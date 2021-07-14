@@ -2,7 +2,8 @@ from typing import List
 
 import click
 
-from sqlfmt import __version__, utils
+from sqlfmt import __version__, api, utils
+from sqlfmt.mode import Mode
 
 
 @click.command()
@@ -24,8 +25,10 @@ def sqlfmt(files: List[str], line_length: int) -> None:
     """
     utils.display_output(f"Running sqlfmt {__version__}")
 
+    mode = Mode(line_length=line_length)
+
     # call API method
     # try:
-    #     _ = api.run()
-    # except exceptions.ShandyConfigError as cfg:
+    _ = api.run(files=files, mode=mode)
+    # except Exception as cfg:
     #     raise click.ClickException(str(cfg))
