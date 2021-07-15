@@ -1,5 +1,6 @@
 .PHONY: check
-check:
+test:
+	pytest
 	isort .
 	black .
 	flake8 .

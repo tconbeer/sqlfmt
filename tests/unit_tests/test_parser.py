@@ -175,4 +175,3 @@ def test_simple_query() -> None:
     ]
 
     assert q.tokens == expected_tokens
-    breakpoint()

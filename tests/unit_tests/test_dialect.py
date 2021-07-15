@@ -1,4 +1,3 @@
-import re
 from typing import Dict
 
 import pytest
@@ -18,6 +17,10 @@ def test_dialect() -> None:
     # can't instantiate abc
     with pytest.raises(TypeError):
         _ = Dialect()  # type: ignore
+
+    # make sure Dialect defines a match for every TokenType
+    for t in list(TokenType):
+        assert Dialect.PATTERNS[t]
 
 
 def test_postgres_trivial_query() -> None:
@@ -60,25 +63,24 @@ def test_regex_easy_match() -> None:
         TokenType.NAME: "my_table",
     }
 
+    # make sure we define an easy match for each TokenType
+    for t in list(TokenType):
+        assert should_match_exactly[t]
+
+    # make sure our compiled programs match these values exactly
     for k, v in should_match_exactly.items():
-        pattern = p.PATTERNS[k]
-        match = re.match(pattern, v)
+        prog = p.programs[k]
+        match = prog.match(v)
         assert match is not None, str(k) + " regex doesn't match " + str(v)
-        start, end = match.span(0)
+        start, end = match.span(1)
 
         assert v[start:end] == v, str(k) + " regex doesn't match " + str(v)
-
-        broad_match = p.all_token_program.match(v)
-        assert broad_match, "All Token Group doesn't match: " + str(k)
-        start, end = match.span(0)
-
-        assert v[start:end] == v, "All Token Group doesn't match: " + str(k)
 
 
 def test_regex_should_not_match_empty_string() -> None:
 
     p = Postgres()
 
-    for k, v in p.PATTERNS.items():
-        match = re.match(v, "")
-        assert match is None, str(k)
+    for token_type, prog in p.programs.items():
+        match = prog.match("")
+        assert match is None, str(token_type)

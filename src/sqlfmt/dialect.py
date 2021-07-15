@@ -30,8 +30,16 @@ class Dialect(ABC):
             r"\d+\.?\d*",
             r"\.\d+",
         ),
-        TokenType.BRACKET_OPEN: r"(\[|\(|\{)",
-        TokenType.BRACKET_CLOSE: r"(\]|\)|\})",
+        TokenType.BRACKET_OPEN: group(
+            r"\[",
+            r"\(",
+            r"\{",
+        ),
+        TokenType.BRACKET_CLOSE: group(
+            r"\]",
+            r"\)",
+            r"\}",
+        ),
         TokenType.OPERATOR: group(
             r"<>",
             r"!=",
@@ -55,11 +63,8 @@ class Dialect(ABC):
 
     def __init__(self) -> None:
         self.programs: Dict[TokenType, re.Pattern] = {
-            k: re.compile(v) for k, v in self.PATTERNS.items()
+            k: re.compile(self.WHITESPACE + group(v)) for k, v in self.PATTERNS.items()
         }
-        self.all_token_program = re.compile(
-            self.WHITESPACE + group(*self.PATTERNS.values())
-        )
 
     @abstractmethod
     def tokenize_line(self, line: str, lnum: int) -> Iterator[Token]:
@@ -73,18 +78,16 @@ class Postgres(Dialect):
         pos, eol = 0, len(line)
 
         while pos < eol:
-            match = self.all_token_program.match(line, pos)
-            if match:
-                start, end = match.span(1)
-                spos, epos, pos = (lnum, start), (lnum, end), end
-                token = line[start:end]
+            for token_type, prog in self.programs.items():
 
-                for token_type, program in self.programs.items():
-                    if program.match(token):
-                        yield Token(token_type, token, spos, epos, line)
-                        break
-                else:
-                    raise Exception
+                match = prog.match(line, pos)
+                if match:
+                    start, end = match.span(1)
+                    spos, epos, pos = (lnum, start), (lnum, end), end
+                    token = line[start:end]
+
+                    yield Token(token_type, token, spos, epos, line)
+                    break
 
             else:
-                raise Exception
+                raise Exception("Couldn't match!")
