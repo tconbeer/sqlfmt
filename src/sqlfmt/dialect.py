@@ -11,21 +11,49 @@ def group(*choices: str) -> str:
     return "(" + "|".join(choices) + ")"
 
 
-class Dialect(ABC):
-    """Abstract class for a SQL dialect"""
+WHITESPACE: str = r"[ \f\t]"
+WHITESPACES: str = WHITESPACE + "+"
+MAYBE_WHITESPACES: str = WHITESPACE + "*"
+NEWLINE: str = r"\r?\n"
+ANY_BLANK: str = group(WHITESPACES, NEWLINE, r"$")
 
-    WHITESPACE: str = r"[ \f\t]*"
+
+class Dialect(ABC):
+    """
+    Abstract class for a SQL dialect.
+
+    Each dialect should override the PATTERNS dict to define their own grammar.
+    Each value in the PATTERNS dict have a regex group (surrounded by
+    parentheses) that matches the token; if the token may be delimited by
+    whitespace, that should be defined outside the first group.
+    """
+
+    PATTERNS: Dict[TokenType, str] = {}
+
+    def __init__(self) -> None:
+        self.programs: Dict[TokenType, re.Pattern] = {
+            k: re.compile(MAYBE_WHITESPACES + v) for k, v in self.PATTERNS.items()
+        }
+
+    @abstractmethod
+    def tokenize_line(self, line: str, lnum: int) -> Iterator[Token]:
+        """A dialect must implement a tokenize_line method, which receives a line (as a string)
+        and other indicators of the state of the line, and yields Tokens"""
+        pass
+
+
+class Postgres(Dialect):
 
     PATTERNS: Dict[TokenType, str] = {
-        TokenType.JINJA_START: r"\{[{%#]",
-        TokenType.JINJA_END: r"[}%#]\}",
+        TokenType.JINJA_START: group(r"\{[{%#]"),
+        TokenType.JINJA_END: group(r"[}%#]\}"),
         TokenType.QUOTED_NAME: group(
             r"'[^\n']*'",
             r'"[^\n"]*"',
         ),
-        TokenType.COMMENT: r"--[^\r\n]*",
-        TokenType.COMMENT_START: r"/\*",
-        TokenType.COMMENT_END: r"\*/",
+        TokenType.COMMENT: group(r"--[^\r\n]*"),
+        TokenType.COMMENT_START: group(r"/\*"),
+        TokenType.COMMENT_END: group(r"\*/"),
         TokenType.NUMBER: group(
             r"\d+\.?\d*",
             r"\.\d+",
@@ -46,9 +74,9 @@ class Dialect(ABC):
             r"[+\-*/%&@|^=<>:]=?",
             r"~",
         ),
-        TokenType.COMMA: r",",
-        TokenType.DOT: r"\.",
-        TokenType.NEWLINE: r"\r?\n",
+        TokenType.COMMA: group(r","),
+        TokenType.DOT: group(r"\."),
+        TokenType.NEWLINE: group(r"\r?\n"),
         TokenType.TOP_KEYWORD: group(
             r"with",
             r"select( distinct)?",
@@ -57,23 +85,11 @@ class Dialect(ABC):
             r"group by",
             r"having",
             r"union( all)?",
-        ),
-        TokenType.NAME: r"\w+",
+        )
+        + ANY_BLANK,
+        TokenType.NAME: group(r"\w+"),
     }
 
-    def __init__(self) -> None:
-        self.programs: Dict[TokenType, re.Pattern] = {
-            k: re.compile(self.WHITESPACE + group(v)) for k, v in self.PATTERNS.items()
-        }
-
-    @abstractmethod
-    def tokenize_line(self, line: str, lnum: int) -> Iterator[Token]:
-        """A dialect must implement a tokenize_line method, which receives a line (as a string)
-        and other indicators of the state of the line, and yields Tokens"""
-        pass
-
-
-class Postgres(Dialect):
     def tokenize_line(self, line: str, lnum: int) -> Iterator[Token]:
         pos, eol = 0, len(line)
 
@@ -90,4 +106,4 @@ class Postgres(Dialect):
                     break
 
             else:
-                raise Exception("Couldn't match!")
+                raise Exception(f"Couldn't match after pos: {pos}. Line: {line}")
