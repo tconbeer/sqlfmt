@@ -32,7 +32,8 @@ class Dialect(ABC):
 
     def __init__(self) -> None:
         self.programs: Dict[TokenType, re.Pattern] = {
-            k: re.compile(MAYBE_WHITESPACES + v) for k, v in self.PATTERNS.items()
+            k: re.compile(MAYBE_WHITESPACES + v, re.IGNORECASE)
+            for k, v in self.PATTERNS.items()
         }
 
     @abstractmethod
@@ -45,6 +46,11 @@ class Dialect(ABC):
 class Postgres(Dialect):
 
     PATTERNS: Dict[TokenType, str] = {
+        TokenType.JINJA: group(
+            r"\{\{[^\n]*\}\}",
+            r"\{%[^\n]*%\}",
+            r"\{\#[^\n]*\#\}",
+        ),
         TokenType.JINJA_START: group(r"\{[{%#]"),
         TokenType.JINJA_END: group(r"[}%#]\}"),
         TokenType.QUOTED_NAME: group(
@@ -54,6 +60,8 @@ class Postgres(Dialect):
         TokenType.COMMENT: group(r"--[^\r\n]*"),
         TokenType.COMMENT_START: group(r"/\*"),
         TokenType.COMMENT_END: group(r"\*/"),
+        TokenType.STATEMENT_START: group(r"case", r"when") + ANY_BLANK,
+        TokenType.STATEMENT_END: group(r"then", r"end") + ANY_BLANK,
         TokenType.NUMBER: group(
             r"\d+\.?\d*",
             r"\.\d+",
@@ -79,11 +87,14 @@ class Postgres(Dialect):
         TokenType.NEWLINE: group(r"\r?\n"),
         TokenType.TOP_KEYWORD: group(
             r"with",
-            r"select( distinct)?",
+            r"select( all| top \d+| distinct)?",
             r"from",
             r"where",
             r"group by",
             r"having",
+            r"order by",
+            r"limit",
+            r"offset",
             r"union( all)?",
         )
         + ANY_BLANK,
@@ -99,11 +110,25 @@ class Postgres(Dialect):
                 match = prog.match(line, pos)
                 if match:
                     start, end = match.span(1)
+                    prefix = line[pos:start]
                     spos, epos, pos = (lnum, start), (lnum, end), end
                     token = line[start:end]
 
-                    yield Token(token_type, token, spos, epos, line)
+                    yield Token(token_type, prefix, token, spos, epos, line)
                     break
 
             else:
-                raise Exception(f"Couldn't match after pos: {pos}. Line: {line}")
+                match = re.match(WHITESPACES, line[pos:])
+                if match:
+                    prefix = match.group(0)
+                else:
+                    prefix = ""
+                yield Token(
+                    TokenType.ERROR_TOKEN,
+                    prefix,
+                    line[pos:].strip(),
+                    (lnum, pos),
+                    (lnum, eol),
+                    line,
+                )
+                pos = eol
