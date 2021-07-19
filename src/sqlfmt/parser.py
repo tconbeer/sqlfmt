@@ -170,7 +170,7 @@ class Node:
 class Line:
     source_string: str
     lnum: int
-    previous_line: Optional["Line"]
+    previous_node: Optional[Node]  # last node of prior line, if any
     nodes: List[Node] = field(default_factory=list)
     depth: int = 0
 
@@ -182,10 +182,8 @@ class Line:
         previous_node: Optional[Node]
         if self.nodes:
             previous_node = self.nodes[-1]
-        elif self.previous_line and self.previous_line.nodes:
-            previous_node = self.previous_line.nodes[-1]
         else:
-            previous_node = None
+            previous_node = self.previous_node
 
         node = Node.from_token(token, previous_node)
 
@@ -211,6 +209,9 @@ class Line:
         else:
             return ""
 
+    def __len__(self) -> int:
+        return len(str(self))
+
 
 @dataclass
 class Query:
@@ -221,6 +222,7 @@ class Query:
 
     def __post_init__(self) -> None:
         self.tokenize_from_source()
+        self.split_and_merge_lines()
 
     def tokenize_from_source(self) -> None:
         """Updates self.lines and self.tokens from source_string"""
@@ -237,12 +239,19 @@ class Query:
             current_line = Line(
                 source_string=line,
                 lnum=lnum,
-                previous_line=self.lines[-1] if self.lines else None,
+                previous_node=self.lines[-1].nodes[-1] if self.lines else None,
             )
             for token in self.dialect.tokenize_line(line=line, lnum=lnum):
+                # nodes are formatted as tokens are appended,
+                # but splitting lines happens later
                 current_line.append_token(token)
 
             self.lines.append(current_line)
+
+    def split_and_merge_lines(self) -> None:
+        """Mutates self.lines to enforce line length and other splitting
+        rules"""
+        pass
 
     @property
     def tokens(self) -> List[Token]:
@@ -251,15 +260,19 @@ class Query:
             tokens.extend(line.tokens)
         return tokens
 
+    @property
+    def nodes(self) -> List[Node]:
+        nodes: List[Node] = []
+        for line in self.lines:
+            nodes.extend(line.nodes)
+        return nodes
+
     @cached_property
     def formatted_string(self) -> str:
-
         draft = []
-
         for s in [str(line) for line in self.lines]:
             if s:
                 draft.append(s)
 
         q = "".join(draft)
-
         return q
