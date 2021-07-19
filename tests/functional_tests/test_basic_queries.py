@@ -14,7 +14,7 @@ def run_cli_command(commands: List[str]) -> subprocess.CompletedProcess:
 
 def test_basic_project() -> None:
 
-    # Sally runs sqlfmt on a directory
+    # Sally runs sqlfmt on a file
     run_command = [
         "sqlfmt",
         "./tests/data/basic_queries/001_select_1.sql",
