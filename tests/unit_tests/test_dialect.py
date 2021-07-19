@@ -62,6 +62,7 @@ class TestPostgres:
             TokenType.NUMBER: "145.8",
             TokenType.BRACKET_OPEN: "[",
             TokenType.BRACKET_CLOSE: ")",
+            TokenType.DOUBLE_COLON: "::",
             TokenType.OPERATOR: "<>",
             TokenType.COMMA: ",",
             TokenType.DOT: ".",
@@ -91,6 +92,7 @@ class TestPostgres:
             TokenType.JINJA_END: "}",
             TokenType.QUOTED_NAME: "my_unquoted_name",
             TokenType.COMMENT: "# wrong comment delimiter",
+            TokenType.DOUBLE_COLON: ":",
             TokenType.OPERATOR: ".",
             TokenType.TOP_KEYWORD: "selection",
         }

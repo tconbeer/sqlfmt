@@ -69,8 +69,16 @@ class Node:
             maybe_last_bracket: Optional[Token] = (
                 open_brackets.pop() if open_brackets else None
             )
-            if maybe_last_bracket and maybe_last_bracket.type == TokenType.TOP_KEYWORD:
+            if (
+                maybe_last_bracket and maybe_last_bracket.type == TokenType.TOP_KEYWORD
+            ):  # this is a kw like 'from' that follows another top keyword,
+                # so we need to dedent
                 change_before = -1
+            elif (
+                maybe_last_bracket
+            ):  # it's an open paren that needs to go back on the stack
+                open_brackets.append(maybe_last_bracket)
+
             open_brackets.append(token)
             change_after = 1
 
@@ -85,7 +93,7 @@ class Node:
                     last_bracket = open_brackets.pop()
             except IndexError:
                 raise ValueError(
-                    f"Closing bracket {token.token} found at "
+                    f"Closing bracket '{token.token}' found at "
                     f"{token.spos} before bracket was opened."
                 )
             matches = {
@@ -97,8 +105,8 @@ class Node:
                 last_bracket.type == TokenType.BRACKET_OPEN
                 and matches[last_bracket.token] == token.token
             ), (
-                f"Closing bracket {token.token} found at {token.spos} does not match "
-                f"last opened bracket {last_bracket.token} found at "
+                f"Closing bracket '{token.token}' found at {token.spos} does not match "
+                f"last opened bracket '{last_bracket.token}' found at "
                 f"{last_bracket.spos}."
             )
             change_before = -1
@@ -125,6 +133,7 @@ class Node:
             return INDENT * depth
         elif token.type in (
             TokenType.BRACKET_CLOSE,
+            TokenType.DOUBLE_COLON,
             TokenType.COMMA,
             TokenType.DOT,
             TokenType.NEWLINE,
@@ -136,7 +145,10 @@ class Node:
             and previous_token.type == TokenType.DOT
         ):
             return ""
-        elif previous_token and previous_token.type == TokenType.BRACKET_OPEN:
+        elif previous_token and previous_token.type in (
+            TokenType.BRACKET_OPEN,
+            TokenType.DOUBLE_COLON,
+        ):
             return ""
         else:
             return " "
