@@ -1,5 +1,6 @@
 .coverage
 tests/coverage
+tests/.results
 .mypy_cache
 .pytest_cache
 *.egg-info

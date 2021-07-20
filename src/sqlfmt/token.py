@@ -25,6 +25,21 @@ class TokenType(Enum):
     ERROR_TOKEN = auto()
 
 
+def split_after(token_type: TokenType) -> bool:
+    """
+    Return True if a line should be split after this token type,
+    False if it should be split before.
+    """
+    if token_type in (
+        TokenType.BRACKET_OPEN,
+        TokenType.TOP_KEYWORD,
+        TokenType.COMMA,
+        TokenType.STATEMENT_START,
+    ):
+        return True
+    return False
+
+
 class Token(NamedTuple):
     """
     Representation of a syntactic element. Tokens always reference their position
@@ -39,3 +54,6 @@ class Token(NamedTuple):
     spos: Tuple[int, int]
     epos: Tuple[int, int]
     line: str
+
+    def __str__(self) -> str:
+        return f"Token(type={self.type}, token={self.token}, spos={self.spos})"
