@@ -1,4 +1,4 @@
-from sqlfmt.dialect import Postgres
+from sqlfmt.mode import Mode
 from sqlfmt.parser import Node, Query
 from sqlfmt.token import Token, TokenType
 
@@ -44,7 +44,7 @@ def test_simple_query_parsing() -> None:
     with open("tests/data/basic_queries/002_select_from_where.sql") as f:
         source_string = f.read()
 
-    q = Query(source_string=source_string, dialect=Postgres())
+    q = Query(source_string=source_string, mode=Mode())
 
     assert q
     assert q.source_string == source_string
@@ -266,7 +266,7 @@ def test_simple_query_parsing() -> None:
 
 def test_error_token() -> None:
     source_string = "select `no backticks in postgres`"
-    q = Query(source_string=source_string, dialect=Postgres())
+    q = Query(source_string=source_string, mode=Mode())
 
     expected_tokens = [
         Token(
@@ -293,5 +293,5 @@ def test_error_token() -> None:
 def test_simple_formatting() -> None:
     source_string = "  select 1\n    from my_table\nwhere true"
     expected_string = "select 1\nfrom my_table\nwhere true"
-    q = Query(source_string=source_string, dialect=Postgres())
+    q = Query(source_string=source_string, mode=Mode())
     assert q.formatted_string == expected_string

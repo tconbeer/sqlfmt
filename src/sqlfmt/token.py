@@ -15,6 +15,7 @@ class TokenType(Enum):
     NUMBER = auto()
     BRACKET_OPEN = auto()
     BRACKET_CLOSE = auto()
+    DOUBLE_COLON = auto()
     OPERATOR = auto()
     COMMA = auto()
     DOT = auto()
@@ -22,6 +23,21 @@ class TokenType(Enum):
     TOP_KEYWORD = auto()
     NAME = auto()
     ERROR_TOKEN = auto()
+
+
+def split_after(token_type: TokenType) -> bool:
+    """
+    Return True if a line should be split after this token type,
+    False if it should be split before.
+    """
+    if token_type in (
+        TokenType.BRACKET_OPEN,
+        TokenType.TOP_KEYWORD,
+        TokenType.COMMA,
+        TokenType.STATEMENT_START,
+    ):
+        return True
+    return False
 
 
 class Token(NamedTuple):
@@ -38,3 +54,6 @@ class Token(NamedTuple):
     spos: Tuple[int, int]
     epos: Tuple[int, int]
     line: str
+
+    def __str__(self) -> str:
+        return f"Token(type={self.type}, token={self.token}, spos={self.spos})"

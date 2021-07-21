@@ -48,5 +48,5 @@ def _generate_results(paths: Iterable[Path], mode: Mode) -> Iterator[SqlFormatRe
 
 
 def format_string(source: str, mode: Mode) -> str:
-    q = Query(source_string=source, dialect=mode.dialect)
+    q = Query(source_string=source, mode=mode)
     return q.formatted_string

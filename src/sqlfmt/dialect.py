@@ -76,6 +76,7 @@ class Postgres(Dialect):
             r"\)",
             r"\}",
         ),
+        TokenType.DOUBLE_COLON: group(r"::"),
         TokenType.OPERATOR: group(
             r"<>",
             r"!=",
