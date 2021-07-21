@@ -100,7 +100,7 @@ def test_basic_line() -> None:
     assert line.change_in_depth == 1
     assert len(line.nodes) == len(tokens)
     assert line.open_brackets == [tokens[0]]
-    assert line.first_split == 1
+    assert line.depth_split == 1
     assert line.first_comma is None
 
     assert str(line) == source_string

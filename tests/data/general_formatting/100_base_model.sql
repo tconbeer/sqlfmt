@@ -2,7 +2,6 @@ with source as (select * from {{ source('my_application', 'users') }}),
   renamed as (
 
     select
-
       --ids
       id,
       nullif(xid,'') as xid,

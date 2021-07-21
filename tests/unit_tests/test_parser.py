@@ -44,7 +44,7 @@ def test_simple_query_parsing() -> None:
     with open("tests/data/basic_queries/002_select_from_where.sql") as f:
         source_string = f.read()
 
-    q = Query(source_string=source_string, mode=Mode())
+    q = Query.from_source(source_string=source_string, mode=Mode())
 
     assert q
     assert q.source_string == source_string
@@ -266,7 +266,7 @@ def test_simple_query_parsing() -> None:
 
 def test_error_token() -> None:
     source_string = "select `no backticks in postgres`"
-    q = Query(source_string=source_string, mode=Mode())
+    q = Query.from_source(source_string=source_string, mode=Mode())
 
     expected_tokens = [
         Token(
@@ -290,8 +290,8 @@ def test_error_token() -> None:
     assert q.tokens == expected_tokens
 
 
-def test_simple_formatting() -> None:
+def test_whitespace_formatting() -> None:
     source_string = "  select 1\n    from my_table\nwhere true"
     expected_string = "select 1\nfrom my_table\nwhere true"
-    q = Query(source_string=source_string, mode=Mode())
-    assert q.formatted_string == expected_string
+    q = Query.from_source(source_string=source_string, mode=Mode())
+    assert str(q) == expected_string

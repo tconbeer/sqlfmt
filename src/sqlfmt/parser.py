@@ -1,11 +1,9 @@
 from dataclasses import dataclass, field
-from functools import cached_property
 from io import StringIO
 from typing import List
 
 from sqlfmt.line import Line, Node
 from sqlfmt.mode import Mode
-from sqlfmt.splitter import LineSplitter
 from sqlfmt.token import Token
 
 
@@ -14,14 +12,15 @@ class Query:
     source_string: str
     mode: Mode
     lines: List[Line] = field(default_factory=list)
-    error_messages: List[str] = field(default_factory=list)
 
-    def __post_init__(self) -> None:
-        self.tokenize_from_source()
-        self.split_and_merge_lines()
+    @classmethod
+    def from_source(cls, source_string: str, mode: Mode) -> "Query":
+        q = Query(source_string, mode)
+        q.tokenize_from_source()
+        return q
 
     def tokenize_from_source(self) -> None:
-        """Updates self.lines and self.tokens from source_string"""
+        """Updates self.lines from source_string"""
         if not self.source_string:
             return
 
@@ -43,18 +42,6 @@ class Query:
 
             self.lines.append(current_line)
 
-    def split_and_merge_lines(self) -> None:
-        """
-        Mutates self.lines to enforce line length and other splitting
-        rules
-        """
-        splitter = LineSplitter(mode=self.mode)
-        new_lines = []
-        for line in self.lines:
-            splits = list(splitter.maybe_split(line))
-            new_lines.extend(splits)
-        self.lines = new_lines
-
     @property
     def tokens(self) -> List[Token]:
         tokens: List[Token] = []
@@ -69,8 +56,7 @@ class Query:
             nodes.extend(line.nodes)
         return nodes
 
-    @cached_property
-    def formatted_string(self) -> str:
+    def __str__(self) -> str:
         draft = []
         for s in [str(line) for line in self.lines]:
             if s:
