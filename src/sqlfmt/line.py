@@ -272,9 +272,13 @@ class Line:
             self.open_brackets = node.open_brackets
         else:
             self.change_in_depth = node.depth - self.depth + node.change_in_depth
+            # if we have a keyword in the middle of a line, we need to split on that
+            # keyword
+            if token.type == TokenType.TOP_KEYWORD and not self.starts_with_top_keyword:
+                self.depth_split = len(self.nodes)
 
-        # splits should happen outside in... if this line is increasing depth,
-        # we should split on the first node that increases depth. If it is
+        # otherwise, splits should happen outside in... if this line is increasing
+        # depth, we should split on the first node that increases depth. If it is
         # decreasing depth, we should split on the last node that decreases depth
         change_over_node = node.depth - node.inherited_depth + node.change_in_depth
         split_index = len(self.nodes)
@@ -354,11 +358,30 @@ class Line:
         return tokens
 
     @property
+    def starts_with_select(self) -> bool:
+        if not self.nodes:
+            return False
+        elif self.nodes[0].token.type == TokenType.TOP_KEYWORD and self.nodes[
+            0
+        ].value.lower() in ("with", "select"):
+            return True
+        else:
+            return False
+
+    @property
     def starts_with_top_keyword(self) -> bool:
         if not self.nodes:
             return False
         elif self.nodes[0].token.type == TokenType.TOP_KEYWORD:
             return True
+        else:
+            return False
+
+    @property
+    def contains_top_keyword(self) -> bool:
+        for node in self.nodes:
+            if node.token.type == TokenType.TOP_KEYWORD:
+                return True
         else:
             return False
 

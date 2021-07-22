@@ -60,7 +60,15 @@ class LineMerger:
                 child_line: Optional[Line]
                 for child_idx, child_line in scanner:
                     child_depth = child_line.depth
-                    if child_depth <= parent_depth:
+                    if child_depth == parent_depth:
+                        if (
+                            parent_line.starts_with_select
+                            and child_line.starts_with_top_keyword
+                        ):
+                            pass
+                        else:
+                            break
+                    elif child_depth < parent_depth:
                         break
 
                     # if we hit another indent, recursively try to merge the children

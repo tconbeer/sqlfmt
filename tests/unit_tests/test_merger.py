@@ -111,8 +111,7 @@ def test_cte_merge() -> None:
 
     expected = [
         "\n",
-        "with my_cte as (select * from my_table)\n",
-        "select * from my_cte\n",
+        "with my_cte as (select * from my_table) select * from my_cte\n",
     ]
 
     assert result == expected

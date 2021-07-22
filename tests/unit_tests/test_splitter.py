@@ -24,14 +24,28 @@ class TestSplitter:
 
         line_gen = splitter.maybe_split(depth_split_line)
 
-        first_line = next(line_gen)
-        assert str(first_line) == "with\n"
+        result = list(map(str, line_gen))
 
-        second_line = next(line_gen)
-        assert (
-            str(second_line)
-            == " " * 4 + "my_cte as (select 1, b from my_schema.my_table),\n"
-        )
+        expected = [
+            "with\n",
+            " " * 4 + "my_cte as (\n",
+            " " * 8 + "select\n",
+            " " * 12 + "1,\n",
+            " " * 12 + "b\n",
+            " " * 8 + "from\n",
+            " " * 12 + "my_schema.my_table\n",
+            " " * 4 + "),\n",
+        ]
 
-        with pytest.raises(StopIteration):
-            next(line_gen)
+        assert result == expected
+
+    def test_split_one_liner(self, splitter: LineSplitter) -> None:
+        source_string = "select * from my_table\n"
+
+        mode = Mode()
+        raw_query = Query.from_source(source_string, mode)
+
+        for raw_line in raw_query.lines:
+            splits = splitter.maybe_split(raw_line)
+            result = list(splits)
+            assert len(result) == 4

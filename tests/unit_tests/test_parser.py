@@ -312,3 +312,44 @@ def test_case_statement_parsing() -> None:
 
     computed_line_depths = [line.depth for line in q.lines]
     assert computed_line_depths == expected_line_depths
+
+
+def test_cte_parsing() -> None:
+    with open("tests/data/basic_queries/004_with_select.sql") as f:
+        source_string = f.read()
+
+    q = Query.from_source(source_string=source_string, mode=Mode())
+
+    assert q
+    assert q.source_string == source_string
+    assert len(q.lines) == 3
+
+    expected_line_depths = [0, 1, 0]
+
+    computed_line_depths = [line.depth for line in q.lines]
+    assert computed_line_depths == expected_line_depths
+
+    expected_node_depths = [
+        (0, 1),  # with
+        (1, 0),  # \n
+        (1, 0),  # my_cte
+        (1, 0),  # as
+        (1, 1),  # (
+        (2, 1),  # select
+        (3, 0),  # 1
+        (3, 0),  # ,
+        (3, 0),  # b
+        (2, 1),  # from
+        (3, 0),  # my_schema
+        (3, 0),  # .
+        (3, 0),  # my_table
+        (1, 0),  # )
+        (1, 0),  # \n
+        (0, 1),  # select
+        (1, 0),  # *
+        (0, 1),  # from
+        (1, 0),  # my_cte
+    ]
+
+    computed_node_depths = [(node.depth, node.change_in_depth) for node in q.nodes]
+    assert computed_node_depths == expected_node_depths

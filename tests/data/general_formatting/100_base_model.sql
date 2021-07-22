@@ -44,16 +44,16 @@ with
         select
             -- ids
             id,
-            nullif(xid,'') as xid,
+            nullif(xid, '') as xid,
 
             -- date
             created_on,
             updated_on,
 
-            nullif(email,'') as email,
+            nullif(email, '') as email,
             
             -- names
-            nullif(full_name,'') as full_name,
+            nullif(full_name, '') as full_name,
             nullif(
                 trim(
                     case
