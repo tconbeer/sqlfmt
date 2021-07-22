@@ -61,7 +61,7 @@ class Postgres(Dialect):
         TokenType.COMMENT_START: group(r"/\*"),
         TokenType.COMMENT_END: group(r"\*/"),
         TokenType.STATEMENT_START: group(r"case", r"when") + ANY_BLANK,
-        TokenType.STATEMENT_END: group(r"then", r"end") + ANY_BLANK,
+        TokenType.STATEMENT_END: group(r"then", r"end(,)?") + ANY_BLANK,
         TokenType.NUMBER: group(
             r"\d+\.?\d*",
             r"\.\d+",
@@ -119,17 +119,20 @@ class Postgres(Dialect):
                     break
 
             else:
-                match = re.match(WHITESPACES, line[pos:])
-                if match:
-                    prefix = match.group(0)
+                if line[pos:].strip() == "":
+                    pos = eol
                 else:
-                    prefix = ""
-                yield Token(
-                    TokenType.ERROR_TOKEN,
-                    prefix,
-                    line[pos:].strip(),
-                    (lnum, pos),
-                    (lnum, eol),
-                    line,
-                )
-                pos = eol
+                    match = re.match(WHITESPACES, line[pos:])
+                    if match:
+                        prefix = match.group(0)
+                    else:
+                        prefix = ""
+                    yield Token(
+                        TokenType.ERROR_TOKEN,
+                        prefix,
+                        line[pos:].strip(),
+                        (lnum, pos),
+                        (lnum, eol),
+                        line,
+                    )
+                    pos = eol

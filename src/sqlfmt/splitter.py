@@ -3,7 +3,7 @@ from typing import Iterator, Optional
 
 from sqlfmt.line import Line
 from sqlfmt.mode import Mode
-from sqlfmt.token import Token, TokenType
+from sqlfmt.token import TokenType
 
 
 @dataclass
@@ -91,15 +91,7 @@ class LineSplitter:
             previous_node=tail[-1] if comment_line else line.previous_node,
             nodes=head,
         )
-        nl = Token(
-            type=TokenType.NEWLINE,
-            prefix="",
-            token="\n",
-            spos=(head[-1].token.epos[0], head[-1].token.epos[1] + 1),
-            epos=(head[-1].token.epos[0], head[-1].token.epos[1] + 2),
-            line=head[-1].token.line,
-        )
-        head_line.append_token(nl)
+        head_line.append_newline()
         yield from self.maybe_split(head_line)
 
         if not comment_line:

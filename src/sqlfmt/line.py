@@ -297,6 +297,35 @@ class Line:
 
         self.nodes.append(node)
 
+    def append_newline(self) -> None:
+        """
+        Create a new NEWLINE token and append it to the end of this line
+        """
+        previous_token: Optional[Token] = None
+        if self.nodes:
+            previous_token = self.nodes[-1].token
+        elif self.previous_node:
+            previous_token = self.previous_node.token
+
+        if previous_token:
+            spos = (previous_token.epos[0], previous_token.epos[1] + 1)
+            epos = (previous_token.epos[0], previous_token.epos[1] + 2)
+            source_line = previous_token.line
+        else:
+            spos = (0, 0)
+            epos = (0, 1)
+            source_line = ""
+
+        nl = Token(
+            type=TokenType.NEWLINE,
+            prefix="",
+            token="\n",
+            spos=spos,
+            epos=epos,
+            line=source_line,
+        )
+        self.append_token(nl)
+
     @classmethod
     def from_nodes(
         cls, source_string: str, previous_node: Optional[Node], nodes: List[Node]

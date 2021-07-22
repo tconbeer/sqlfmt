@@ -295,3 +295,20 @@ def test_whitespace_formatting() -> None:
     expected_string = "select 1\nfrom my_table\nwhere true"
     q = Query.from_source(source_string=source_string, mode=Mode())
     assert str(q) == expected_string
+
+
+def test_case_statement_parsing() -> None:
+
+    with open("tests/data/basic_queries/003_select_case.sql") as f:
+        source_string = f.read()
+
+    q = Query.from_source(source_string=source_string, mode=Mode())
+
+    assert q
+    assert q.source_string == source_string
+    assert len(q.lines) == 13
+
+    expected_line_depths = [0, 1, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 0]
+
+    computed_line_depths = [line.depth for line in q.lines]
+    assert computed_line_depths == expected_line_depths

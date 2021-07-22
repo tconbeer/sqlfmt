@@ -40,7 +40,8 @@ class Query:
                 # but splitting lines happens later
                 current_line.append_token(token)
 
-            self.lines.append(current_line)
+            if current_line and current_line.nodes:
+                self.lines.append(current_line)
 
     @property
     def tokens(self) -> List[Token]:
