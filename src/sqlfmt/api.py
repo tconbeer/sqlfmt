@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Iterator, List, Optional, Set
 
+from sqlfmt.formatter import QueryFormatter
 from sqlfmt.mode import Mode
 from sqlfmt.parser import Query
 from sqlfmt.utils import display_output, gen_sql_files
@@ -48,5 +49,7 @@ def _generate_results(paths: Iterable[Path], mode: Mode) -> Iterator[SqlFormatRe
 
 
 def format_string(source: str, mode: Mode) -> str:
-    q = Query(source_string=source, mode=mode)
-    return q.formatted_string
+    raw_query = Query.from_source(source_string=source, mode=mode)
+    formatter = QueryFormatter(mode)
+    formatted_query = formatter.format(raw_query)
+    return str(formatted_query)

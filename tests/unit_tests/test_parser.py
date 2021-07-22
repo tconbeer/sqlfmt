@@ -44,7 +44,7 @@ def test_simple_query_parsing() -> None:
     with open("tests/data/basic_queries/002_select_from_where.sql") as f:
         source_string = f.read()
 
-    q = Query(source_string=source_string, mode=Mode())
+    q = Query.from_source(source_string=source_string, mode=Mode())
 
     assert q
     assert q.source_string == source_string
@@ -266,7 +266,7 @@ def test_simple_query_parsing() -> None:
 
 def test_error_token() -> None:
     source_string = "select `no backticks in postgres`"
-    q = Query(source_string=source_string, mode=Mode())
+    q = Query.from_source(source_string=source_string, mode=Mode())
 
     expected_tokens = [
         Token(
@@ -290,8 +290,66 @@ def test_error_token() -> None:
     assert q.tokens == expected_tokens
 
 
-def test_simple_formatting() -> None:
+def test_whitespace_formatting() -> None:
     source_string = "  select 1\n    from my_table\nwhere true"
     expected_string = "select 1\nfrom my_table\nwhere true"
-    q = Query(source_string=source_string, mode=Mode())
-    assert q.formatted_string == expected_string
+    q = Query.from_source(source_string=source_string, mode=Mode())
+    assert str(q) == expected_string
+
+
+def test_case_statement_parsing() -> None:
+
+    with open("tests/data/basic_queries/003_select_case.sql") as f:
+        source_string = f.read()
+
+    q = Query.from_source(source_string=source_string, mode=Mode())
+
+    assert q
+    assert q.source_string == source_string
+    assert len(q.lines) == 13
+
+    expected_line_depths = [0, 1, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 0]
+
+    computed_line_depths = [line.depth for line in q.lines]
+    assert computed_line_depths == expected_line_depths
+
+
+def test_cte_parsing() -> None:
+    with open("tests/data/basic_queries/004_with_select.sql") as f:
+        source_string = f.read()
+
+    q = Query.from_source(source_string=source_string, mode=Mode())
+
+    assert q
+    assert q.source_string == source_string
+    assert len(q.lines) == 3
+
+    expected_line_depths = [0, 1, 0]
+
+    computed_line_depths = [line.depth for line in q.lines]
+    assert computed_line_depths == expected_line_depths
+
+    expected_node_depths = [
+        (0, 1),  # with
+        (1, 0),  # \n
+        (1, 0),  # my_cte
+        (1, 0),  # as
+        (1, 1),  # (
+        (2, 1),  # select
+        (3, 0),  # 1
+        (3, 0),  # ,
+        (3, 0),  # b
+        (2, 1),  # from
+        (3, 0),  # my_schema
+        (3, 0),  # .
+        (3, 0),  # my_table
+        (1, 0),  # )
+        (1, 0),  # \n
+        (0, 1),  # select
+        (1, 0),  # *
+        (0, 1),  # from
+        (1, 0),  # my_cte
+    ]
+
+    computed_node_depths = [(node.depth, node.change_in_depth) for node in q.nodes]
+    assert computed_node_depths == expected_node_depths

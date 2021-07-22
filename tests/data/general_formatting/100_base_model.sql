@@ -2,7 +2,6 @@ with source as (select * from {{ source('my_application', 'users') }}),
   renamed as (
 
     select
-
       --ids
       id,
       nullif(xid,'') as xid,
@@ -45,16 +44,16 @@ with
         select
             -- ids
             id,
-            nullif(xid,'') as xid,
+            nullif(xid, '') as xid,
 
             -- date
             created_on,
             updated_on,
 
-            nullif(email,'') as email,
+            nullif(email, '') as email,
             
             -- names
-            nullif(full_name,'') as full_name,
+            nullif(full_name, '') as full_name,
             nullif(
                 trim(
                     case

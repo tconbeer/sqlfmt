@@ -3,7 +3,7 @@ from typing import Iterator, Optional
 
 from sqlfmt.line import Line
 from sqlfmt.mode import Mode
-from sqlfmt.token import Token, TokenType
+from sqlfmt.token import TokenType
 
 
 @dataclass
@@ -19,38 +19,47 @@ class LineSplitter:
         """
         MAX_LENGTH = self.mode.line_length
         length = len(line)
+
+        # first, split a comment onto previous line if the line is too long
         if length > MAX_LENGTH and line.ends_with_comment:
             yield from self.split(line, kind="comment")
+        # next, consider splitting on a change in depth, if the line has one
+        # that isn't at the start or end of the line
         elif (
-            (
-                (line.change_in_depth > 0 and not line.starts_with_top_keyword)
-                or (
-                    line.change_in_depth > 0
-                    and line.starts_with_top_keyword
-                    and line.first_comma
-                )
-                or (line.change_in_depth > 1)
-                or line.change_in_depth < 0
-                or length > MAX_LENGTH
+            line.depth_split
+            and line.depth_split < len(line.nodes) - 1
+            and (
+                # always split a long line that changes depth at any point
+                length > MAX_LENGTH
+                # always split a line that indents or dedents midway through.
+                # This will split one-liners ("select a\nfrom b" ->
+                # "select/n    a\nfrom\n    b") but we'll
+                # merge those back together in the next pass if they are short
+                # enough
+                or line.change_in_depth != 0
+                or (line.contains_top_keyword and not line.starts_with_top_keyword)
             )
-            and line.first_split
-            and line.first_split < len(line.nodes) - 1
         ):
             yield from self.split(line, kind="depth")
+
+        # split on any comma that doesn't end a line
         elif line.first_comma and line.first_comma < len(line.nodes) - 1:
             yield from self.split(line, kind="comma")
+        # nothing to split on. TODO: split on long lines with operators or
+        # just names
         else:
             yield line
 
     def split(self, line: Line, kind: str = "depth") -> Iterator[Line]:
         """
-        Split this line at the highest-priority token
+        Split this line according to the kind dictated, using the
+        highest priority token of each kind. Yields new lines.
         """
         if kind in ("depth", "comment"):
-            if not line.first_split:
+            if not line.depth_split:
                 yield line
             else:
-                yield from self.split_at_index(line, line.first_split)
+                yield from self.split_at_index(line, line.depth_split)
         elif kind == "comma":
             if not line.first_comma:
                 yield line
@@ -61,7 +70,8 @@ class LineSplitter:
 
     def split_at_index(self, line: Line, index: int) -> Iterator[Line]:
         """
-        Split a line before or after nodes[index]. Yields new lines
+        Split a line before nodes[index]. Recursively maybe_split
+        resulting lines. Yields new lines
         """
         assert index > 0, "Cannot split at start of line!"
         head, tail = line.nodes[:index], line.nodes[index:]
@@ -82,15 +92,7 @@ class LineSplitter:
             previous_node=tail[-1] if comment_line else line.previous_node,
             nodes=head,
         )
-        nl = Token(
-            type=TokenType.NEWLINE,
-            prefix="",
-            token="\n",
-            spos=(head[-1].token.epos[0], head[-1].token.epos[1] + 1),
-            epos=(head[-1].token.epos[0], head[-1].token.epos[1] + 2),
-            line=head[-1].token.line,
-        )
-        head_line.append_token(nl)
+        head_line.append_newline()
         yield from self.maybe_split(head_line)
 
         if not comment_line:

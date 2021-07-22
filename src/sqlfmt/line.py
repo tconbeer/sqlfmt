@@ -19,6 +19,10 @@ class Node:
         return self.prefix + self.value
 
     def __repr__(self) -> str:
+        """
+        Because of self.previous_node, the default dataclass repr creates
+        unusable output
+        """
         prev = (
             f"Node(token={self.previous_node.token})" if self.previous_node else "None"
         )
@@ -42,12 +46,23 @@ class Node:
 
     @classmethod
     def from_token(cls, token: Token, previous_node: Optional["Node"]) -> "Node":
+        """
+        Create a Node from a Token. For the Node to be properly formatted,
+        method call must also include a reference to the previous Node in the
+        Query (either on the same or previous Line), unless it is the first
+        Node in the Query.
+
+        The Node's depth and whitespace are calculated when it is created
+        (this does most of the formatting of the Node). Node values are
+        lowercased if they are simple names, keywords, or statements.
+        """
         if previous_node:
             inherited_depth = previous_node.depth + previous_node.change_in_depth
             open_brackets = previous_node.open_brackets.copy()
         else:
             inherited_depth = 0
             open_brackets = []
+
         depth, change_in_depth, open_brackets = cls.calculate_depth(
             token, inherited_depth, open_brackets
         )
@@ -77,10 +92,16 @@ class Node:
     def calculate_depth(
         cls, token: Token, inherited_depth: int, open_brackets: List[Token]
     ) -> Tuple[int, int, List[Token]]:
-        # we're operating on a single token at a time; since the token can affect
-        # its own node's indentation and/or the indentation of the next node, we
-        # need to start with the "inherited" depth and then adjust the final
-        # indention of the node based on the contents of the token at the node
+        """
+        Calculates the depth statistics for a Node (depth, change_in_depth,
+        open_brackets), based on the properties of its token. Depth determines
+        indentation and line splitting in the formatted query.
+
+        We're operating on a single token at a time; since the token can affect
+        its own node's indentation and/or the indentation of the next node, we
+        need to start with the "inherited" depth and then adjust the final
+        depth of the node based on the contents of the token at the node.
+        """
         change_before = 0
         change_after = 0
 
@@ -109,6 +130,9 @@ class Node:
             try:
                 last_bracket: Token = open_brackets.pop()
                 change_before = -1
+                # if the closing bracket follows a keyword like "from",
+                # we need to pop the next open bracket off the stack,
+                # which should be the matching pair to the current token
                 if last_bracket and last_bracket.type == TokenType.TOP_KEYWORD:
                     last_bracket = open_brackets.pop()
                     change_before -= 1
@@ -148,9 +172,20 @@ class Node:
         depth: int,
         previous_token: Optional[Token],
     ) -> str:
+        """
+        Returns the proper whitespace before the token literal, to be set as the
+        prefix of the Node.
+
+        Most tokens should be prefixed by a simple space. Other cases are outlined
+        below.
+        """
+        NO_SPACE = ""
+        SPACE = " "
+        INDENT = SPACE * 4
+
         if is_first_on_line:
-            INDENT = " " * 4
             return INDENT * depth
+        # tokens that are never preceded by a space
         elif token.type in (
             TokenType.BRACKET_CLOSE,
             TokenType.DOUBLE_COLON,
@@ -158,32 +193,42 @@ class Node:
             TokenType.DOT,
             TokenType.NEWLINE,
         ):
-            return ""
+            return NO_SPACE
+        # names preceded by dots are namespaced identifiers. No space.
         elif (
             token.type in (TokenType.QUOTED_NAME, TokenType.NAME)
             and previous_token
             and previous_token.type == TokenType.DOT
         ):
-            return ""
+            return NO_SPACE
+        # open brackets that follow names are function calls
+        # (no space) unless the preceding name is "as"
+        # (declaring a CTE) or "over" (declaring a window partition)
         elif (
             token.type == TokenType.BRACKET_OPEN
             and previous_token
             and previous_token.type == TokenType.NAME
-            and previous_token.token.lower() in ("over", "as")
+            and previous_token.token.lower() not in ("over", "as")
         ):
-            return " "
+            return NO_SPACE
         elif token.type == TokenType.BRACKET_OPEN:
-            return ""
+            return SPACE
+        # no spaces after an open bracket or a cast operator (::)
         elif previous_token and previous_token.type in (
             TokenType.BRACKET_OPEN,
             TokenType.DOUBLE_COLON,
         ):
-            return ""
+            return NO_SPACE
         else:
-            return " "
+            return SPACE
 
     @classmethod
     def capitalize(cls, token: Token) -> str:
+        """
+        Proper style is to lowercase all keywords, statements, and names.
+        If DB identifiers can't be lowercased, they should be quoted. This
+        will likely need to be changed for Snowflake support.
+        """
         if token.type in (
             TokenType.TOP_KEYWORD,
             TokenType.NAME,
@@ -203,7 +248,7 @@ class Line:
     depth: int = 0
     change_in_depth: int = 0
     open_brackets: List[Token] = field(default_factory=list)
-    first_split: Optional[int] = None
+    depth_split: Optional[int] = None
     first_comma: Optional[int] = None
 
     def append_token(self, token: Token) -> None:
@@ -227,9 +272,13 @@ class Line:
             self.open_brackets = node.open_brackets
         else:
             self.change_in_depth = node.depth - self.depth + node.change_in_depth
+            # if we have a keyword in the middle of a line, we need to split on that
+            # keyword
+            if token.type == TokenType.TOP_KEYWORD and not self.starts_with_top_keyword:
+                self.depth_split = len(self.nodes)
 
-        # splits should happen outside in... if this line is increasing depth,
-        # we should split on the first node that increases depth. If it is
+        # otherwise, splits should happen outside in... if this line is increasing
+        # depth, we should split on the first node that increases depth. If it is
         # decreasing depth, we should split on the last node that decreases depth
         change_over_node = node.depth - node.inherited_depth + node.change_in_depth
         split_index = len(self.nodes)
@@ -237,11 +286,11 @@ class Line:
             split_index += 1
 
         if token.type == TokenType.COMMENT:
-            self.first_split = split_index
+            self.depth_split = split_index
         if self.change_in_depth < 0 and change_over_node < 0 and split_index > 0:
-            self.first_split = split_index
-        elif self.first_split is None and node.change_in_depth > 0:
-            self.first_split = split_index
+            self.depth_split = split_index
+        elif self.depth_split is None and node.change_in_depth > 0:
+            self.depth_split = split_index
 
         if (
             token.type == TokenType.COMMA
@@ -252,10 +301,43 @@ class Line:
 
         self.nodes.append(node)
 
+    def append_newline(self) -> None:
+        """
+        Create a new NEWLINE token and append it to the end of this line
+        """
+        previous_token: Optional[Token] = None
+        if self.nodes:
+            previous_token = self.nodes[-1].token
+        elif self.previous_node:
+            previous_token = self.previous_node.token
+
+        if previous_token:
+            spos = (previous_token.epos[0], previous_token.epos[1] + 1)
+            epos = (previous_token.epos[0], previous_token.epos[1] + 2)
+            source_line = previous_token.line
+        else:
+            spos = (0, 0)
+            epos = (0, 1)
+            source_line = ""
+
+        nl = Token(
+            type=TokenType.NEWLINE,
+            prefix="",
+            token="\n",
+            spos=spos,
+            epos=epos,
+            line=source_line,
+        )
+        self.append_token(nl)
+
     @classmethod
     def from_nodes(
         cls, source_string: str, previous_node: Optional[Node], nodes: List[Node]
     ) -> "Line":
+        """
+        Creates and returns a new line from a list of Nodes. Useful for line
+        splitting and merging
+        """
         line = Line(
             source_string=source_string,
             previous_node=previous_node,
@@ -276,11 +358,30 @@ class Line:
         return tokens
 
     @property
+    def starts_with_select(self) -> bool:
+        if not self.nodes:
+            return False
+        elif self.nodes[0].token.type == TokenType.TOP_KEYWORD and self.nodes[
+            0
+        ].value.lower() in ("with", "select"):
+            return True
+        else:
+            return False
+
+    @property
     def starts_with_top_keyword(self) -> bool:
         if not self.nodes:
             return False
         elif self.nodes[0].token.type == TokenType.TOP_KEYWORD:
             return True
+        else:
+            return False
+
+    @property
+    def contains_top_keyword(self) -> bool:
+        for node in self.nodes:
+            if node.token.type == TokenType.TOP_KEYWORD:
+                return True
         else:
             return False
 
