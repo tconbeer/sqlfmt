@@ -60,8 +60,8 @@ class Postgres(Dialect):
         TokenType.COMMENT: group(r"--[^\r\n]*"),
         TokenType.COMMENT_START: group(r"/\*"),
         TokenType.COMMENT_END: group(r"\*/"),
-        TokenType.STATEMENT_START: group(r"case", r"when") + ANY_BLANK,
-        TokenType.STATEMENT_END: group(r"then", r"end(,)?") + ANY_BLANK,
+        TokenType.STATEMENT_START: group(r"case") + ANY_BLANK,
+        TokenType.STATEMENT_END: group(r"end") + r"(,)?" + ANY_BLANK,
         TokenType.NUMBER: group(
             r"\d+\.?\d*",
             r"\.\d+",
@@ -86,7 +86,7 @@ class Postgres(Dialect):
         TokenType.COMMA: group(r","),
         TokenType.DOT: group(r"\."),
         TokenType.NEWLINE: group(r"\r?\n"),
-        TokenType.TOP_KEYWORD: group(
+        TokenType.UNTERM_KEYWORD: group(
             r"with",
             r"select( all| top \d+| distinct)?",
             r"from",
@@ -97,6 +97,9 @@ class Postgres(Dialect):
             r"limit",
             r"offset",
             r"union( all)?",
+            r"when",
+            r"then",
+            r"else",
         )
         + ANY_BLANK,
         TokenType.NAME: group(r"\w+"),

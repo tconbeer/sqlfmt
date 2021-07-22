@@ -20,7 +20,7 @@ class TokenType(Enum):
     COMMA = auto()
     DOT = auto()
     NEWLINE = auto()
-    TOP_KEYWORD = auto()
+    UNTERM_KEYWORD = auto()  # Unterminated keyword
     NAME = auto()
     ERROR_TOKEN = auto()
 
@@ -32,7 +32,7 @@ def split_after(token_type: TokenType) -> bool:
     """
     if token_type in (
         TokenType.BRACKET_OPEN,
-        TokenType.TOP_KEYWORD,
+        TokenType.UNTERM_KEYWORD,
         TokenType.COMMA,
         TokenType.STATEMENT_START,
     ):

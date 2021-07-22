@@ -37,7 +37,7 @@ class TestPostgres:
         gen = postgres.tokenize_line(line=basic_line, lnum=0)
 
         expected_token = Token(
-            TokenType.TOP_KEYWORD, "", "select", (0, 0), (0, 6), "select 1"
+            TokenType.UNTERM_KEYWORD, "", "select", (0, 0), (0, 6), "select 1"
         )
         assert next(gen) == expected_token
 
@@ -67,7 +67,7 @@ class TestPostgres:
             TokenType.COMMA: ",",
             TokenType.DOT: ".",
             TokenType.NEWLINE: "\n",
-            TokenType.TOP_KEYWORD: "select DISTINCT",
+            TokenType.UNTERM_KEYWORD: "select DISTINCT",
             TokenType.NAME: "my_table_45",
         }
 
@@ -94,7 +94,7 @@ class TestPostgres:
             TokenType.COMMENT: "# wrong comment delimiter",
             TokenType.DOUBLE_COLON: ":",
             TokenType.OPERATOR: ".",
-            TokenType.TOP_KEYWORD: "selection",
+            TokenType.UNTERM_KEYWORD: "selection",
         }
 
         # make sure our compiled programs do not match these values

@@ -105,12 +105,13 @@ class Node:
         change_before = 0
         change_after = 0
 
-        if token.type == TokenType.TOP_KEYWORD:
+        if token.type == TokenType.UNTERM_KEYWORD:
             maybe_last_bracket: Optional[Token] = (
                 open_brackets.pop() if open_brackets else None
             )
             if (
-                maybe_last_bracket and maybe_last_bracket.type == TokenType.TOP_KEYWORD
+                maybe_last_bracket
+                and maybe_last_bracket.type == TokenType.UNTERM_KEYWORD
             ):  # this is a kw like 'from' that follows another top keyword,
                 # so we need to dedent
                 change_before = -1
@@ -122,18 +123,18 @@ class Node:
             open_brackets.append(token)
             change_after = 1
 
-        elif token.type == TokenType.BRACKET_OPEN:
+        elif token.type in (TokenType.BRACKET_OPEN, TokenType.STATEMENT_START):
             open_brackets.append(token)
             change_after = 1
 
-        elif token.type == TokenType.BRACKET_CLOSE:
+        elif token.type in (TokenType.BRACKET_CLOSE, TokenType.STATEMENT_END):
             try:
                 last_bracket: Token = open_brackets.pop()
                 change_before = -1
                 # if the closing bracket follows a keyword like "from",
                 # we need to pop the next open bracket off the stack,
                 # which should be the matching pair to the current token
-                if last_bracket and last_bracket.type == TokenType.TOP_KEYWORD:
+                if last_bracket and last_bracket.type == TokenType.UNTERM_KEYWORD:
                     last_bracket = open_brackets.pop()
                     change_before -= 1
             except IndexError:
@@ -145,20 +146,16 @@ class Node:
                 "{": "}",
                 "(": ")",
                 "[": "]",
+                "case": "end",
             }
             assert (
-                last_bracket.type == TokenType.BRACKET_OPEN
-                and matches[last_bracket.token] == token.token
+                last_bracket.type in (TokenType.BRACKET_OPEN, TokenType.STATEMENT_START)
+                and matches[last_bracket.token].lower() == token.token.lower()
             ), (
                 f"Closing bracket '{token.token}' found at {token.spos} does not match "
                 f"last opened bracket '{last_bracket.token}' found at "
                 f"{last_bracket.spos}."
             )
-
-        elif token.type == TokenType.STATEMENT_START:
-            change_after = 1
-        elif token.type == TokenType.STATEMENT_END:
-            change_before = -1
 
         depth = inherited_depth + change_before
 
@@ -230,7 +227,7 @@ class Node:
         will likely need to be changed for Snowflake support.
         """
         if token.type in (
-            TokenType.TOP_KEYWORD,
+            TokenType.UNTERM_KEYWORD,
             TokenType.NAME,
             TokenType.STATEMENT_START,
             TokenType.STATEMENT_END,
@@ -274,7 +271,10 @@ class Line:
             self.change_in_depth = node.depth - self.depth + node.change_in_depth
             # if we have a keyword in the middle of a line, we need to split on that
             # keyword
-            if token.type == TokenType.TOP_KEYWORD and not self.starts_with_top_keyword:
+            if (
+                token.type == TokenType.UNTERM_KEYWORD
+                and not self.starts_with_UNTERM_KEYWORD
+            ):
                 self.depth_split = len(self.nodes)
 
         # otherwise, splits should happen outside in... if this line is increasing
@@ -361,7 +361,7 @@ class Line:
     def starts_with_select(self) -> bool:
         if not self.nodes:
             return False
-        elif self.nodes[0].token.type == TokenType.TOP_KEYWORD and self.nodes[
+        elif self.nodes[0].token.type == TokenType.UNTERM_KEYWORD and self.nodes[
             0
         ].value.lower() in ("with", "select"):
             return True
@@ -369,18 +369,18 @@ class Line:
             return False
 
     @property
-    def starts_with_top_keyword(self) -> bool:
+    def starts_with_UNTERM_KEYWORD(self) -> bool:
         if not self.nodes:
             return False
-        elif self.nodes[0].token.type == TokenType.TOP_KEYWORD:
+        elif self.nodes[0].token.type == TokenType.UNTERM_KEYWORD:
             return True
         else:
             return False
 
     @property
-    def contains_top_keyword(self) -> bool:
+    def contains_UNTERM_KEYWORD(self) -> bool:
         for node in self.nodes:
-            if node.token.type == TokenType.TOP_KEYWORD:
+            if node.token.type == TokenType.UNTERM_KEYWORD:
                 return True
         else:
             return False

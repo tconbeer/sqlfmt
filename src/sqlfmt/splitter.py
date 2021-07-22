@@ -37,7 +37,9 @@ class LineSplitter:
                 # merge those back together in the next pass if they are short
                 # enough
                 or line.change_in_depth != 0
-                or (line.contains_top_keyword and not line.starts_with_top_keyword)
+                or (
+                    line.contains_UNTERM_KEYWORD and not line.starts_with_UNTERM_KEYWORD
+                )
             )
         ):
             yield from self.split(line, kind="depth")
