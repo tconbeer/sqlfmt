@@ -12,7 +12,7 @@ def test_basic_line() -> None:
 
     tokens = [
         Token(
-            type=TokenType.TOP_KEYWORD,
+            type=TokenType.UNTERM_KEYWORD,
             prefix="",
             token="with",
             spos=(0, 0),
@@ -44,7 +44,7 @@ def test_basic_line() -> None:
             line="with abc as (select * from my_table\n)",
         ),
         Token(
-            type=TokenType.TOP_KEYWORD,
+            type=TokenType.UNTERM_KEYWORD,
             prefix="",
             token="select",
             spos=(0, 13),
@@ -60,7 +60,7 @@ def test_basic_line() -> None:
             line="with abc as (select * from my_table\n)",
         ),
         Token(
-            type=TokenType.TOP_KEYWORD,
+            type=TokenType.UNTERM_KEYWORD,
             prefix=" ",
             token="from",
             spos=(0, 22),

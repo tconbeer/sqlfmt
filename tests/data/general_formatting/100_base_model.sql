@@ -58,9 +58,9 @@ with
                 trim(
                     case
                         when regexp_count(nullif(full_name, ''), ' ') = 0
-                            then nullif(full_name, '')
+                        then nullif(full_name, '')
                         when regexp_count(nullif(full_name, ''), ' ') = 1
-                            then split_part(nullif(full_name, ''), ' ', 1)
+                        then split_part(nullif(full_name, ''), ' ', 1)
                         -- let's explain what is going on here
                         else regexp_substr(nullif(full_name, ''), '.* .* ')
                     end

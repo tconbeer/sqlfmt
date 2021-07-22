@@ -5,7 +5,7 @@ from sqlfmt.token import Token, TokenType
 
 def test_calculate_depth() -> None:
     t = Token(
-        type=TokenType.TOP_KEYWORD,
+        type=TokenType.UNTERM_KEYWORD,
         prefix="",
         token="select",
         spos=(0, 0),
@@ -60,7 +60,7 @@ def test_simple_query_parsing() -> None:
 
     expected_tokens = [
         Token(
-            type=TokenType.TOP_KEYWORD,
+            type=TokenType.UNTERM_KEYWORD,
             prefix="",
             token="select",
             spos=(0, 0),
@@ -188,7 +188,7 @@ def test_simple_query_parsing() -> None:
             line="    (a + b) as c\n",
         ),
         Token(
-            type=TokenType.TOP_KEYWORD,
+            type=TokenType.UNTERM_KEYWORD,
             prefix="",
             token="from",
             spos=(4, 0),
@@ -228,7 +228,7 @@ def test_simple_query_parsing() -> None:
             line='from my_schema."my_QUOTED_ table!"\n',
         ),
         Token(
-            type=TokenType.TOP_KEYWORD,
+            type=TokenType.UNTERM_KEYWORD,
             prefix="",
             token="where",
             spos=(5, 0),
@@ -270,7 +270,7 @@ def test_error_token() -> None:
 
     expected_tokens = [
         Token(
-            TokenType.TOP_KEYWORD,
+            TokenType.UNTERM_KEYWORD,
             "",
             "select",
             (0, 0),
