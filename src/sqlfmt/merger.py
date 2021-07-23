@@ -63,7 +63,7 @@ class LineMerger:
                     if child_depth == parent_depth:
                         if (
                             parent_line.starts_with_select
-                            and child_line.starts_with_UNTERM_KEYWORD
+                            and child_line.starts_with_unterm_keyword
                         ):
                             pass
                         else:

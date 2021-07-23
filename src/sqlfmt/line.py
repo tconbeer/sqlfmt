@@ -44,6 +44,46 @@ class Node:
     def __len__(self) -> int:
         return len(str(self))
 
+    @property
+    def is_unterm_keyword(self) -> bool:
+        return self.token.type == TokenType.UNTERM_KEYWORD
+
+    @property
+    def is_select(self) -> bool:
+        """
+        Return True if this could be the beginning of a select statement (this node is
+        "select" or "with")
+        """
+        if self.token.type == TokenType.UNTERM_KEYWORD and self.value.lower() in (
+            "with",
+            "select",
+        ):
+            return True
+        else:
+            return False
+
+    @property
+    def is_comma(self) -> bool:
+        return self.token.type == TokenType.COMMA
+
+    @property
+    def is_comment(self) -> bool:
+        return self.token.type == TokenType.COMMENT
+
+    @property
+    def is_newline(self) -> bool:
+        return self.token.type == TokenType.NEWLINE
+
+    @property
+    def is_multiline(self) -> bool:
+        if (
+            self.token.type in (TokenType.COMMENT, TokenType.JINJA)
+            and "\n" in self.value
+        ):
+            return True
+        else:
+            return False
+
     @classmethod
     def from_token(cls, token: Token, previous_node: Optional["Node"]) -> "Node":
         """
@@ -248,6 +288,12 @@ class Line:
     depth_split: Optional[int] = None
     first_comma: Optional[int] = None
 
+    def __str__(self) -> str:
+        return "".join([str(node) for node in self.nodes])
+
+    def __len__(self) -> int:
+        return len(str(self))
+
     def append_token(self, token: Token) -> None:
         """
         Creates a new Node from the passed token and the context of the current line,
@@ -273,7 +319,7 @@ class Line:
             # keyword
             if (
                 token.type == TokenType.UNTERM_KEYWORD
-                and not self.starts_with_UNTERM_KEYWORD
+                and not self.starts_with_unterm_keyword
             ):
                 self.depth_split = len(self.nodes)
 
@@ -369,70 +415,99 @@ class Line:
 
     @property
     def starts_with_select(self) -> bool:
-        if not self.nodes:
-            return False
-        elif self.nodes[0].token.type == TokenType.UNTERM_KEYWORD and self.nodes[
-            0
-        ].value.lower() in ("with", "select"):
-            return True
-        else:
+        try:
+            return self.nodes[0].is_select
+        except IndexError:
             return False
 
     @property
-    def starts_with_UNTERM_KEYWORD(self) -> bool:
-        if not self.nodes:
-            return False
-        elif self.nodes[0].token.type == TokenType.UNTERM_KEYWORD:
-            return True
-        else:
+    def starts_with_unterm_keyword(self) -> bool:
+        try:
+            return self.nodes[0].is_unterm_keyword
+        except IndexError:
             return False
 
     @property
-    def contains_UNTERM_KEYWORD(self) -> bool:
-        for node in self.nodes:
-            if node.token.type == TokenType.UNTERM_KEYWORD:
-                return True
-        else:
-            return False
+    def contains_unterm_keyword(self) -> bool:
+        return any([n.is_unterm_keyword for n in self.nodes])
+
+    @property
+    def contains_comment(self) -> bool:
+        return any([n.is_comment for n in self.nodes])
+
+    @property
+    def contains_multiline_node(self) -> bool:
+        return any([n.is_multiline for n in self.nodes])
 
     @property
     def ends_with_comma(self) -> bool:
-        if not self.nodes:
-            return False
-        elif self.nodes[-1].token.type == TokenType.COMMA:
-            return True
-        elif (
-            len(self.nodes) > 1
-            and self.nodes[-1].token.type == TokenType.NEWLINE
-            and self.nodes[-2].token.type == TokenType.COMMA
-        ):
-            return True
-        else:
+        try:
+            if self.nodes[-1].is_comma:
+                return True
+            elif (
+                len(self.nodes) > 1
+                and self.nodes[-1].is_newline
+                and self.nodes[-2].is_comma
+            ):
+                return True
+            else:
+                return False
+        except IndexError:
             return False
 
     @property
     def ends_with_comment(self) -> bool:
-        if not self.nodes:
+        try:
+            if self.nodes[-1].is_comment:
+                return True
+            elif (
+                len(self.nodes) > 1
+                and self.nodes[-1].is_newline
+                and self.nodes[-2].is_comment
+            ):
+                return True
+            else:
+                return False
+        except IndexError:
             return False
-        elif self.nodes[-1].token.type == TokenType.COMMENT:
+
+    @property
+    def is_standalone_comment(self) -> bool:
+        if len(self.nodes) == 2 and self.ends_with_comment:
             return True
-        elif (
-            len(self.nodes) > 1
-            and self.nodes[-1].token.type == TokenType.NEWLINE
-            and self.nodes[-2].token.type == TokenType.COMMENT
+        else:
+            return False
+
+    @property
+    def is_standalone_multiline_node(self) -> bool:
+        if len(self.nodes) == 2 and self.contains_multiline_node:
+            return True
+        else:
+            return False
+
+    def is_too_long(self, max_length: int) -> bool:
+        """
+        Returns true if the rendered length of the line is strictly greater
+        than max_length, and if the line isn't a standalone long comment or
+        multiline node
+        """
+        if (
+            len(self) > max_length
+            and not self.contains_multiline_node
+            and not self.is_standalone_comment
         ):
             return True
         else:
             return False
 
-    def __str__(self) -> str:
-        if self.nodes:
-            parts = []
-            for node in self.nodes:
-                parts.append(str(node))
-            return "".join(parts)
+    @property
+    def can_be_depth_split(self) -> bool:
+        if (
+            self.depth_split
+            and self.depth_split < len(self.nodes) - 1
+            and not self.is_standalone_comment
+            and not self.is_standalone_multiline_node
+        ):
+            return True
         else:
-            return ""
-
-    def __len__(self) -> int:
-        return len(str(self))
+            return False
