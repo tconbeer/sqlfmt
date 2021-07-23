@@ -2,7 +2,7 @@
 
 import re
 from abc import ABC, abstractmethod
-from typing import Dict, Iterator, Optional
+from typing import Dict, Iterator, List, Optional
 
 from sqlfmt.token import Token, TokenType
 
@@ -38,14 +38,19 @@ class Dialect(ABC):
 
     @abstractmethod
     def tokenize_line(self, line: str, lnum: int) -> Iterator[Token]:
-        """A dialect must implement a tokenize_line method, which receives a line (as a string)
-        and other indicators of the state of the line, and yields Tokens"""
+        """
+        A dialect must implement a tokenize_line method, which receives a line
+        (as a string) and other indicators of the state of the line, and yields Tokens
+        """
         pass
 
     @abstractmethod
     def search_for_token(
-        self, token_type: TokenType, line: str, lnum: int, skipchars: int = 0
+        self, token_types: List[TokenType], line: str, lnum: int, skipchars: int = 0
     ) -> Optional[Token]:
+        """
+        Match the first instance of token_type in line; return None if no match is found
+        """
         pass
 
 
@@ -150,12 +155,14 @@ class Postgres(Dialect):
                     pos = eol
 
     def search_for_token(
-        self, token_type: TokenType, line: str, lnum: int, skipchars: int = 0
+        self, token_types: List[TokenType], line: str, lnum: int, skipchars: int = 0
     ) -> Optional[Token]:
-        """
-        Match the first instance of token_type in line; return None if no match is found
-        """
-        prog = self.programs[token_type]
+        if len(token_types) == 1:
+            prog = self.programs[token_types[0]]
+        else:
+            patterns = [self.PATTERNS[t] for t in token_types]
+            prog = re.compile(MAYBE_WHITESPACES + group(*patterns), re.IGNORECASE)
+
         match = prog.search(line, skipchars)
         if not match:
             return None
@@ -165,4 +172,19 @@ class Postgres(Dialect):
         spos, epos = (lnum, start), (lnum, end)
         token = line[start:end]
 
-        return Token(token_type, prefix, token, spos, epos, line)
+        if len(token_types) == 1:
+            final_type = token_types[0]
+        else:
+            for t in token_types:
+                prog = self.programs[t]
+                match = prog.search(line, skipchars)
+                if match:
+                    final_type = t
+                    break
+
+        if final_type:
+            return Token(final_type, prefix, token, spos, epos, line)
+        else:
+            raise ValueError(
+                "Internal Error! Matched group of types but not individual type"
+            )

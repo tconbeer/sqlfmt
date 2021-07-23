@@ -49,7 +49,9 @@ class Query:
 
                     trailing_tokens: List[Token] = mc.trailing_tokens
                     if trailing_tokens and current_line.nodes:
-                        # append the current_line and reset it to create a new one
+                        # if there are additional tokens trailing the multiline
+                        # token, we want to put those on their own logical Line,
+                        # so they are properly split
                         current_line.append_newline()
                         self.lines.append(current_line)
                         current_line = Line(
@@ -107,31 +109,58 @@ class MultilineConsumer:
     def scan_to_end(self) -> None:
         if self.end:
             return
-        # todo: make this respect nested jinja curlies and nested
-        # comments, which can be allowed in some circumstances
         terminations = {
             TokenType.JINJA_START: TokenType.JINJA_END,
             TokenType.COMMENT_START: TokenType.COMMENT_END,
         }
         sentinel = terminations[self.start.type]
-        self.end = self.dialect.search_for_token(
-            token_type=sentinel,
-            line=self.source[0],
+        inline_match = self.dialect.search_for_token(
+            token_types=[self.start.type, sentinel],
+            line=self.source[-1],
             lnum=self.start.spos[0],
-            skipchars=self.start.spos[1],
+            skipchars=self.start.epos[1],
         )
+        if self._handle_match(inline_match, sentinel):
+            return
+
         for lnum, line in self.reader:
             self.source.append(line)
-            self.end = self.dialect.search_for_token(
-                token_type=sentinel, line=line, lnum=lnum
+            matching_token = self.dialect.search_for_token(
+                token_types=[self.start.type, sentinel], line=line, lnum=lnum
             )
-            if self.end:
+            if self._handle_match(matching_token, sentinel):
                 break
+
         else:  # exhausted reader without finding end token
             raise ValueError(
                 f"Unterminated multiline token {self.start.token} "
                 f"started at {self.start.spos}"
             )
+
+    def _handle_match(
+        self, matching_token: Optional[Token], sentinel: TokenType
+    ) -> bool:
+        """
+        Returns True if end is set from the match; False otherwise.
+        """
+
+        if matching_token and matching_token.type == sentinel:
+            self.end = matching_token
+            return True
+        elif matching_token and matching_token.type == self.start.type:
+            # nested multiline markers! recurse on the new token to consume
+            # reader until we hit the inner sentinel
+            mc = MultilineConsumer(
+                self.reader,
+                self.dialect,
+                start=matching_token,
+                source=self.source.copy(),
+            )
+            inner_token = mc.multiline_token
+            self.source = [inner_token.line]
+            return False
+        else:
+            return False
 
     @property
     def multiline_token(self) -> Token:
@@ -190,8 +219,13 @@ class MultilineConsumer:
             self.scan_to_end()
 
         contents = self.source.copy()
-        contents[0] = contents[0][self.start.spos[1] :]
-        contents[-1] = contents[-1][: self.end.epos[1]]  # type: ignore
+        if len(contents) > 1:
+            contents[0] = contents[0][self.start.spos[1] :]
+            contents[-1] = contents[-1][: self.end.epos[1]]  # type: ignore
+        else:
+            contents[0] = contents[0][
+                self.start.spos[1] : self.end.epos[1]  # type: ignore
+            ]
         return "".join(contents)
 
     @classmethod

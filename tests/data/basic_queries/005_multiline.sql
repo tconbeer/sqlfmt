@@ -2,14 +2,15 @@
     config(
         materialized='table',
         sort='id',
-        dist='all'
+        dist='all',
+        post_hook='grant select on {{ this }} to role bi_role'
     )
 }}
 
 /*
  * This is a typical multiline comment.
  * It contains newlines.
- * And *maybe* some {% special characters %}
+ * And even /* some {% special characters %} */
  * but we're not going to parse those
 */
 
@@ -36,4 +37,4 @@ with
  # that we will also handle.
 #}
 
-select * from renamed
+select * from renamed /* what!?! */ where true

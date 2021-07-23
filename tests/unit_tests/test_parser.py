@@ -381,7 +381,7 @@ def test_multiline_parsing() -> None:
     assert q
     assert q.source_string == source_string
     assert len(q.lines) < len(source_string.split("\n"))
-    assert len(q.tokens) == 52
+    assert len(q.tokens) == 56
 
     assert TokenType.ERROR_TOKEN not in [token.type for token in q.tokens]
     assert TokenType.COMMENT_START not in [token.type for token in q.tokens]
@@ -395,7 +395,8 @@ def test_multiline_parsing() -> None:
             "    config(\n"
             "        materialized='table',\n"
             "        sort='id',\n"
-            "        dist='all'\n"
+            "        dist='all',\n"
+            "        post_hook='grant select on {{ this }} to role bi_role'\n"
             "    )\n"
             "}}"
         ),
@@ -403,7 +404,7 @@ def test_multiline_parsing() -> None:
             "/*\n"
             " * This is a typical multiline comment.\n"
             " * It contains newlines.\n"
-            " * And *maybe* some {% special characters %}\n"
+            " * And even /* some {% special characters %} */\n"
             " * but we're not going to parse those\n"
             "*/"
         ),
@@ -472,5 +473,18 @@ def test_multiline_parsing() -> None:
     assert [node.token.type for node in q.lines[14].nodes] == [TokenType.NEWLINE]
     assert [node.token.type for node in q.lines[15].nodes] == [
         TokenType.JINJA,
+        TokenType.NEWLINE,
+    ]
+    assert [node.token.type for node in q.lines[17].nodes] == [
+        TokenType.UNTERM_KEYWORD,
+        TokenType.OPERATOR,
+        TokenType.UNTERM_KEYWORD,
+        TokenType.NAME,
+        TokenType.COMMENT,
+        TokenType.NEWLINE,
+    ]
+    assert [node.token.type for node in q.lines[18].nodes] == [
+        TokenType.UNTERM_KEYWORD,
+        TokenType.NAME,
         TokenType.NEWLINE,
     ]
