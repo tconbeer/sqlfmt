@@ -301,6 +301,16 @@ class Line:
 
         self.nodes.append(node)
 
+    def maybe_append_newline(self) -> None:
+        """
+        Check to see if this Line already ends in a NEWLINE. If not,
+        call append_newline
+        """
+        if self.nodes and self.nodes[-1].token.type == TokenType.NEWLINE:
+            pass
+        else:
+            self.append_newline()
+
     def append_newline(self) -> None:
         """
         Create a new NEWLINE token and append it to the end of this line
@@ -312,8 +322,8 @@ class Line:
             previous_token = self.previous_node.token
 
         if previous_token:
-            spos = (previous_token.epos[0], previous_token.epos[1] + 1)
-            epos = (previous_token.epos[0], previous_token.epos[1] + 2)
+            spos = (previous_token.epos[0], previous_token.epos[1])
+            epos = (previous_token.epos[0], previous_token.epos[1] + 1)
             source_line = previous_token.line
         else:
             spos = (0, 0)

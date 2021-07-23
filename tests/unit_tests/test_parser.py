@@ -55,7 +55,7 @@ def test_simple_query_parsing() -> None:
     computed_line_depths = [line.depth for line in q.lines]
     assert computed_line_depths == expected_line_depths
 
-    assert len(q.tokens) == 25
+    assert len(q.tokens) == 26
     assert isinstance(q.tokens[0], Token)
 
     expected_tokens = [
@@ -259,6 +259,14 @@ def test_simple_query_parsing() -> None:
             epos=(5, 11),
             line="where a < b",
         ),
+        Token(
+            type=TokenType.NEWLINE,
+            prefix="",
+            token="\n",
+            spos=(5, 11),
+            epos=(5, 12),
+            line="where a < b",
+        ),
     ]
 
     assert q.tokens == expected_tokens
@@ -285,6 +293,14 @@ def test_error_token() -> None:
             (0, len(source_string)),
             source_string,
         ),
+        Token(
+            TokenType.NEWLINE,
+            "",
+            "\n",
+            (0, len(source_string)),
+            (0, len(source_string) + 1),
+            source_string,
+        ),
     ]
 
     assert q.tokens == expected_tokens
@@ -292,7 +308,7 @@ def test_error_token() -> None:
 
 def test_whitespace_formatting() -> None:
     source_string = "  select 1\n    from my_table\nwhere true"
-    expected_string = "select 1\nfrom my_table\nwhere true"
+    expected_string = "select 1\nfrom my_table\nwhere true\n"
     q = Query.from_source(source_string=source_string, mode=Mode())
     assert str(q) == expected_string
 
@@ -349,7 +365,112 @@ def test_cte_parsing() -> None:
         (1, 0),  # *
         (0, 1),  # from
         (1, 0),  # my_cte
+        (1, 0),  # \n
     ]
 
     computed_node_depths = [(node.depth, node.change_in_depth) for node in q.nodes]
     assert computed_node_depths == expected_node_depths
+
+
+def test_multiline_parsing() -> None:
+    with open("tests/data/basic_queries/005_multiline.sql") as f:
+        source_string = f.read()
+
+    q = Query.from_source(source_string=source_string, mode=Mode())
+
+    assert q
+    assert q.source_string == source_string
+    assert len(q.lines) < len(source_string.split("\n"))
+    assert len(q.tokens) == 52
+
+    assert TokenType.ERROR_TOKEN not in [token.type for token in q.tokens]
+    assert TokenType.COMMENT_START not in [token.type for token in q.tokens]
+    assert TokenType.COMMENT_END not in [token.type for token in q.tokens]
+    assert TokenType.JINJA_START not in [token.type for token in q.tokens]
+    assert TokenType.JINJA_END not in [token.type for token in q.tokens]
+
+    expected = [
+        (
+            "{{\n"
+            "    config(\n"
+            "        materialized='table',\n"
+            "        sort='id',\n"
+            "        dist='all'\n"
+            "    )\n"
+            "}}"
+        ),
+        (
+            "/*\n"
+            " * This is a typical multiline comment.\n"
+            " * It contains newlines.\n"
+            " * And *maybe* some {% special characters %}\n"
+            " * but we're not going to parse those\n"
+            "*/"
+        ),
+        (
+            "/* This is a multiline comment in very bad style,\n"
+            "    * which starts and ends on lines with other tokens.\n"
+            "    */"
+        ),
+        (
+            "{% set my_variable_in_bad_style = [\n"
+            '        "a",\n'
+            '        "short",\n'
+            '        "list",\n'
+            '        "of",\n'
+            '        "strings"\n'
+            "    ] %}"
+        ),
+        (
+            "{#\n"
+            " # And this is a nice multiline jinja comment\n"
+            " # that we will also handle.\n"
+            "#}"
+        ),
+    ]
+
+    assert q.tokens[0].token == expected[0]
+    assert q.tokens[3].token == expected[1]
+
+    source = (
+        "    renamed as ( /* This is a multiline comment in very bad style,\n"
+        "    * which starts and ends on lines with other tokens.\n"
+        "    */  select\n"
+    )
+    assert q.tokens[21].token == expected[2]
+    assert q.tokens[21].line == source
+
+    assert q.tokens[41].token == expected[3]
+    assert q.tokens[44].token == expected[4]
+
+    assert [node.token.type for node in q.lines[0].nodes] == [
+        TokenType.JINJA,
+        TokenType.NEWLINE,
+    ]
+    assert [node.token.type for node in q.lines[2].nodes] == [
+        TokenType.COMMENT,
+        TokenType.NEWLINE,
+    ]
+    assert [node.token.type for node in q.lines[6].nodes] == [
+        TokenType.NAME,
+        TokenType.NAME,
+        TokenType.BRACKET_OPEN,
+        TokenType.COMMENT,
+        TokenType.NEWLINE,
+    ]
+    assert [node.token.type for node in q.lines[7].nodes] == [
+        TokenType.UNTERM_KEYWORD,
+        TokenType.NEWLINE,
+    ]
+    assert (q.lines[7].depth, q.lines[7].change_in_depth) == (2, 1)
+    assert [node.token.type for node in q.lines[13].nodes] == [
+        TokenType.BRACKET_CLOSE,
+        TokenType.COMMA,
+        TokenType.JINJA,
+        TokenType.NEWLINE,
+    ]
+    assert [node.token.type for node in q.lines[14].nodes] == [TokenType.NEWLINE]
+    assert [node.token.type for node in q.lines[15].nodes] == [
+        TokenType.JINJA,
+        TokenType.NEWLINE,
+    ]
