@@ -16,12 +16,18 @@ class Query:
 
     @classmethod
     def from_source(cls, source_string: str, mode: Mode) -> "Query":
+        """
+        Initialize a parser and parse the source string.
+        """
         q = Query(source_string, mode)
         q.tokenize_from_source()
         return q
 
     def tokenize_from_source(self) -> None:
-        """Updates self.lines from source_string"""
+        """
+        Updates self.lines by lexing source_string into tokens. Supports multiline
+        tokens by initializing a MultilineConsumer.
+        """
         if not self.source_string:
             return
 
@@ -100,6 +106,18 @@ class Query:
 
 @dataclass
 class MultilineConsumer:
+    """
+    We need to track some state in order to properly parse multiline tokens,
+    especially since they can be nested in some circumstances. This class
+    holds that state. It is initialized by the parser when a token is
+    encountered that indicates the start of a multiline token, and/or
+    when it scans for the end of the multiline token and must recurse
+    to handle nested comments or jinja tags. Once initialized, scan_to_end
+    does most of the hard work, but clients can just call the multiline_token
+    property. This class consumes the same string buffer as its caller,
+    so when it returns, the caller needs to proceed to the next line.
+    """
+
     reader: Iterator[Tuple[int, str]]
     dialect: Dialect
     start: Token
@@ -107,6 +125,10 @@ class MultilineConsumer:
     end: Optional[Token] = None
 
     def scan_to_end(self) -> None:
+        """
+        Sets self.end by consuming self.reader and looking for a token that
+        matches the terminating token for self.start
+        """
         if self.end:
             return
         terminations = {
