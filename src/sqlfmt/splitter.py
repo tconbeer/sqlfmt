@@ -3,7 +3,6 @@ from typing import Iterator, Optional
 
 from sqlfmt.line import Line
 from sqlfmt.mode import Mode
-from sqlfmt.token import TokenType
 
 
 @dataclass
@@ -14,36 +13,22 @@ class LineSplitter:
         """
         Evaluates a line for splitting. If line matches criteria for splitting,
         yields new lines; otherwise yields original line
-
-        TODO: MAKE THIS LOGIC MORE MODULAR AND CLEAR
         """
-        MAX_LENGTH = self.mode.line_length
-        length = len(line)
+        line_is_too_long: bool = line.is_too_long(self.mode.line_length)
 
-        # first, split a comment onto previous line if the line is too long
-        if length > MAX_LENGTH and line.ends_with_comment:
-            yield from self.split(line, kind="comment")
-        # next, consider splitting on a change in depth, if the line has one
-        # that isn't at the start or end of the line
-        elif (
-            line.depth_split
-            and line.depth_split < len(line.nodes) - 1
-            and (
-                # always split a long line that changes depth at any point
-                length > MAX_LENGTH
-                # always split a line that indents or dedents midway through.
-                # This will split one-liners ("select a\nfrom b" ->
-                # "select/n    a\nfrom\n    b") but we'll
-                # merge those back together in the next pass if they are short
-                # enough
-                or line.change_in_depth != 0
-                or (
-                    line.contains_UNTERM_KEYWORD and not line.starts_with_UNTERM_KEYWORD
-                )
-            )
+        # first, if there is a multiline node on this line and it isn't the
+        # only thing on this line, then split before the multiline node
+        if line.can_be_depth_split and line.contains_multiline_node:
+            yield from self.split(line, kind="depth")
+        # next, split any long lines
+        elif line.can_be_depth_split and line_is_too_long:
+            yield from self.split(line, kind="depth")
+        # next, split on a change in depth
+        elif line.can_be_depth_split and (
+            line.change_in_depth != 0
+            or (line.contains_unterm_keyword and not line.starts_with_unterm_keyword)
         ):
             yield from self.split(line, kind="depth")
-
         # split on any comma that doesn't end a line
         elif line.first_comma and line.first_comma < len(line.nodes) - 1:
             yield from self.split(line, kind="comma")
@@ -57,7 +42,7 @@ class LineSplitter:
         Split this line according to the kind dictated, using the
         highest priority token of each kind. Yields new lines.
         """
-        if kind in ("depth", "comment"):
+        if kind == "depth":
             if not line.depth_split:
                 yield line
             else:
@@ -81,7 +66,7 @@ class LineSplitter:
         # if we're splitting on a comment, we want the standalone comment
         # line to come first, before the code it is commenting
         comment_line: Optional[Line] = None
-        if tail[0].token.type == TokenType.COMMENT:
+        if tail[0].is_comment and not tail[0].is_multiline:
             comment_line = Line.from_nodes(
                 source_string=line.source_string,
                 previous_node=line.previous_node,

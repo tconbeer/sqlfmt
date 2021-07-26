@@ -14,33 +14,10 @@ class LineMerger:
         """
         Mutates lines by combining lines if possible.
 
-        We only merge lines when all of the following conditions are met:
-
-        1. The merged line has the same depth as the following line
-        2. The merged line is short enough
-
         Every time the next line indents, there is an opportunity to
         merge, by scanning the lines until the current depth
         is reached again. We do this recursively, by calling this
         method again, with a copied slice of lines
-
-        select
-            first_field,
-            nullif(
-                split_part(
-                    full_name,
-                    ' ',
-                    2
-                ),
-                ''
-            ) as last_name,
-            another_field,
-            yet_another_field,
-            and_still_another_field
-        from
-            my_table
-        where
-            some_condition is true
         """
         MAX_LENGTH = self.mode.line_length
         if len(lines) == 1:
@@ -63,8 +40,11 @@ class LineMerger:
                     if child_depth == parent_depth:
                         if (
                             parent_line.starts_with_select
-                            and child_line.starts_with_UNTERM_KEYWORD
+                            and child_line.starts_with_unterm_keyword
                         ):
+                            # this is a special case where we might be merging
+                            # into a one-line select statement. In that case,
+                            # we keep scanning. Otherwise, we're done.
                             pass
                         else:
                             break
@@ -104,8 +84,7 @@ class LineMerger:
                 if parent_idx - child_idx == 1:
                     break
 
-                # we've scanned through all the children. Now we need to try to
-                # merge.
+                # Now we merge the slice from parent_idx:child_idx
                 source_string = parent_line.source_string
                 merged_nodes: List[Node] = []
                 for line in lines[parent_idx:child_idx]:
@@ -118,6 +97,9 @@ class LineMerger:
                     merged_nodes.extend(nodes)
                 if not merged_nodes:
                     # we only have whitespace/newlines
+                    break
+                elif any([n.is_multiline for n in merged_nodes]):
+                    # there's a multiline node in there. abort!
                     break
                 merged_line = Line.from_nodes(
                     source_string=source_string,
