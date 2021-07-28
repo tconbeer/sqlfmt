@@ -72,7 +72,7 @@ class Postgres(Dialect):
         TokenType.COMMENT_START: group(r"/\*"),
         TokenType.COMMENT_END: group(r"\*/"),
         TokenType.STATEMENT_START: group(r"case") + ANY_BLANK,
-        TokenType.STATEMENT_END: group(r"end") + r"(,)?" + ANY_BLANK,
+        TokenType.STATEMENT_END: group(r"end") + group(r"\W", r"$"),
         TokenType.NUMBER: group(
             r"\d+\.?\d*",
             r"\.\d+",

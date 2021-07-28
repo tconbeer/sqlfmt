@@ -190,7 +190,7 @@ class Node:
             }
             assert (
                 last_bracket.type in (TokenType.BRACKET_OPEN, TokenType.STATEMENT_START)
-                and matches[last_bracket.token].lower() == token.token.lower()
+                and matches[last_bracket.token.lower()] == token.token.lower()
             ), (
                 f"Closing bracket '{token.token}' found at {token.spos} does not match "
                 f"last opened bracket '{last_bracket.token}' found at "

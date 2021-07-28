@@ -322,12 +322,16 @@ def test_case_statement_parsing() -> None:
 
     assert q
     assert q.source_string == source_string
-    assert len(q.lines) == 13
+    assert len(q.lines) == 18
 
-    expected_line_depths = [0, 1, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 0]
+    expected_line_depths = [0, 1, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 1, 1, 1, 1, 0]
 
     computed_line_depths = [line.depth for line in q.lines]
     assert computed_line_depths == expected_line_depths
+
+    # there are 6 case statements in the test data
+    assert len([t for t in q.tokens if t.type == TokenType.STATEMENT_START]) == 6
+    assert len([t for t in q.tokens if t.type == TokenType.STATEMENT_END]) == 6
 
 
 def test_cte_parsing() -> None:
