@@ -74,8 +74,8 @@ class Postgres(Dialect):
         TokenType.STATEMENT_START: group(r"case") + ANY_BLANK,
         TokenType.STATEMENT_END: group(r"end") + group(r"\W", r"$"),
         TokenType.NUMBER: group(
-            r"\d+\.?\d*",
-            r"\.\d+",
+            r"-?\d+\.?\d*",
+            r"-?\.\d+",
         ),
         TokenType.BRACKET_OPEN: group(
             r"\[",
