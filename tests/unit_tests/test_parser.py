@@ -263,9 +263,9 @@ def test_simple_query_parsing() -> None:
             type=TokenType.NEWLINE,
             prefix="",
             token="\n",
-            spos=(5, 11),
-            epos=(5, 12),
-            line="where a < b",
+            spos=(5, 31),
+            epos=(5, 32),
+            line="where one_field < another_field",
         ),
     ]
 
