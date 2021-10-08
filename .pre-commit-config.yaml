@@ -15,7 +15,18 @@ repos:
       - id: isort
         language_version: python
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.790
+    rev: v0.910
     hooks:
       - id: mypy
         language_version: python
+        args:
+          - "--ignore-missing-imports"
+          - "--disallow-untyped-calls"
+          - "--disallow-untyped-defs"
+          - "--disallow-incomplete-defs"
+          - "--strict-optional"
+          - "--warn-return-any"
+          - "--warn-no-return"
+          - "--warn-redundant-casts"
+          - "--no-warn-unused-ignores"
+
