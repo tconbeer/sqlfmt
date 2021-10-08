@@ -35,6 +35,8 @@ class LineMerger:
                 # scan ahead until we get back to this depth, or hit EOF
                 # note that we're using the same generator as parent loop
                 child_line: Optional[Line]
+                child_idx = parent_idx
+                child_depth = parent_depth
                 for child_idx, child_line in scanner:
                     child_depth = child_line.depth
                     if child_depth == parent_depth:
