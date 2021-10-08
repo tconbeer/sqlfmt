@@ -91,6 +91,7 @@ class Postgres(Dialect):
         TokenType.OPERATOR: group(
             r"<>",
             r"!=",
+            r"\|\|",
             r"[+\-*/%&@|^=<>:]=?",
             r"~",
         ),
