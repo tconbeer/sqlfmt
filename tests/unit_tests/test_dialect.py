@@ -45,7 +45,6 @@ class TestPostgres:
         with pytest.raises(StopIteration):
             next(gen)
 
-    @pytest.mark.xfail
     def test_regex_easy_match(self, postgres: Postgres) -> None:
 
         should_match_exactly = [
