@@ -525,9 +525,7 @@ def test_star_parsing() -> None:
         ("over (partition by abc)", " "),
         ("with cte as (select 1)", " "),
         ("select 1 + (1-3)", " "),
-        pytest.param(
-            "where something in (select id from t)", " ", marks=pytest.mark.xfail
-        ),
+        ("where something in (select id from t)", " "),
     ],
 )
 def test_open_paren_parsing(source: str, expected_prefix: str) -> None:
