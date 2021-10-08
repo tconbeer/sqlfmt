@@ -245,7 +245,7 @@ class Node:
             token.type == TokenType.BRACKET_OPEN
             and previous_token
             and previous_token.type == TokenType.NAME
-            and previous_token.token.lower() not in ("over", "as")
+            and previous_token.token.lower() not in ("over", "as", "in")
         ):
             return NO_SPACE
         elif token.type == TokenType.BRACKET_OPEN:

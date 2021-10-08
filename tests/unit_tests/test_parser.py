@@ -1,3 +1,5 @@
+import pytest
+
 from sqlfmt.mode import Mode
 from sqlfmt.parser import Node, Query
 from sqlfmt.token import Token, TokenType
@@ -514,3 +516,24 @@ def test_star_parsing() -> None:
     assert (
         dot_star_q.nodes[3].prefix == ""
     ), "There should be no space between dot and star in my_table.*"
+
+
+@pytest.mark.parametrize(
+    "source, expected_prefix",
+    [
+        ("select sum(1)", ""),
+        ("over (partition by abc)", " "),
+        ("with cte as (select 1)", " "),
+        ("select 1 + (1-3)", " "),
+        ("where something in (select id from t)", " "),
+    ],
+)
+def test_open_paren_parsing(source: str, expected_prefix: str) -> None:
+    q = Query.from_source(source_string=source, mode=Mode())
+
+    assert q
+    for node in q.nodes:
+        if node.token.token == "(":
+            assert (
+                node.prefix == expected_prefix
+            ), "Open paren prefixed by wrong number of spaces"
