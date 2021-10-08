@@ -1,3 +1,5 @@
+import pytest
+
 from sqlfmt.mode import Mode
 from sqlfmt.parser import Node, Query
 from sqlfmt.token import Token, TokenType
@@ -494,3 +496,16 @@ def test_multiline_parsing() -> None:
         TokenType.NAME,
         TokenType.NEWLINE,
     ]
+
+
+@pytest.mark.xfail
+def test_dot_start_parsing() -> None:
+    source = "select my_table.* from my_table\n"
+
+    q = Query.from_source(source_string=source, mode=Mode())
+
+    assert q
+    assert len(q.nodes) == 7
+    assert (
+        q.nodes[4].prefix == ""
+    ), "There should be no space between dot and star in my_table.*"
