@@ -1,3 +1,3 @@
-with 
-    my_cte as (select 1, b from my_schema.my_table)
+with
+    my_cte as (select 1, b, another_field from my_schema.my_table)
 select * from my_cte
