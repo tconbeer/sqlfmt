@@ -12,6 +12,7 @@ class TokenType(Enum):
     COMMENT_END = auto()
     STATEMENT_START = auto()
     STATEMENT_END = auto()
+    STAR = auto()
     NUMBER = auto()
     BRACKET_OPEN = auto()
     BRACKET_CLOSE = auto()

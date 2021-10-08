@@ -57,6 +57,7 @@ class TestPostgres:
             (TokenType.COMMENT_END, "*/"),
             (TokenType.STATEMENT_START, "case"),
             (TokenType.STATEMENT_END, "END"),
+            (TokenType.STAR, "*"),
             (TokenType.NUMBER, "145.8"),
             (TokenType.NUMBER, "-.58"),
             (TokenType.BRACKET_OPEN, "["),

@@ -483,7 +483,7 @@ def test_multiline_parsing() -> None:
     ]
     assert [node.token.type for node in q.lines[17].nodes] == [
         TokenType.UNTERM_KEYWORD,
-        TokenType.OPERATOR,
+        TokenType.STAR,
         TokenType.UNTERM_KEYWORD,
         TokenType.NAME,
         TokenType.COMMENT,
@@ -494,3 +494,23 @@ def test_multiline_parsing() -> None:
         TokenType.NAME,
         TokenType.NEWLINE,
     ]
+
+
+def test_star_parsing() -> None:
+    space_star = "select * from my_table\n"
+    space_star_q = Query.from_source(source_string=space_star, mode=Mode())
+
+    assert space_star_q
+    assert len(space_star_q.nodes) == 5
+    assert (
+        space_star_q.nodes[1].prefix == " "
+    ), "There should be a space between select and star in select *"
+
+    dot_star = "select my_table.* from my_table\n"
+    dot_star_q = Query.from_source(source_string=dot_star, mode=Mode())
+
+    assert dot_star_q
+    assert len(dot_star_q.nodes) == 7
+    assert (
+        dot_star_q.nodes[3].prefix == ""
+    ), "There should be no space between dot and star in my_table.*"
