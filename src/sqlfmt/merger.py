@@ -64,20 +64,19 @@ class LineMerger:
                     child_idx += 1
                     child_line = None
 
-                # if child is dedented past parent, we can't do any merging.
-                # break to return lines as-is
-                if child_depth < parent_depth:
-                    break
-
-                # child_idx has the same depth as the parent. If this is an
-                # unterminated keyword, we don't want to include the line
-                # at child_idx in the merged string. But if it's a bracket or
-                # statement, we do want to include the line, since it closes
+                # If this is a bracket or end statement, and the parent
+                # is the same depth as the closing bracket/statement, then
+                # we do want to include the line at child_idx, since it closes
                 # the bracket/statement. This only works because LineSplitter
                 # will always put a closing bracket at the start of a new line
-                if child_line and child_line.nodes[0].token.type in (
-                    TokenType.BRACKET_CLOSE,
-                    TokenType.STATEMENT_END,
+                if (
+                    child_depth == parent_depth
+                    and child_line
+                    and child_line.nodes[0].token.type
+                    in (
+                        TokenType.BRACKET_CLOSE,
+                        TokenType.STATEMENT_END,
+                    )
                 ):
                     child_idx += 1
 

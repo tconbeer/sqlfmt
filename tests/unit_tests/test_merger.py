@@ -115,3 +115,33 @@ def test_cte_merge() -> None:
     ]
 
     assert result == expected
+
+
+def test_case_then_merge() -> None:
+    source_string = """
+    case
+        when
+            some_initial_condition_is_true
+        then
+            some_other_condition
+        else
+            something_else_entirely
+    end
+    """
+    mode = Mode()
+    raw_query = Query.from_source(source_string, mode)
+    merger = LineMerger(mode)
+    merged_lines = merger.maybe_merge_lines(raw_query.lines)
+
+    result = list(map(str, merged_lines))
+
+    expected = [
+        "\n",
+        "case\n",
+        "    when some_initial_condition_is_true\n",
+        "    then some_other_condition\n",
+        "    else something_else_entirely\n",
+        "end\n",
+    ]
+
+    assert result == expected

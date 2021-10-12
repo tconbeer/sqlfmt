@@ -10,7 +10,7 @@ from tests.test_utils import check_formatting, read_test_data
     [
         "basic_queries/001_select_1.sql",
         "basic_queries/002_select_from_where.sql",
-        pytest.param("basic_queries/003_select_case.sql", marks=pytest.mark.xfail),
+        "basic_queries/003_select_case.sql",
         "basic_queries/004_with_select.sql",
         "basic_queries/005_literals.sql",
     ],
