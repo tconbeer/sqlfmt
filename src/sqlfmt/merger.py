@@ -30,7 +30,7 @@ class LineMerger:
 
         # if the child is just one below the parent, we're trying to
         # merge a single line.
-        if parent_idx - child_idx == 1:
+        if child_idx - parent_idx == 1:
             raise CannotMergeException("Can't merge just one line")
 
         parent_line = lines[parent_idx]

@@ -1,18 +1,62 @@
-from sqlfmt.merger import LineMerger
+import pytest
+
+from sqlfmt.merger import CannotMergeException, LineMerger
 from sqlfmt.mode import Mode
 from sqlfmt.parser import Query
 
 
-def test_basic_merge() -> None:
+@pytest.fixture
+def mode() -> Mode:
+    return Mode()
+
+
+@pytest.fixture
+def merger(mode: Mode) -> LineMerger:
+    return LineMerger(mode)
+
+
+def test_create_merged_line(mode: Mode, merger: LineMerger) -> None:
+
+    source_string = """
+    select
+        able,
+        baker,
+        /*  a
+            multiline
+            comment
+        */
+        charlie,
+
+
+
+    """
+    raw_query = Query.from_source(source_string, mode)
+
+    expected = "select able, baker,\n"
+    actual = merger.create_merged_line(raw_query.lines, 0, 4)
+    assert str(actual) == expected
+
+    with pytest.raises(CannotMergeException):
+        # can't merge whitespace
+        _ = merger.create_merged_line(raw_query.lines, -3, -1)
+
+    with pytest.raises(CannotMergeException):
+        # can't merge a single line
+        _ = merger.create_merged_line(raw_query.lines, 1, 2)
+
+    with pytest.raises(CannotMergeException):
+        # can't merge a multiline comment
+        _ = merger.create_merged_line(raw_query.lines, 4, 8)
+
+
+def test_basic_merge(mode: Mode, merger: LineMerger) -> None:
     source_string = """
         nullif(
             full_name,
             ''
         ) as c,
     """
-    mode = Mode()
     raw_query = Query.from_source(source_string, mode)
-    merger = LineMerger(mode)
     merged_lines = merger.maybe_merge_lines(raw_query.lines)
 
     expected_string = "nullif(full_name, '') as c,"
@@ -21,7 +65,7 @@ def test_basic_merge() -> None:
     assert result == expected_string
 
 
-def test_nested_merge() -> None:
+def test_nested_merge(mode: Mode, merger: LineMerger) -> None:
     source_string = """
     select
         a,
@@ -34,9 +78,7 @@ def test_nested_merge() -> None:
             ''
         ) as last_name,
     """
-    mode = Mode()
     raw_query = Query.from_source(source_string, mode)
-    merger = LineMerger(mode)
     merged_lines = merger.maybe_merge_lines(raw_query.lines)
 
     expected_string = (
@@ -47,7 +89,7 @@ def test_nested_merge() -> None:
     assert result == expected_string
 
 
-def test_incomplete_merge() -> None:
+def test_incomplete_merge(mode: Mode, merger: LineMerger) -> None:
     source_string = """
     select
         first_field,
@@ -71,9 +113,7 @@ def test_incomplete_merge() -> None:
     where
         some_condition is true
     """
-    mode = Mode()
     raw_query = Query.from_source(source_string, mode)
-    merger = LineMerger(mode)
     merged_lines = merger.maybe_merge_lines(raw_query.lines)
 
     result = list(map(str, merged_lines))
@@ -94,7 +134,7 @@ def test_incomplete_merge() -> None:
     assert result == expected
 
 
-def test_cte_merge() -> None:
+def test_cte_merge(mode: Mode, merger: LineMerger) -> None:
     source_string = """
     with
         my_cte as (
@@ -102,9 +142,7 @@ def test_cte_merge() -> None:
         )
     select * from my_cte
     """
-    mode = Mode()
     raw_query = Query.from_source(source_string, mode)
-    merger = LineMerger(mode)
     merged_lines = merger.maybe_merge_lines(raw_query.lines)
 
     result = list(map(str, merged_lines))
@@ -117,7 +155,7 @@ def test_cte_merge() -> None:
     assert result == expected
 
 
-def test_case_then_merge() -> None:
+def test_case_then_merge(mode: Mode, merger: LineMerger) -> None:
     source_string = """
     case
         when
@@ -128,9 +166,7 @@ def test_case_then_merge() -> None:
             something_else_entirely
     end
     """
-    mode = Mode()
     raw_query = Query.from_source(source_string, mode)
-    merger = LineMerger(mode)
     merged_lines = merger.maybe_merge_lines(raw_query.lines)
 
     result = list(map(str, merged_lines))
