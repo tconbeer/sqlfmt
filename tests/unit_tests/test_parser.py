@@ -3,6 +3,7 @@ import pytest
 from sqlfmt.mode import Mode
 from sqlfmt.parser import Node, Query
 from sqlfmt.token import Token, TokenType
+from tests.test_utils import read_test_data
 
 
 def test_calculate_depth() -> None:
@@ -43,8 +44,7 @@ def test_calculate_depth() -> None:
 
 def test_simple_query_parsing() -> None:
 
-    with open("tests/data/basic_queries/002_select_from_where.sql") as f:
-        source_string = f.read()
+    source_string, _ = read_test_data("basic_queries/002_select_from_where.sql")
 
     q = Query.from_source(source_string=source_string, mode=Mode())
 
@@ -235,7 +235,7 @@ def test_simple_query_parsing() -> None:
             token="where",
             spos=(5, 0),
             epos=(5, 5),
-            line="where one_field < another_field",
+            line="where one_field < another_field\n",
         ),
         Token(
             type=TokenType.NAME,
@@ -243,7 +243,7 @@ def test_simple_query_parsing() -> None:
             token="one_field",
             spos=(5, 6),
             epos=(5, 15),
-            line="where one_field < another_field",
+            line="where one_field < another_field\n",
         ),
         Token(
             type=TokenType.OPERATOR,
@@ -251,7 +251,7 @@ def test_simple_query_parsing() -> None:
             token="<",
             spos=(5, 16),
             epos=(5, 17),
-            line="where one_field < another_field",
+            line="where one_field < another_field\n",
         ),
         Token(
             type=TokenType.NAME,
@@ -259,7 +259,7 @@ def test_simple_query_parsing() -> None:
             token="another_field",
             spos=(5, 18),
             epos=(5, 31),
-            line="where one_field < another_field",
+            line="where one_field < another_field\n",
         ),
         Token(
             type=TokenType.NEWLINE,
@@ -267,7 +267,7 @@ def test_simple_query_parsing() -> None:
             token="\n",
             spos=(5, 31),
             epos=(5, 32),
-            line="where one_field < another_field",
+            line="where one_field < another_field\n",
         ),
     ]
 
@@ -317,16 +317,15 @@ def test_whitespace_formatting() -> None:
 
 def test_case_statement_parsing() -> None:
 
-    with open("tests/data/basic_queries/003_select_case.sql") as f:
-        source_string = f.read()
+    source_string, _ = read_test_data("basic_queries/003_select_case.sql")
 
     q = Query.from_source(source_string=source_string, mode=Mode())
 
     assert q
     assert q.source_string == source_string
-    assert len(q.lines) == 18
+    assert len(q.lines) == 20
 
-    expected_line_depths = [0, 1, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 1, 1, 1, 1, 0]
+    expected_line_depths = [0, 1, 1, 1, 2, 2, 1, 1, 2, 2, 2, 3, 1, 1, 2, 1, 1, 1, 1, 0]
 
     computed_line_depths = [line.depth for line in q.lines]
     assert computed_line_depths == expected_line_depths
@@ -337,8 +336,7 @@ def test_case_statement_parsing() -> None:
 
 
 def test_cte_parsing() -> None:
-    with open("tests/data/basic_queries/004_with_select.sql") as f:
-        source_string = f.read()
+    source_string, _ = read_test_data("basic_queries/004_with_select.sql")
 
     q = Query.from_source(source_string=source_string, mode=Mode())
 
@@ -381,8 +379,7 @@ def test_cte_parsing() -> None:
 
 
 def test_multiline_parsing() -> None:
-    with open("tests/data/basic_queries/005_multiline.sql") as f:
-        source_string = f.read()
+    source_string, _ = read_test_data("basic_queries/005_multiline.sql")
 
     q = Query.from_source(source_string=source_string, mode=Mode())
 

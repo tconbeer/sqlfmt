@@ -78,6 +78,7 @@ with
 
         from source
         where
+        
             nvl(is_deleted, false) is false
             -- a very long comment about why we would exclude this user from this table
             -- that we will wrap
