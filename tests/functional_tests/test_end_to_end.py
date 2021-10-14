@@ -32,7 +32,20 @@ def target_directory(request: Any, tmp_path: Path) -> Path:
     return test_dir
 
 
-@pytest.mark.parametrize("options", ["", "--line-length 88", "-l 88"])
+@pytest.mark.parametrize(
+    "options",
+    [
+        "",
+        "--line-length 88",
+        "-l 88",
+        pytest.param("--output update", marks=pytest.mark.xfail),
+        pytest.param("-o update", marks=pytest.mark.xfail),
+        pytest.param("--output diff", marks=pytest.mark.xfail),
+        pytest.param("-o diff", marks=pytest.mark.xfail),
+        pytest.param("-output check", marks=pytest.mark.xfail),
+        pytest.param("-o check", marks=pytest.mark.xfail),
+    ],
+)
 def test_end_to_end(runner: CliRunner, target_directory: Path, options: str) -> None:
 
     args = f"{target_directory} {options}"
