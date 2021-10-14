@@ -5,7 +5,7 @@ import pytest
 from click.testing import CliRunner
 
 from sqlfmt.cli import sqlfmt as sqlfmt_main
-from tests.test_utils import copy_test_data_to_tmp
+from tests.test_utils import copy_test_data_to_tmp, discover_test_files
 
 
 @pytest.fixture
@@ -15,11 +15,8 @@ def runner() -> CliRunner:
 
 @pytest.fixture(
     params=[
-        [
-            "basic_queries/001_select_1.sql",
-            "basic_queries/002_select_from_where.sql",
-        ],
-        ["basic_queries"],
+        list(discover_test_files("preformatted")),
+        ["preformatted"],
     ]
 )
 def target_directory(request: Any, tmp_path: Path) -> Path:
@@ -38,12 +35,12 @@ def target_directory(request: Any, tmp_path: Path) -> Path:
         "",
         "--line-length 88",
         "-l 88",
-        pytest.param("--output update", marks=pytest.mark.xfail),
-        pytest.param("-o update", marks=pytest.mark.xfail),
+        "--output update",
+        "-o update",
+        "--output check",
+        "-o check",
         pytest.param("--output diff", marks=pytest.mark.xfail),
         pytest.param("-o diff", marks=pytest.mark.xfail),
-        pytest.param("-output check", marks=pytest.mark.xfail),
-        pytest.param("-o check", marks=pytest.mark.xfail),
     ],
 )
 def test_end_to_end(runner: CliRunner, target_directory: Path, options: str) -> None:

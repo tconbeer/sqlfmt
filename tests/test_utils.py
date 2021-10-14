@@ -35,7 +35,7 @@ def read_test_data(relpath: Union[Path, str]) -> Tuple[str, str]:
     return "".join(source_query).strip() + "\n", "".join(formatted_query).strip() + "\n"
 
 
-def check_formatting(expected: str, actual: str) -> None:
+def check_formatting(expected: str, actual: str, ctx: str = "") -> None:
 
     try:
         assert (
@@ -47,7 +47,12 @@ def check_formatting(expected: str, actual: str) -> None:
         caller = inspect.stack()[1].function
         results_dir = p = TEST_DIR / ".results"
         results_dir.mkdir(exist_ok=True)
-        p = results_dir / (caller + ".sql")
+        ctx = ctx.replace("/", "-")
+        if ctx.endswith(".sql"):
+            suffix = ""
+        else:
+            suffix = ".sql"
+        p = results_dir / (caller + ctx + suffix)
         with open(p, "w") as f:
             f.write(actual)
         raise e
