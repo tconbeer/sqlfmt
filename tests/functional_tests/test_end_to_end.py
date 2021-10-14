@@ -19,7 +19,7 @@ def runner() -> CliRunner:
         ["preformatted"],
     ]
 )
-def target_directory(request: Any, tmp_path: Path) -> Path:
+def preformatted_target(request: Any, tmp_path: Path) -> Path:
     """
     Copies the parameterized list of files/directories from the test/data
     directory into a temp directory (provided by pytest fixture tmp_path),
@@ -43,9 +43,9 @@ def target_directory(request: Any, tmp_path: Path) -> Path:
         pytest.param("-o diff", marks=pytest.mark.xfail),
     ],
 )
-def test_end_to_end(runner: CliRunner, target_directory: Path, options: str) -> None:
+def test_end_to_end(runner: CliRunner, preformatted_target: Path, options: str) -> None:
 
-    args = f"{target_directory} {options}"
+    args = f"{preformatted_target} {options}"
     result = runner.invoke(sqlfmt_main, args=args)
 
     assert result
