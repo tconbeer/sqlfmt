@@ -5,7 +5,7 @@ import pytest
 from click.testing import CliRunner
 
 from sqlfmt.cli import sqlfmt as sqlfmt_main
-from tests.test_utils import copy_test_data_to_tmp, discover_test_files
+from tests.util import copy_test_data_to_tmp, discover_test_files
 
 
 @pytest.fixture

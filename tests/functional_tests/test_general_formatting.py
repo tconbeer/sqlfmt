@@ -2,7 +2,7 @@ import pytest
 
 from sqlfmt.api import format_string
 from sqlfmt.mode import Mode
-from tests.test_utils import check_formatting, read_test_data
+from tests.util import check_formatting, read_test_data
 
 
 @pytest.mark.parametrize(

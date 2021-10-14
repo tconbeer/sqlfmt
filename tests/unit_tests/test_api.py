@@ -6,7 +6,7 @@ import pytest
 
 from sqlfmt.api import _generate_results, _update_source_files, format_string
 from sqlfmt.mode import Mode
-from tests.test_utils import copy_test_data_to_tmp
+from tests.util import copy_test_data_to_tmp
 
 
 @pytest.fixture

@@ -3,7 +3,7 @@ import pytest
 from sqlfmt.mode import Mode
 from sqlfmt.parser import Node, Query
 from sqlfmt.token import Token, TokenType
-from tests.test_utils import read_test_data
+from tests.util import read_test_data
 
 
 def test_calculate_depth() -> None:
