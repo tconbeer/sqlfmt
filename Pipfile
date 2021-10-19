@@ -6,7 +6,7 @@ name = "pypi"
 [packages]
 sqlfmt = {path = ".", editable = true}
 
-click = ">=7.1.2"
+click = ">=8.0.0"
 
 [dev-packages]
 black = "*"
