@@ -15,7 +15,7 @@ class SqlFormatResult:
     formatted_string: Optional[str]
 
     def __post_init__(self) -> None:
-        self.changed: bool = self.source_string != self.formatted_string
+        self.has_changed: bool = self.source_string != self.formatted_string
 
 
 def run(files: List[str], mode: Mode) -> int:
@@ -42,7 +42,7 @@ def run(files: List[str], mode: Mode) -> int:
     if mode.output == "update":
         _update_source_files(results)
     elif mode.output == "check":
-        if any([res.changed for res in results]):
+        if any([res.has_changed for res in results]):
             return 1
     elif mode.output == "diff":
         display_output("Diff not implemented!")
@@ -72,7 +72,7 @@ def _update_source_files(results: Iterable[SqlFormatResult]) -> None:
     No-ops for unchanged files, results without a source path, and empty files
     """
     for res in results:
-        if res.changed and res.source_path and res.formatted_string:
+        if res.has_changed and res.source_path and res.formatted_string:
             with open(res.source_path, "w") as f:
                 f.write(res.formatted_string)
 

@@ -60,7 +60,7 @@ def test_generate_results_preformatted(
     assert len(results) == len(
         preformatted_files
     ), "Did not generate one result for each input file"
-    assert not any([res.changed for res in results]), "Changed preformatted file"
+    assert not any([res.has_changed for res in results]), "Changed preformatted file"
     assert all(
         [raw == res.source_path for raw, res in zip(preformatted_files, results)]
     ), "Result stored a source path that doesn't match the raw path passed to api"
@@ -74,7 +74,7 @@ def test_generate_results_unformatted(
     assert len(results) == len(
         unformatted_files
     ), "Did not generate one result for each input file"
-    assert all([res.changed for res in results]), "Did not change unformatted file"
+    assert all([res.has_changed for res in results]), "Did not change unformatted file"
     assert all(
         [raw == res.source_path for raw, res in zip(unformatted_files, results)]
     ), "Result stored a source path that doesn't match the raw path passed to api"
