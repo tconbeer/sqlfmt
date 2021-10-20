@@ -473,14 +473,26 @@ class Line:
 
     @property
     def is_standalone_comment(self) -> bool:
-        if len(self.nodes) == 2 and self.ends_with_comment:
+        if len(self.nodes) == 1 and self.ends_with_comment:
+            return True
+        elif (
+            len(self.nodes) == 2
+            and self.ends_with_comment
+            and self.nodes[-1].is_newline
+        ):
             return True
         else:
             return False
 
     @property
     def is_standalone_multiline_node(self) -> bool:
-        if len(self.nodes) == 2 and self.contains_multiline_node:
+        if len(self.nodes) == 1 and self.contains_multiline_node:
+            return True
+        if (
+            len(self.nodes) == 2
+            and self.contains_multiline_node
+            and self.nodes[-1].is_newline
+        ):
             return True
         else:
             return False

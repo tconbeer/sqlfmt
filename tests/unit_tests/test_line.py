@@ -3,7 +3,7 @@ from typing import List
 
 import pytest
 
-from sqlfmt.line import Line
+from sqlfmt.line import Line, Node
 from sqlfmt.token import Token, TokenType
 
 
@@ -167,3 +167,169 @@ def test_simple_line(
     assert not simple_line.is_standalone_multiline_node
     assert not simple_line.is_too_long(88)
     assert simple_line.can_be_depth_split
+
+
+def test_bare_append_newline(bare_line: Line) -> None:
+    # this line has no nodes
+    assert not bare_line.nodes
+    assert not bare_line.previous_node
+
+    bare_line.append_newline()
+    assert bare_line.nodes
+    new_last_node = bare_line.nodes[-1]
+    assert new_last_node.token.type == TokenType.NEWLINE
+    assert (new_last_node.token.spos, new_last_node.token.epos) == ((0, 0), (0, 1))
+
+
+def test_bare_with_previous_append_newline(bare_line: Line, simple_line: Line) -> None:
+    bare_line.previous_node = simple_line.nodes[-1]
+    bare_line.append_newline()
+    assert bare_line.nodes
+    new_last_node = bare_line.nodes[-1]
+    previous_token = simple_line.nodes[-1].token
+    expected_position = (
+        (previous_token.epos),
+        (previous_token.epos[0], previous_token.epos[1] + 1),
+    )
+    assert (new_last_node.token.spos, new_last_node.token.epos) == expected_position
+
+
+def test_simple_append_newline(simple_line: Line) -> None:
+
+    # this line already ends with a newline
+    last_node = simple_line.nodes[-1]
+    assert last_node.token.type == TokenType.NEWLINE
+    assert last_node.previous_node
+    assert last_node.previous_node.token.type != TokenType.NEWLINE
+
+    simple_line.append_newline()
+    new_last_node = simple_line.nodes[-1]
+    assert new_last_node != last_node
+    assert new_last_node.token.type == TokenType.NEWLINE
+    assert new_last_node.previous_node == last_node
+    assert new_last_node.previous_node.token == last_node.token
+
+
+def test_ends_with_comma(simple_line: Line) -> None:
+
+    last_node = simple_line.nodes[-1]
+    assert not last_node.token.type == TokenType.COMMA
+    assert not simple_line.ends_with_comma
+
+    comma = Token(
+        type=TokenType.COMMA,
+        prefix="",
+        token=",",
+        spos=last_node.token.epos,
+        epos=(last_node.token.epos[0], last_node.token.epos[1] + 1),
+        line=last_node.token.line,
+    )
+
+    simple_line.append_token(comma)
+
+    assert simple_line.nodes[-1].token.type == TokenType.COMMA
+    assert simple_line.ends_with_comma
+
+    simple_line.append_newline()
+    assert simple_line.nodes[-1].token.type == TokenType.NEWLINE
+    assert simple_line.ends_with_comma
+
+
+def test_ends_with_comment(simple_line: Line) -> None:
+
+    last_node = simple_line.nodes[-1]
+    assert not last_node.token.type == TokenType.COMMENT
+    assert not simple_line.ends_with_comment
+
+    comment = Token(
+        type=TokenType.COMMENT,
+        prefix="",
+        token="-- my comment",
+        spos=last_node.token.epos,
+        epos=(last_node.token.epos[0], last_node.token.epos[1] + 13),
+        line=last_node.token.line,
+    )
+
+    simple_line.append_token(comment)
+
+    assert simple_line.nodes[-1].token.type == TokenType.COMMENT
+    assert simple_line.ends_with_comment
+
+    simple_line.append_newline()
+    assert simple_line.nodes[-1].token.type == TokenType.NEWLINE
+    assert simple_line.ends_with_comment
+
+    assert not simple_line.is_standalone_comment
+
+
+def test_is_standalone_comment(bare_line: Line, simple_line: Line) -> None:
+
+    assert not bare_line.is_standalone_comment
+    assert not simple_line.is_standalone_comment
+
+    comment = Token(
+        type=TokenType.COMMENT,
+        prefix="",
+        token="-- my comment",
+        spos=(0, 0),
+        epos=(0, 13),
+        line="does not matter",
+    )
+
+    bare_line.append_token(comment)
+    simple_line.append_token(comment)
+
+    assert bare_line.is_standalone_comment
+    assert not simple_line.is_standalone_comment
+
+    bare_line.append_newline()
+    simple_line.append_newline()
+
+    assert bare_line.is_standalone_comment
+    assert not simple_line.is_standalone_comment
+
+
+def test_is_standalone_multiline_node(bare_line: Line, simple_line: Line) -> None:
+
+    assert not bare_line.is_standalone_multiline_node
+    assert not simple_line.is_standalone_multiline_node
+
+    comment = Token(
+        type=TokenType.COMMENT,
+        prefix="",
+        token="/*\nmy comment\n*/",
+        spos=(0, 0),
+        epos=(2, 2),
+        line="/*\nmy comment\n*/",
+    )
+
+    bare_line.append_token(comment)
+    simple_line.append_token(comment)
+
+    assert bare_line.is_standalone_comment
+    assert bare_line.is_standalone_multiline_node
+    assert not simple_line.is_standalone_comment
+    assert not simple_line.is_standalone_multiline_node
+
+    bare_line.append_newline()
+    simple_line.append_newline()
+
+    assert bare_line.is_standalone_comment
+    assert bare_line.is_standalone_multiline_node
+    assert not simple_line.is_standalone_comment
+    assert not simple_line.is_standalone_multiline_node
+
+
+def test_calculate_depth_exception() -> None:
+
+    close_paren = Token(
+        type=TokenType.BRACKET_CLOSE,
+        prefix="",
+        token=")",
+        spos=(0, 0),
+        epos=(0, 1),
+        line=")",
+    )
+
+    with pytest.raises(ValueError):
+        Node.calculate_depth(close_paren, inherited_depth=0, open_brackets=[])
