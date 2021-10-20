@@ -104,3 +104,49 @@ class TestPostgres:
         for token_type, prog in postgres.programs.items():
             match = prog.match("")
             assert match is None, str(token_type)
+
+    def test_error_token(self, postgres: Postgres) -> None:
+        gen = postgres.tokenize_line(line="?\n", lnum=0)
+        t = next(gen)
+
+        expected_token = Token(
+            type=TokenType.ERROR_TOKEN,
+            prefix="",
+            token="?",
+            spos=(0, 0),
+            epos=(0, 2),
+            line="?\n",
+        )
+        assert t == expected_token
+
+    def test_search_for_one_token(self, postgres: Postgres) -> None:
+        line = "select 1 from my_table\n"
+
+        expected_token = Token(
+            type=TokenType.NUMBER,
+            prefix="select ",
+            token="1",
+            spos=(0, 7),
+            epos=(0, 8),
+            line="select 1 from my_table\n",
+        )
+
+        actual_token = postgres.search_for_token([TokenType.NUMBER], line=line, lnum=0)
+        assert actual_token == expected_token
+
+    def test_search_for_multiple_tokens(self, postgres: Postgres) -> None:
+        line = "select 1 from my_table\n"
+
+        expected_token = Token(
+            type=TokenType.NUMBER,
+            prefix=" ",
+            token="1",
+            spos=(0, 7),
+            epos=(0, 8),
+            line="select 1 from my_table\n",
+        )
+
+        actual_token = postgres.search_for_token(
+            [TokenType.NUMBER, TokenType.UNTERM_KEYWORD], line=line, lnum=0, skipchars=6
+        )
+        assert actual_token == expected_token

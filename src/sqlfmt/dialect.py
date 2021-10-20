@@ -179,7 +179,7 @@ class Postgres(Dialect):
         else:
             for t in token_types:
                 prog = self.programs[t]
-                match = prog.search(line, skipchars)
+                match = prog.match(line, start)
                 if match:
                     final_type = t
                     break
