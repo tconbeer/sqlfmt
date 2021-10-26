@@ -25,14 +25,7 @@ def run(files: List[str], mode: Mode) -> int:
     2 indicates unhandled exception
     """
     matched_paths: Set[Path] = set()
-    for s in files:
-        p = Path(s)
-
-        if p.is_file() and p.suffix in (mode.SQL_EXTENSIONS):
-            matched_paths.add(p)
-
-        elif p.is_dir():
-            matched_paths.update(gen_sql_files(p.iterdir(), mode))
+    matched_paths.update(gen_sql_files([Path(s) for s in files], mode))
 
     results = list(_generate_results(matched_paths, mode))
 

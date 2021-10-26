@@ -540,3 +540,24 @@ def test_open_paren_parsing(source: str, expected_prefix: str) -> None:
             assert (
                 node.prefix == expected_prefix
             ), "Open paren prefixed by wrong number of spaces"
+
+
+def test_dont_parse_twice(monkeypatch: pytest.MonkeyPatch) -> None:
+    source_string = "select 1, 2, 3 from my_table where a = b"
+    q = Query.from_source(source_string=source_string, mode=Mode())
+
+    assert q.lines and q.tokens
+
+    # should raise a name error if we parse source again
+    monkeypatch.delattr("sqlfmt.dialect.Postgres.tokenize_line")
+    q.tokenize_from_source()
+    assert q.lines and q.tokens
+
+
+def test_unterminated_multiline_token() -> None:
+    source_string = "{% \n config = {}\n"
+
+    with pytest.raises(ValueError) as excinfo:
+        _ = Query.from_source(source_string=source_string, mode=Mode())
+
+    assert "Unterminated multiline" in str(excinfo.value)

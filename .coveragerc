@@ -1,2 +1,2 @@
 [html]
-directory = tests/coverage
+directory = tests/.coverage

@@ -4,7 +4,7 @@ from typing import List
 
 import pytest
 
-from sqlfmt.api import _generate_results, _update_source_files, format_string
+from sqlfmt.api import _generate_results, _update_source_files, format_string, run
 from sqlfmt.mode import Mode
 from tests.util import copy_test_data_to_tmp
 
@@ -12,12 +12,6 @@ from tests.util import copy_test_data_to_tmp
 @pytest.fixture
 def mode() -> Mode:
     return Mode()
-
-
-def test_format_empty_string(mode: Mode) -> None:
-    source = expected = ""
-    actual = format_string(source, mode)
-    assert expected == actual
 
 
 @pytest.fixture
@@ -50,6 +44,12 @@ def unformatted_dir(tmp_path: Path) -> Path:
 @pytest.fixture
 def unformatted_files(unformatted_dir: Path) -> List[Path]:
     return list(unformatted_dir.iterdir())
+
+
+def test_format_empty_string(mode: Mode) -> None:
+    source = expected = ""
+    actual = format_string(source, mode)
+    assert expected == actual
 
 
 def test_generate_results_preformatted(
@@ -141,3 +141,31 @@ def test_update_source_files_unformatted(
             new_file_contents = f.read()
         assert new_file_contents == res.formatted_string
         assert new_file_contents != res.source_string
+
+
+def test_run_unformatted_update(
+    unformatted_dir: Path, mode: Mode, monkeypatch: pytest.MonkeyPatch
+) -> None:
+
+    # confirm that we call the _update_source function
+    monkeypatch.delattr("sqlfmt.api._update_source_files")
+    with pytest.raises(NameError):
+        _ = run(files=[str(unformatted_dir)], mode=mode)
+
+
+def test_run_preformatted_check(preformatted_files: List[Path]) -> None:
+    check_mode = Mode(output="check")
+    exit_code = run(files=[str(f) for f in preformatted_files], mode=check_mode)
+    assert exit_code == 0
+
+
+def test_run_unformatted_check(unformatted_files: List[Path]) -> None:
+    check_mode = Mode(output="check")
+    exit_code = run(files=[str(f) for f in unformatted_files], mode=check_mode)
+    assert exit_code == 1
+
+
+def test_run_unformatted_diff(unformatted_files: List[Path]) -> None:
+    diff_mode = Mode(output="diff")
+    exit_code = run(files=[str(f) for f in unformatted_files], mode=diff_mode)
+    assert exit_code == 2
