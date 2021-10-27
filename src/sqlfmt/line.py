@@ -4,6 +4,10 @@ from typing import List, Optional, Tuple
 from sqlfmt.token import Token, TokenType, split_after
 
 
+class SQLBracketError(ValueError):
+    pass
+
+
 @dataclass
 class Node:
     token: Token
@@ -178,7 +182,7 @@ class Node:
                     last_bracket = open_brackets.pop()
                     change_before -= 1
             except IndexError:
-                raise ValueError(
+                raise SQLBracketError(
                     f"Closing bracket '{token.token}' found at "
                     f"{token.spos} before bracket was opened."
                 )

@@ -8,6 +8,10 @@ from sqlfmt.mode import Mode
 from sqlfmt.token import Token, TokenType
 
 
+class SQLMultilineError(ValueError):
+    pass
+
+
 @dataclass
 class Query:
     source_string: str
@@ -154,7 +158,7 @@ class MultilineConsumer:
                 break
 
         else:  # exhausted reader without finding end token
-            raise ValueError(
+            raise SQLMultilineError(
                 f"Unterminated multiline token {self.start.token} "
                 f"started at {self.start.spos}"
             )

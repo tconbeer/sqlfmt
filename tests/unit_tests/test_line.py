@@ -3,7 +3,7 @@ from typing import List
 
 import pytest
 
-from sqlfmt.line import Line, Node
+from sqlfmt.line import Line, Node, SQLBracketError
 from sqlfmt.token import Token, TokenType
 
 
@@ -331,5 +331,5 @@ def test_calculate_depth_exception() -> None:
         line=")",
     )
 
-    with pytest.raises(ValueError):
+    with pytest.raises(SQLBracketError):
         Node.calculate_depth(close_paren, inherited_depth=0, open_brackets=[])

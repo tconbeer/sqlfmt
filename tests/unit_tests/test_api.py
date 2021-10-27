@@ -1,11 +1,14 @@
 import os
 from pathlib import Path
-from typing import List
+from typing import List, Type
 
 import pytest
 
 from sqlfmt.api import _generate_results, _update_source_files, format_string, run
+from sqlfmt.dialect import SQLParsingError
+from sqlfmt.line import SQLBracketError
 from sqlfmt.mode import Mode
+from sqlfmt.parser import SQLMultilineError
 from tests.util import copy_test_data_to_tmp
 
 
@@ -45,6 +48,21 @@ def test_format_empty_string(all_output_modes: Mode) -> None:
     source = expected = ""
     actual = format_string(source, all_output_modes)
     assert expected == actual
+
+
+@pytest.mark.parametrize(
+    "source,exception",
+    [
+        ("?\n", SQLParsingError),
+        ("select )\n", SQLBracketError),
+        ("{{\n", SQLMultilineError),
+    ],
+)
+def test_format_bad_string(
+    all_output_modes: Mode, source: str, exception: Type[ValueError]
+) -> None:
+    with pytest.raises(exception):
+        _ = format_string(source, all_output_modes)
 
 
 def test_generate_results_preformatted(
