@@ -22,8 +22,18 @@ def default_mode() -> Mode:
 
 
 @pytest.fixture
+def verbose_mode() -> Mode:
+    return Mode(verbose=True)
+
+
+@pytest.fixture
 def check_mode() -> Mode:
     return Mode(output="check")
+
+
+@pytest.fixture
+def verbose_check_mode() -> Mode:
+    return Mode(output="check", verbose=True)
 
 
 @pytest.fixture

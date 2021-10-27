@@ -41,6 +41,9 @@ class Report:
         report.append(f"{self._pluralize_file(self.number_unchanged)} {unchanged}.")
         for res in self.changed_results:
             report.append(f"{res.source_path} {formatted}.")
+        if self.mode.verbose:
+            for res in self.unchanged_results:
+                report.append(f"{res.source_path} {unchanged}.")
         return "\n".join(report)
 
     @staticmethod
@@ -54,7 +57,15 @@ class Report:
 
     @property
     def changed_results(self) -> List[SqlFormatResult]:
-        return [r for r in self.results if r.has_changed]
+        return self._filtered_results(has_changed=True)
+
+    @property
+    def unchanged_results(self) -> List[SqlFormatResult]:
+        return self._filtered_results(has_changed=False)
+
+    def _filtered_results(self, has_changed: bool = True) -> List[SqlFormatResult]:
+        filtered = [r for r in self.results if r.has_changed == has_changed]
+        return sorted(filtered, key=lambda res: res.source_path)
 
     @property
     def number_changed(self) -> int:
