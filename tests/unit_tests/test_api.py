@@ -162,4 +162,4 @@ def test_run_unformatted_check(unformatted_files: List[Path], check_mode: Mode) 
 
 def test_run_unformatted_diff(unformatted_files: List[Path], diff_mode: Mode) -> None:
     exit_code = run(files=[str(f) for f in unformatted_files], mode=diff_mode)
-    assert exit_code == 2
+    assert exit_code == 1

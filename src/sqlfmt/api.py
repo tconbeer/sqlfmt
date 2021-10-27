@@ -24,12 +24,9 @@ def run(files: List[str], mode: Mode) -> int:
 
     if mode.output == "update":
         _update_source_files(results)
-    elif mode.output == "check":
+    elif mode.output in ("check", "diff"):
         if any([res.has_changed for res in results]):
             return 1
-    elif mode.output == "diff":
-        display_output("Diff not implemented!")
-        return 2
 
     return 0
 
