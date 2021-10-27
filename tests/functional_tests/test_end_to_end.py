@@ -8,14 +8,9 @@ from sqlfmt.cli import sqlfmt as sqlfmt_main
 from tests.util import copy_test_data_to_tmp, discover_test_files
 
 
-@pytest.fixture
-def runner() -> CliRunner:
-    return CliRunner(mix_stderr=False)
-
-
 @pytest.fixture(
     params=[
-        list(discover_test_files("preformatted")),
+        list(discover_test_files(["preformatted"])),
         ["preformatted"],
     ]
 )
@@ -43,10 +38,18 @@ def preformatted_target(request: Any, tmp_path: Path) -> Path:
         pytest.param("-o diff", marks=pytest.mark.xfail),
     ],
 )
-def test_end_to_end(runner: CliRunner, preformatted_target: Path, options: str) -> None:
+def test_end_to_end(
+    sqlfmt_runner: CliRunner, preformatted_target: Path, options: str
+) -> None:
 
     args = f"{preformatted_target} {options}"
-    result = runner.invoke(sqlfmt_main, args=args)
+    result = sqlfmt_runner.invoke(sqlfmt_main, args=args)
 
     assert result
+    assert "4 files" in result.stderr
+    if "check" in options or "diff" in options:
+        assert "passed formatting check" in result.stderr
+    else:
+        assert "left unchanged" in result.stderr
+
     assert result.exit_code == 0

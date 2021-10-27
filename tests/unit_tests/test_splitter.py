@@ -7,19 +7,14 @@ from sqlfmt.splitter import LineSplitter
 
 
 @pytest.fixture
-def mode() -> Mode:
-    return Mode()
+def splitter(default_mode: Mode) -> LineSplitter:
+    return LineSplitter(default_mode)
 
 
 @pytest.fixture
-def splitter(mode: Mode) -> LineSplitter:
-    return LineSplitter(mode)
-
-
-@pytest.fixture
-def depth_split_line(mode: Mode) -> Line:
+def depth_split_line(default_mode: Mode) -> Line:
     source_string = "with my_cte as (select 1, b from my_schema.my_table),\n"
-    raw_query = Query.from_source(source_string, mode)
+    raw_query = Query.from_source(source_string, default_mode)
     return raw_query.lines[0]
 
 

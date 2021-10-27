@@ -4,9 +4,9 @@ from sqlfmt.mode import Mode
 from sqlfmt.utils import gen_sql_files
 
 
-def test_file_discovery() -> None:
+def test_file_discovery(all_output_modes: Mode) -> None:
     p = Path("tests/data/unit_tests/test_utils/test_file_discovery")
-    res = list(gen_sql_files(p.iterdir(), Mode()))
+    res = list(gen_sql_files(p.iterdir(), all_output_modes))
 
     expected = (
         p / "top_level_file.sql",
