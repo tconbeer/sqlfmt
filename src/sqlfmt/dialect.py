@@ -4,6 +4,7 @@ import re
 from abc import ABC, abstractmethod
 from typing import Dict, Iterator, List, Optional
 
+from sqlfmt.exception import SqlfmtError
 from sqlfmt.token import Token, TokenType
 
 
@@ -18,7 +19,7 @@ NEWLINE: str = r"\r?\n"
 ANY_BLANK: str = group(WHITESPACES, NEWLINE, r"$")
 
 
-class SQLParsingError(ValueError):
+class SqlfmtParsingError(SqlfmtError):
     pass
 
 
@@ -145,7 +146,7 @@ class Postgres(Dialect):
                 if line[pos:].strip() == "":
                     pos = eol
                 else:
-                    raise SQLParsingError(
+                    raise SqlfmtParsingError(
                         f"Error parsing SQL at {lnum}:{pos}\n" f"{line[pos:].strip()}"
                     )
 
@@ -180,6 +181,6 @@ class Postgres(Dialect):
         if final_type:
             return Token(final_type, prefix, token, spos, epos, line)
         else:
-            raise SQLParsingError(
+            raise SqlfmtParsingError(
                 "Internal Error! Matched group of types but not individual type"
             )

@@ -1,6 +1,6 @@
 import pytest
 
-from sqlfmt.dialect import Dialect, Postgres, SQLParsingError, group
+from sqlfmt.dialect import Dialect, Postgres, SqlfmtParsingError, group
 from sqlfmt.token import Token, TokenType
 
 
@@ -110,7 +110,7 @@ class TestPostgres:
         select = next(gen)
         assert select
 
-        with pytest.raises(SQLParsingError) as e:
+        with pytest.raises(SqlfmtParsingError) as e:
             _ = next(gen)
             assert "at 33:7" in str(e.value)
 

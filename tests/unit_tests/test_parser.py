@@ -1,8 +1,8 @@
 import pytest
 
-from sqlfmt.dialect import SQLParsingError
+from sqlfmt.dialect import SqlfmtParsingError
 from sqlfmt.mode import Mode
-from sqlfmt.parser import Node, Query, SQLMultilineError
+from sqlfmt.parser import Node, Query, SqlfmtMultilineError
 from sqlfmt.token import Token, TokenType
 from tests.util import read_test_data
 
@@ -279,7 +279,7 @@ def test_simple_query_parsing(all_output_modes: Mode) -> None:
 
 def test_parsing_error(default_mode: Mode) -> None:
     source_string = "select `no backticks in postgres`"
-    with pytest.raises(SQLParsingError):
+    with pytest.raises(SqlfmtParsingError):
         _ = Query.from_source(source_string=source_string, mode=default_mode)
 
 
@@ -531,7 +531,7 @@ def test_dont_parse_twice(default_mode: Mode, monkeypatch: pytest.MonkeyPatch) -
 def test_unterminated_multiline_token(default_mode: Mode) -> None:
     source_string = "{% \n config = {}\n"
 
-    with pytest.raises(SQLMultilineError) as excinfo:
+    with pytest.raises(SqlfmtMultilineError) as excinfo:
         _ = Query.from_source(source_string=source_string, mode=default_mode)
 
     assert "Unterminated multiline" in str(excinfo.value)

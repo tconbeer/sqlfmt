@@ -5,10 +5,11 @@ from typing import List, Type
 import pytest
 
 from sqlfmt.api import _generate_results, _update_source_files, format_string, run
-from sqlfmt.dialect import SQLParsingError
-from sqlfmt.line import SQLBracketError
+from sqlfmt.dialect import SqlfmtParsingError
+from sqlfmt.exception import SqlfmtError
+from sqlfmt.line import SqlfmtBracketError
 from sqlfmt.mode import Mode
-from sqlfmt.parser import SQLMultilineError
+from sqlfmt.parser import SqlfmtMultilineError
 from tests.util import copy_test_data_to_tmp
 
 
@@ -53,13 +54,13 @@ def test_format_empty_string(all_output_modes: Mode) -> None:
 @pytest.mark.parametrize(
     "source,exception",
     [
-        ("?\n", SQLParsingError),
-        ("select )\n", SQLBracketError),
-        ("{{\n", SQLMultilineError),
+        ("?\n", SqlfmtParsingError),
+        ("select )\n", SqlfmtBracketError),
+        ("{{\n", SqlfmtMultilineError),
     ],
 )
 def test_format_bad_string(
-    all_output_modes: Mode, source: str, exception: Type[ValueError]
+    all_output_modes: Mode, source: str, exception: Type[SqlfmtError]
 ) -> None:
     with pytest.raises(exception):
         _ = format_string(source, all_output_modes)

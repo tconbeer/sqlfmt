@@ -3,12 +3,13 @@ from io import StringIO
 from typing import Iterator, List, Optional, Tuple
 
 from sqlfmt.dialect import Dialect
+from sqlfmt.exception import SqlfmtError
 from sqlfmt.line import Line, Node
 from sqlfmt.mode import Mode
 from sqlfmt.token import Token, TokenType
 
 
-class SQLMultilineError(ValueError):
+class SqlfmtMultilineError(SqlfmtError):
     pass
 
 
@@ -158,7 +159,7 @@ class MultilineConsumer:
                 break
 
         else:  # exhausted reader without finding end token
-            raise SQLMultilineError(
+            raise SqlfmtMultilineError(
                 f"Unterminated multiline token {self.start.token} "
                 f"started at {self.start.spos}"
             )
