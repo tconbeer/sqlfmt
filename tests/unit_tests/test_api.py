@@ -10,11 +10,6 @@ from tests.util import copy_test_data_to_tmp
 
 
 @pytest.fixture
-def mode() -> Mode:
-    return Mode()
-
-
-@pytest.fixture
 def preformatted_dir(tmp_path: Path) -> Path:
     """
     Copies the directory of preformatted sql files from the test/data
@@ -46,16 +41,16 @@ def unformatted_files(unformatted_dir: Path) -> List[Path]:
     return list(unformatted_dir.iterdir())
 
 
-def test_format_empty_string(mode: Mode) -> None:
+def test_format_empty_string(all_output_modes: Mode) -> None:
     source = expected = ""
-    actual = format_string(source, mode)
+    actual = format_string(source, all_output_modes)
     assert expected == actual
 
 
 def test_generate_results_preformatted(
-    preformatted_files: List[Path], mode: Mode
+    preformatted_files: List[Path], all_output_modes: Mode
 ) -> None:
-    results = list(_generate_results(preformatted_files, mode))
+    results = list(_generate_results(preformatted_files, all_output_modes))
 
     assert len(results) == len(
         preformatted_files
@@ -67,9 +62,9 @@ def test_generate_results_preformatted(
 
 
 def test_generate_results_unformatted(
-    unformatted_files: List[Path], mode: Mode
+    unformatted_files: List[Path], all_output_modes: Mode
 ) -> None:
-    results = list(_generate_results(unformatted_files, mode))
+    results = list(_generate_results(unformatted_files, all_output_modes))
 
     assert len(results) == len(
         unformatted_files
@@ -81,9 +76,9 @@ def test_generate_results_unformatted(
 
 
 def test_update_source_files_preformatted(
-    preformatted_files: List[Path], mode: Mode
+    preformatted_files: List[Path], default_mode: Mode
 ) -> None:
-    results = list(_generate_results(preformatted_files, mode))
+    results = list(_generate_results(preformatted_files, default_mode))
 
     expected_last_update_timestamps = [
         os.stat(res.source_path).st_mtime for res in results if res.source_path
@@ -110,9 +105,9 @@ def test_update_source_files_preformatted(
 
 
 def test_update_source_files_unformatted(
-    unformatted_files: List[Path], mode: Mode
+    unformatted_files: List[Path], default_mode: Mode
 ) -> None:
-    results = list(_generate_results(unformatted_files, mode))
+    results = list(_generate_results(unformatted_files, default_mode))
 
     original_update_timestamps = [
         os.stat(res.source_path).st_mtime for res in results if res.source_path
@@ -144,28 +139,27 @@ def test_update_source_files_unformatted(
 
 
 def test_run_unformatted_update(
-    unformatted_dir: Path, mode: Mode, monkeypatch: pytest.MonkeyPatch
+    unformatted_dir: Path, default_mode: Mode, monkeypatch: pytest.MonkeyPatch
 ) -> None:
 
     # confirm that we call the _update_source function
     monkeypatch.delattr("sqlfmt.api._update_source_files")
     with pytest.raises(NameError):
-        _ = run(files=[str(unformatted_dir)], mode=mode)
+        _ = run(files=[str(unformatted_dir)], mode=default_mode)
 
 
-def test_run_preformatted_check(preformatted_files: List[Path]) -> None:
-    check_mode = Mode(output="check")
+def test_run_preformatted_check(
+    preformatted_files: List[Path], check_mode: Mode
+) -> None:
     exit_code = run(files=[str(f) for f in preformatted_files], mode=check_mode)
     assert exit_code == 0
 
 
-def test_run_unformatted_check(unformatted_files: List[Path]) -> None:
-    check_mode = Mode(output="check")
+def test_run_unformatted_check(unformatted_files: List[Path], check_mode: Mode) -> None:
     exit_code = run(files=[str(f) for f in unformatted_files], mode=check_mode)
     assert exit_code == 1
 
 
-def test_run_unformatted_diff(unformatted_files: List[Path]) -> None:
-    diff_mode = Mode(output="diff")
+def test_run_unformatted_diff(unformatted_files: List[Path], diff_mode: Mode) -> None:
     exit_code = run(files=[str(f) for f in unformatted_files], mode=diff_mode)
     assert exit_code == 2

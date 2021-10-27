@@ -1,21 +1,11 @@
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Iterator, List, Optional, Set
+from typing import Iterable, Iterator, List, Set
 
 from sqlfmt.formatter import QueryFormatter
 from sqlfmt.mode import Mode
 from sqlfmt.parser import Query
+from sqlfmt.report import Report, SqlFormatResult
 from sqlfmt.utils import display_output, gen_sql_files
-
-
-@dataclass
-class SqlFormatResult:
-    source_path: Optional[Path]
-    source_string: str
-    formatted_string: Optional[str]
-
-    def __post_init__(self) -> None:
-        self.has_changed: bool = self.source_string != self.formatted_string
 
 
 def run(files: List[str], mode: Mode) -> int:
@@ -28,9 +18,9 @@ def run(files: List[str], mode: Mode) -> int:
     matched_paths.update(gen_sql_files([Path(s) for s in files], mode))
 
     results = list(_generate_results(matched_paths, mode))
+    report = Report(results, mode)
 
-    for res in results:
-        display_output(str(res))
+    display_output(str(report))
 
     if mode.output == "update":
         _update_source_files(results)

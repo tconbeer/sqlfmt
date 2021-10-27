@@ -42,13 +42,13 @@ def test_calculate_depth() -> None:
     assert res == (1, 0, [])
 
 
-def test_simple_query_parsing() -> None:
+def test_simple_query_parsing(all_output_modes: Mode) -> None:
 
     source_string, _ = read_test_data(
         "unit_tests/test_parser/test_simple_query_parsing.sql"
     )
 
-    q = Query.from_source(source_string=source_string, mode=Mode())
+    q = Query.from_source(source_string=source_string, mode=all_output_modes)
 
     assert q
     assert q.source_string == source_string
@@ -276,9 +276,9 @@ def test_simple_query_parsing() -> None:
     assert q.tokens == expected_tokens
 
 
-def test_error_token() -> None:
+def test_error_token(default_mode: Mode) -> None:
     source_string = "select `no backticks in postgres`"
-    q = Query.from_source(source_string=source_string, mode=Mode())
+    q = Query.from_source(source_string=source_string, mode=default_mode)
 
     expected_tokens = [
         Token(
@@ -310,20 +310,20 @@ def test_error_token() -> None:
     assert q.tokens == expected_tokens
 
 
-def test_whitespace_formatting() -> None:
+def test_whitespace_formatting(default_mode: Mode) -> None:
     source_string = "  select 1\n    from my_table\nwhere true"
     expected_string = "select 1\nfrom my_table\nwhere true\n"
-    q = Query.from_source(source_string=source_string, mode=Mode())
+    q = Query.from_source(source_string=source_string, mode=default_mode)
     assert str(q) == expected_string
 
 
-def test_case_statement_parsing() -> None:
+def test_case_statement_parsing(default_mode: Mode) -> None:
 
     source_string, _ = read_test_data(
         "unit_tests/test_parser/test_case_statement_parsing.sql"
     )
 
-    q = Query.from_source(source_string=source_string, mode=Mode())
+    q = Query.from_source(source_string=source_string, mode=default_mode)
 
     assert q
     assert q.source_string == source_string
@@ -339,10 +339,10 @@ def test_case_statement_parsing() -> None:
     assert len([t for t in q.tokens if t.type == TokenType.STATEMENT_END]) == 6
 
 
-def test_cte_parsing() -> None:
+def test_cte_parsing(default_mode: Mode) -> None:
     source_string, _ = read_test_data("unit_tests/test_parser/test_cte_parsing.sql")
 
-    q = Query.from_source(source_string=source_string, mode=Mode())
+    q = Query.from_source(source_string=source_string, mode=default_mode)
 
     assert q
     assert q.source_string == source_string
@@ -382,12 +382,12 @@ def test_cte_parsing() -> None:
     assert computed_node_depths == expected_node_depths
 
 
-def test_multiline_parsing() -> None:
+def test_multiline_parsing(default_mode: Mode) -> None:
     source_string, _ = read_test_data(
         "unit_tests/test_parser/test_multiline_parsing.sql"
     )
 
-    q = Query.from_source(source_string=source_string, mode=Mode())
+    q = Query.from_source(source_string=source_string, mode=default_mode)
 
     assert q
     assert q.source_string == source_string
@@ -501,9 +501,9 @@ def test_multiline_parsing() -> None:
     ]
 
 
-def test_star_parsing() -> None:
+def test_star_parsing(default_mode: Mode) -> None:
     space_star = "select * from my_table\n"
-    space_star_q = Query.from_source(source_string=space_star, mode=Mode())
+    space_star_q = Query.from_source(source_string=space_star, mode=default_mode)
 
     assert space_star_q
     assert len(space_star_q.nodes) == 5
@@ -512,7 +512,7 @@ def test_star_parsing() -> None:
     ), "There should be a space between select and star in select *"
 
     dot_star = "select my_table.* from my_table\n"
-    dot_star_q = Query.from_source(source_string=dot_star, mode=Mode())
+    dot_star_q = Query.from_source(source_string=dot_star, mode=default_mode)
 
     assert dot_star_q
     assert len(dot_star_q.nodes) == 7
@@ -531,8 +531,10 @@ def test_star_parsing() -> None:
         ("where something in (select id from t)", " "),
     ],
 )
-def test_open_paren_parsing(source: str, expected_prefix: str) -> None:
-    q = Query.from_source(source_string=source, mode=Mode())
+def test_open_paren_parsing(
+    source: str, expected_prefix: str, default_mode: Mode
+) -> None:
+    q = Query.from_source(source_string=source, mode=default_mode)
 
     assert q
     for node in q.nodes:
@@ -542,9 +544,9 @@ def test_open_paren_parsing(source: str, expected_prefix: str) -> None:
             ), "Open paren prefixed by wrong number of spaces"
 
 
-def test_dont_parse_twice(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_dont_parse_twice(default_mode: Mode, monkeypatch: pytest.MonkeyPatch) -> None:
     source_string = "select 1, 2, 3 from my_table where a = b"
-    q = Query.from_source(source_string=source_string, mode=Mode())
+    q = Query.from_source(source_string=source_string, mode=default_mode)
 
     assert q.lines and q.tokens
 
@@ -554,10 +556,10 @@ def test_dont_parse_twice(monkeypatch: pytest.MonkeyPatch) -> None:
     assert q.lines and q.tokens
 
 
-def test_unterminated_multiline_token() -> None:
+def test_unterminated_multiline_token(default_mode: Mode) -> None:
     source_string = "{% \n config = {}\n"
 
     with pytest.raises(ValueError) as excinfo:
-        _ = Query.from_source(source_string=source_string, mode=Mode())
+        _ = Query.from_source(source_string=source_string, mode=default_mode)
 
     assert "Unterminated multiline" in str(excinfo.value)

@@ -6,8 +6,8 @@ import click
 from sqlfmt.mode import Mode
 
 
-def display_output(msg: str) -> None:
-    click.echo(msg)
+def display_output(msg: str, err: bool = True) -> None:
+    click.echo(msg, err=err)
 
 
 def gen_sql_files(paths: Iterable[Path], mode: Mode) -> Iterator[Path]:

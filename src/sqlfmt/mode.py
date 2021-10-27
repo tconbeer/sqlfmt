@@ -11,3 +11,4 @@ class Mode:
     dialect: Dialect = field(default_factory=lambda: Postgres())
     line_length: int = 88
     output: str = "update"
+    verbose: bool = False
