@@ -1,3 +1,4 @@
+import difflib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List
@@ -41,6 +42,8 @@ class Report:
         report.append(f"{self._pluralize_file(self.number_unchanged)} {unchanged}.")
         for res in self.changed_results:
             report.append(f"{res.source_path} {formatted}.")
+            if self.mode.output == "diff":
+                report.append(self._generate_diff(res))
         if self.mode.verbose:
             for res in self.unchanged_results:
                 report.append(f"{res.source_path} {unchanged}.")
@@ -50,6 +53,24 @@ class Report:
     def _pluralize_file(n: int) -> str:
         suffix = "s" if n != 1 else ""
         return f"{n} file{suffix}"
+
+    @staticmethod
+    def _generate_diff(result: SqlFormatResult) -> str:
+        cleaned_lines = []
+        # Work around https://bugs.python.org/issue2142
+        for line in difflib.unified_diff(
+            result.source_string.splitlines(keepends=True),
+            result.formatted_string.splitlines(keepends=True),
+            fromfile="source_query",
+            tofile="formatted_query",
+        ):
+            if line[-1] == "\n":
+                cleaned_lines.append(line)
+            else:
+                cleaned_lines.append(line + "\n")
+                cleaned_lines.append("\\ No newline at end of file\n")
+
+        return "".join(cleaned_lines)
 
     @property
     def number_of_results(self) -> int:
