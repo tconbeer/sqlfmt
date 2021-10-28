@@ -5,6 +5,7 @@ from typing import List, Optional
 
 from sqlfmt.exception import SqlfmtError
 from sqlfmt.mode import Mode
+from sqlfmt.utils import style_output
 
 
 @dataclass
@@ -44,15 +45,18 @@ class Report:
             else "passed formatting check"
         )
         if self.number_errored > 0:
-            report.append(
+            error_msg = (
                 f"{self._pluralize_file(self.number_errored)} had errors while "
                 f"formatting."
             )
+            report.append(style_output(error_msg, fg="red", bold=True))
         if self.number_changed > 0:
-            report.append(f"{self._pluralize_file(self.number_changed)} {formatted}.")
+            changed_msg = f"{self._pluralize_file(self.number_changed)} {formatted}."
+            report.append(style_output(changed_msg, bold=True))
         report.append(f"{self._pluralize_file(self.number_unchanged)} {unchanged}.")
         for res in self.errored_results:
-            report.append(f"{res.source_path}\n    {res.exception}")
+            err = style_output(str(res.exception), fg="red")
+            report.append(f"{res.source_path}\n    {err}")
         for res in self.changed_results:
             report.append(f"{res.source_path} {formatted}.")
             if self.mode.output == "diff":
@@ -67,8 +71,8 @@ class Report:
         suffix = "s" if n != 1 else ""
         return f"{n} file{suffix}"
 
-    @staticmethod
-    def _generate_diff(result: SqlFormatResult) -> str:
+    @classmethod
+    def _generate_diff(cls, result: SqlFormatResult) -> str:
         cleaned_lines = []
         # Work around https://bugs.python.org/issue2142
         for line in difflib.unified_diff(
@@ -78,16 +82,26 @@ class Report:
             tofile="formatted_query",
         ):
             if line[-1] == "\n":
-                cleaned_lines.append(line)
+                cleaned_lines.append(cls._style_diff_line(line))
             else:
-                cleaned_lines.append(line + "\n")
-                cleaned_lines.append("\\ No newline at end of file\n")
+                cleaned_lines.append(cls._style_diff_line(line + "\n"))
+                cleaned_lines.append(
+                    cls._style_diff_line("\\ No newline at end of file\n")
+                )
 
         return "".join(cleaned_lines)
 
-    @property
-    def number_of_results(self) -> int:
-        return len(self.results)
+    @staticmethod
+    def _style_diff_line(line: str) -> str:
+        if line.startswith("@@"):
+            styled = style_output(line, fg="cyan")
+        elif line.startswith("+"):
+            styled = style_output(line, fg="green")
+        elif line.startswith("-"):
+            styled = style_output(line, fg="red")
+        else:
+            styled = line
+        return styled
 
     @property
     def changed_results(self) -> List[SqlFormatResult]:

@@ -75,7 +75,7 @@ def test_changed_report_default_mode(
     report = Report(changed_results, default_mode)
     assert report
     expected_report = (
-        "2 files formatted.\n"
+        "\x1b[1m2 files formatted.\x1b[0m\n"
         "1 file left unchanged.\n"
         "~/path/to/another_file.sql formatted.\n"
         "~/path/to/yet_another_file.sql formatted."
@@ -89,7 +89,7 @@ def test_changed_report_verbose_mode(
     report = Report(changed_results, verbose_mode)
     assert report
     expected_report = (
-        "2 files formatted.\n"
+        "\x1b[1m2 files formatted.\x1b[0m\n"
         "1 file left unchanged.\n"
         "~/path/to/another_file.sql formatted.\n"
         "~/path/to/yet_another_file.sql formatted.\n"
@@ -104,7 +104,7 @@ def test_changed_report_check_mode(
     report = Report(changed_results, check_mode)
     assert report
     expected_report = (
-        "2 files failed formatting check.\n"
+        "\x1b[1m2 files failed formatting check.\x1b[0m\n"
         "1 file passed formatting check.\n"
         "~/path/to/another_file.sql failed formatting check.\n"
         "~/path/to/yet_another_file.sql failed formatting check."
@@ -118,7 +118,7 @@ def test_changed_report_verbose_check_mode(
     report = Report(changed_results, verbose_check_mode)
     assert report
     expected_report = (
-        "2 files failed formatting check.\n"
+        "\x1b[1m2 files failed formatting check.\x1b[0m\n"
         "1 file passed formatting check.\n"
         "~/path/to/another_file.sql failed formatting check.\n"
         "~/path/to/yet_another_file.sql failed formatting check.\n"
@@ -148,25 +148,26 @@ def test_changed_report_diff_mode(
 ) -> None:
     report = Report(changed_results, diff_mode)
     expected_report = (
-        "2 files failed formatting check.\n"
+        "\x1b[1m2 files failed formatting check.\x1b[0m\n"
         "1 file passed formatting check.\n"
         "~/path/to/another_file.sql failed formatting check.\n"
-        "--- source_query\n"
-        "+++ formatted_query\n"
-        "@@ -1 +1 @@\n"
-        "-SELECT * from my_table where true\n"
-        "\\ No newline at end of file\n"
-        "+select * from my_table where true\n"
-        "\n"
+        "\x1b[31m\x1b[22m--- source_query\n"
+        "\x1b[0m\x1b[32m\x1b[22m+++ formatted_query\n"
+        "\x1b[0m\x1b[36m\x1b[22m@@ -1 +1 @@\n"
+        "\x1b[0m\x1b[31m\x1b[22m-SELECT * from my_table where true\n"
+        "\x1b[0m\\ No newline at end of file\n"
+        "\x1b[32m\x1b[22m+select * from my_table where true\n"
+        "\x1b[0m\n"
         "~/path/to/yet_another_file.sql failed formatting check.\n"
-        "--- source_query\n"
-        "+++ formatted_query\n"
-        "@@ -1,4 +1 @@\n"
-        "-select a,\n"
-        "- b\n"
-        "- * from my_table where \n"
-        "- a = b\n"
-        "+select a, b from my_table where a = b\n"
+        "\x1b[31m\x1b[22m--- source_query\n"
+        "\x1b[0m\x1b[32m\x1b[22m+++ formatted_query\n"
+        "\x1b[0m\x1b[36m\x1b[22m@@ -1,4 +1 @@\n"
+        "\x1b[0m\x1b[31m\x1b[22m-select a,\n"
+        "\x1b[0m\x1b[31m\x1b[22m- b\n"
+        "\x1b[0m\x1b[31m\x1b[22m- * from my_table where \n"
+        "\x1b[0m\x1b[31m\x1b[22m- a = b\n"
+        "\x1b[0m\x1b[32m\x1b[22m+select a, b from my_table where a = b\n"
+        "\x1b[0m"
     )
     assert report
     assert str(report) == expected_report
