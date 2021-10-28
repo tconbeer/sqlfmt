@@ -1,7 +1,8 @@
 import pytest
 
+from sqlfmt.dialect import SqlfmtParsingError
 from sqlfmt.mode import Mode
-from sqlfmt.parser import Node, Query
+from sqlfmt.parser import Node, Query, SqlfmtMultilineError
 from sqlfmt.token import Token, TokenType
 from tests.util import read_test_data
 
@@ -276,38 +277,10 @@ def test_simple_query_parsing(all_output_modes: Mode) -> None:
     assert q.tokens == expected_tokens
 
 
-def test_error_token(default_mode: Mode) -> None:
+def test_parsing_error(default_mode: Mode) -> None:
     source_string = "select `no backticks in postgres`"
-    q = Query.from_source(source_string=source_string, mode=default_mode)
-
-    expected_tokens = [
-        Token(
-            TokenType.UNTERM_KEYWORD,
-            "",
-            "select",
-            (0, 0),
-            (0, 6),
-            source_string,
-        ),
-        Token(
-            TokenType.ERROR_TOKEN,
-            " ",
-            "`no backticks in postgres`",
-            (0, 6),
-            (0, len(source_string)),
-            source_string,
-        ),
-        Token(
-            TokenType.NEWLINE,
-            "",
-            "\n",
-            (0, len(source_string)),
-            (0, len(source_string) + 1),
-            source_string,
-        ),
-    ]
-
-    assert q.tokens == expected_tokens
+    with pytest.raises(SqlfmtParsingError):
+        _ = Query.from_source(source_string=source_string, mode=default_mode)
 
 
 def test_whitespace_formatting(default_mode: Mode) -> None:
@@ -394,7 +367,6 @@ def test_multiline_parsing(default_mode: Mode) -> None:
     assert len(q.lines) < len(source_string.split("\n"))
     assert len(q.tokens) == 56
 
-    assert TokenType.ERROR_TOKEN not in [token.type for token in q.tokens]
     assert TokenType.COMMENT_START not in [token.type for token in q.tokens]
     assert TokenType.COMMENT_END not in [token.type for token in q.tokens]
     assert TokenType.JINJA_START not in [token.type for token in q.tokens]
@@ -559,7 +531,7 @@ def test_dont_parse_twice(default_mode: Mode, monkeypatch: pytest.MonkeyPatch) -
 def test_unterminated_multiline_token(default_mode: Mode) -> None:
     source_string = "{% \n config = {}\n"
 
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(SqlfmtMultilineError) as excinfo:
         _ = Query.from_source(source_string=source_string, mode=default_mode)
 
     assert "Unterminated multiline" in str(excinfo.value)

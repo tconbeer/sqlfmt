@@ -1,6 +1,6 @@
 import pytest
 
-from sqlfmt.dialect import Dialect, Postgres, group
+from sqlfmt.dialect import Dialect, Postgres, SqlfmtParsingError, group
 from sqlfmt.token import Token, TokenType
 
 
@@ -25,7 +25,7 @@ class TestPostgres:
 
     def test_patterns_are_complete(self, postgres: Postgres) -> None:
         # make sure Dialect defines a match for every TokenType
-        for t in [t for t in list(TokenType) if t != TokenType.ERROR_TOKEN]:
+        for t in list(TokenType):
             assert postgres.PATTERNS[t]
 
     def test_postgres_trivial_query(self, postgres: Postgres) -> None:
@@ -106,18 +106,12 @@ class TestPostgres:
             assert match is None, str(token_type)
 
     def test_error_token(self, postgres: Postgres) -> None:
-        gen = postgres.tokenize_line(line="?\n", lnum=0)
-        t = next(gen)
+        gen = postgres.tokenize_line(line="select ?\n", lnum=33)
+        select = next(gen)
+        assert select
 
-        expected_token = Token(
-            type=TokenType.ERROR_TOKEN,
-            prefix="",
-            token="?",
-            spos=(0, 0),
-            epos=(0, 2),
-            line="?\n",
-        )
-        assert t == expected_token
+        with pytest.raises(SqlfmtParsingError):
+            _ = next(gen)
 
     def test_search_for_one_token(self, postgres: Postgres) -> None:
         line = "select 1 from my_table\n"

@@ -4,6 +4,7 @@ import re
 from abc import ABC, abstractmethod
 from typing import Dict, Iterator, List, Optional
 
+from sqlfmt.exception import SqlfmtError
 from sqlfmt.token import Token, TokenType
 
 
@@ -16,6 +17,10 @@ WHITESPACES: str = WHITESPACE + "+"
 MAYBE_WHITESPACES: str = WHITESPACE + "*"
 NEWLINE: str = r"\r?\n"
 ANY_BLANK: str = group(WHITESPACES, NEWLINE, r"$")
+
+
+class SqlfmtParsingError(SqlfmtError):
+    pass
 
 
 class Dialect(ABC):
@@ -141,20 +146,9 @@ class Postgres(Dialect):
                 if line[pos:].strip() == "":
                     pos = eol
                 else:
-                    match = re.match(WHITESPACES, line[pos:])
-                    if match:
-                        prefix = match.group(0)
-                    else:
-                        prefix = ""
-                    yield Token(
-                        TokenType.ERROR_TOKEN,
-                        prefix,
-                        line[pos:].strip(),
-                        (lnum, pos),
-                        (lnum, eol),
-                        line,
+                    raise SqlfmtParsingError(
+                        f"Could not parse SQL at {(lnum, pos)}: {line[pos:].strip()}"
                     )
-                    pos = eol
 
     def search_for_token(
         self, token_types: List[TokenType], line: str, lnum: int, skipchars: int = 0
@@ -187,6 +181,6 @@ class Postgres(Dialect):
         if final_type:
             return Token(final_type, prefix, token, spos, epos, line)
         else:
-            raise ValueError(
+            raise SqlfmtParsingError(
                 "Internal Error! Matched group of types but not individual type"
             )

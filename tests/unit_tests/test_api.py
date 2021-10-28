@@ -1,11 +1,15 @@
 import os
 from pathlib import Path
-from typing import List
+from typing import List, Type
 
 import pytest
 
 from sqlfmt.api import _generate_results, _update_source_files, format_string, run
+from sqlfmt.dialect import SqlfmtParsingError
+from sqlfmt.exception import SqlfmtError
+from sqlfmt.line import SqlfmtBracketError
 from sqlfmt.mode import Mode
+from sqlfmt.parser import SqlfmtMultilineError
 from tests.util import copy_test_data_to_tmp
 
 
@@ -41,10 +45,31 @@ def unformatted_files(unformatted_dir: Path) -> List[Path]:
     return list(unformatted_dir.iterdir())
 
 
+@pytest.fixture
+def error_dir(tmp_path: Path) -> Path:
+    test_dir = copy_test_data_to_tmp(["errors"], tmp_path)
+    return test_dir
+
+
 def test_format_empty_string(all_output_modes: Mode) -> None:
     source = expected = ""
     actual = format_string(source, all_output_modes)
     assert expected == actual
+
+
+@pytest.mark.parametrize(
+    "source,exception",
+    [
+        ("?\n", SqlfmtParsingError),
+        ("select )\n", SqlfmtBracketError),
+        ("{{\n", SqlfmtMultilineError),
+    ],
+)
+def test_format_bad_string(
+    all_output_modes: Mode, source: str, exception: Type[SqlfmtError]
+) -> None:
+    with pytest.raises(exception):
+        _ = format_string(source, all_output_modes)
 
 
 def test_generate_results_preformatted(
@@ -163,3 +188,8 @@ def test_run_unformatted_check(unformatted_files: List[Path], check_mode: Mode) 
 def test_run_unformatted_diff(unformatted_files: List[Path], diff_mode: Mode) -> None:
     exit_code = run(files=[str(f) for f in unformatted_files], mode=diff_mode)
     assert exit_code == 1
+
+
+def test_run_error(error_dir: Path, all_output_modes: Mode) -> None:
+    exit_code = run(files=[str(error_dir)], mode=all_output_modes)
+    assert exit_code == 2

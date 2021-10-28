@@ -23,7 +23,6 @@ class TokenType(Enum):
     NEWLINE = auto()
     UNTERM_KEYWORD = auto()  # Unterminated keyword
     NAME = auto()
-    ERROR_TOKEN = auto()
 
 
 def split_after(token_type: TokenType) -> bool:
