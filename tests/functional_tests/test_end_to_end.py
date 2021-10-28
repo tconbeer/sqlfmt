@@ -29,6 +29,17 @@ def unformatted_target(tmp_path: Path) -> Path:
     return test_dir
 
 
+@pytest.fixture
+def error_target(tmp_path: Path) -> Path:
+    """
+    Copies the parameterized list of files/directories from the test/data
+    directory into a temp directory (provided by pytest fixture tmp_path),
+    and then returns the path to the temp directory.
+    """
+    test_dir = copy_test_data_to_tmp(["errors"], tmp_path)
+    return test_dir
+
+
 @pytest.mark.parametrize(
     "options",
     [
@@ -91,3 +102,16 @@ def test_end_to_end_check_unformatted(
     assert "failed formatting check" in result.stderr
 
     assert result.exit_code == 1
+
+
+@pytest.mark.parametrize("options", ["", "-o check"])
+def test_end_to_end_errors(
+    sqlfmt_runner: CliRunner, error_target: Path, options: str
+) -> None:
+    args = f"{error_target} {options}"
+    result = sqlfmt_runner.invoke(sqlfmt_main, args=args)
+
+    assert result
+    assert "4 files had errors" in result.stderr
+
+    assert "sqlfmt encountered an error" in result.stderr

@@ -147,7 +147,7 @@ class Postgres(Dialect):
                     pos = eol
                 else:
                     raise SqlfmtParsingError(
-                        f"Error parsing SQL at {lnum}:{pos}\n" f"{line[pos:].strip()}"
+                        f"Could not parse SQL at {(lnum, pos)}: {line[pos:].strip()}"
                     )
 
     def search_for_token(

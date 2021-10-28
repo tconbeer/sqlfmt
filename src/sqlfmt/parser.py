@@ -52,6 +52,11 @@ class Query:
                 # most tokens are contained on a single line. However, for multiline
                 # comments and jinja tags, tokenize_line only returns the opening
                 # bracket; we need to scan ahead to find the ending bracket
+                if MultilineConsumer.is_multiline_end_token(token):
+                    raise SqlfmtMultilineError(
+                        f"Encountered multiline end token '{token.token}' at "
+                        f"{token.spos}, before matching multiline start token"
+                    )
                 if MultilineConsumer.is_multiline_start_token(token):
                     mc = MultilineConsumer(
                         reader, dialect=self.mode.dialect, start=token, source=[line]
@@ -258,6 +263,13 @@ class MultilineConsumer:
     @classmethod
     def is_multiline_start_token(cls, token: Token) -> bool:
         if token.type in (TokenType.JINJA_START, TokenType.COMMENT_START):
+            return True
+        else:
+            return False
+
+    @classmethod
+    def is_multiline_end_token(cls, token: Token) -> bool:
+        if token.type in (TokenType.JINJA_END, TokenType.COMMENT_END):
             return True
         else:
             return False

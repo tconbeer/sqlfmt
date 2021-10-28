@@ -4,4 +4,6 @@ class SqlfmtError(ValueError):
     user code.
     """
 
-    pass
+    def __str__(self) -> str:
+        message = super().__str__()
+        return f"sqlfmt encountered an error: {message}"

@@ -1,8 +1,9 @@
 import difflib
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
+from sqlfmt.exception import SqlfmtError
 from sqlfmt.mode import Mode
 
 
@@ -11,10 +12,15 @@ class SqlFormatResult:
     source_path: Path
     source_string: str
     formatted_string: str
+    exception: Optional[SqlfmtError] = None
 
     @property
     def has_changed(self) -> bool:
         return self.source_string != self.formatted_string
+
+    @property
+    def has_error(self) -> bool:
+        return self.exception is not None
 
 
 @dataclass
@@ -37,9 +43,16 @@ class Report:
             if self.mode.output == "update"
             else "passed formatting check"
         )
+        if self.number_errored > 0:
+            report.append(
+                f"{self._pluralize_file(self.number_errored)} had errors while "
+                f"formatting."
+            )
         if self.number_changed > 0:
             report.append(f"{self._pluralize_file(self.number_changed)} {formatted}.")
         report.append(f"{self._pluralize_file(self.number_unchanged)} {unchanged}.")
+        for res in self.errored_results:
+            report.append(f"{res.source_path}\n    {res.exception}")
         for res in self.changed_results:
             report.append(f"{res.source_path} {formatted}.")
             if self.mode.output == "diff":
@@ -78,14 +91,24 @@ class Report:
 
     @property
     def changed_results(self) -> List[SqlFormatResult]:
-        return self._filtered_results(has_changed=True)
+        return self._filtered_results(has_changed=True, has_error=False)
 
     @property
     def unchanged_results(self) -> List[SqlFormatResult]:
-        return self._filtered_results(has_changed=False)
+        return self._filtered_results(has_changed=False, has_error=False)
 
-    def _filtered_results(self, has_changed: bool = True) -> List[SqlFormatResult]:
-        filtered = [r for r in self.results if r.has_changed == has_changed]
+    @property
+    def errored_results(self) -> List[SqlFormatResult]:
+        return self._filtered_results(has_changed=True, has_error=True)
+
+    def _filtered_results(
+        self, has_changed: bool = True, has_error: bool = False
+    ) -> List[SqlFormatResult]:
+        filtered = [
+            r
+            for r in self.results
+            if r.has_changed == has_changed and r.has_error == has_error
+        ]
         return sorted(filtered, key=lambda res: res.source_path)
 
     @property
@@ -94,4 +117,8 @@ class Report:
 
     @property
     def number_unchanged(self) -> int:
-        return self.number_of_results - self.number_changed
+        return len(self.unchanged_results)
+
+    @property
+    def number_errored(self) -> int:
+        return len(self.errored_results)
