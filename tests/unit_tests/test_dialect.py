@@ -110,9 +110,8 @@ class TestPostgres:
         select = next(gen)
         assert select
 
-        with pytest.raises(SqlfmtParsingError) as e:
+        with pytest.raises(SqlfmtParsingError):
             _ = next(gen)
-            assert "at 33:7" in str(e.value)
 
     def test_search_for_one_token(self, postgres: Postgres) -> None:
         line = "select 1 from my_table\n"
