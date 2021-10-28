@@ -165,7 +165,7 @@ class MultilineConsumer:
 
         else:  # exhausted reader without finding end token
             raise SqlfmtMultilineError(
-                f"Unterminated multiline token {self.start.token} "
+                f"Unterminated multiline token '{self.start.token}' "
                 f"started at {self.start.spos}"
             )
 
