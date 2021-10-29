@@ -1,8 +1,10 @@
-dist
-.coverage
-tests/.coverage
-tests/.results
 .mypy_cache
 .pytest_cache
+.tox
+dist
+tests/.coverage
+tests/.results
+.coverage
+
 *.egg-info
 __pycache__
