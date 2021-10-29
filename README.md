@@ -12,3 +12,13 @@ sqlfmt is not configurable, except for line length. It enforces a single style. 
 sqlfmt is not a linter. It does not parse your code; it just tokenizes it and tracks a small subset of tokens that impact formatting. This lets us "do one thing and do it well:" sqlfmt is very fast, and easier to extend than linters that need a full sql grammar.
 
 sqlfmt is designed to work with sql files that contain jinja tags and blocks. It formats the code that users look at, and therefore doesn't need to know anything about what happens after the templates are rendered.
+
+## Contributing
+
+### Setting up Your Dev Environment and Running Tests
+
+1. Install [Poetry](https://python-poetry.org/docs/#installation) if you don't have it already. You may also need or want pyenv, make, and gcc. A complete setup from a fresh install of Ubuntu can be found [here](https://github.com/tconbeer/linux_setup)
+1. Clone this repo into a directory (let's call it `sqlfmt`), then `cd sqlfmt`
+1. Use `poetry install` to install the project (editable) and its dependencies into a new virtual env
+1. Use `poetry shell` to spawn a subshell
+1. Type `make` to run all tests and linters, or run `pytest`, `black`, `flake8`, `isort`, and `mypy` individually.
