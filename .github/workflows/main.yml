@@ -1,0 +1,52 @@
+name: Lints and Tests
+
+on:
+  - pull_request:
+  - workflow_dispatch:
+
+permissions: read-all
+
+# will cancel previous workflows triggered by the same event and for the same ref for PRs or same SHA otherwise
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ contains(github.event_name, 'pull_request') && github.event.pull_request.head.ref || github.sha }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:    
+  test-and-lint:
+    name: test ${{ matrix.py }} - ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - Ubuntu
+          - Windows
+          - MacOs
+        py:
+          - "3.10"
+          - "3.9"
+          - "3.8"
+          - "3.7"
+    steps:
+      - name: Check out Repo
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v2
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+      - name: Install python dependencies
+        run: |
+          pip install --user --upgrade pip
+          pip install tox
+          pip install tox-gh
+      - name: Run tox
+        run: tox
+      
+
+
