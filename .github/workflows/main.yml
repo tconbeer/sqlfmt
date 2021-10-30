@@ -43,10 +43,9 @@ jobs:
       - name: Install python dependencies
         run: |
           pip install --user --upgrade pip
-          pip install tox
           pip install tox-gh
       - name: Run tox
-        run: tox
+        run: tox4
       
 
 
