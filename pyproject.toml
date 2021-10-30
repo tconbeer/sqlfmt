@@ -10,7 +10,7 @@ authors = ["Ted Conbeer <ted@shandy.io>"]
 license = "Apache-2.0"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.7"
 click = "^8.0"
 
 [tool.poetry.dev-dependencies]
