@@ -24,7 +24,6 @@ jobs:
       matrix:
         os:
           - Ubuntu
-          - Windows
           - MacOs
         py:
           - "3.10"
@@ -36,8 +35,10 @@ jobs:
         uses: actions/checkout@v2
         with:
           persist-credentials: false
-      - name: Set up Python
+      - name: Set up Python ${{ matrix.py }}
         uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.py }}
       - name: Install Poetry
         uses: snok/install-poetry@v1
       - name: Install python dependencies
