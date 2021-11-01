@@ -47,6 +47,5 @@ def sqlfmt(
     utils.display_output(f"Running sqlfmt {__version__}")
 
     mode = Mode(line_length=line_length, output=output, verbose=verbose)
-
     exit_code = api.run(files=files, mode=mode)
     ctx.exit(exit_code)
