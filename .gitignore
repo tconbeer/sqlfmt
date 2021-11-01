@@ -1,6 +1,7 @@
 .mypy_cache
 .pytest_cache
 .tox
+.venv
 dist
 tests/.coverage
 tests/.results

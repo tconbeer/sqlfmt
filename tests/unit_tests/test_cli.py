@@ -12,6 +12,7 @@ def run_cli_command(commands: List[str]) -> subprocess.CompletedProcess:
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True,
+        shell=True,
     )
     return process
 

@@ -61,7 +61,11 @@ def test_end_to_end_preformatted(
     sqlfmt_runner: CliRunner, preformatted_target: Path, options: str
 ) -> None:
 
-    args = f"{preformatted_target} {options}"
+    # CliRunner removes backslashes from strings passed in as args,
+    # which makes this test fail when running on windows. We need
+    # to format the path as a posix path (with forward slashes)
+    # as a workaround.
+    args = f"{preformatted_target.as_posix()} {options}"
     result = sqlfmt_runner.invoke(sqlfmt_main, args=args)
 
     assert result
@@ -93,7 +97,11 @@ def test_end_to_end_check_unformatted(
     sqlfmt_runner: CliRunner, unformatted_target: Path, options: str
 ) -> None:
 
-    args = f"{unformatted_target} {options}"
+    # CliRunner removes backslashes from strings passed in as args,
+    # which makes this test fail when running on windows. We need
+    # to format the path as a posix path (with forward slashes)
+    # as a workaround.
+    args = f"{unformatted_target.as_posix()} {options}"
     result = sqlfmt_runner.invoke(sqlfmt_main, args=args)
 
     assert result
@@ -108,7 +116,11 @@ def test_end_to_end_check_unformatted(
 def test_end_to_end_errors(
     sqlfmt_runner: CliRunner, error_target: Path, options: str
 ) -> None:
-    args = f"{error_target} {options}"
+    # CliRunner removes backslashes from strings passed in as args,
+    # which makes this test fail when running on windows. We need
+    # to format the path as a posix path (with forward slashes)
+    # as a workaround.
+    args = f"{error_target.as_posix()} {options}"
     result = sqlfmt_runner.invoke(sqlfmt_main, args=args)
 
     assert result

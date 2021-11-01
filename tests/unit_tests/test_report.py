@@ -63,8 +63,8 @@ def test_no_change_verbose_report(
 
     expected_report = (
         "2 files left unchanged.\n"
-        "~/path/to/another_file.sql left unchanged.\n"
-        "~/path/to/file.sql left unchanged."
+        f"{Path('~/path/to/another_file.sql')} left unchanged.\n"
+        f"{Path('~/path/to/file.sql')} left unchanged."
     )
     assert str(report) == expected_report
 
@@ -77,8 +77,8 @@ def test_changed_report_default_mode(
     expected_report = (
         "\x1b[1m2 files formatted.\x1b[0m\n"
         "1 file left unchanged.\n"
-        "~/path/to/another_file.sql formatted.\n"
-        "~/path/to/yet_another_file.sql formatted."
+        f"{Path('~/path/to/another_file.sql')} formatted.\n"
+        f"{Path('~/path/to/yet_another_file.sql')} formatted."
     )
     assert str(report) == expected_report
 
@@ -91,9 +91,9 @@ def test_changed_report_verbose_mode(
     expected_report = (
         "\x1b[1m2 files formatted.\x1b[0m\n"
         "1 file left unchanged.\n"
-        "~/path/to/another_file.sql formatted.\n"
-        "~/path/to/yet_another_file.sql formatted.\n"
-        "~/path/to/file.sql left unchanged."
+        f"{Path('~/path/to/another_file.sql')} formatted.\n"
+        f"{Path('~/path/to/yet_another_file.sql')} formatted.\n"
+        f"{Path('~/path/to/file.sql')} left unchanged."
     )
     assert str(report) == expected_report
 
@@ -106,8 +106,8 @@ def test_changed_report_check_mode(
     expected_report = (
         "\x1b[1m2 files failed formatting check.\x1b[0m\n"
         "1 file passed formatting check.\n"
-        "~/path/to/another_file.sql failed formatting check.\n"
-        "~/path/to/yet_another_file.sql failed formatting check."
+        f"{Path('~/path/to/another_file.sql')} failed formatting check.\n"
+        f"{Path('~/path/to/yet_another_file.sql')} failed formatting check."
     )
     assert str(report) == expected_report
 
@@ -120,9 +120,9 @@ def test_changed_report_verbose_check_mode(
     expected_report = (
         "\x1b[1m2 files failed formatting check.\x1b[0m\n"
         "1 file passed formatting check.\n"
-        "~/path/to/another_file.sql failed formatting check.\n"
-        "~/path/to/yet_another_file.sql failed formatting check.\n"
-        "~/path/to/file.sql passed formatting check."
+        f"{Path('~/path/to/another_file.sql')} failed formatting check.\n"
+        f"{Path('~/path/to/yet_another_file.sql')} failed formatting check.\n"
+        f"{Path('~/path/to/file.sql')} passed formatting check."
     )
     assert str(report) == expected_report
 
@@ -150,7 +150,7 @@ def test_changed_report_diff_mode(
     expected_report = (
         "\x1b[1m2 files failed formatting check.\x1b[0m\n"
         "1 file passed formatting check.\n"
-        "~/path/to/another_file.sql failed formatting check.\n"
+        f"{Path('~/path/to/another_file.sql')} failed formatting check.\n"
         "\x1b[31m\x1b[22m--- source_query\n"
         "\x1b[0m\x1b[32m\x1b[22m+++ formatted_query\n"
         "\x1b[0m\x1b[36m\x1b[22m@@ -1 +1 @@\n"
@@ -158,7 +158,7 @@ def test_changed_report_diff_mode(
         "\x1b[0m\\ No newline at end of file\n"
         "\x1b[32m\x1b[22m+select * from my_table where true\n"
         "\x1b[0m\n"
-        "~/path/to/yet_another_file.sql failed formatting check.\n"
+        f"{Path('~/path/to/yet_another_file.sql')} failed formatting check.\n"
         "\x1b[31m\x1b[22m--- source_query\n"
         "\x1b[0m\x1b[32m\x1b[22m+++ formatted_query\n"
         "\x1b[0m\x1b[36m\x1b[22m@@ -1,4 +1 @@\n"
