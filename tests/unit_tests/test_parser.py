@@ -473,6 +473,24 @@ def test_multiline_parsing(default_mode: Mode) -> None:
     ]
 
 
+def test_multiline_wrapping(default_mode: Mode) -> None:
+    source_string, _ = read_test_data(
+        "unit_tests/test_parser/test_multiline_wrapping.sql"
+    )
+
+    q = Query.from_source(source_string=source_string, mode=default_mode)
+
+    assert q
+    assert q.source_string == source_string
+
+    lines_after_parsing = [str(line).strip() for line in q.lines]
+
+    assert "a," in lines_after_parsing, "Should split line after multiline comment"
+    assert "as b," not in lines_after_parsing, "Should not split after multiline jinja"
+    assert "," not in lines_after_parsing, "Should not split line after multiline jinja"
+    assert "c" in lines_after_parsing, "shouldn't impact subsequent lines"
+
+
 def test_star_parsing(default_mode: Mode) -> None:
     space_star = "select * from my_table\n"
     space_star_q = Query.from_source(source_string=space_star, mode=default_mode)

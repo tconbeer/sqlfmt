@@ -63,11 +63,15 @@ class Query:
                     )
                     current_line.append_token(mc.multiline_token)
 
+                    # if there are additional tokens trailing a multiline
+                    # comment, we want to put those on their own logical Line,
+                    # so they are properly split
                     trailing_tokens: List[Token] = mc.trailing_tokens
-                    if trailing_tokens and current_line.nodes:
-                        # if there are additional tokens trailing the multiline
-                        # token, we want to put those on their own logical Line,
-                        # so they are properly split
+                    if (
+                        trailing_tokens
+                        and current_line.nodes
+                        and mc.multiline_token.type == TokenType.COMMENT
+                    ):
                         current_line.append_newline()
                         self.lines.append(current_line)
                         current_line = Line(
