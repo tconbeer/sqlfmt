@@ -119,7 +119,7 @@ class Node:
             is_first_on_line = False
             previous_token = previous_node.token
 
-        prefix = cls.whitespace(token, is_first_on_line, depth, previous_token)
+        prefix = cls.whitespace(token, is_first_on_line, previous_token)
         value = cls.capitalize(token)
 
         return Node(
@@ -211,7 +211,6 @@ class Node:
         cls,
         token: Token,
         is_first_on_line: bool,
-        depth: int,
         previous_token: Optional[Token],
     ) -> str:
         """
@@ -223,10 +222,9 @@ class Node:
         """
         NO_SPACE = ""
         SPACE = " "
-        INDENT = SPACE * 4
 
         if is_first_on_line:
-            return INDENT * depth
+            return NO_SPACE
         # tokens that are never preceded by a space
         elif token.type in (
             TokenType.BRACKET_CLOSE,
@@ -294,7 +292,9 @@ class Line:
     first_comma: Optional[int] = None
 
     def __str__(self) -> str:
-        return "".join([str(node) for node in self.nodes])
+        INDENT = " " * 4
+        prefix = INDENT * self.depth
+        return prefix + "".join([str(node) for node in self.nodes])
 
     def __len__(self) -> int:
         return len(str(self))
