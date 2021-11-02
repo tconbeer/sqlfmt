@@ -2,6 +2,7 @@
 .pytest_cache
 .tox
 .venv
+.vscode
 dist
 tests/.coverage
 tests/.results
