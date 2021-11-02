@@ -534,7 +534,19 @@ class Line:
     def can_be_depth_split(self) -> bool:
         if (
             self.depth_split
-            and self.depth_split < len(self.nodes) - 1
+            and self.depth_split < self.last_content_index + 1
+            and not self.is_standalone_comment
+            and not self.is_standalone_multiline_node
+        ):
+            return True
+        else:
+            return False
+
+    @property
+    def can_be_comment_split(self) -> bool:
+        if (
+            self.depth_split
+            and self.ends_with_comment
             and not self.is_standalone_comment
             and not self.is_standalone_multiline_node
         ):

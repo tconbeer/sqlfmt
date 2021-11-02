@@ -34,14 +34,23 @@ class LineMerger:
             raise CannotMergeException("Can't merge just one line")
 
         parent_line = lines[parent_idx]
-        merged_nodes: List[Node] = []
+        content_nodes: List[Node] = []
+        comment_nodes: List[Node] = []
 
         for line in lines[parent_idx:child_idx]:
             # skip over nodes containing NEWLINEs
             nodes = [
-                node for node in line.nodes if node.token.type != TokenType.NEWLINE
+                node
+                for node in line.nodes
+                if node.token.type != TokenType.NEWLINE
+                and node.token.type != TokenType.COMMENT
             ]
-            merged_nodes.extend(nodes)
+            content_nodes.extend(nodes)
+            comments = [
+                node for node in line.nodes if node.token.type == TokenType.COMMENT
+            ]
+            comment_nodes.extend(comments)
+        merged_nodes = content_nodes + comment_nodes
 
         if not merged_nodes:
             raise CannotMergeException("Can't merge only whitespace/newlines")
