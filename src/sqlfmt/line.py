@@ -485,9 +485,9 @@ class Line:
     def last_content_index(self) -> int:
         for i, node in enumerate(self.nodes):
             if node.is_comment or node.is_newline:
-                return i
+                return i - 1
         else:
-            return len(self)
+            return i
 
     @property
     def is_standalone_comment(self) -> bool:
