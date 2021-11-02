@@ -119,7 +119,7 @@ class Node:
             is_first_on_line = False
             previous_token = previous_node.token
 
-        prefix = cls.whitespace(token, is_first_on_line, depth, previous_token)
+        prefix = cls.whitespace(token, is_first_on_line, previous_token)
         value = cls.capitalize(token)
 
         return Node(
@@ -211,7 +211,6 @@ class Node:
         cls,
         token: Token,
         is_first_on_line: bool,
-        depth: int,
         previous_token: Optional[Token],
     ) -> str:
         """
@@ -223,10 +222,9 @@ class Node:
         """
         NO_SPACE = ""
         SPACE = " "
-        INDENT = SPACE * 4
 
         if is_first_on_line:
-            return INDENT * depth
+            return NO_SPACE
         # tokens that are never preceded by a space
         elif token.type in (
             TokenType.BRACKET_CLOSE,
@@ -294,7 +292,9 @@ class Line:
     first_comma: Optional[int] = None
 
     def __str__(self) -> str:
-        return "".join([str(node) for node in self.nodes])
+        INDENT = " " * 4
+        prefix = INDENT * self.depth
+        return prefix + "".join([str(node) for node in self.nodes])
 
     def __len__(self) -> int:
         return len(str(self))
@@ -393,7 +393,10 @@ class Line:
 
     @classmethod
     def from_nodes(
-        cls, source_string: str, previous_node: Optional[Node], nodes: List[Node]
+        cls,
+        source_string: str,
+        previous_node: Optional[Node],
+        nodes: List[Node],
     ) -> "Line":
         """
         Creates and returns a new line from a list of Nodes. Useful for line
@@ -402,9 +405,11 @@ class Line:
         line = Line(
             source_string=source_string,
             previous_node=previous_node,
-            depth=previous_node.depth + previous_node.change_in_depth
-            if previous_node
-            else 0,
+            depth=(
+                previous_node.depth + previous_node.change_in_depth
+                if previous_node
+                else 0
+            ),
         )
         for node in nodes:
             line.append_token(node.token)  # todo: optimize this.
@@ -475,6 +480,14 @@ class Line:
                 return False
         except IndexError:
             return False
+
+    @property
+    def last_content_index(self) -> int:
+        for i, node in enumerate(self.nodes):
+            if node.is_comment or node.is_newline:
+                return i - 1
+        else:
+            return i
 
     @property
     def is_standalone_comment(self) -> bool:

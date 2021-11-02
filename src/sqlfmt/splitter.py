@@ -30,7 +30,8 @@ class LineSplitter:
         ):
             yield from self.split(line, kind="depth")
         # split on any comma that doesn't end a line
-        elif line.first_comma and line.first_comma < len(line.nodes) - 1:
+        # first_comma points to the index after the comma
+        elif line.first_comma and line.first_comma < line.last_content_index + 1:
             yield from self.split(line, kind="comma")
         # nothing to split on. TODO: split on long lines with operators or
         # just names

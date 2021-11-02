@@ -320,6 +320,11 @@ def test_is_standalone_multiline_node(bare_line: Line, simple_line: Line) -> Non
     assert not simple_line.is_standalone_multiline_node
 
 
+def test_last_content_index(simple_line: Line) -> None:
+    idx = simple_line.last_content_index
+    assert str(simple_line.nodes[idx]) == ")"
+
+
 def test_calculate_depth_exception() -> None:
 
     close_paren = Token(

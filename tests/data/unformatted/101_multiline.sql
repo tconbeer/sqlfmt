@@ -76,5 +76,5 @@ with
  # that we will also handle.
 #}
     
-    /* what!?! */
+/* what!?! */
 select * from renamed where true
