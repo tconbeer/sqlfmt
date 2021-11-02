@@ -18,12 +18,17 @@ class LineSplitter:
 
         # first, if there is a multiline node on this line and it isn't the
         # only thing on this line, then split before the multiline node
-        if line.can_be_depth_split and line.contains_multiline_node:
+        if (
+            line.can_be_depth_split or line.can_be_comment_split
+        ) and line.contains_multiline_node:
             yield from self.split(line, kind="depth")
         # next, split any long lines
-        elif line.can_be_depth_split and line_is_too_long:
+        elif (
+            line.can_be_depth_split or line.can_be_comment_split
+        ) and line_is_too_long:
             yield from self.split(line, kind="depth")
-        # next, split on a change in depth
+        # next, if a line changes depth midway, split that line,
+        # unless we are only splitting off a comment
         elif line.can_be_depth_split and (
             line.change_in_depth != 0
             or (line.contains_unterm_keyword and not line.starts_with_unterm_keyword)
