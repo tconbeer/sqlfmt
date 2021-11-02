@@ -1,9 +1,12 @@
+from typing import List
+
 import pytest
 
 from sqlfmt.line import Line
 from sqlfmt.mode import Mode
 from sqlfmt.parser import Query
 from sqlfmt.splitter import LineSplitter
+from tests.util import read_test_data
 
 
 @pytest.fixture
@@ -80,3 +83,18 @@ def test_cannot_comma_split(splitter: LineSplitter) -> None:
 
     with pytest.raises(StopIteration):
         next(gen)
+
+
+def test_simple_comment_split(splitter: LineSplitter) -> None:
+    source_string, expected_result = read_test_data(
+        "unit_tests/test_splitter/test_simple_comment_split.sql"
+    )
+    raw_query = Query.from_source(source_string, splitter.mode)
+
+    split_lines: List[Line] = []
+    for raw_line in raw_query.lines:
+        split_lines.extend(splitter.maybe_split(raw_line))
+
+    actual_result = "".join([str(line) for line in split_lines])
+
+    assert actual_result == expected_result

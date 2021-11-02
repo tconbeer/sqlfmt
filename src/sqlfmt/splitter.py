@@ -30,7 +30,7 @@ class LineSplitter:
         ):
             yield from self.split(line, kind="depth")
         # split on any comma that doesn't end a line
-        elif line.first_comma and line.first_comma < len(line.nodes) - 1:
+        elif line.first_comma and line.first_comma < line.last_content_index:
             yield from self.split(line, kind="comma")
         # nothing to split on. TODO: split on long lines with operators or
         # just names
@@ -67,6 +67,13 @@ class LineSplitter:
         # line to come first, before the code it is commenting
         comment_line: Optional[Line] = None
         if tail[0].is_comment and not tail[0].is_multiline:
+            # we want to match indentation of the beginning of head
+            # so we have to munge the depth of the comment node in tail
+            tail[0].depth = head[0].depth
+            if line.previous_node:
+                line.previous_node.change_in_depth = (
+                    head[0].depth - line.previous_node.depth
+                )
             comment_line = Line.from_nodes(
                 source_string=line.source_string,
                 previous_node=line.previous_node,

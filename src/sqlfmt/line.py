@@ -393,7 +393,10 @@ class Line:
 
     @classmethod
     def from_nodes(
-        cls, source_string: str, previous_node: Optional[Node], nodes: List[Node]
+        cls,
+        source_string: str,
+        previous_node: Optional[Node],
+        nodes: List[Node],
     ) -> "Line":
         """
         Creates and returns a new line from a list of Nodes. Useful for line
@@ -402,9 +405,11 @@ class Line:
         line = Line(
             source_string=source_string,
             previous_node=previous_node,
-            depth=previous_node.depth + previous_node.change_in_depth
-            if previous_node
-            else 0,
+            depth=(
+                previous_node.depth + previous_node.change_in_depth
+                if previous_node
+                else 0
+            ),
         )
         for node in nodes:
             line.append_token(node.token)  # todo: optimize this.
@@ -475,6 +480,14 @@ class Line:
                 return False
         except IndexError:
             return False
+
+    @property
+    def last_content_index(self) -> int:
+        for i, node in enumerate(self.nodes):
+            if node.is_comment or node.is_newline:
+                return i
+        else:
+            return len(self)
 
     @property
     def is_standalone_comment(self) -> bool:
