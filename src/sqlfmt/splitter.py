@@ -32,6 +32,7 @@ class LineSplitter:
         elif line.can_be_depth_split and (
             line.change_in_depth != 0
             or (line.contains_unterm_keyword and not line.starts_with_unterm_keyword)
+            or line.closes_bracket_from_previous_line
         ):
             yield from self.split(line, kind="depth")
         # split on any comma that doesn't end a line

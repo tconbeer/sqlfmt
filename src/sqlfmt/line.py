@@ -338,7 +338,7 @@ class Line:
 
         if token.type == TokenType.COMMENT:
             self.depth_split = split_index
-        if self.change_in_depth < 0 and change_over_node < 0 and split_index > 0:
+        elif self.change_in_depth < 0 and change_over_node < 0 and split_index > 0:
             self.depth_split = split_index
         elif self.depth_split is None and node.change_in_depth > 0:
             self.depth_split = split_index
@@ -549,6 +549,19 @@ class Line:
             and self.ends_with_comment
             and not self.is_standalone_comment
             and not self.is_standalone_multiline_node
+        ):
+            return True
+        else:
+            return False
+
+    @property
+    def closes_bracket_from_previous_line(self) -> bool:
+        if any(
+            [
+                len(node.open_brackets) < len(self.open_brackets)
+                and node.depth < self.depth
+                for node in self.nodes
+            ]
         ):
             return True
         else:

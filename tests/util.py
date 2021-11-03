@@ -44,14 +44,19 @@ def check_formatting(expected: str, actual: str, ctx: str = "") -> None:
     except AssertionError as e:
         import inspect
 
-        caller = inspect.stack()[1].function
         results_dir = p = TEST_DIR / ".results"
         results_dir.mkdir(exist_ok=True)
-        ctx = ctx.replace("/", "-")
+
+        caller = inspect.stack()[1].function
+        if ctx:
+            caller += "-"
+            ctx = ctx.replace("/", "-")
+
         if ctx.endswith(".sql"):
             suffix = ""
         else:
             suffix = ".sql"
+
         p = results_dir / (caller + ctx + suffix)
         with open(p, "w") as f:
             f.write(actual)

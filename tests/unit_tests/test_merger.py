@@ -10,7 +10,7 @@ def merger(default_mode: Mode) -> LineMerger:
     return LineMerger(default_mode)
 
 
-def test_create_merged_line(default_mode: Mode, merger: LineMerger) -> None:
+def test_create_merged_line(merger: LineMerger) -> None:
 
     source_string = """
     select
@@ -25,7 +25,7 @@ def test_create_merged_line(default_mode: Mode, merger: LineMerger) -> None:
 
 
     """
-    raw_query = Query.from_source(source_string, default_mode)
+    raw_query = Query.from_source(source_string, merger.mode)
 
     expected = "select able, baker,\n"
     actual = merger.create_merged_line(raw_query.lines, 0, 4)
@@ -44,14 +44,14 @@ def test_create_merged_line(default_mode: Mode, merger: LineMerger) -> None:
         _ = merger.create_merged_line(raw_query.lines, 4, 8)
 
 
-def test_basic_merge(default_mode: Mode, merger: LineMerger) -> None:
+def test_basic_merge(merger: LineMerger) -> None:
     source_string = """
         nullif(
             full_name,
             ''
         ) as c,
     """
-    raw_query = Query.from_source(source_string, default_mode)
+    raw_query = Query.from_source(source_string, merger.mode)
     merged_lines = merger.maybe_merge_lines(raw_query.lines)
 
     expected_string = "nullif(full_name, '') as c,"
@@ -60,7 +60,7 @@ def test_basic_merge(default_mode: Mode, merger: LineMerger) -> None:
     assert result == expected_string
 
 
-def test_nested_merge(default_mode: Mode, merger: LineMerger) -> None:
+def test_nested_merge(merger: LineMerger) -> None:
     source_string = """
     select
         a,
@@ -73,7 +73,7 @@ def test_nested_merge(default_mode: Mode, merger: LineMerger) -> None:
             ''
         ) as last_name,
     """
-    raw_query = Query.from_source(source_string, default_mode)
+    raw_query = Query.from_source(source_string, merger.mode)
     merged_lines = merger.maybe_merge_lines(raw_query.lines)
 
     expected_string = (
@@ -84,7 +84,7 @@ def test_nested_merge(default_mode: Mode, merger: LineMerger) -> None:
     assert result == expected_string
 
 
-def test_incomplete_merge(default_mode: Mode, merger: LineMerger) -> None:
+def test_incomplete_merge(merger: LineMerger) -> None:
     source_string = """
     select
         first_field,
@@ -108,7 +108,7 @@ def test_incomplete_merge(default_mode: Mode, merger: LineMerger) -> None:
     where
         some_condition is true
     """
-    raw_query = Query.from_source(source_string, default_mode)
+    raw_query = Query.from_source(source_string, merger.mode)
     merged_lines = merger.maybe_merge_lines(raw_query.lines)
 
     result = list(map(str, merged_lines))
@@ -129,7 +129,7 @@ def test_incomplete_merge(default_mode: Mode, merger: LineMerger) -> None:
     assert result == expected
 
 
-def test_cte_merge(default_mode: Mode, merger: LineMerger) -> None:
+def test_cte_merge(merger: LineMerger) -> None:
     source_string = """
     with
         my_cte as (
@@ -137,7 +137,7 @@ def test_cte_merge(default_mode: Mode, merger: LineMerger) -> None:
         )
     select * from my_cte
     """
-    raw_query = Query.from_source(source_string, default_mode)
+    raw_query = Query.from_source(source_string, merger.mode)
     merged_lines = merger.maybe_merge_lines(raw_query.lines)
 
     result = list(map(str, merged_lines))
@@ -150,7 +150,7 @@ def test_cte_merge(default_mode: Mode, merger: LineMerger) -> None:
     assert result == expected
 
 
-def test_case_then_merge(default_mode: Mode, merger: LineMerger) -> None:
+def test_case_then_merge(merger: LineMerger) -> None:
     source_string = """
     case
         when
@@ -161,7 +161,7 @@ def test_case_then_merge(default_mode: Mode, merger: LineMerger) -> None:
             something_else_entirely
     end
     """
-    raw_query = Query.from_source(source_string, default_mode)
+    raw_query = Query.from_source(source_string, merger.mode)
     merged_lines = merger.maybe_merge_lines(raw_query.lines)
 
     result = list(map(str, merged_lines))
@@ -173,6 +173,36 @@ def test_case_then_merge(default_mode: Mode, merger: LineMerger) -> None:
         "    then some_other_condition\n",
         "    else something_else_entirely\n",
         "end\n",
+    ]
+
+    assert result == expected
+
+
+@pytest.mark.xfail
+def test_merge_count_window_function(merger: LineMerger) -> None:
+    source_string = (
+        "count(\n"
+        "    case\n"
+        "        when\n"
+        "            a is null\n"
+        "        then\n"
+        "            1\n"
+        "    end\n"
+        ") over (\n"
+        "    partition by\n"
+        "        user_id,\n"
+        "        date_trunc('year', performed_at)\n"
+        ") as d,\n"
+    )
+    raw_query = Query.from_source(source_string, merger.mode)
+    merged_lines = merger.maybe_merge_lines(raw_query.lines)
+
+    result = list(map(str, merged_lines))
+
+    expected = [
+        "count(case when a is null then 1 end) over (\n",
+        "    partition by user_id, date_trunc('year', performed_at)\n",
+        ") as d,\n",
     ]
 
     assert result == expected
