@@ -45,9 +45,9 @@ class TestPostgres:
         with pytest.raises(StopIteration):
             next(gen)
 
-    def test_regex_easy_match(self, postgres: Postgres) -> None:
-
-        should_match_exactly = [
+    @pytest.mark.parametrize(
+        "token_type,value",
+        [
             (TokenType.JINJA, "{% set my_var=macro('abc 123') %}"),
             (TokenType.JINJA_START, "{#"),
             (TokenType.JINJA_END, "}}"),
@@ -69,17 +69,27 @@ class TestPostgres:
             (TokenType.DOT, "."),
             (TokenType.NEWLINE, "\n"),
             (TokenType.UNTERM_KEYWORD, "select DISTINCT"),
+            (TokenType.UNTERM_KEYWORD, "select"),
+            (TokenType.UNTERM_KEYWORD, "select\n    distinct"),
+            (TokenType.UNTERM_KEYWORD, "select top 25"),
+            (TokenType.UNTERM_KEYWORD, "select all"),
+            (TokenType.UNTERM_KEYWORD, "natural\n    full outer join"),
+            (TokenType.UNTERM_KEYWORD, "left join"),
             (TokenType.NAME, "my_table_45"),
-        ]
+        ],
+    )
+    def test_regex_exact_match(
+        self, postgres: Postgres, token_type: TokenType, value: str
+    ) -> None:
 
-        # make sure our compiled programs match these values exactly
-        for tt, v in should_match_exactly:
-            prog = postgres.programs[tt]
-            match = prog.match(v)
-            assert match is not None, str(tt) + " regex doesn't match " + str(v)
-            start, end = match.span(1)
+        prog = postgres.programs[token_type]
+        match = prog.match(value)
+        assert match is not None, str(token_type) + " regex doesn't match " + str(value)
+        start, end = match.span(1)
 
-            assert v[start:end] == v, str(tt) + " regex doesn't match " + str(v)
+        assert value[start:end] == value, (
+            str(token_type) + " regex doesn't exactly match " + str(value)
+        )
 
     def test_regex_anti_match(self, postgres: Postgres) -> None:
 
@@ -105,7 +115,7 @@ class TestPostgres:
             match = prog.match("")
             assert match is None, str(token_type)
 
-    def test_error_token(self, postgres: Postgres) -> None:
+    def test_parsing_error(self, postgres: Postgres) -> None:
         gen = postgres.tokenize_line(line="select ?\n", lnum=33)
         select = next(gen)
         assert select
