@@ -4,6 +4,8 @@ from typing import List
 import pytest
 
 from sqlfmt.line import Line, Node, SqlfmtBracketError
+from sqlfmt.mode import Mode
+from sqlfmt.parser import Query
 from sqlfmt.token import Token, TokenType
 
 
@@ -340,5 +342,23 @@ def test_calculate_depth_exception() -> None:
         Node.calculate_depth(close_paren, inherited_depth=0, open_brackets=[])
 
 
-def test_closes_bracket_from_previous_line(simple_line: Line) -> None:
+def test_closes_bracket_from_previous_line(
+    simple_line: Line, default_mode: Mode
+) -> None:
     assert not simple_line.closes_bracket_from_previous_line
+
+    source_string = (
+        "case\n"
+        "    when\n"
+        "        (\n"
+        "            field_one\n"
+        "            + (field_two)\n"
+        "            + field_three\n"
+        "        )\n"
+        "    then true\n"
+        "end\n"
+    )
+    q = Query.from_source(source_string=source_string, mode=default_mode)
+    result = [line.closes_bracket_from_previous_line for line in q.lines]
+    expected = [False, False, False, False, False, False, True, False, True]
+    assert result == expected
