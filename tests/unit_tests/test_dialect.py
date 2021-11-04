@@ -76,6 +76,7 @@ class TestPostgres:
             (TokenType.UNTERM_KEYWORD, "select all"),
             (TokenType.UNTERM_KEYWORD, "natural\n    full outer join"),
             (TokenType.UNTERM_KEYWORD, "left join"),
+            (TokenType.UNTERM_KEYWORD, "join"),
             (TokenType.NAME, "my_table_45"),
         ],
     )

@@ -117,7 +117,7 @@ class Postgres(Dialect):
             r"with",
             expand_spaces(r"select( all| top \d+| distinct)?"),
             r"from",
-            expand_spaces(r"(natural )?(inner|((left|right|full)( outer)?))( )?join"),
+            expand_spaces(r"(natural )?((inner|((left|right|full)( outer)?)) )?join"),
             r"where",
             expand_spaces(r"group by"),
             r"having",
