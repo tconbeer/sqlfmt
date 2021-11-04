@@ -39,8 +39,9 @@ class LineSplitter:
         # first_comma points to the index after the comma
         elif line.first_comma and line.first_comma < line.last_content_index + 1:
             yield from self.split(line, kind="comma")
-        # nothing to split on. TODO: split on long lines with operators or
-        # just names
+        elif line_is_too_long and line.contains_operator:
+            yield from self.split(line, kind="operator")
+        # nothing to split on. TODO: split on long lines just names
         else:
             yield line
 
@@ -59,6 +60,11 @@ class LineSplitter:
                 yield line
             else:
                 yield from self.split_at_index(line, line.first_comma)
+        elif kind == "operator":
+            if not line.first_operator:
+                yield line
+            else:
+                yield from self.split_at_index(line, line.first_operator)
         else:
             yield line
 

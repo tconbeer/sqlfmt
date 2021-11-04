@@ -65,6 +65,7 @@ class TestPostgres:
             (TokenType.DOUBLE_COLON, "::"),
             (TokenType.OPERATOR, "<>"),
             (TokenType.OPERATOR, "||"),
+            (TokenType.WORD_OPERATOR, "AND"),
             (TokenType.COMMA, ","),
             (TokenType.DOT, "."),
             (TokenType.NEWLINE, "\n"),

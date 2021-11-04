@@ -104,8 +104,12 @@ class Postgres(Dialect):
             r"\|\|",
             r"[+\-*/%&@|^=<>:]=?",
             r"~",
-            group(r"on", r"using") + ANY_BLANK,
         ),
+        TokenType.WORD_OPERATOR: group(
+            group(r"and", r"or"),
+            group(r"on", r"using"),
+        )
+        + ANY_BLANK,
         TokenType.COMMA: group(r","),
         TokenType.DOT: group(r"\."),
         TokenType.NEWLINE: group(r"\r?\n"),

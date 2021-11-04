@@ -18,6 +18,7 @@ class TokenType(Enum):
     BRACKET_CLOSE = auto()
     DOUBLE_COLON = auto()
     OPERATOR = auto()
+    WORD_OPERATOR = auto()
     COMMA = auto()
     DOT = auto()
     NEWLINE = auto()
