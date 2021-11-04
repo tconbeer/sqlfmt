@@ -15,8 +15,8 @@ select
         partition by user_id, date_trunc('year', performed_at)
     ) as d,
     first_value(a ignore nulls) over (
-        partition by user_id 
-        order by performed_at desc 
+        partition by user_id
+        order by performed_at desc
         rows between unbounded preceding and unbounded following
     ) as e
 from my_table

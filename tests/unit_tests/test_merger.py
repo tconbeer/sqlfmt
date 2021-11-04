@@ -28,20 +28,16 @@ def test_create_merged_line(merger: LineMerger) -> None:
     raw_query = Query.from_source(source_string, merger.mode)
 
     expected = "select able, baker,\n"
-    actual = merger.create_merged_line(raw_query.lines, 0, 4)
+    actual = merger.create_merged_line(raw_query.lines[0:4])
     assert str(actual) == expected
 
     with pytest.raises(CannotMergeException):
         # can't merge whitespace
-        _ = merger.create_merged_line(raw_query.lines, -3, -1)
-
-    with pytest.raises(CannotMergeException):
-        # can't merge a single line
-        _ = merger.create_merged_line(raw_query.lines, 1, 2)
+        _ = merger.create_merged_line(raw_query.lines[-3:-1])
 
     with pytest.raises(CannotMergeException):
         # can't merge a multiline comment
-        _ = merger.create_merged_line(raw_query.lines, 4, 8)
+        _ = merger.create_merged_line(raw_query.lines[4:8])
 
 
 def test_basic_merge(merger: LineMerger) -> None:
@@ -143,7 +139,6 @@ def test_cte_merge(merger: LineMerger) -> None:
     result = list(map(str, merged_lines))
 
     expected = [
-        "\n",
         "with my_cte as (select * from my_table) select * from my_cte\n",
     ]
 
@@ -178,7 +173,6 @@ def test_case_then_merge(merger: LineMerger) -> None:
     assert result == expected
 
 
-@pytest.mark.xfail
 def test_merge_count_window_function(merger: LineMerger) -> None:
     source_string = (
         "count(\n"

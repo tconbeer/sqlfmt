@@ -556,13 +556,15 @@ class Line:
 
     @property
     def closes_bracket_from_previous_line(self) -> bool:
-        if any(
-            [
-                len(node.open_brackets) < len(self.open_brackets)
-                and node.depth < self.depth
-                for node in self.nodes
+        if self.previous_node and self.previous_node.open_brackets and self.nodes:
+            explicit_brackets = [
+                b
+                for b in self.previous_node.open_brackets
+                if b.type in (TokenType.STATEMENT_START, TokenType.BRACKET_OPEN)
             ]
-        ):
-            return True
-        else:
-            return False
+            if (
+                explicit_brackets
+                and explicit_brackets[-1] not in self.nodes[-1].open_brackets
+            ):
+                return True
+        return False

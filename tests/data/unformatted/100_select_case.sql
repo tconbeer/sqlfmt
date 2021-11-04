@@ -6,7 +6,7 @@ select
         then some_really_long_value
     end as my_case_statement,
     case
-        when caser
+        when caser = 'my_literal'
             then some_really_really_long_value_to_wrap_this_next_line
         else
             42
@@ -27,7 +27,7 @@ select
         then some_really_long_value
     end as my_case_statement,
     case
-        when caser
+        when caser = 'my_literal'
         then some_really_really_long_value_to_wrap_this_next_line
         else 42
     end,

@@ -338,3 +338,7 @@ def test_calculate_depth_exception() -> None:
 
     with pytest.raises(SqlfmtBracketError):
         Node.calculate_depth(close_paren, inherited_depth=0, open_brackets=[])
+
+
+def test_closes_bracket_from_previous_line(simple_line: Line) -> None:
+    assert not simple_line.closes_bracket_from_previous_line

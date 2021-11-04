@@ -25,7 +25,7 @@ class QueryFormatter:
 
         merger = LineMerger(mode=self.mode)
         if new_lines:
-            merger.maybe_merge_lines(new_lines)
+            new_lines = merger.maybe_merge_lines(new_lines)
 
         # fix indentation of standalone comments
         prev_depth = 0
