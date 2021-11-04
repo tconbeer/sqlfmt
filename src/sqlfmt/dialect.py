@@ -104,6 +104,7 @@ class Postgres(Dialect):
             r"\|\|",
             r"[+\-*/%&@|^=<>:]=?",
             r"~",
+            group(r"on", r"using") + ANY_BLANK,
         ),
         TokenType.COMMA: group(r","),
         TokenType.DOT: group(r"\."),
