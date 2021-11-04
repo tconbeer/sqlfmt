@@ -7,6 +7,7 @@ dist
 tests/.coverage
 tests/.results
 .coverage
+Pipfile
 
 *.egg-info
 __pycache__
