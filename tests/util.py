@@ -1,8 +1,10 @@
+import shutil
 from pathlib import Path
 from typing import Iterable, Iterator, List, Tuple, Union
 
 TEST_DIR = Path(__file__).parent
 BASE_DIR = TEST_DIR / "data"
+RESULTS_DIR = TEST_DIR / ".results"
 
 
 def read_test_data(relpath: Union[Path, str]) -> Tuple[str, str]:
@@ -35,6 +37,16 @@ def read_test_data(relpath: Union[Path, str]) -> Tuple[str, str]:
     return "".join(source_query).strip() + "\n", "".join(formatted_query).strip() + "\n"
 
 
+def _safe_create_results_dir() -> Path:
+    results_dir = RESULTS_DIR
+    results_dir.mkdir(exist_ok=True)
+    return results_dir
+
+
+def delete_results_dir() -> None:
+    shutil.rmtree(RESULTS_DIR, ignore_errors=True)
+
+
 def check_formatting(expected: str, actual: str, ctx: str = "") -> None:
 
     try:
@@ -44,8 +56,7 @@ def check_formatting(expected: str, actual: str, ctx: str = "") -> None:
     except AssertionError as e:
         import inspect
 
-        results_dir = p = TEST_DIR / ".results"
-        results_dir.mkdir(exist_ok=True)
+        results_dir = _safe_create_results_dir()
 
         caller = inspect.stack()[1].function
         if ctx:

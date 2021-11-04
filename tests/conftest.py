@@ -11,6 +11,16 @@ from sqlfmt.mode import Mode
 sys.path.append(os.path.dirname(__file__))
 
 
+def pytest_sessionstart(session: pytest.Session) -> None:
+    """
+    Called after the Session object has been created and
+    before performing collection and entering the run test loop.
+    """
+    from tests.util import delete_results_dir
+
+    delete_results_dir()
+
+
 @pytest.fixture
 def sqlfmt_runner() -> CliRunner:
     return CliRunner(mix_stderr=False)
