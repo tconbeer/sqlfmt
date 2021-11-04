@@ -61,7 +61,8 @@ with
         /* This is a multiline comment in very bad style,
     * which starts and ends on lines with other tokens.
     */
-        select id, another_field, and_another, and_still_another from source
+        select id, another_field, and_another, and_still_another
+        from source
     ),
     {% set my_variable_in_bad_style = [
         "a",
@@ -76,5 +77,7 @@ with
  # that we will also handle.
 #}
     
-select * from renamed where true /* what!?! */
+select * from renamed /* what!?! */
+where true
+
 

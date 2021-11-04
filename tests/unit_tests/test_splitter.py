@@ -98,3 +98,33 @@ def test_simple_comment_split(splitter: LineSplitter) -> None:
     actual_result = "".join([str(line) for line in split_lines])
 
     assert actual_result == expected_result
+
+
+def test_split_count_window_function(splitter: LineSplitter) -> None:
+    source_string = (
+        "count(case when a is null then 1 end) over "
+        "(partition by user_id, date_trunc('year', performed_at)) as d,\n"
+    )
+    expected_result = (
+        "count(\n"
+        "    case\n"
+        "        when\n"
+        "            a is null\n"
+        "        then\n"
+        "            1\n"
+        "    end\n"
+        ") over (\n"
+        "    partition by\n"
+        "        user_id,\n"
+        "        date_trunc('year', performed_at)\n"
+        ") as d,\n"
+    )
+    raw_query = Query.from_source(source_string, splitter.mode)
+
+    split_lines: List[Line] = []
+    for raw_line in raw_query.lines:
+        split_lines.extend(splitter.maybe_split(raw_line))
+
+    actual_result = "".join([str(line) for line in split_lines])
+
+    assert actual_result == expected_result

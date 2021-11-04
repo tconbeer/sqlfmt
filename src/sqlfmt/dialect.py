@@ -118,6 +118,8 @@ class Postgres(Dialect):
             r"when",
             r"then",
             r"else",
+            r"partition by",
+            r"rows between",
         )
         + ANY_BLANK,
         TokenType.NAME: group(r"\w+"),
