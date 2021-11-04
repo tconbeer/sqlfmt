@@ -61,7 +61,7 @@ class LineMerger:
 
         return merged_line
 
-    def split_into_segments(self, lines: List[Line]) -> List[List[Line]]:
+    def _split_into_segments(self, lines: List[Line]) -> List[List[Line]]:
         """
         A segment is a list of consecutive lines that are indented from the
         first line.
@@ -83,7 +83,7 @@ class LineMerger:
                     idx = i + 1
                 else:
                     idx = i
-                return [lines[:idx]] + self.split_into_segments(lines[idx:])
+                return [lines[:idx]] + self._split_into_segments(lines[idx:])
         else:
             return [lines[:]]
 
@@ -96,7 +96,7 @@ class LineMerger:
 
         Returns a new list of lines
         """
-        if len(lines) == 1:
+        if len(lines) <= 1:
             return lines
         else:
             try:
@@ -104,10 +104,26 @@ class LineMerger:
                 new_lines = [merged_line]
             except CannotMergeException:
                 new_lines = []
-                segments = self.split_into_segments(lines)
+                segments = self._split_into_segments(lines)
+                # if there are multiple segments of equal depth, and
+                # we know we can't merge across segments, we should try
+                # to merge within each segment
                 if len(segments) > 1:
                     for segment in segments:
                         new_lines.extend(self.maybe_merge_lines(segment))
+                    # if merging of any segment was successful, it is
+                    # possible that more merging can be done on a second
+                    # pass
+                    if len(new_lines) < len(lines):
+                        new_lines = self.maybe_merge_lines(new_lines)
+                # if there was only a single segment at the depth of the
+                # top line, we need to move down one line and try again.
+                # Because of the structure of a well-split set of lines,
+                # in this case moving down one line is guaranteed to move
+                # us in one depth.
+                # if the final line of the segment matches the top line,
+                # we need to strip that off so we only segment the
+                # indented lines
                 else:
                     new_lines.append(lines[0])
                     if (

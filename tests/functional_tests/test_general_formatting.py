@@ -12,11 +12,11 @@ from tests.util import check_formatting, read_test_data
         "preformatted/002_select_from_where.sql",
         "preformatted/003_literals.sql",
         "preformatted/004_with_select.sql",
-        pytest.param("unformatted/100_select_case.sql", marks=pytest.mark.xfail),
+        "unformatted/100_select_case.sql",
         "unformatted/101_multiline.sql",
         "unformatted/102_lots_of_comments.sql",
         "unformatted/103_window_functions.sql",
-        pytest.param("unformatted/200_base_model.sql", marks=pytest.mark.xfail),
+        "unformatted/200_base_model.sql",
     ],
 )
 def test_formatting(p: str) -> None:

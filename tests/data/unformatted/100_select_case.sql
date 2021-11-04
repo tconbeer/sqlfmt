@@ -23,8 +23,7 @@ select
     my_first_field,
     my_second_field as an_alias,
     case
-        when another_field = some_other_value
-        then some_really_long_value
+        when another_field = some_other_value then some_really_long_value
     end as my_case_statement,
     case
         when caser = 'my_literal'

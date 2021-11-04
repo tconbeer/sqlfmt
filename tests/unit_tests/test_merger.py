@@ -3,6 +3,7 @@ import pytest
 from sqlfmt.merger import CannotMergeException, LineMerger
 from sqlfmt.mode import Mode
 from sqlfmt.parser import Query
+from tests.util import read_test_data
 
 
 @pytest.fixture
@@ -200,3 +201,29 @@ def test_merge_count_window_function(merger: LineMerger) -> None:
     ]
 
     assert result == expected
+
+
+def test_split_into_segments(merger: LineMerger) -> None:
+    source_string, _ = read_test_data(
+        "unit_tests/test_merger/test_split_into_segments.sql"
+    )
+    q = Query.from_source(source_string, merger.mode)
+
+    top_level_segments = merger._split_into_segments(q.lines)
+
+    assert len(top_level_segments) == 2
+    assert str(top_level_segments[0][0]).startswith("select")
+    assert str(top_level_segments[1][0]).startswith("from")
+
+    select_segment = [top_level_segments[0]]
+
+    assert select_segment == merger._split_into_segments(select_segment[0])
+
+    select_lines = select_segment[0]
+    assert not (
+        select_lines[-1].closes_bracket_from_previous_line
+        and select_lines[-1].depth == select_lines[0].depth
+    )
+
+    indented_segments = merger._split_into_segments(select_lines[1:])
+    assert len(indented_segments) == 13
