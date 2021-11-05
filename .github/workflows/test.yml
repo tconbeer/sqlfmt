@@ -5,8 +5,6 @@ on:
   workflow_call:
   workflow_dispatch:
 
-permissions: read-all
-
 # will cancel previous workflows triggered by the same event and for the same ref for PRs or same SHA otherwise
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ contains(github.event_name, 'pull_request') && github.event.pull_request.head.ref || github.sha }}
