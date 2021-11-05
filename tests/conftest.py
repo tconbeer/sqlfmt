@@ -38,19 +38,19 @@ def verbose_mode() -> Mode:
 
 @pytest.fixture
 def check_mode() -> Mode:
-    return Mode(output="check")
+    return Mode(check=True)
 
 
 @pytest.fixture
 def verbose_check_mode() -> Mode:
-    return Mode(output="check", verbose=True)
+    return Mode(check=True, verbose=True)
 
 
 @pytest.fixture
 def diff_mode() -> Mode:
-    return Mode(output="diff")
+    return Mode(diff=True)
 
 
-@pytest.fixture(params=["update", "check", "diff"])
+@pytest.fixture(params=[(False, False), (False, True), (True, False), (True, True)])
 def all_output_modes(request: Any) -> Mode:
-    return Mode(output=request.param)
+    return Mode(check=request.param[0], diff=request.param[1])

@@ -8,15 +8,19 @@ from sqlfmt.mode import Mode
 
 @click.command()
 @click.option(
-    "-o",
-    "--output",
-    type=click.Choice(["update", "check", "diff"], case_sensitive=False),
-    default="update",
+    "--check",
+    is_flag=True,
     help=(
-        "Determines the result of running sqlfmt. "
-        "update: [default] overwrite the source files with the formatted sql. "
-        "check: fail with exit_code=1 if source files are not formatted to spec. "
-        "diff: print a diff of any formatting changes to stdout"
+        "Fail with an exit code of 1 if source files are not formatted to spec."
+        "Do not write formatted queries to files"
+    ),
+)
+@click.option(
+    "--diff",
+    is_flag=True,
+    help=(
+        "Print a diff of any formatting changes to stdout. Fails like --check"
+        "on any changes. Do not write formatted queries to files"
     ),
 )
 @click.option(
@@ -39,13 +43,18 @@ from sqlfmt.mode import Mode
 )
 @click.pass_context
 def sqlfmt(
-    ctx: click.Context, files: List[str], output: str, line_length: int, verbose: bool
+    ctx: click.Context,
+    files: List[str],
+    check: bool,
+    diff: bool,
+    line_length: int,
+    verbose: bool,
 ) -> None:
     """
     sqlfmt is an opinionated CLI tool that formats your sql files
     """
     utils.display_output(f"Running sqlfmt {__version__}")
 
-    mode = Mode(line_length=line_length, output=output, verbose=verbose)
+    mode = Mode(line_length=line_length, check=check, diff=diff, verbose=verbose)
     exit_code = api.run(files=files, mode=mode)
     ctx.exit(exit_code)

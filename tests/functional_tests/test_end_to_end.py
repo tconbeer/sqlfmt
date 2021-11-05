@@ -47,14 +47,11 @@ def error_target(tmp_path: Path) -> Path:
         "--verbose",
         "--line-length 88",
         "-l 88",
-        "--output update",
-        "-o update",
-        "--output check",
-        "-o check",
-        "-o check -v",
-        "--output diff",
-        "-o diff",
-        "-v -o diff",
+        "--check",
+        "--check -v",
+        "--diff",
+        "-v --diff",
+        "--check --diff",
     ],
 )
 def test_end_to_end_preformatted(
@@ -84,14 +81,7 @@ def test_end_to_end_preformatted(
 
 @pytest.mark.parametrize(
     "options",
-    [
-        "--output check",
-        "-o check",
-        "-o check -v",
-        "--output diff",
-        "-o diff",
-        "-v -o diff",
-    ],
+    ["--check", "--check -v", "--diff", "-v --diff", "--diff --check"],
 )
 def test_end_to_end_check_unformatted(
     sqlfmt_runner: CliRunner, unformatted_target: Path, options: str
@@ -112,7 +102,7 @@ def test_end_to_end_check_unformatted(
     assert result.exit_code == 1
 
 
-@pytest.mark.parametrize("options", ["", "-o check"])
+@pytest.mark.parametrize("options", ["", "--check"])
 def test_end_to_end_errors(
     sqlfmt_runner: CliRunner, error_target: Path, options: str
 ) -> None:
