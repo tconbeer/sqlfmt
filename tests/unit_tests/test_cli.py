@@ -1,3 +1,4 @@
+import re
 import subprocess
 from typing import List
 
@@ -36,3 +37,14 @@ def test_help_command(sqlfmt_runner: CliRunner) -> None:
     help_results = sqlfmt_runner.invoke(sqlfmt_main, args=help_option)
     assert help_results.exit_code == 0
     assert help_results.stdout.startswith("Usage: sqlfmt")
+
+
+def test_version_command(sqlfmt_runner: CliRunner) -> None:
+    version_option = "--version"
+    results = sqlfmt_runner.invoke(sqlfmt_main, args=version_option)
+    assert results.exit_code == 0
+    assert results.stdout.startswith("sqlfmt, version ")
+
+    semver_pattern = r"\d+\.\d+.\d+"
+    match = re.search(semver_pattern, results.stdout)
+    assert match, "Semantic version number not in output"

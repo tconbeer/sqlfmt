@@ -12,6 +12,8 @@ license = "Apache-2.0"
 [tool.poetry.dependencies]
 python = "^3.7"
 click = "^8.0"
+importlib_metadata = { version = "*", python = "<3.8" }
+
 
 [tool.poetry.dev-dependencies]
 black = "^21.9b0"
