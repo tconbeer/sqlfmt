@@ -19,6 +19,10 @@ NEWLINE: str = r"\r?\n"
 ANY_BLANK: str = group(WHITESPACES, NEWLINE, r"$")
 
 
+def expand_spaces(s: str) -> str:
+    return s.replace(" ", f"{ANY_BLANK}+")
+
+
 class SqlfmtParsingError(SqlfmtError):
     pass
 
@@ -101,25 +105,31 @@ class Postgres(Dialect):
             r"[+\-*/%&@|^=<>:]=?",
             r"~",
         ),
+        TokenType.WORD_OPERATOR: group(
+            group(r"and", r"or"),
+            group(r"on", r"using"),
+        )
+        + ANY_BLANK,
         TokenType.COMMA: group(r","),
         TokenType.DOT: group(r"\."),
         TokenType.NEWLINE: group(r"\r?\n"),
         TokenType.UNTERM_KEYWORD: group(
             r"with",
-            r"select( all| top \d+| distinct)?",
+            expand_spaces(r"select( all| top \d+| distinct)?"),
             r"from",
+            expand_spaces(r"(natural )?((inner|((left|right|full)( outer)?)) )?join"),
             r"where",
-            r"group by",
+            expand_spaces(r"group by"),
             r"having",
-            r"order by",
+            expand_spaces(r"order by"),
             r"limit",
             r"offset",
-            r"union( all)?",
+            expand_spaces(r"union( all)?"),
             r"when",
             r"then",
             r"else",
-            r"partition by",
-            r"rows between",
+            expand_spaces(r"partition by"),
+            expand_spaces(r"rows between"),
         )
         + ANY_BLANK,
         TokenType.NAME: group(r"\w+"),

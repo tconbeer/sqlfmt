@@ -76,6 +76,10 @@ class Node:
         return self.token.type == TokenType.COMMENT
 
     @property
+    def is_operator(self) -> bool:
+        return self.token.type in (TokenType.OPERATOR, TokenType.WORD_OPERATOR)
+
+    @property
     def is_newline(self) -> bool:
         return self.token.type == TokenType.NEWLINE
 
@@ -290,6 +294,7 @@ class Line:
     open_brackets: List[Token] = field(default_factory=list)
     depth_split: Optional[int] = None
     first_comma: Optional[int] = None
+    first_operator: Optional[int] = None
 
     def __str__(self) -> str:
         INDENT = " " * 4
@@ -349,6 +354,11 @@ class Line:
             and self.first_comma is None
         ):
             self.first_comma = split_index
+        elif (
+            token.type in (TokenType.OPERATOR, TokenType.WORD_OPERATOR)
+            and self.first_operator is None
+        ):
+            self.first_operator = split_index
 
         self.nodes.append(node)
 
@@ -444,6 +454,10 @@ class Line:
     @property
     def contains_comment(self) -> bool:
         return any([n.is_comment for n in self.nodes])
+
+    @property
+    def contains_operator(self) -> bool:
+        return any([n.is_operator for n in self.nodes])
 
     @property
     def contains_multiline_node(self) -> bool:
