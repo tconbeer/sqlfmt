@@ -7,6 +7,7 @@ from sqlfmt.mode import Mode
 
 
 @click.command()
+@click.version_option()
 @click.option(
     "--check",
     is_flag=True,
