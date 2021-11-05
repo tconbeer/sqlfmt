@@ -1,12 +1,12 @@
 from pathlib import Path
 from typing import Iterable, Iterator, List, Set
 
+from sqlfmt import __version__
 from sqlfmt.exception import SqlfmtError
 from sqlfmt.formatter import QueryFormatter
 from sqlfmt.mode import Mode
 from sqlfmt.parser import Query
-from sqlfmt.report import Report, SqlFormatResult
-from sqlfmt.utils import display_output
+from sqlfmt.report import Report, SqlFormatResult, display_output
 
 
 def run(files: List[str], mode: Mode) -> int:
@@ -15,6 +15,9 @@ def run(files: List[str], mode: Mode) -> int:
     Returns the exit code for the cli; 0 indicates success, 1 indicates failed check,
     2 indicates a handled exception caused by errors in one or more user code files
     """
+
+    display_output(f"Running sqlfmt {__version__}")
+
     matched_paths: Set[Path] = set()
     matched_paths.update(_generate_matched_paths([Path(s) for s in files], mode))
 

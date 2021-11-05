@@ -2,7 +2,7 @@ from typing import List
 
 import click
 
-from sqlfmt import __version__, api, utils
+from sqlfmt import api
 from sqlfmt.mode import Mode
 
 
@@ -53,8 +53,6 @@ def sqlfmt(
     """
     sqlfmt is an opinionated CLI tool that formats your sql files
     """
-    utils.display_output(f"Running sqlfmt {__version__}")
-
     mode = Mode(line_length=line_length, check=check, diff=diff, verbose=verbose)
     exit_code = api.run(files=files, mode=mode)
     ctx.exit(exit_code)
