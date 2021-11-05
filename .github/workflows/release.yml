@@ -8,8 +8,8 @@ on:
         required: true
 
 jobs:
-  test-and-lint:
-    uses: tconbeer/sqlfmt/.github/workflows/test.yml@main
+  # test-and-lint:
+  #   uses: tconbeer/sqlfmt/.github/workflows/test.yml@main
   
   prepare-release:
     runs-on: ubuntu-latest
