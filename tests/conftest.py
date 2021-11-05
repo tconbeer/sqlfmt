@@ -27,30 +27,40 @@ def sqlfmt_runner() -> CliRunner:
 
 
 @pytest.fixture
-def default_mode() -> Mode:
+def unset_no_color_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("NO_COLOR", raising=False)
+
+
+@pytest.fixture
+def default_mode(unset_no_color_env: None) -> Mode:
     return Mode()
 
 
 @pytest.fixture
-def verbose_mode() -> Mode:
+def verbose_mode(unset_no_color_env: None) -> Mode:
     return Mode(verbose=True)
 
 
 @pytest.fixture
-def check_mode() -> Mode:
+def check_mode(unset_no_color_env: None) -> Mode:
     return Mode(check=True)
 
 
 @pytest.fixture
-def verbose_check_mode() -> Mode:
+def verbose_check_mode(unset_no_color_env: None) -> Mode:
     return Mode(check=True, verbose=True)
 
 
 @pytest.fixture
-def diff_mode() -> Mode:
+def diff_mode(unset_no_color_env: None) -> Mode:
     return Mode(diff=True)
 
 
+@pytest.fixture
+def no_color_diff_mode(unset_no_color_env: None) -> Mode:
+    return Mode(diff=True, _no_color=True)
+
+
 @pytest.fixture(params=[(False, False), (False, True), (True, False), (True, True)])
-def all_output_modes(request: Any) -> Mode:
+def all_output_modes(request: Any, unset_no_color_env: None) -> Mode:
     return Mode(check=request.param[0], diff=request.param[1])

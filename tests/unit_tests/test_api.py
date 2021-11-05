@@ -4,7 +4,13 @@ from typing import List, Type
 
 import pytest
 
-from sqlfmt.api import _generate_results, _update_source_files, format_string, run
+from sqlfmt.api import (
+    _generate_matched_paths,
+    _generate_results,
+    _update_source_files,
+    format_string,
+    run,
+)
 from sqlfmt.dialect import SqlfmtParsingError
 from sqlfmt.exception import SqlfmtError
 from sqlfmt.line import SqlfmtBracketError
@@ -49,6 +55,21 @@ def unformatted_files(unformatted_dir: Path) -> List[Path]:
 def error_dir(tmp_path: Path) -> Path:
     test_dir = copy_test_data_to_tmp(["errors"], tmp_path)
     return test_dir
+
+
+def test_file_discovery(all_output_modes: Mode) -> None:
+    p = Path("tests/data/unit_tests/test_api/test_file_discovery")
+    res = list(_generate_matched_paths(p.iterdir(), all_output_modes))
+
+    expected = (
+        p / "top_level_file.sql",
+        p / "a_directory/one_file.sql",
+        p / "a_directory/nested_directory/another_file.sql",
+        p / "a_directory/nested_directory/j2_extension.sql.jinja",
+    )
+
+    for p in expected:
+        assert p in res
 
 
 def test_format_empty_string(all_output_modes: Mode) -> None:

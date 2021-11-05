@@ -3,9 +3,27 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
 
+import click
+
 from sqlfmt.exception import SqlfmtError
 from sqlfmt.mode import Mode
-from sqlfmt.utils import style_output
+
+
+def style_output(
+    msg: str, fg: Optional[str] = None, bg: Optional[str] = None, bold: bool = False
+) -> str:
+    # see https://click.palletsprojects.com/en/8.0.x/api/?highlight=style#click.style
+    s: str = click.style(msg, fg=fg, bg=bg, bold=bold)
+    return s
+
+
+def unstyle_output(msg: str) -> str:
+    s: str = click.unstyle(msg)
+    return s
+
+
+def display_output(msg: str, err: bool = True) -> None:
+    click.echo(msg, err=err)
 
 
 @dataclass
@@ -66,7 +84,11 @@ class Report:
         if self.mode.verbose:
             for res in self.unchanged_results:
                 report.append(f"{res.source_path} {unchanged}.")
-        return "\n".join(report)
+
+        msg = "\n".join(report)
+        if self.mode.color is False:
+            msg = unstyle_output(msg)
+        return msg
 
     @staticmethod
     def _pluralize_file(n: int) -> str:
@@ -104,6 +126,9 @@ class Report:
         else:
             styled = line
         return styled
+
+    def display_report(self) -> None:
+        display_output(str(self), err=True)
 
     @property
     def changed_results(self) -> List[SqlFormatResult]:
