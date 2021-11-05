@@ -23,12 +23,12 @@ def run(files: List[str], mode: Mode) -> int:
 
     display_output(str(report))
 
-    if mode.output == "update":
+    if not (mode.check or mode.diff) == "update":
         _update_source_files(results)
 
     if report.number_errored > 0:
         return 2
-    elif mode.output in ("check", "diff") and report.number_changed > 0:
+    elif (mode.check or mode.diff) and report.number_changed > 0:
         return 1
     else:
         return 0

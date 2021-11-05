@@ -37,12 +37,14 @@ class Report:
     def __str__(self) -> str:
         report = []
         formatted = (
-            "formatted" if self.mode.output == "update" else "failed formatting check"
+            "failed formatting check"
+            if (self.mode.check or self.mode.diff)
+            else "formatted"
         )
         unchanged = (
-            "left unchanged"
-            if self.mode.output == "update"
-            else "passed formatting check"
+            "passed formatting check"
+            if (self.mode.check or self.mode.diff)
+            else "left unchanged"
         )
         if self.number_errored > 0:
             error_msg = (
@@ -59,7 +61,7 @@ class Report:
             report.append(f"{res.source_path}\n    {err}")
         for res in self.changed_results:
             report.append(f"{res.source_path} {formatted}.")
-            if self.mode.output == "diff":
+            if self.mode.diff:
                 report.append(self._generate_diff(res))
         if self.mode.verbose:
             for res in self.unchanged_results:
