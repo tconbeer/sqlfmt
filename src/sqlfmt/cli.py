@@ -36,6 +36,23 @@ from sqlfmt.mode import Mode
     is_flag=True,
     help=("Prints more information to stderr"),
 )
+@click.option(
+    "--no-color",
+    is_flag=True,
+    help=(
+        "Removes color codes from all output, including diffs."
+        "Alternatively, set the NO_COLOR environment variable"
+    ),
+)
+@click.option(
+    "--force-color",
+    is_flag=True,
+    help=(
+        "sqlfmt output is colorized by default. However, if you have"
+        "the NO_COLOR env var set, and still want sqlfmt to colorize"
+        "output, you can use --force-color to override the env var"
+    ),
+)
 @click.argument(
     "files",
     nargs=-1,
@@ -47,12 +64,21 @@ def sqlfmt(
     files: List[str],
     check: bool,
     diff: bool,
+    no_color: bool,
+    force_color: bool,
     line_length: int,
     verbose: bool,
 ) -> None:
     """
     sqlfmt is an opinionated CLI tool that formats your sql files
     """
-    mode = Mode(line_length=line_length, check=check, diff=diff, verbose=verbose)
+    mode = Mode(
+        line_length=line_length,
+        check=check,
+        diff=diff,
+        verbose=verbose,
+        _no_color=no_color,
+        _force_color=force_color,
+    )
     exit_code = api.run(files=files, mode=mode)
     ctx.exit(exit_code)
