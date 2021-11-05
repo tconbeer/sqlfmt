@@ -171,3 +171,33 @@ def test_changed_report_diff_mode(
     )
     assert report
     assert str(report) == expected_report
+
+
+def test_changed_report_no_color_diff_mode(
+    changed_results: List[SqlFormatResult], no_color_diff_mode: Mode
+) -> None:
+    report = Report(changed_results, no_color_diff_mode)
+    expected_report = (
+        "2 files failed formatting check.\n"
+        "1 file passed formatting check.\n"
+        f"{Path('~/path/to/another_file.sql')} failed formatting check.\n"
+        "--- source_query\n"
+        "+++ formatted_query\n"
+        "@@ -1 +1 @@\n"
+        "-SELECT * from my_table where true\n"
+        "\\ No newline at end of file\n"
+        "+select * from my_table where true\n"
+        "\n"
+        f"{Path('~/path/to/yet_another_file.sql')} failed formatting check.\n"
+        "--- source_query\n"
+        "+++ formatted_query\n"
+        "@@ -1,4 +1 @@\n"
+        "-select a,\n"
+        "- b\n"
+        "- * from my_table where \n"
+        "- a = b\n"
+        "+select a, b from my_table where a = b\n"
+        ""
+    )
+    assert report
+    assert str(report) == expected_report
