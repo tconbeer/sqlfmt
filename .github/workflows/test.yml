@@ -1,7 +1,8 @@
-name: Lints and Tests
+name: Lint and Test
 
 on:
   pull_request:
+  workflow_call:
   workflow_dispatch:
 
 permissions: read-all
