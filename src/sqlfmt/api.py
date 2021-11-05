@@ -6,7 +6,7 @@ from sqlfmt.formatter import QueryFormatter
 from sqlfmt.mode import Mode
 from sqlfmt.parser import Query
 from sqlfmt.report import Report, SqlFormatResult
-from sqlfmt.utils import display_output, gen_sql_files
+from sqlfmt.utils import display_output
 
 
 def run(files: List[str], mode: Mode) -> int:
@@ -16,7 +16,7 @@ def run(files: List[str], mode: Mode) -> int:
     2 indicates a handled exception caused by errors in one or more user code files
     """
     matched_paths: Set[Path] = set()
-    matched_paths.update(gen_sql_files([Path(s) for s in files], mode))
+    matched_paths.update(_generate_matched_paths([Path(s) for s in files], mode))
 
     results = list(_generate_results(matched_paths, mode))
     report = Report(results, mode)
@@ -54,6 +54,14 @@ def _generate_results(paths: Iterable[Path], mode: Mode) -> Iterator[SqlFormatRe
                     formatted_string="",
                     exception=e,
                 )
+
+
+def _generate_matched_paths(paths: Iterable[Path], mode: Mode) -> Iterator[Path]:
+    for p in paths:
+        if p.is_file() and "".join(p.suffixes) in (mode.SQL_EXTENSIONS):
+            yield p
+        elif p.is_dir():
+            yield from (_generate_matched_paths(p.iterdir(), mode))
 
 
 def _update_source_files(results: Iterable[SqlFormatResult]) -> None:
