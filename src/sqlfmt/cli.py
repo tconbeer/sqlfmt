@@ -11,7 +11,7 @@ from sqlfmt.mode import Mode
     "--check",
     is_flag=True,
     help=(
-        "Fail with exit_code=1 if source files are not formatted to spec."
+        "Fail with an exit code of 1 if source files are not formatted to spec."
         "Do not write formatted queries to files"
     ),
 )
