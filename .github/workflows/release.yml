@@ -28,7 +28,7 @@ jobs:
       - name: Create release branch
         run: |
           git checkout -b release/v${{ github.event.inputs.newVersion }}
-          git push origin release/v${{ github.event.inputs.newVersion }}
+          git push --set-upstream origin release/v${{ github.event.inputs.newVersion }}
       - name: Bump version
         run: poetry version ${{ github.event.inputs.newVersion }} --no-interaction
       - name: Ensure package can be built
