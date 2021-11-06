@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "sqlfmt"
-version = "0.0.1"
+version = "0.1.0-alpha.2"
 description = "sqlfmt is an opinionated CLI tool that formats your sql files"
 authors = ["Ted Conbeer <ted@shandy.io>"]
 license = "Apache-2.0"
