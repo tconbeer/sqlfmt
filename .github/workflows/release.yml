@@ -45,7 +45,9 @@ jobs:
           commit_message: Bumps version to ${{ github.event.inputs.newVersion }}
           tagging_message: v${{ github.event.inputs.newVersion }}
       - name: Create pull request into main
-        uses: thomaseizinger/create-pull-request@1.0.0
+        uses: thomaseizinger/create-pull-request@1.0.0env:
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           head: release/v${{ github.event.inputs.newVersion }}
           base: main
