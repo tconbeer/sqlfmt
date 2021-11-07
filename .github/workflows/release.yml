@@ -7,10 +7,7 @@ on:
         description: A version number for this release (e.g., "0.1.0")
         required: true
 
-jobs:
-  # test-and-lint:
-  #   uses: tconbeer/sqlfmt/.github/workflows/test.yml@main
-  
+jobs:  
   prepare-release:
     runs-on: ubuntu-latest
 
