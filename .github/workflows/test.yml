@@ -2,8 +2,6 @@ name: Lint and Test
 
 on:
   pull_request:
-  workflow_call:
-  workflow_dispatch:
 
 # will cancel previous workflows triggered by the same event and for the same ref for PRs or same SHA otherwise
 concurrency:
