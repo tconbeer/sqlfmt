@@ -1,4 +1,4 @@
-name: Create a New Release
+name: Create Release Branch
 
 on:
   workflow_dispatch:
@@ -7,18 +7,15 @@ on:
         description: A version number for this release (e.g., "0.1.0")
         required: true
 
-jobs:
-  # test-and-lint:
-  #   uses: tconbeer/sqlfmt/.github/workflows/test.yml@main
-  
+jobs:  
   prepare-release:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out Repo
+      - name: Check out sqlfmt main branch
         uses: actions/checkout@v2
         with:
-          persist-credentials: false
+          ref: main
       - name: Set up Python 3.9
         uses: actions/setup-python@v2
         with:
@@ -28,7 +25,9 @@ jobs:
         with:
           version: latest
       - name: Create release branch
-        run: git checkout -b release/v${{ github.event.inputs.newVersion }}
+        run: |
+          git checkout -b release/v${{ github.event.inputs.newVersion }}
+          git push --set-upstream origin release/v${{ github.event.inputs.newVersion }}
       - name: Bump version
         run: poetry version ${{ github.event.inputs.newVersion }} --no-interaction
       - name: Ensure package can be built
@@ -44,11 +43,12 @@ jobs:
           tagging_message: v${{ github.event.inputs.newVersion }}
       - name: Create pull request into main
         uses: thomaseizinger/create-pull-request@1.0.0
-        with:
+        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
           head: release/v${{ github.event.inputs.newVersion }}
           base: main
-          title: v${{ github.event.inputs.versionName }}
+          title: v${{ github.event.inputs.newVersion }}
           body: |
               This PR was automatically generated. It bumps the version number
               in pyproject.toml and updates CHANGELOG.md

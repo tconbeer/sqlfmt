@@ -3,11 +3,14 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "sqlfmt"
+name = "shandy-sqlfmt"
 version = "0.0.1"
 description = "sqlfmt is an opinionated CLI tool that formats your sql files"
 authors = ["Ted Conbeer <ted@shandy.io>"]
 license = "Apache-2.0"
+packages = [
+    { include = "sqlfmt", from = "src" }
+]
 
 [tool.poetry.dependencies]
 python = "^3.7"
