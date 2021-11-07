@@ -7,7 +7,7 @@ from sqlfmt.mode import Mode
 
 
 @click.command()
-@click.version_option()
+@click.version_option(package_name="shandy-sqlfmt")
 @click.option(
     "--check",
     is_flag=True,
