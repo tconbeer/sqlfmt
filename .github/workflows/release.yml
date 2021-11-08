@@ -40,15 +40,14 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: Bumps version to ${{ github.event.inputs.newVersion }}
-          tagging_message: v${{ github.event.inputs.newVersion }}
       - name: Create pull request into main
-        uses: thomaseizinger/create-pull-request@1.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: peter-evans/create-pull-request@v3
         with:
-          head: release/v${{ github.event.inputs.newVersion }}
+          token: ${{ secrets.SQLFMT_RELEASE_TOKEN }}
+          branch: release/v${{ github.event.inputs.newVersion }}
           base: main
           title: v${{ github.event.inputs.newVersion }}
+          labels: release
           body: |
               This PR was automatically generated. It bumps the version number
               in pyproject.toml and updates CHANGELOG.md

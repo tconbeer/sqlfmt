@@ -1,13 +1,15 @@
 name: Build and Publish Package
 
 on:
-  push:
+  pull_request:
     branches:
       - main
+    types:
+      - close
 
 jobs:
   publish-package:
-    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    if: ${{ github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, "release/v") }}
     runs-on: ubuntu-latest
 
     steps:
@@ -36,6 +38,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.sqlfmt_version.outputs.sqlfmt_version }}
+          target_commitish: main
           token: ${{ secrets.SQLFMT_RELEASE_TOKEN }}
           body_path: CHANGELOG.md
           files: |
