@@ -9,7 +9,7 @@ on:
 
 jobs:
   publish-package:
-    if: ${{ github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, "release/v") }}
+    if: ${{ github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/v') }}
     runs-on: ubuntu-latest
 
     steps:
