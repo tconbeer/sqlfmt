@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.0-alpha.7] - 2021-11-08
+
 ## [0.1.0-alpha.5] - 2021-11-08
 
 ## [0.1.0-alpha.4] - 2021-11-08
@@ -18,7 +20,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.1.0-alpha.5...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.1.0-alpha.7...HEAD
+
+[0.1.0-alpha.7]: https://github.com/tconbeer/sqlfmt/compare/0.1.0-alpha.5...0.1.0-alpha.7
 
 [0.1.0-alpha.5]: https://github.com/tconbeer/sqlfmt/compare/0.1.0-alpha.4...0.1.0-alpha.5
 
