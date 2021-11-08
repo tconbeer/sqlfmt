@@ -48,7 +48,8 @@ jobs:
           head: release/v${{ github.event.inputs.newVersion }}
           base: main
           title: v${{ github.event.inputs.newVersion }}
-          body: |
+          body: >
               This PR was automatically generated. It bumps the version number
-              in pyproject.toml and updates CHANGELOG.md
+              in pyproject.toml and updates CHANGELOG.md. You may have to close
+              this PR and reopen it to get the required checks to run.
 
