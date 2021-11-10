@@ -145,10 +145,12 @@ def test_simple_line(
     assert str(simple_line) == source_string
 
     expected_token_repr = (
-        "Token(type=<TokenType.UNTERM_KEYWORD: 20>, prefix='', token='with', "
+        "Token(type=TokenType.UNTERM_KEYWORD, prefix='', token='with', "
         "spos=(0, 0), epos=(0, 4), line='with abc as (select * from my_table)\\n')"
     )
     assert repr(simple_line.tokens[0]) == expected_token_repr
+    new_token = eval(repr(simple_line.tokens[0]))
+    assert simple_line.tokens[0] == new_token
 
     expected_node_repr = (
         "Node(\n\ttoken='Token(type=TokenType.UNTERM_KEYWORD, token=with, "
