@@ -156,3 +156,15 @@ class TestPostgres:
             [TokenType.NUMBER, TokenType.UNTERM_KEYWORD], line=line, lnum=0, skipchars=6
         )
         assert actual_token == expected_token
+
+    def test_match_first_jinja_Tag(self, postgres: Postgres) -> None:
+        source_string = (
+            "{{ event_cte.source_cte_name}}.{{ event_cte.primary_key }} "
+            "|| '-' || '{{ event_cte.event_name }}'"
+        )
+        prog = postgres.programs[TokenType.JINJA]
+        match = prog.match(source_string)
+
+        assert match is not None
+        start, end = match.span(1)
+        assert source_string[start:end] == "{{ event_cte.source_cte_name}}"
