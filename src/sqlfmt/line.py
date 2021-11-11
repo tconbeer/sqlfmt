@@ -244,7 +244,8 @@ class Node:
             return NO_SPACE
         # names preceded by dots are namespaced identifiers. No space.
         elif (
-            token.type in (TokenType.QUOTED_NAME, TokenType.NAME, TokenType.STAR)
+            token.type
+            in (TokenType.QUOTED_NAME, TokenType.NAME, TokenType.STAR, TokenType.JINJA)
             and previous_token
             and previous_token.type == TokenType.DOT
         ):
@@ -282,6 +283,7 @@ class Node:
             TokenType.NAME,
             TokenType.STATEMENT_START,
             TokenType.STATEMENT_END,
+            TokenType.WORD_OPERATOR,
         ):
             return token.token.lower()
         else:

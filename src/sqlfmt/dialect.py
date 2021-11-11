@@ -67,15 +67,15 @@ class Postgres(Dialect):
 
     PATTERNS: Dict[TokenType, str] = {
         TokenType.JINJA: group(
-            r"\{\{[^\n]*\}\}",
-            r"\{%[^\n]*%\}",
-            r"\{\#[^\n]*\#\}",
+            r"\{\{[^\n]*?\}\}",
+            r"\{%[^\n]*?%\}",
+            r"\{\#[^\n]*?\#\}",
         ),
         TokenType.JINJA_START: group(r"\{[{%#]"),
         TokenType.JINJA_END: group(r"[}%#]\}"),
         TokenType.QUOTED_NAME: group(
-            r"'[^\n']*'",
-            r'"[^\n"]*"',
+            r"'[^\n']*?'",
+            r'"[^\n"]*?"',
         ),
         TokenType.COMMENT: group(r"--[^\r\n]*"),
         TokenType.COMMENT_START: group(r"/\*"),
