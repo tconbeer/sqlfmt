@@ -197,14 +197,18 @@ class Node:
                 "[": "]",
                 "case": "end",
             }
-            assert (
-                last_bracket.type in (TokenType.BRACKET_OPEN, TokenType.STATEMENT_START)
-                and matches[last_bracket.token.lower()] == token.token.lower()
-            ), (
-                f"Closing bracket '{token.token}' found at {token.spos} does not match "
-                f"last opened bracket '{last_bracket.token}' found at "
-                f"{last_bracket.spos}."
-            )
+            try:
+                assert (
+                    last_bracket.type
+                    in (TokenType.BRACKET_OPEN, TokenType.STATEMENT_START)
+                    and matches[last_bracket.token.lower()] == token.token.lower()
+                )
+            except AssertionError:
+                raise SqlfmtBracketError(
+                    f"Closing bracket '{token.token}' found at {token.spos} does not "
+                    f"match last opened bracket '{last_bracket.token}' found at "
+                    f"{last_bracket.spos}."
+                )
 
         depth = inherited_depth + change_before
 
