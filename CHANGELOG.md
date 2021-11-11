@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Features
+
+- supports --quiet option
+
 ## [0.1.0] - 2021-11-08
 
 ### Features

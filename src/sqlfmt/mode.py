@@ -14,6 +14,7 @@ class Mode:
     check: bool = False
     diff: bool = False
     verbose: bool = False
+    quiet: bool = False
     _no_color: bool = False
     _force_color: bool = False
 
