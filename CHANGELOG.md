@@ -8,6 +8,12 @@ All notable changes to this project will be documented in this file.
 
 - supports --quiet option
 
+### Fixes
+
+- fixes parsing of jinja tags (use lazy regex so we don't match multiple tags at once)
+- fixes issue with whitespace around jinja tags
+- fixes capitalization of word operators (on, and, etc.)
+
 ## [0.1.0] - 2021-11-08
 
 ### Features
