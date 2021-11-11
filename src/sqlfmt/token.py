@@ -58,3 +58,11 @@ class Token(NamedTuple):
 
     def __str__(self) -> str:
         return f"Token(type={self.type}, token={self.token}, spos={self.spos})"
+
+    def __repr__(self) -> str:
+        return (
+            f"Token(type={self.type}, "
+            f"prefix={repr(self.prefix)}, token={repr(self.token)}, "
+            f"spos={self.spos}, epos={self.epos}, line={repr(self.line)}"
+            f")"
+        )
