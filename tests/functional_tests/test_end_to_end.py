@@ -94,8 +94,8 @@ def test_end_to_end_preformatted(
         "--diff --check",
         "--check --no-color",
         "--diff --no-color",
-        "-q",
-        "--quiet",
+        "-q --check",
+        "--quiet --check",
         "--check -q",
     ],
 )

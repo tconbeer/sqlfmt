@@ -77,10 +77,11 @@ class Report:
         for res in self.errored_results:
             err = style_output(str(res.exception), fg="red")
             report.append(f"{res.source_path}\n    {err}")
-        for res in self.changed_results:
-            report.append(f"{res.source_path} {formatted}.")
-            if self.mode.diff:
-                report.append(self._generate_diff(res))
+        if not self.mode.quiet or self.mode.diff:
+            for res in self.changed_results:
+                report.append(f"{res.source_path} {formatted}.")
+                if self.mode.diff:
+                    report.append(self._generate_diff(res))
         if self.mode.verbose:
             for res in self.unchanged_results:
                 report.append(f"{res.source_path} {unchanged}.")

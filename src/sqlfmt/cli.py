@@ -38,6 +38,12 @@ from sqlfmt.mode import Mode
     help=("Prints more information to stderr"),
 )
 @click.option(
+    "-q",
+    "--quiet",
+    is_flag=True,
+    help=("Prints much less information to stderr"),
+)
+@click.option(
     "--no-color",
     is_flag=True,
     help=(
@@ -69,6 +75,7 @@ def sqlfmt(
     force_color: bool,
     line_length: int,
     verbose: bool,
+    quiet: bool,
 ) -> None:
     """
     sqlfmt is an opinionated CLI tool that formats your sql files
@@ -78,6 +85,7 @@ def sqlfmt(
         check=check,
         diff=diff,
         verbose=verbose,
+        quiet=quiet,
         _no_color=no_color,
         _force_color=force_color,
     )
