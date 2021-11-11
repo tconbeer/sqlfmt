@@ -54,6 +54,9 @@ def error_target(tmp_path: Path) -> Path:
         "--check --diff",
         "--no-color",
         "--diff --no-color",
+        "-q",
+        "--quiet",
+        "--check -q",
     ],
 )
 def test_end_to_end_preformatted(
@@ -91,6 +94,9 @@ def test_end_to_end_preformatted(
         "--diff --check",
         "--check --no-color",
         "--diff --no-color",
+        "-q",
+        "--quiet",
+        "--check -q",
     ],
 )
 def test_end_to_end_check_unformatted(
@@ -109,10 +115,15 @@ def test_end_to_end_check_unformatted(
 
     assert "failed formatting check" in result.stderr
 
+    if "-q" in options or "--quiet" in options:
+        assert "100_select_case.sql" not in result.stderr
+    else:
+        assert "100_select_case.sql" in result.stderr
+
     assert result.exit_code == 1
 
 
-@pytest.mark.parametrize("options", ["", "--check", "--no-color"])
+@pytest.mark.parametrize("options", ["", "--check", "--no-color", "--quiet"])
 def test_end_to_end_errors(
     sqlfmt_runner: CliRunner, error_target: Path, options: str
 ) -> None:
@@ -127,3 +138,5 @@ def test_end_to_end_errors(
     assert "4 files had errors" in result.stderr
 
     assert "sqlfmt encountered an error" in result.stderr
+
+    assert "900_bad_token.sql" in result.stderr
