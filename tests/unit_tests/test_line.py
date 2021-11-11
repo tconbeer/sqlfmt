@@ -384,3 +384,15 @@ def test_identifier_whitespace(default_mode: Mode) -> None:
     q = Query.from_source(source_string=source_string, mode=default_mode)
     parsed_string = "".join(str(line) for line in q.lines)
     assert source_string == parsed_string
+
+
+def test_capitalization(default_mode: Mode) -> None:
+    source_string = (
+        "SELECT A, B, \"C\", {{ D }}, e, 'f', 'G'\n" 'fROM "H"."j" Join I ON k And L\n'
+    )
+    expected = (
+        "select a, b, \"C\", {{ D }}, e, 'f', 'G'\n" 'from "H"."j" join i on k and l\n'
+    )
+    q = Query.from_source(source_string=source_string, mode=default_mode)
+    parsed_string = "".join(str(line) for line in q.lines)
+    assert parsed_string == expected

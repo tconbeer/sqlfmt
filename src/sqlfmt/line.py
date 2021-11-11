@@ -283,6 +283,7 @@ class Node:
             TokenType.NAME,
             TokenType.STATEMENT_START,
             TokenType.STATEMENT_END,
+            TokenType.WORD_OPERATOR,
         ):
             return token.token.lower()
         else:
