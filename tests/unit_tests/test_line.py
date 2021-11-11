@@ -364,3 +364,23 @@ def test_closes_bracket_from_previous_line(
     result = [line.closes_bracket_from_previous_line for line in q.lines]
     expected = [False, False, False, False, False, False, True, False, True]
     assert result == expected
+
+
+def test_identifier_whitespace(default_mode: Mode) -> None:
+    """
+    Ensure we do not inject spaces into qualified identifier names
+    """
+    source_string = (
+        "my_schema.my_table,\n"
+        "my_schema.*,\n"
+        "{{ my_schema }}.my_table,\n"
+        "my_schema.{{ my_table }},\n"
+        "my_database.my_schema.my_table,\n"
+        'my_schema."my_table",\n'
+        '"my_schema".my_table,\n'
+        '"my_schema"."my_table",\n'
+        '"my_schema".*,\n'
+    )
+    q = Query.from_source(source_string=source_string, mode=default_mode)
+    parsed_string = "".join(str(line) for line in q.lines)
+    assert source_string == parsed_string
