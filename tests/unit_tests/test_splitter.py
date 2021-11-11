@@ -128,3 +128,19 @@ def test_split_count_window_function(splitter: LineSplitter) -> None:
     actual_result = "".join([str(line) for line in split_lines])
 
     assert actual_result == expected_result
+
+
+def test_comment_split_impact_on_open_brackets(splitter: LineSplitter) -> None:
+    source_string, expected_result = read_test_data(
+        "unit_tests/test_splitter/test_comment_split_impact_on_open_brackets.sql"
+    )
+    raw_query = Query.from_source(source_string, splitter.mode)
+
+    split_lines: List[Line] = []
+    for raw_line in raw_query.lines:
+        split_lines.extend(splitter.maybe_split(raw_line))
+
+    actual_result = "".join([str(line) for line in split_lines])
+    assert actual_result == expected_result
+
+    assert "case" in [brackets.token for brackets in split_lines[12].open_brackets]
