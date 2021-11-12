@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - fixes parsing of jinja tags (use lazy regex so we don't match multiple tags at once)
 - fixes issue with whitespace around jinja tags
 - fixes capitalization of word operators (on, and, etc.)
+- fixes parsing error caused by comments without leading spaces
 
 ## [0.1.0] - 2021-11-08
 
