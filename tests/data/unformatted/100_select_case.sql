@@ -16,7 +16,12 @@ select
     END::numeric(10, 2) as casted_case,
     (case when ending then false end)+(case when 2 then true end)::varchar(10),
     another_field,
-    case when true then 10 end+4
+    case when true then 10 end+4,
+    case-- a comment with no spaces
+        when something_long_that_keeps_this_from_wrapping
+        then something_else_long_long_long
+        else another_super_long_field_name
+    end
 from some_table
 )))))__SQLFMT_OUTPUT__(((((
 select
@@ -33,5 +38,10 @@ select
     case when (my_field) then end_field end::numeric(10, 2) as casted_case,
     (case when ending then false end) + (case when 2 then true end)::varchar(10),
     another_field,
-    case when true then 10 end + 4
+    case when true then 10 end + 4,
+    case -- a comment with no spaces
+        when something_long_that_keeps_this_from_wrapping
+        then something_else_long_long_long
+        else another_super_long_field_name
+    end
 from some_table

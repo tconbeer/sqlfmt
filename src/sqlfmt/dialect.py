@@ -80,7 +80,7 @@ class Postgres(Dialect):
         TokenType.COMMENT: group(r"--[^\r\n]*"),
         TokenType.COMMENT_START: group(r"/\*"),
         TokenType.COMMENT_END: group(r"\*/"),
-        TokenType.STATEMENT_START: group(r"case") + ANY_BLANK,
+        TokenType.STATEMENT_START: group(r"case") + group(r"\W", r"$"),
         TokenType.STATEMENT_END: group(r"end") + group(r"\W", r"$"),
         TokenType.STAR: group(r"\*"),
         TokenType.NUMBER: group(
@@ -109,7 +109,7 @@ class Postgres(Dialect):
             group(r"and", r"or"),
             group(r"on", r"using"),
         )
-        + ANY_BLANK,
+        + group(r"\W", r"$"),
         TokenType.COMMA: group(r","),
         TokenType.DOT: group(r"\."),
         TokenType.NEWLINE: group(r"\r?\n"),
@@ -131,7 +131,7 @@ class Postgres(Dialect):
             expand_spaces(r"partition by"),
             expand_spaces(r"rows between"),
         )
-        + ANY_BLANK,
+        + group(r"\W", r"$"),
         TokenType.NAME: group(r"\w+"),
     }
 

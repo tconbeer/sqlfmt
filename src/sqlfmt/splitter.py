@@ -89,7 +89,9 @@ class LineSplitter:
 
         head_line = Line.from_nodes(
             source_string=line.source_string,
-            previous_node=tail[-1] if comment_line else line.previous_node,
+            previous_node=comment_line.nodes[-1]
+            if comment_line
+            else line.previous_node,
             nodes=head,
         )
         head_line.append_newline()
