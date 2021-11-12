@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Features
 
 - supports --quiet option
+- supports more select keywords, like `window` and `qualify`
 
 ### Fixes
 
