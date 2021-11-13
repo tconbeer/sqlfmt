@@ -8,11 +8,14 @@ from sqlfmt.parser import Query
 from sqlfmt.report import Report, SqlFormatResult
 
 
-def run(files: List[str], mode: Mode) -> int:
+def run(files: List[str], mode: Mode) -> Report:
     """
     Runs sqlfmt on all files in list of given paths (files), using the specified mode.
-    Returns the exit code for the cli; 0 indicates success, 1 indicates failed check,
-    2 indicates a handled exception caused by errors in one or more user code files
+
+    Modifies sql files in place, by default. Check or diff mode do not modify files,
+    they only create a report.
+
+    Returns a Report that can be queried or printed.
     """
 
     matched_paths: Set[Path] = set()
@@ -21,17 +24,10 @@ def run(files: List[str], mode: Mode) -> int:
     results = list(_generate_results(matched_paths, mode))
     report = Report(results, mode)
 
-    report.display_report()
-
     if not (mode.check or mode.diff):
         _update_source_files(results)
 
-    if report.number_errored > 0:
-        return 2
-    elif (mode.check or mode.diff) and report.number_changed > 0:
-        return 1
-    else:
-        return 0
+    return report
 
 
 def _generate_results(paths: Iterable[Path], mode: Mode) -> Iterator[SqlFormatResult]:
