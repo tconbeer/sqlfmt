@@ -69,6 +69,25 @@ jobs:
           pip install tox-gh
       - name: Run tox
         run: tox4
+
+  primer:
+    name: sqlfmt primer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Repo
+        uses: actions/checkout@v2
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.9"
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+      - name: Install python dependencies
+        run: poetry install -E sqlfmt_primer --no-interaction
+      - name: Run primer
+        run: poetry run sqlfmt_primer
       
 
 

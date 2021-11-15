@@ -74,7 +74,7 @@ def get_projects() -> List[SQLProject]:
     help=("Does not print sqlfmt report to stderr"),
 )
 @click.pass_context
-def sqlfmt_primer(ctx: click.Context, project_names: List[str]) -> None:
+def sqlfmt_primer(ctx: click.Context, quiet: bool, project_names: List[str]) -> None:
     """
     Run sqlfmt against one or many projects.
 
@@ -125,7 +125,9 @@ def sqlfmt_primer(ctx: click.Context, project_names: List[str]) -> None:
                 ),
                 err=True,
             )
-            report.display_report()
+
+            if not quiet:
+                report.display_report()
 
             if report.number_changed != project.expected_changed:
                 click.echo(
