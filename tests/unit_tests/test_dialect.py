@@ -48,6 +48,10 @@ class TestPolyglot:
     @pytest.mark.parametrize(
         "token_type,value",
         [
+            (TokenType.FMT_OFF, "-- fmt: off"),
+            (TokenType.FMT_OFF, "--FMT: off"),
+            (TokenType.FMT_OFF, "# fmt: off"),
+            (TokenType.FMT_ON, "--fmt: ON"),
             (TokenType.JINJA, "{% set my_var=macro('abc 123') %}"),
             (TokenType.JINJA_START, "{#"),
             (TokenType.JINJA_END, "}}"),
@@ -76,10 +80,10 @@ class TestPolyglot:
             (TokenType.NEWLINE, "\n"),
             (TokenType.UNTERM_KEYWORD, "select DISTINCT"),
             (TokenType.UNTERM_KEYWORD, "select"),
-            (TokenType.UNTERM_KEYWORD, "select\n    distinct"),
+            (TokenType.UNTERM_KEYWORD, "select\t    distinct"),
             (TokenType.UNTERM_KEYWORD, "select top 25"),
             (TokenType.UNTERM_KEYWORD, "select all"),
-            (TokenType.UNTERM_KEYWORD, "natural\n    full outer join"),
+            (TokenType.UNTERM_KEYWORD, "natural\t    full outer join"),
             (TokenType.UNTERM_KEYWORD, "left join"),
             (TokenType.UNTERM_KEYWORD, "join"),
             (TokenType.NAME, "my_table_45"),
@@ -101,6 +105,8 @@ class TestPolyglot:
     def test_regex_anti_match(self, polyglot: Polyglot) -> None:
 
         should_not_match = [
+            (TokenType.FMT_OFF, "# fmt:"),
+            (TokenType.FMT_OFF, "-- fmt: off but not really"),
             (TokenType.JINJA, "{% mismatched brackets }}"),
             (TokenType.JINJA_START, "{"),
             (TokenType.JINJA_END, "}"),

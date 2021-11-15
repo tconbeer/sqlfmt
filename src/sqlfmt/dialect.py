@@ -16,7 +16,7 @@ WHITESPACE: str = r"[ \f\t]"
 WHITESPACES: str = WHITESPACE + "+"
 MAYBE_WHITESPACES: str = WHITESPACE + "*"
 NEWLINE: str = r"\r?\n"
-ANY_BLANK: str = group(WHITESPACES, NEWLINE, r"$")
+ANY_BLANK: str = group(WHITESPACES, r"$")
 
 
 def expand_spaces(s: str) -> str:
@@ -32,7 +32,7 @@ class Dialect(ABC):
     Abstract class for a SQL dialect.
 
     Each dialect should override the PATTERNS dict to define their own grammar.
-    Each value in the PATTERNS dict have a regex group (surrounded by
+    Each value in the PATTERNS dict must have a regex group (surrounded by
     parentheses) that matches the token; if the token may be delimited by
     whitespace, that should be defined outside the first group.
     """
@@ -122,10 +122,12 @@ class Dialect(ABC):
 class Polyglot(Dialect):
     """
     A universal SQL dialect meant to encompass the common usage of at least
-    Postgres, MySQL, BigQuery Standard SQL, Snowflake SQL, SparkSQL
+    Postgres, MySQL, BigQuery Standard SQL, Snowflake SQL, SparkSQL.
     """
 
     PATTERNS: Dict[TokenType, str] = {
+        TokenType.FMT_OFF: group(r"(--|#) ?fmt: ?off") + group(r"\n", r"$"),
+        TokenType.FMT_ON: group(r"(--|#) ?fmt: ?on") + group(r"\n", r"$"),
         TokenType.JINJA: group(
             r"\{\{[^\n]*?\}\}",
             r"\{%[^\n]*?%\}",

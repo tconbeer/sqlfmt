@@ -23,7 +23,7 @@ class QueryFormatter:
     def _indent_standalone_comments(self, lines: List[Line]) -> List[Line]:
         prev_depth = 0
         for line in reversed(lines):
-            if line.is_standalone_comment:
+            if line.is_standalone_comment and not line.formatting_disabled:
                 line.depth = prev_depth
             else:
                 prev_depth = line.depth

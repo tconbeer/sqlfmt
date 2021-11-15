@@ -71,7 +71,7 @@ def test_end_to_end_preformatted(
     result = sqlfmt_runner.invoke(sqlfmt_main, args=args)
 
     assert result
-    assert "4 files" in result.stderr
+    assert "5 files" in result.stderr
 
     if "check" in options or "diff" in options:
         assert "passed formatting check" in result.stderr
@@ -111,7 +111,7 @@ def test_end_to_end_check_unformatted(
     result = sqlfmt_runner.invoke(sqlfmt_main, args=args)
 
     assert result
-    assert "6 files" in result.stderr
+    assert "7 files" in result.stderr
 
     assert "failed formatting check" in result.stderr
 

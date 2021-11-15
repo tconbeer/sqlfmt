@@ -14,11 +14,14 @@ class LineSplitter:
         Evaluates a line for splitting. If line matches criteria for splitting,
         yields new lines; otherwise yields original line
         """
+
         line_is_too_long: bool = line.is_too_long(self.mode.line_length)
 
-        # first, if there is a multiline node on this line and it isn't the
+        if line.formatting_disabled:
+            yield line
+        # if there is a multiline node on this line and it isn't the
         # only thing on this line, then split before the multiline node
-        if (
+        elif (
             line.can_be_depth_split or line.can_be_comment_split
         ) and line.contains_multiline_node:
             yield from self.split(line, kind="depth")
