@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 - supports --quiet option
 - supports more select keywords, like `window` and `qualify`
+- adds a new cli tool, sqlfmt_primer, to run sqlfmt against known OSS projects to gauge changes
 
 ### Fixes
 
