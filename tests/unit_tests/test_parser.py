@@ -541,7 +541,7 @@ def test_dont_parse_twice(default_mode: Mode, monkeypatch: pytest.MonkeyPatch) -
     assert q.lines and q.tokens
 
     # should raise a name error if we parse source again
-    monkeypatch.delattr("sqlfmt.dialect.Polyglot.tokenize_line")
+    monkeypatch.delattr("sqlfmt.dialect.Dialect.tokenize_line")
     q.tokenize_from_source()
     assert q.lines and q.tokens
 
