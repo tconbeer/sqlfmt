@@ -1,6 +1,6 @@
 import pytest
 
-from sqlfmt.dialect import Dialect, Postgres, SqlfmtParsingError, group
+from sqlfmt.dialect import Dialect, Polyglot, SqlfmtParsingError, group
 from sqlfmt.token import Token, TokenType
 
 
@@ -18,21 +18,21 @@ def test_dialect() -> None:
         _ = Dialect()  # type: ignore
 
 
-class TestPostgres:
+class TestPolyglot:
     @pytest.fixture(scope="class")
-    def postgres(self) -> Postgres:
-        return Postgres()
+    def polyglot(self) -> Polyglot:
+        return Polyglot()
 
-    def test_patterns_are_complete(self, postgres: Postgres) -> None:
+    def test_patterns_are_complete(self, polyglot: Polyglot) -> None:
         # make sure Dialect defines a match for every TokenType
         for t in list(TokenType):
-            assert postgres.PATTERNS[t]
+            assert polyglot.PATTERNS[t]
 
-    def test_postgres_trivial_query(self, postgres: Postgres) -> None:
-        assert isinstance(postgres, Dialect)
+    def test_polyglot_trivial_query(self, polyglot: Polyglot) -> None:
+        assert isinstance(polyglot, Dialect)
 
         basic_line = "select 1"
-        gen = postgres.tokenize_line(line=basic_line, lnum=0)
+        gen = polyglot.tokenize_line(line=basic_line, lnum=0)
 
         expected_token = Token(
             TokenType.UNTERM_KEYWORD, "", "select", (0, 0), (0, 6), "select 1"
@@ -51,8 +51,13 @@ class TestPostgres:
             (TokenType.JINJA, "{% set my_var=macro('abc 123') %}"),
             (TokenType.JINJA_START, "{#"),
             (TokenType.JINJA_END, "}}"),
+            (TokenType.QUOTED_NAME, "`my_quoted_field_name`"),
+            (TokenType.QUOTED_NAME, "'my_quoted_literal'"),
             (TokenType.QUOTED_NAME, '"my_quoted_field_name"'),
             (TokenType.COMMENT, "-- my comment"),
+            (TokenType.COMMENT, "--no-space comment"),
+            (TokenType.COMMENT, "# mysql-style # comments"),
+            (TokenType.COMMENT, "#nospace"),
             (TokenType.COMMENT_START, "/*"),
             (TokenType.COMMENT_END, "*/"),
             (TokenType.STATEMENT_START, "case"),
@@ -81,10 +86,10 @@ class TestPostgres:
         ],
     )
     def test_regex_exact_match(
-        self, postgres: Postgres, token_type: TokenType, value: str
+        self, polyglot: Polyglot, token_type: TokenType, value: str
     ) -> None:
 
-        prog = postgres.programs[token_type]
+        prog = polyglot.programs[token_type]
         match = prog.match(value)
         assert match is not None, str(token_type) + " regex doesn't match " + str(value)
         start, end = match.span(1)
@@ -93,14 +98,13 @@ class TestPostgres:
             str(token_type) + " regex doesn't exactly match " + str(value)
         )
 
-    def test_regex_anti_match(self, postgres: Postgres) -> None:
+    def test_regex_anti_match(self, polyglot: Polyglot) -> None:
 
         should_not_match = [
             (TokenType.JINJA, "{% mismatched brackets }}"),
             (TokenType.JINJA_START, "{"),
             (TokenType.JINJA_END, "}"),
             (TokenType.QUOTED_NAME, "my_unquoted_name"),
-            (TokenType.COMMENT, "# wrong comment delimiter"),
             (TokenType.DOUBLE_COLON, ":"),
             (TokenType.OPERATOR, "."),
             (TokenType.UNTERM_KEYWORD, "selection"),
@@ -108,24 +112,24 @@ class TestPostgres:
 
         # make sure our compiled programs do not match these values
         for tt, v in should_not_match:
-            prog = postgres.programs[tt]
+            prog = polyglot.programs[tt]
             match = prog.match(v)
             assert match is None, str(tt) + " regex should not match " + str(v)
 
-    def test_regex_should_not_match_empty_string(self, postgres: Postgres) -> None:
-        for token_type, prog in postgres.programs.items():
+    def test_regex_should_not_match_empty_string(self, polyglot: Polyglot) -> None:
+        for token_type, prog in polyglot.programs.items():
             match = prog.match("")
             assert match is None, str(token_type)
 
-    def test_parsing_error(self, postgres: Postgres) -> None:
-        gen = postgres.tokenize_line(line="select ?\n", lnum=33)
+    def test_parsing_error(self, polyglot: Polyglot) -> None:
+        gen = polyglot.tokenize_line(line="select ?\n", lnum=33)
         select = next(gen)
         assert select
 
         with pytest.raises(SqlfmtParsingError):
             _ = next(gen)
 
-    def test_search_for_one_token(self, postgres: Postgres) -> None:
+    def test_search_for_one_token(self, polyglot: Polyglot) -> None:
         line = "select 1 from my_table\n"
 
         expected_token = Token(
@@ -137,10 +141,10 @@ class TestPostgres:
             line="select 1 from my_table\n",
         )
 
-        actual_token = postgres.search_for_token([TokenType.NUMBER], line=line, lnum=0)
+        actual_token = polyglot.search_for_token([TokenType.NUMBER], line=line, lnum=0)
         assert actual_token == expected_token
 
-    def test_search_for_multiple_tokens(self, postgres: Postgres) -> None:
+    def test_search_for_multiple_tokens(self, polyglot: Polyglot) -> None:
         line = "select 1 from my_table\n"
 
         expected_token = Token(
@@ -152,17 +156,17 @@ class TestPostgres:
             line="select 1 from my_table\n",
         )
 
-        actual_token = postgres.search_for_token(
+        actual_token = polyglot.search_for_token(
             [TokenType.NUMBER, TokenType.UNTERM_KEYWORD], line=line, lnum=0, skipchars=6
         )
         assert actual_token == expected_token
 
-    def test_match_first_jinja_Tag(self, postgres: Postgres) -> None:
+    def test_match_first_jinja_Tag(self, polyglot: Polyglot) -> None:
         source_string = (
             "{{ event_cte.source_cte_name}}.{{ event_cte.primary_key }} "
             "|| '-' || '{{ event_cte.event_name }}'"
         )
-        prog = postgres.programs[TokenType.JINJA]
+        prog = polyglot.programs[TokenType.JINJA]
         match = prog.match(source_string)
 
         assert match is not None

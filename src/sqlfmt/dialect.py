@@ -46,24 +46,84 @@ class Dialect(ABC):
         }
 
     @abstractmethod
-    def tokenize_line(self, line: str, lnum: int) -> Iterator[Token]:
+    def get_patterns(self) -> Dict[TokenType, str]:
+        return self.PATTERNS
+
+    def tokenize_line(
+        self, line: str, lnum: int, skipchars: int = 0
+    ) -> Iterator[Token]:
         """
         A dialect must implement a tokenize_line method, which receives a line
         (as a string) and other indicators of the state of the line, and yields Tokens
         """
-        pass
+        pos, eol = skipchars, len(line)
 
-    @abstractmethod
+        while pos < eol:
+            # try to match against each regex, in order
+            for token_type, prog in self.programs.items():
+
+                match = prog.match(line, pos)
+                if match:
+                    start, end = match.span(1)
+                    prefix = line[pos:start]
+                    spos, epos, pos = (lnum, start), (lnum, end), end
+                    token = line[start:end]
+
+                    yield Token(token_type, prefix, token, spos, epos, line)
+                    break
+            # nothing matched. Either whitespace or an error
+            else:
+                if line[pos:].strip() == "":
+                    pos = eol
+                else:
+                    raise SqlfmtParsingError(
+                        f"Could not parse SQL at {(lnum, pos)}: '{line[pos:].strip()}'"
+                    )
+
     def search_for_token(
         self, token_types: List[TokenType], line: str, lnum: int, skipchars: int = 0
     ) -> Optional[Token]:
         """
         Match the first instance of token_type in line; return None if no match is found
         """
-        pass
+        if len(token_types) == 1:
+            prog = self.programs[token_types[0]]
+        else:
+            patterns = [self.PATTERNS[t] for t in token_types]
+            prog = re.compile(MAYBE_WHITESPACES + group(*patterns), re.IGNORECASE)
+
+        match = prog.search(line, skipchars)
+        if not match:
+            return None
+
+        start, end = match.span(1)
+        prefix = line[skipchars:start]
+        spos, epos = (lnum, start), (lnum, end)
+        token = line[start:end]
+
+        if len(token_types) == 1:
+            final_type = token_types[0]
+        else:
+            for t in token_types:
+                prog = self.programs[t]
+                match = prog.match(line, start)
+                if match:
+                    final_type = t
+                    break
+
+        if final_type:
+            return Token(final_type, prefix, token, spos, epos, line)
+        else:
+            raise SqlfmtParsingError(
+                "Internal Error! Matched group of types but not individual type"
+            )
 
 
-class Postgres(Dialect):
+class Polyglot(Dialect):
+    """
+    A universal SQL dialect meant to encompass the common usage of at least
+    Postgres, MySQL, BigQuery Standard SQL, Snowflake SQL, SparkSQL
+    """
 
     PATTERNS: Dict[TokenType, str] = {
         TokenType.JINJA: group(
@@ -76,8 +136,12 @@ class Postgres(Dialect):
         TokenType.QUOTED_NAME: group(
             r"'[^\n']*?'",
             r'"[^\n"]*?"',
+            r"`[^\n`]*?`",
         ),
-        TokenType.COMMENT: group(r"--[^\r\n]*"),
+        TokenType.COMMENT: group(
+            r"--[^\r\n]*",
+            r"#[^\r\n]*",
+        ),
         TokenType.COMMENT_START: group(r"/\*"),
         TokenType.COMMENT_END: group(r"\*/"),
         TokenType.STATEMENT_START: group(r"case") + group(r"\W", r"$"),
@@ -139,64 +203,5 @@ class Postgres(Dialect):
         TokenType.NAME: group(r"\w+"),
     }
 
-    def tokenize_line(
-        self, line: str, lnum: int, skipchars: int = 0
-    ) -> Iterator[Token]:
-        pos, eol = skipchars, len(line)
-
-        while pos < eol:
-            # try to match against each regex, in order
-            for token_type, prog in self.programs.items():
-
-                match = prog.match(line, pos)
-                if match:
-                    start, end = match.span(1)
-                    prefix = line[pos:start]
-                    spos, epos, pos = (lnum, start), (lnum, end), end
-                    token = line[start:end]
-
-                    yield Token(token_type, prefix, token, spos, epos, line)
-                    break
-            # nothing matched. Either whitespace or an error
-            else:
-                if line[pos:].strip() == "":
-                    pos = eol
-                else:
-                    raise SqlfmtParsingError(
-                        f"Could not parse SQL at {(lnum, pos)}: '{line[pos:].strip()}'"
-                    )
-
-    def search_for_token(
-        self, token_types: List[TokenType], line: str, lnum: int, skipchars: int = 0
-    ) -> Optional[Token]:
-        if len(token_types) == 1:
-            prog = self.programs[token_types[0]]
-        else:
-            patterns = [self.PATTERNS[t] for t in token_types]
-            prog = re.compile(MAYBE_WHITESPACES + group(*patterns), re.IGNORECASE)
-
-        match = prog.search(line, skipchars)
-        if not match:
-            return None
-
-        start, end = match.span(1)
-        prefix = line[skipchars:start]
-        spos, epos = (lnum, start), (lnum, end)
-        token = line[start:end]
-
-        if len(token_types) == 1:
-            final_type = token_types[0]
-        else:
-            for t in token_types:
-                prog = self.programs[t]
-                match = prog.match(line, start)
-                if match:
-                    final_type = t
-                    break
-
-        if final_type:
-            return Token(final_type, prefix, token, spos, epos, line)
-        else:
-            raise SqlfmtParsingError(
-                "Internal Error! Matched group of types but not individual type"
-            )
+    def get_patterns(self) -> Dict[TokenType, str]:
+        return super().get_patterns()
