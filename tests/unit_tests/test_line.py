@@ -41,7 +41,7 @@ def tokens(source_string: str) -> List[Token]:
             line=source_string,
         ),
         Token(
-            type=TokenType.NAME,
+            type=TokenType.WORD_OPERATOR,
             prefix=" ",
             token="as",
             spos=(0, 9),

@@ -260,14 +260,11 @@ class Node:
             and previous_token.type == TokenType.DOT
         ):
             return NO_SPACE
-        # open brackets that follow names are function calls
-        # (no space) unless the preceding name is "as"
-        # (declaring a CTE) or "over" (declaring a window partition)
+        # open brackets that follow names are function calls. No Space.
         elif (
             token.type == TokenType.BRACKET_OPEN
             and previous_token
             and previous_token.type == TokenType.NAME
-            and previous_token.token.lower() not in ("over", "as", "in")
         ):
             return NO_SPACE
         elif token.type == TokenType.BRACKET_OPEN:
