@@ -78,7 +78,10 @@ class Polyglot(Dialect):
             r'"[^\n"]*?"',
             r"`[^\n`]*?`",
         ),
-        TokenType.COMMENT: group(r"--[^\r\n]*"),
+        TokenType.COMMENT: group(
+            r"--[^\r\n]*",
+            r"#[^\r\n]*",
+        ),
         TokenType.COMMENT_START: group(r"/\*"),
         TokenType.COMMENT_END: group(r"\*/"),
         TokenType.STATEMENT_START: group(r"case") + group(r"\W", r"$"),
