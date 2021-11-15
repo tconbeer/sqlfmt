@@ -3,6 +3,8 @@ from typing import NamedTuple, Tuple
 
 
 class TokenType(Enum):
+    FMT_OFF = auto()
+    FMT_ON = auto()
     JINJA = auto()
     JINJA_START = auto()
     JINJA_END = auto()
