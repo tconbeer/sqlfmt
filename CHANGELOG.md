@@ -6,7 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Features
 
-- supports --quiet option
+- supports `--quiet` option
+- supports `-- fmt: off` and `-- fmt: on` comments in sql files
 - supports more select keywords, like `window` and `qualify`
 - supports back-ticks for quoting relation names
 - supports MySQL-style comments (`# comment`)

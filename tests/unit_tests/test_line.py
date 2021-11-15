@@ -7,6 +7,7 @@ from sqlfmt.line import Line, Node, SqlfmtBracketError
 from sqlfmt.mode import Mode
 from sqlfmt.parser import Query
 from sqlfmt.token import Token, TokenType
+from tests.util import read_test_data
 
 
 @pytest.fixture
@@ -156,7 +157,8 @@ def test_simple_line(
         "Node(\n\ttoken='Token(type=TokenType.UNTERM_KEYWORD, token=with, "
         "spos=(0, 0))',\n\tprevious_node=None,\n\tinherited_depth=0,\n\tdepth=0,"
         "\n\tchange_in_depth=1,\n\tprefix='',\n\tvalue='with',\n\topen_brackets=["
-        "'Token(type=TokenType.UNTERM_KEYWORD, token=with, spos=(0, 0))']\n)"
+        "'Token(type=TokenType.UNTERM_KEYWORD, token=with, spos=(0, 0))']"
+        "\n\tformatting_disabled=False\n)"
     )
     assert repr(simple_line.nodes[0]) == expected_node_repr
 
@@ -396,3 +398,23 @@ def test_capitalization(default_mode: Mode) -> None:
     q = Query.from_source(source_string=source_string, mode=default_mode)
     parsed_string = "".join(str(line) for line in q.lines)
     assert parsed_string == expected
+
+
+def test_formatting_disabled(default_mode: Mode) -> None:
+    source_string, _ = read_test_data(
+        "unit_tests/test_line/test_formatting_disabled.sql"
+    )
+    q = Query.from_source(source_string=source_string, mode=default_mode)
+    expected = [
+        False,  # select
+        True,  # -- fmt: off
+        True,  # 1, 2, 3
+        True,  # 4, 5, 6
+        True,  # -- fmt: on
+        False,  # from something
+        True,  # join something_else -- fmt: off
+        True,  # --fmt: on
+        False,  # where format is true
+    ]
+    actual = [line.formatting_disabled for line in q.lines]
+    assert actual == expected

@@ -19,6 +19,7 @@ class Node:
     depth: int
     change_in_depth: int
     open_brackets: List[Token] = field(default_factory=list)
+    formatting_disabled: bool = False
 
     def __str__(self) -> str:
         return self.prefix + self.value
@@ -42,6 +43,7 @@ class Node:
             f"\tprefix='{self.prefix}',\n"
             f"\tvalue='{self.value}',\n"
             f"\topen_brackets={b}\n"
+            f"\tformatting_disabled={self.formatting_disabled}\n"
             f")"
         )
         return r
@@ -108,9 +110,11 @@ class Node:
         if previous_node:
             inherited_depth = previous_node.depth + previous_node.change_in_depth
             open_brackets = previous_node.open_brackets.copy()
+            formatting_disabled = previous_node.formatting_disabled
         else:
             inherited_depth = 0
             open_brackets = []
+            formatting_disabled = False
 
         depth, change_in_depth, open_brackets = cls.calculate_depth(
             token, inherited_depth, open_brackets
@@ -126,6 +130,11 @@ class Node:
         prefix = cls.whitespace(token, is_first_on_line, previous_token)
         value = cls.capitalize(token)
 
+        if token.type == TokenType.FMT_OFF:
+            formatting_disabled = True
+        elif previous_token and previous_token.type == TokenType.FMT_ON:
+            formatting_disabled = False
+
         return Node(
             token,
             previous_node,
@@ -135,6 +144,7 @@ class Node:
             depth,
             change_in_depth,
             open_brackets,
+            formatting_disabled,
         )
 
     @classmethod
@@ -301,11 +311,15 @@ class Line:
     depth_split: Optional[int] = None
     first_comma: Optional[int] = None
     first_operator: Optional[int] = None
+    formatting_disabled: bool = False
 
     def __str__(self) -> str:
-        INDENT = " " * 4
-        prefix = INDENT * self.depth
-        return prefix + "".join([str(node) for node in self.nodes])
+        if self.formatting_disabled:
+            return "".join([f"{t.prefix}{t.token}" for t in self.tokens])
+        else:
+            INDENT = " " * 4
+            prefix = INDENT * self.depth
+            return prefix + "".join([str(node) for node in self.nodes])
 
     def __len__(self) -> int:
         return len(str(self))
@@ -365,6 +379,8 @@ class Line:
             and self.first_operator is None
         ):
             self.first_operator = split_index
+
+        self.formatting_disabled = self.formatting_disabled or node.formatting_disabled
 
         self.nodes.append(node)
 

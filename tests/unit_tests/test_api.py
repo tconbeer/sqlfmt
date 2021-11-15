@@ -199,13 +199,13 @@ def test_run_preformatted(
 ) -> None:
     report = run(files=[str(f) for f in preformatted_files], mode=all_output_modes)
     assert report.number_changed == 0
-    assert report.number_unchanged == 4
+    assert report.number_unchanged == len(preformatted_files)
     assert report.number_errored == 0
 
 
 def test_run_unformatted(unformatted_files: List[Path], all_output_modes: Mode) -> None:
     report = run(files=[str(f) for f in unformatted_files], mode=all_output_modes)
-    assert report.number_changed == 6
+    assert report.number_changed == len(unformatted_files)
     assert report.number_unchanged == 0
     assert report.number_errored == 0
 

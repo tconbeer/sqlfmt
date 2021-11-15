@@ -45,8 +45,10 @@ class LineMerger:
 
         if not merged_nodes:
             raise CannotMergeException("Can't merge only whitespace/newlines")
-        elif any([n.is_multiline for n in merged_nodes]):
-            raise CannotMergeException("Can't merge lines containing multiline nodes")
+        elif any([n.is_multiline or n.formatting_disabled for n in merged_nodes]):
+            raise CannotMergeException(
+                "Can't merge lines containing multiline nodes or disabled formatting"
+            )
 
         merged_line = Line.from_nodes(
             source_string=lines[0].source_string,
