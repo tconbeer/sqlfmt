@@ -126,10 +126,8 @@ class Polyglot(Dialect):
     """
 
     PATTERNS: Dict[TokenType, str] = {
-        TokenType.FMT_OFF: group(expand_spaces(r"(--|#)( )?fmt:( )?off"))
-        + group(r"\n", r"$"),
-        TokenType.FMT_ON: group(expand_spaces(r"(--|#)( )?fmt:( )?on"))
-        + group(r"\n", r"$"),
+        TokenType.FMT_OFF: group(r"(--|#) ?fmt: ?off") + group(r"\n", r"$"),
+        TokenType.FMT_ON: group(r"(--|#) ?fmt: ?on") + group(r"\n", r"$"),
         TokenType.JINJA: group(
             r"\{\{[^\n]*?\}\}",
             r"\{%[^\n]*?%\}",
