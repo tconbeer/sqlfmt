@@ -7,6 +7,7 @@ from typing import List, Optional
 
 import click
 from git import Repo
+from platformdirs import user_cache_dir
 
 from sqlfmt.api import run
 from sqlfmt.mode import Mode
@@ -73,8 +74,16 @@ def get_projects() -> List[SQLProject]:
     is_flag=True,
     help=("Does not print sqlfmt report to stderr"),
 )
+@click.option(
+    "-k",
+    "--reset-cache",
+    is_flag=True,
+    help=("Always does a fresh clone from project's repo."),
+)
 @click.pass_context
-def sqlfmt_primer(ctx: click.Context, quiet: bool, project_names: List[str]) -> None:
+def sqlfmt_primer(
+    ctx: click.Context, quiet: bool, reset_cache: bool, project_names: List[str]
+) -> None:
     """
     Run sqlfmt against one or many projects.
 
@@ -107,8 +116,7 @@ def sqlfmt_primer(ctx: click.Context, quiet: bool, project_names: List[str]) -> 
     with TemporaryDirectory() as working_dir:
         for project in projects:
 
-            click.echo(f"Cloning {project.name}", err=True)
-            target_dir = clone_and_checkout(project, working_dir)
+            target_dir = get_project_source_tree(project, reset_cache, working_dir)
 
             click.echo(f"Running sqlfmt on {project.name}", err=True)
             start_time = timeit.default_timer()
@@ -162,8 +170,31 @@ def sqlfmt_primer(ctx: click.Context, quiet: bool, project_names: List[str]) -> 
                 or report.number_errored != project.expected_errored
             )
 
-    click.echo(f"Exiting with code {exit_code}", err=True)
+    click.echo(f"Exiting with code {exit_code:d}", err=True)
     ctx.exit(exit_code)
+
+
+def get_project_source_tree(
+    project: SQLProject, reset_cache: bool, working_dir: str
+) -> Path:
+    """
+    Returns a Path to a directory containing a project's source tree. Defaults to
+    using a cached copy, but will clone a repo and checkout a specific ref if the
+    cache does not exist or if reset_cache is passed (in this case, it copies the
+    newly-checked-out tree to the cache)
+    """
+
+    cache_dir = Path(user_cache_dir(appname="sqlfmt_primer"))
+    proj_cache_dir = cache_dir / project.name
+
+    if reset_cache or not proj_cache_dir.exists():
+        click.echo(f"Cloning {project.name}", err=True)
+        target_dir = clone_and_checkout(project, working_dir)
+        shutil.copytree(target_dir, proj_cache_dir, dirs_exist_ok=True)
+        return target_dir
+    else:
+        click.echo(f"Using cached files for {project.name}", err=True)
+        return proj_cache_dir
 
 
 def clone_and_checkout(project: SQLProject, working_dir: str) -> Path:
