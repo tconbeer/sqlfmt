@@ -39,27 +39,27 @@ def get_projects() -> List[SQLProject]:
             name="rittman",
             git_url="https://github.com/rittmananalytics/ra_data_warehouse.git",
             git_ref="ecde71faa9a4400d864ad2e484a4ac478298e53a",  # v1.2.1
-            expected_changed=206,
+            expected_changed=212,
             expected_unchanged=0,
-            expected_errored=10,  # 6 will be resolved if we support backticks
+            expected_errored=4,  # true mismatching brackets
             sub_directory=Path("models"),
         ),
         SQLProject(
             name="http_archive",
             git_url="https://github.com/HTTPArchive/almanac.httparchive.org.git",
             git_ref="db9fd2e1405a549c96ae5091b571989f13a8a539",  # Nov 14, 2021
-            expected_changed=0,
+            expected_changed=829,
             expected_unchanged=0,
-            expected_errored=1631,  # caused by comments with #
+            expected_errored=802,  # caused by mismatched quotes
             sub_directory=Path("sql"),
         ),
         SQLProject(
             name="aqi",
             git_url="https://github.com/tconbeer/aqi_livibility_analysis.git",
             git_ref="6ef50aa998794837d436abd3676fe46a19de44e4",  # Oct 1, 2021
-            expected_changed=6,
+            expected_changed=7,
             expected_unchanged=0,
-            expected_errored=1,  # caused by comments with #
+            expected_errored=0,  # caused by comments with #
             sub_directory=Path("src/aqi_dbt/models"),
         ),
     ]
