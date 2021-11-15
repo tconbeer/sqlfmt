@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
 
 - supports --quiet option
 - supports more select keywords, like `window` and `qualify`
+- supports back-ticks for quoting relation names
+- supports MySQL-style comments (`# comment`)
 - adds a new cli tool, sqlfmt_primer, to run sqlfmt against known OSS projects to gauge changes
 
 ### Fixes
