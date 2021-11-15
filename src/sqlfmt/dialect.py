@@ -63,7 +63,7 @@ class Dialect(ABC):
         pass
 
 
-class Postgres(Dialect):
+class Polyglot(Dialect):
 
     PATTERNS: Dict[TokenType, str] = {
         TokenType.JINJA: group(

@@ -2,14 +2,14 @@ import os
 from dataclasses import dataclass, field
 from typing import List
 
-from sqlfmt.dialect import Dialect, Postgres
+from sqlfmt.dialect import Dialect, Polyglot
 
 
 @dataclass
 class Mode:
 
     SQL_EXTENSIONS: List[str] = field(default_factory=lambda: [".sql", ".sql.jinja"])
-    dialect: Dialect = field(default_factory=lambda: Postgres())
+    dialect: Dialect = field(default_factory=lambda: Polyglot())
     line_length: int = 88
     check: bool = False
     diff: bool = False

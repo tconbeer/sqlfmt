@@ -278,7 +278,7 @@ def test_simple_query_parsing(all_output_modes: Mode) -> None:
 
 
 def test_parsing_error(default_mode: Mode) -> None:
-    source_string = "select `no backticks in postgres`"
+    source_string = "select !"
     with pytest.raises(SqlfmtParsingError):
         _ = Query.from_source(source_string=source_string, mode=default_mode)
 
@@ -541,7 +541,7 @@ def test_dont_parse_twice(default_mode: Mode, monkeypatch: pytest.MonkeyPatch) -
     assert q.lines and q.tokens
 
     # should raise a name error if we parse source again
-    monkeypatch.delattr("sqlfmt.dialect.Postgres.tokenize_line")
+    monkeypatch.delattr("sqlfmt.dialect.Polyglot.tokenize_line")
     q.tokenize_from_source()
     assert q.lines and q.tokens
 
