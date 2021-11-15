@@ -78,7 +78,10 @@ def sqlfmt(
     quiet: bool,
 ) -> None:
     """
-    sqlfmt is an opinionated CLI tool that formats your sql files
+    sqlfmt is an opinionated CLI tool that formats your sql files.
+
+    Exit codes: 0 indicates success, 1 indicates failed check,
+    2 indicates a handled exception caused by errors in one or more user code files
     """
     mode = Mode(
         line_length=line_length,
@@ -89,5 +92,15 @@ def sqlfmt(
         _no_color=no_color,
         _force_color=force_color,
     )
-    exit_code = api.run(files=files, mode=mode)
+
+    report = api.run(files=files, mode=mode)
+    report.display_report()
+
+    if report.number_errored > 0:
+        exit_code = 2
+    elif (mode.check or mode.diff) and report.number_changed > 0:
+        exit_code = 1
+    else:
+        exit_code = 0
+
     ctx.exit(exit_code)

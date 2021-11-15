@@ -194,23 +194,24 @@ def test_run_unformatted_update(
         _ = run(files=[str(unformatted_dir)], mode=default_mode)
 
 
-def test_run_preformatted_check(
-    preformatted_files: List[Path], check_mode: Mode
+def test_run_preformatted(
+    preformatted_files: List[Path], all_output_modes: Mode
 ) -> None:
-    exit_code = run(files=[str(f) for f in preformatted_files], mode=check_mode)
-    assert exit_code == 0
+    report = run(files=[str(f) for f in preformatted_files], mode=all_output_modes)
+    assert report.number_changed == 0
+    assert report.number_unchanged == 4
+    assert report.number_errored == 0
 
 
-def test_run_unformatted_check(unformatted_files: List[Path], check_mode: Mode) -> None:
-    exit_code = run(files=[str(f) for f in unformatted_files], mode=check_mode)
-    assert exit_code == 1
-
-
-def test_run_unformatted_diff(unformatted_files: List[Path], diff_mode: Mode) -> None:
-    exit_code = run(files=[str(f) for f in unformatted_files], mode=diff_mode)
-    assert exit_code == 1
+def test_run_unformatted(unformatted_files: List[Path], all_output_modes: Mode) -> None:
+    report = run(files=[str(f) for f in unformatted_files], mode=all_output_modes)
+    assert report.number_changed == 6
+    assert report.number_unchanged == 0
+    assert report.number_errored == 0
 
 
 def test_run_error(error_dir: Path, all_output_modes: Mode) -> None:
-    exit_code = run(files=[str(error_dir)], mode=all_output_modes)
-    assert exit_code == 2
+    report = run(files=[str(error_dir)], mode=all_output_modes)
+    assert report.number_changed == 0
+    assert report.number_unchanged == 0
+    assert report.number_errored == 4

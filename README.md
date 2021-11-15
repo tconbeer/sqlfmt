@@ -50,6 +50,8 @@ From your current working directory, `sqlfmt .` will format all files `.sql` or 
 
 1. Install [Poetry](https://python-poetry.org/docs/#installation) if you don't have it already. You may also need or want pyenv, make, and gcc. A complete setup from a fresh install of Ubuntu can be found [here](https://github.com/tconbeer/linux_setup)
 1. Clone this repo into a directory (let's call it `sqlfmt`), then `cd sqlfmt`
-1. Use `poetry install` to install the project (editable) and its dependencies into a new virtual env
+1. Use `poetry install` to install the project (editable) and its dependencies into a new virtual env. To run `sqlfmt_primer`, you will need to install it (and its dependencies) by specifying it as an extra: `poetry install -E sqlfmt_primer`
 1. Use `poetry shell` to spawn a subshell
 1. Type `make` to run all tests and linters, or run `pytest`, `black`, `flake8`, `isort`, and `mypy` individually.
+
+Note: If encountering a JSONDecodeError during `poetry install`, you will want to clear the poetry cache with `poetry cache clear pypi --all`.

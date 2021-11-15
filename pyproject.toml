@@ -21,14 +21,19 @@ classifiers = [
     "Typing :: Typed",
 ]
 packages = [
-    { include = "sqlfmt", from = "src" }
+    { include = "sqlfmt", from = "src" },
+    { include = "sqlfmt_primer", from = "src" },
 ]
+
+[tool.poetry.extras]
+sqlfmt_primer = ["GitPython", "platformdirs"]
 
 [tool.poetry.dependencies]
 python = "^3.7"
 click = "^8.0"
 importlib_metadata = { version = "*", python = "<3.8" }
-
+GitPython = { version = "^3.1.24", optional = true }
+platformdirs = { version = "^2.4.0", optional = true }
 
 [tool.poetry.dev-dependencies]
 black = "^21.9b0"
@@ -41,6 +46,7 @@ pytest-cov = "^3.0.0"
 
 [tool.poetry.scripts]
 sqlfmt = "sqlfmt.cli:sqlfmt"
+sqlfmt_primer = "sqlfmt_primer.primer:sqlfmt_primer"
 
 [tool.black]
 line-length = 88
