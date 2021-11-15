@@ -169,7 +169,7 @@ def test_simple_query_parsing(all_output_modes: Mode) -> None:
             line="    (one_field + another_field) as c\n",
         ),
         Token(
-            type=TokenType.NAME,
+            type=TokenType.WORD_OPERATOR,
             prefix=" ",
             token="as",
             spos=(3, 32),
@@ -437,7 +437,7 @@ def test_multiline_parsing(default_mode: Mode) -> None:
     ]
     assert [node.token.type for node in q.lines[6].nodes] == [
         TokenType.NAME,
-        TokenType.NAME,
+        TokenType.WORD_OPERATOR,
         TokenType.BRACKET_OPEN,
         TokenType.COMMENT,
         TokenType.NEWLINE,
