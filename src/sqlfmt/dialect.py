@@ -76,6 +76,7 @@ class Polyglot(Dialect):
         TokenType.QUOTED_NAME: group(
             r"'[^\n']*?'",
             r'"[^\n"]*?"',
+            r"`[^\n`]*?`",
         ),
         TokenType.COMMENT: group(r"--[^\r\n]*"),
         TokenType.COMMENT_START: group(r"/\*"),

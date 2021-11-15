@@ -51,6 +51,8 @@ class TestPolyglot:
             (TokenType.JINJA, "{% set my_var=macro('abc 123') %}"),
             (TokenType.JINJA_START, "{#"),
             (TokenType.JINJA_END, "}}"),
+            (TokenType.QUOTED_NAME, "`my_quoted_field_name`"),
+            (TokenType.QUOTED_NAME, "'my_quoted_literal'"),
             (TokenType.QUOTED_NAME, '"my_quoted_field_name"'),
             (TokenType.COMMENT, "-- my comment"),
             (TokenType.COMMENT_START, "/*"),
