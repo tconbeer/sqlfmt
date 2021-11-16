@@ -120,12 +120,9 @@ def test_bare_line(source_string: str, bare_line: Line) -> None:
     assert bare_line.source_string == source_string
     assert str(bare_line) == ""
 
-    assert not bare_line.starts_with_select
     assert not bare_line.starts_with_unterm_keyword
     assert not bare_line.contains_unterm_keyword
-    assert not bare_line.contains_comment
     assert not bare_line.contains_multiline_node
-    assert not bare_line.ends_with_comma
     assert not bare_line.ends_with_comment
     assert not bare_line.is_standalone_comment
     assert not bare_line.is_standalone_multiline_node
@@ -162,12 +159,9 @@ def test_simple_line(
     )
     assert repr(simple_line.nodes[0]) == expected_node_repr
 
-    assert simple_line.starts_with_select
     assert simple_line.starts_with_unterm_keyword
     assert simple_line.contains_unterm_keyword
-    assert not simple_line.contains_comment
     assert not simple_line.contains_multiline_node
-    assert not simple_line.ends_with_comma
     assert not simple_line.ends_with_comment
     assert not simple_line.is_standalone_comment
     assert not simple_line.is_standalone_multiline_node
@@ -214,31 +208,6 @@ def test_simple_append_newline(simple_line: Line) -> None:
     assert new_last_node.token.type == TokenType.NEWLINE
     assert new_last_node.previous_node == last_node
     assert new_last_node.previous_node.token == last_node.token
-
-
-def test_ends_with_comma(simple_line: Line) -> None:
-
-    last_node = simple_line.nodes[-1]
-    assert not last_node.token.type == TokenType.COMMA
-    assert not simple_line.ends_with_comma
-
-    comma = Token(
-        type=TokenType.COMMA,
-        prefix="",
-        token=",",
-        spos=last_node.token.epos,
-        epos=(last_node.token.epos[0], last_node.token.epos[1] + 1),
-        line=last_node.token.line,
-    )
-
-    simple_line.append_token(comma)
-
-    assert simple_line.nodes[-1].token.type == TokenType.COMMA
-    assert simple_line.ends_with_comma
-
-    simple_line.append_newline()
-    assert simple_line.nodes[-1].token.type == TokenType.NEWLINE
-    assert simple_line.ends_with_comma
 
 
 def test_ends_with_comment(simple_line: Line) -> None:

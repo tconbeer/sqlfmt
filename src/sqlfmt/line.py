@@ -453,13 +453,6 @@ class Line:
         return tokens
 
     @property
-    def starts_with_select(self) -> bool:
-        try:
-            return self.nodes[0].is_select
-        except IndexError:
-            return False
-
-    @property
     def starts_with_unterm_keyword(self) -> bool:
         try:
             return self.nodes[0].is_unterm_keyword
@@ -471,32 +464,12 @@ class Line:
         return any([n.is_unterm_keyword for n in self.nodes])
 
     @property
-    def contains_comment(self) -> bool:
-        return any([n.is_comment for n in self.nodes])
-
-    @property
     def contains_operator(self) -> bool:
         return any([n.is_operator for n in self.nodes])
 
     @property
     def contains_multiline_node(self) -> bool:
         return any([n.is_multiline for n in self.nodes])
-
-    @property
-    def ends_with_comma(self) -> bool:
-        try:
-            if self.nodes[-1].is_comma:
-                return True
-            elif (
-                len(self.nodes) > 1
-                and self.nodes[-1].is_newline
-                and self.nodes[-2].is_comma
-            ):
-                return True
-            else:
-                return False
-        except IndexError:
-            return False
 
     @property
     def ends_with_comment(self) -> bool:
