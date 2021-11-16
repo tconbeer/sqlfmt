@@ -8,6 +8,8 @@ import click
 from sqlfmt.exception import SqlfmtError
 from sqlfmt.mode import Mode
 
+STDIN_PATH = Path("-")
+
 
 def style_output(
     msg: str, fg: Optional[str] = None, bg: Optional[str] = None, bold: bool = False
@@ -32,6 +34,10 @@ class SqlFormatResult:
     source_string: str
     formatted_string: str
     exception: Optional[SqlfmtError] = None
+
+    def maybe_print_to_stdout(self) -> None:
+        if self.source_path == STDIN_PATH:
+            display_output(self.formatted_string, err=False)
 
     @property
     def has_changed(self) -> bool:
@@ -129,6 +135,9 @@ class Report:
         return styled
 
     def display_report(self) -> None:
+        if not self.mode.check and not self.mode.diff:
+            for res in self.results:
+                res.maybe_print_to_stdout()
         display_output(str(self), err=True)
 
     @property

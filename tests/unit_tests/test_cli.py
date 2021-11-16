@@ -48,3 +48,10 @@ def test_version_command(sqlfmt_runner: CliRunner) -> None:
     semver_pattern = r"\d+\.\d+.\d+"
     match = re.search(semver_pattern, results.stdout)
     assert match, "Semantic version number not in output"
+
+
+def test_stdin(sqlfmt_runner: CliRunner) -> None:
+    input = "select 1"
+    results = sqlfmt_runner.invoke(sqlfmt_main, args="-", input=input)
+    assert results.exit_code == 0
+    assert results.stdout == "select 1\n\n"
