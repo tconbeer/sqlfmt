@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Features
 
+- can format text through stdin by passing `-` as the files argument
 - supports `--quiet` option
 - supports `-- fmt: off` and `-- fmt: on` comments in sql files
 - supports more select keywords, like `window` and `qualify`
