@@ -9,6 +9,13 @@ from sqlfmt.parser import Query
 from sqlfmt.report import STDIN_PATH, Report, SqlFormatResult
 
 
+def format_string(source: str, mode: Mode) -> str:
+    raw_query = Query.from_source(source_string=source, mode=mode)
+    formatter = QueryFormatter(mode)
+    formatted_query = formatter.format(raw_query)
+    return str(formatted_query)
+
+
 def run(files: List[str], mode: Mode) -> Report:
     """
     Runs sqlfmt on all files in list of given paths (files), using the specified mode.
@@ -29,6 +36,16 @@ def run(files: List[str], mode: Mode) -> Report:
         _update_source_files(results)
 
     return report
+
+
+def _generate_matched_paths(paths: Iterable[Path], mode: Mode) -> Iterator[Path]:
+    for p in paths:
+        if p == STDIN_PATH:
+            yield p
+        elif p.is_file() and "".join(p.suffixes) in (mode.SQL_EXTENSIONS):
+            yield p
+        elif p.is_dir():
+            yield from (_generate_matched_paths(p.iterdir(), mode))
 
 
 def _generate_results(paths: Iterable[Path], mode: Mode) -> Iterator[SqlFormatResult]:
@@ -52,16 +69,6 @@ def _generate_results(paths: Iterable[Path], mode: Mode) -> Iterator[SqlFormatRe
                 formatted_string="",
                 exception=e,
             )
-
-
-def _generate_matched_paths(paths: Iterable[Path], mode: Mode) -> Iterator[Path]:
-    for p in paths:
-        if p == STDIN_PATH:
-            yield p
-        elif p.is_file() and "".join(p.suffixes) in (mode.SQL_EXTENSIONS):
-            yield p
-        elif p.is_dir():
-            yield from (_generate_matched_paths(p.iterdir(), mode))
 
 
 def _update_source_files(results: Iterable[SqlFormatResult]) -> None:
@@ -88,10 +95,3 @@ def _read_path_or_stdin(path: Path) -> str:
         with open(path, "r") as f:
             source = f.read()
     return source
-
-
-def format_string(source: str, mode: Mode) -> str:
-    raw_query = Query.from_source(source_string=source, mode=mode)
-    formatter = QueryFormatter(mode)
-    formatted_query = formatter.format(raw_query)
-    return str(formatted_query)
