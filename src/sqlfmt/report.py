@@ -8,6 +8,8 @@ import click
 from sqlfmt.exception import SqlfmtError
 from sqlfmt.mode import Mode
 
+STDIN_PATH = Path("-")
+
 
 def style_output(
     msg: str, fg: Optional[str] = None, bg: Optional[str] = None, bold: bool = False
@@ -34,7 +36,7 @@ class SqlFormatResult:
     exception: Optional[SqlfmtError] = None
 
     def maybe_print_to_stdout(self) -> None:
-        if self.source_path == Path("STDIN"):
+        if self.source_path == STDIN_PATH:
             display_output(self.formatted_string, err=False)
 
     @property

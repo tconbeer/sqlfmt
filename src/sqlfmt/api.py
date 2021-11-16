@@ -1,12 +1,12 @@
 import sys
 from pathlib import Path
-from typing import Iterable, Iterator, List, Set, TextIO, Union
+from typing import Iterable, Iterator, List, Set
 
 from sqlfmt.exception import SqlfmtError
 from sqlfmt.formatter import QueryFormatter
 from sqlfmt.mode import Mode
 from sqlfmt.parser import Query
-from sqlfmt.report import Report, SqlFormatResult
+from sqlfmt.report import STDIN_PATH, Report, SqlFormatResult
 
 
 def run(files: List[str], mode: Mode) -> Report:
@@ -19,7 +19,7 @@ def run(files: List[str], mode: Mode) -> Report:
     Returns a Report that can be queried or printed.
     """
 
-    matched_paths: Set[Union[Path, TextIO]] = set()
+    matched_paths: Set[Path] = set()
     matched_paths.update(_generate_matched_paths([Path(s) for s in files], mode))
 
     results = list(_generate_results(matched_paths, mode))
@@ -31,22 +31,14 @@ def run(files: List[str], mode: Mode) -> Report:
     return report
 
 
-def _generate_results(
-    paths: Iterable[Union[Path, TextIO]], mode: Mode
-) -> Iterator[SqlFormatResult]:
+def _generate_results(paths: Iterable[Path], mode: Mode) -> Iterator[SqlFormatResult]:
     """
     Runs sqlfmt on all files in an iterable of given paths, using the specified mode.
     Yields SqlFormatResults.
     """
     for p in paths:
 
-        if isinstance(p, Path):
-            with open(p, "r") as f:
-                source = f.read()
-        else:
-            # p is sys.stdin
-            source = p.read()
-            p = Path("STDIN")
+        source = _read_path_or_stdin(p)
 
         try:
             formatted = format_string(source, mode)
@@ -62,12 +54,10 @@ def _generate_results(
             )
 
 
-def _generate_matched_paths(
-    paths: Iterable[Path], mode: Mode
-) -> Iterator[Union[Path, TextIO]]:
+def _generate_matched_paths(paths: Iterable[Path], mode: Mode) -> Iterator[Path]:
     for p in paths:
-        if str(p) == "-":
-            yield sys.stdin
+        if p == STDIN_PATH:
+            yield p
         elif p.is_file() and "".join(p.suffixes) in (mode.SQL_EXTENSIONS):
             yield p
         elif p.is_dir():
@@ -81,13 +71,23 @@ def _update_source_files(results: Iterable[SqlFormatResult]) -> None:
     No-ops for unchanged files, results without a source path, and empty files
     """
     for res in results:
-        if (
-            res.has_changed
-            and res.source_path != Path("STDIN")
-            and res.formatted_string
-        ):
+        if res.has_changed and res.source_path != STDIN_PATH and res.formatted_string:
             with open(res.source_path, "w") as f:
                 f.write(res.formatted_string)
+
+
+def _read_path_or_stdin(path: Path) -> str:
+    """
+    If passed a Path, calls open() and read() and returns contents as a string.
+
+    If passed a TextIO buffer, calls read() directly
+    """
+    if path == STDIN_PATH:
+        source = sys.stdin.read()
+    else:
+        with open(path, "r") as f:
+            source = f.read()
+    return source
 
 
 def format_string(source: str, mode: Mode) -> str:
