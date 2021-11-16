@@ -140,3 +140,26 @@ def test_end_to_end_errors(
     assert "sqlfmt encountered an error" in result.stderr
 
     assert "900_bad_token.sql" in result.stderr
+
+
+@pytest.mark.parametrize(
+    "options,input,expected_stdout,expected_exit",
+    [
+        ("-", "select    1\n", "select 1\n\n", 0),
+        ("-", "select 1\n", "select 1\n\n", 0),
+        ("- --check", "select    1\n", "", 1),
+        ("- --diff", "select    1\n", "", 1),
+        ("- --check", "select 1\n", "", 0),
+        ("- --diff", "select 1\n", "", 0),
+    ],
+)
+def test_stdin(
+    sqlfmt_runner: CliRunner,
+    options: str,
+    input: str,
+    expected_stdout: str,
+    expected_exit: int,
+) -> None:
+    results = sqlfmt_runner.invoke(sqlfmt_main, args=options, input=input)
+    assert results.exit_code == expected_exit
+    assert results.stdout == expected_stdout

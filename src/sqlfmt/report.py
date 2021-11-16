@@ -33,6 +33,10 @@ class SqlFormatResult:
     formatted_string: str
     exception: Optional[SqlfmtError] = None
 
+    def maybe_print_to_stdout(self) -> None:
+        if self.source_path == Path("STDIN"):
+            display_output(self.formatted_string, err=False)
+
     @property
     def has_changed(self) -> bool:
         return self.source_string != self.formatted_string
@@ -129,6 +133,9 @@ class Report:
         return styled
 
     def display_report(self) -> None:
+        if not self.mode.check and not self.mode.diff:
+            for res in self.results:
+                res.maybe_print_to_stdout()
         display_output(str(self), err=True)
 
     @property

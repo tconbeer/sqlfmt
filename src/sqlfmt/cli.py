@@ -63,7 +63,7 @@ from sqlfmt.mode import Mode
 @click.argument(
     "files",
     nargs=-1,
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, allow_dash=True),
 )
 @click.pass_context
 def sqlfmt(
@@ -79,6 +79,9 @@ def sqlfmt(
 ) -> None:
     """
     sqlfmt is an opinionated CLI tool that formats your sql files.
+
+    The FILES argument can be one or many paths to sql files (or directories),
+    or use "-" to use stdin.
 
     Exit codes: 0 indicates success, 1 indicates failed check,
     2 indicates a handled exception caused by errors in one or more user code files

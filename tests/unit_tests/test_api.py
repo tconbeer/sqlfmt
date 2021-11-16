@@ -1,3 +1,4 @@
+import io
 import os
 from pathlib import Path
 from typing import List, Type
@@ -215,3 +216,11 @@ def test_run_error(error_dir: Path, all_output_modes: Mode) -> None:
     assert report.number_changed == 0
     assert report.number_unchanged == 0
     assert report.number_errored == 4
+
+
+def test_run_stdin(all_output_modes: Mode, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("sys.stdin", io.StringIO("select\n    1"))
+    report = run(files=["-"], mode=all_output_modes)
+    assert report.number_changed == 1
+    assert report.number_unchanged == 0
+    assert report.number_errored == 0
