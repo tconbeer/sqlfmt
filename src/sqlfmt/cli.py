@@ -29,19 +29,19 @@ from sqlfmt.mode import Mode
     "--line-length",
     default=88,
     type=int,
-    help="The maximum line length allowed in output files. Default is 88",
+    help=("The maximum line length allowed in output files. Default is 88"),
 )
 @click.option(
     "-v",
     "--verbose",
     is_flag=True,
-    help="Prints more information to stderr",
+    help=("Prints more information to stderr"),
 )
 @click.option(
     "-q",
     "--quiet",
     is_flag=True,
-    help="Prints much less information to stderr",
+    help=("Prints much less information to stderr"),
 )
 @click.option(
     "--no-color",

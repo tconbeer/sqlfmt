@@ -34,7 +34,7 @@ class Node:
         )
         b = [str(t) for t in self.open_brackets]
         r = (
-            "Node(\n"
+            f"Node(\n"
             f"\ttoken='{str(self.token)}',\n"
             f"\tprevious_node={prev},\n"
             f"\tinherited_depth={self.inherited_depth},\n"
@@ -44,7 +44,7 @@ class Node:
             f"\tvalue='{self.value}',\n"
             f"\topen_brackets={b}\n"
             f"\tformatting_disabled={self.formatting_disabled}\n"
-            ")"
+            f")"
         )
         return r
 
@@ -82,6 +82,10 @@ class Node:
         return self.token.type in (TokenType.OPERATOR, TokenType.WORD_OPERATOR)
 
     @property
+    def is_newline(self) -> bool:
+        return self.token.type == TokenType.NEWLINE
+
+    @property
     def is_multiline(self) -> bool:
         if (
             self.token.type in (TokenType.COMMENT, TokenType.JINJA)
@@ -117,10 +121,13 @@ class Node:
         )
 
         previous_token: Optional[Token] = None
-        if previous_node:
+        if previous_node is None or previous_node.token.type == TokenType.NEWLINE:
+            is_first_on_line = True
+        else:
+            is_first_on_line = False
             previous_token = previous_node.token
 
-        prefix = cls.whitespace(token, previous_token)
+        prefix = cls.whitespace(token, is_first_on_line, previous_token)
         value = cls.capitalize(token)
 
         if token.type == TokenType.FMT_OFF:
@@ -221,6 +228,7 @@ class Node:
     def whitespace(
         cls,
         token: Token,
+        is_first_on_line: bool,
         previous_token: Optional[Token],
     ) -> str:
         """
@@ -233,12 +241,15 @@ class Node:
         NO_SPACE = ""
         SPACE = " "
 
+        if is_first_on_line:
+            return NO_SPACE
         # tokens that are never preceded by a space
-        if token.type in (
+        elif token.type in (
             TokenType.BRACKET_CLOSE,
             TokenType.DOUBLE_COLON,
             TokenType.COMMA,
             TokenType.DOT,
+            TokenType.NEWLINE,
         ):
             return NO_SPACE
         # names preceded by dots are namespaced identifiers. No space.
@@ -302,13 +313,10 @@ class Line:
     def __str__(self) -> str:
         if self.formatting_disabled:
             return "".join([f"{t.prefix}{t.token}" for t in self.tokens])
-        elif self.nodes:
+        else:
             INDENT = " " * 4
             prefix = INDENT * self.depth
-            output = prefix + str(self.nodes[0]).lstrip()
-            return output + "".join([str(node) for node in self.nodes[1:]]) + "\n"
-        else:
-            return ""
+            return prefix + "".join([str(node) for node in self.nodes])
 
     def __len__(self) -> int:
         return len(str(self))
@@ -373,6 +381,45 @@ class Line:
 
         self.nodes.append(node)
 
+    def maybe_append_newline(self) -> None:
+        """
+        Check to see if this Line already ends in a NEWLINE. If not,
+        call append_newline
+        """
+        if self.nodes and self.nodes[-1].token.type == TokenType.NEWLINE:
+            pass
+        else:
+            self.append_newline()
+
+    def append_newline(self) -> None:
+        """
+        Create a new NEWLINE token and append it to the end of this line
+        """
+        previous_token: Optional[Token] = None
+        if self.nodes:
+            previous_token = self.nodes[-1].token
+        elif self.previous_node:
+            previous_token = self.previous_node.token
+
+        if previous_token:
+            spos = (previous_token.epos[0], previous_token.epos[1])
+            epos = (previous_token.epos[0], previous_token.epos[1] + 1)
+            source_line = previous_token.line
+        else:
+            spos = (0, 0)
+            epos = (0, 1)
+            source_line = ""
+
+        nl = Token(
+            type=TokenType.NEWLINE,
+            prefix="",
+            token="\n",
+            spos=spos,
+            epos=epos,
+            line=source_line,
+        )
+        self.append_token(nl)
+
     @classmethod
     def from_nodes(
         cls,
@@ -429,6 +476,12 @@ class Line:
         try:
             if self.nodes[-1].is_comment:
                 return True
+            elif (
+                len(self.nodes) > 1
+                and self.nodes[-1].is_newline
+                and self.nodes[-2].is_comment
+            ):
+                return True
             else:
                 return False
         except IndexError:
@@ -437,7 +490,7 @@ class Line:
     @property
     def last_content_index(self) -> int:
         for i, node in enumerate(self.nodes):
-            if node.is_comment:
+            if node.is_comment or node.is_newline:
                 return i - 1
         else:
             return i
@@ -446,12 +499,24 @@ class Line:
     def is_standalone_comment(self) -> bool:
         if len(self.nodes) == 1 and self.ends_with_comment:
             return True
+        elif (
+            len(self.nodes) == 2
+            and self.ends_with_comment
+            and self.nodes[-1].is_newline
+        ):
+            return True
         else:
             return False
 
     @property
     def is_standalone_multiline_node(self) -> bool:
         if len(self.nodes) == 1 and self.contains_multiline_node:
+            return True
+        if (
+            len(self.nodes) == 2
+            and self.contains_multiline_node
+            and self.nodes[-1].is_newline
+        ):
             return True
         else:
             return False

@@ -31,7 +31,10 @@ class LineMerger:
         for line in lines:
             # skip over nodes containing NEWLINEs
             nodes = [
-                node for node in line.nodes if node.token.type != TokenType.COMMENT
+                node
+                for node in line.nodes
+                if node.token.type != TokenType.NEWLINE
+                and node.token.type != TokenType.COMMENT
             ]
             content_nodes.extend(nodes)
             comments = [
@@ -41,7 +44,7 @@ class LineMerger:
         merged_nodes = content_nodes + comment_nodes
 
         if not merged_nodes:
-            raise CannotMergeException("Can't merge only whitespace")
+            raise CannotMergeException("Can't merge only whitespace/newlines")
         elif any([n.is_multiline or n.formatting_disabled for n in merged_nodes]):
             raise CannotMergeException(
                 "Can't merge lines containing multiline nodes or disabled formatting"
@@ -53,7 +56,7 @@ class LineMerger:
             nodes=merged_nodes,
         )
 
-        # merged_line.append_newline()
+        merged_line.append_newline()
 
         if merged_line.is_too_long(self.mode.line_length):
             raise CannotMergeException("Merged line is too long")

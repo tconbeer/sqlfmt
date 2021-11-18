@@ -72,13 +72,13 @@ def get_projects() -> List[SQLProject]:
     "-q",
     "--quiet",
     is_flag=True,
-    help="Does not print sqlfmt report to stderr",
+    help=("Does not print sqlfmt report to stderr"),
 )
 @click.option(
     "-k",
     "--reset-cache",
     is_flag=True,
-    help="Always does a fresh clone from project's repo.",
+    help=("Always does a fresh clone from project's repo."),
 )
 @click.pass_context
 def sqlfmt_primer(
@@ -127,8 +127,10 @@ def sqlfmt_primer(
             )
             time_elapsed = end_time - start_time
             click.echo(
-                f"Run completed in {time_elapsed:.2f} seconds "
-                f"({number_formatted / time_elapsed:.1f} files/sec)",
+                (
+                    f"Run completed in {time_elapsed:.2f} seconds "
+                    f"({number_formatted / time_elapsed:.1f} files/sec)"
+                ),
                 err=True,
             )
 
@@ -137,21 +139,27 @@ def sqlfmt_primer(
 
             if report.number_changed != project.expected_changed:
                 click.echo(
-                    "Changed:: Expected: "
-                    f"{project.expected_changed}, Actual: {report.number_changed}",
+                    (
+                        f"Changed:: Expected: "
+                        f"{project.expected_changed}, Actual: {report.number_changed}"
+                    ),
                     err=True,
                 )
             if report.number_unchanged != project.expected_unchanged:
                 click.echo(
-                    "Unchanged:: Expected: "
-                    f"{project.expected_unchanged}, "
-                    f"Actual: {report.number_unchanged}",
+                    (
+                        f"Unchanged:: Expected: "
+                        f"{project.expected_unchanged}, "
+                        f"Actual: {report.number_unchanged}"
+                    ),
                     err=True,
                 )
             if report.number_errored != project.expected_errored:
                 click.echo(
-                    "Errored:: Expected: "
-                    f"{project.expected_errored}, Actual: {report.number_errored}",
+                    (
+                        f"Errored:: Expected: "
+                        f"{project.expected_errored}, Actual: {report.number_errored}"
+                    ),
                     err=True,
                 )
 

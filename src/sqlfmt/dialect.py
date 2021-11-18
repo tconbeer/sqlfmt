@@ -2,21 +2,21 @@
 
 import re
 from abc import ABC, abstractmethod
-from typing import Dict
+from typing import Dict, Iterator, List, Optional
 
 from sqlfmt.exception import SqlfmtError
-from sqlfmt.token import TokenType
+from sqlfmt.token import Token, TokenType
 
 
 def group(*choices: str) -> str:
     return "(" + "|".join(choices) + ")"
 
 
-WHITESPACE: str = r"[ \f\t\r\n]"
+WHITESPACE: str = r"[ \f\t]"
 WHITESPACES: str = WHITESPACE + "+"
 MAYBE_WHITESPACES: str = WHITESPACE + "*"
 NEWLINE: str = r"\r?\n"
-ANY_BLANK: str = group(WHITESPACES, NEWLINE, r"$")
+ANY_BLANK: str = group(WHITESPACES, r"$")
 
 
 def expand_spaces(s: str) -> str:
@@ -49,6 +49,75 @@ class Dialect(ABC):
     def get_patterns(self) -> Dict[TokenType, str]:
         return self.PATTERNS
 
+    def tokenize_line(
+        self, line: str, lnum: int, skipchars: int = 0
+    ) -> Iterator[Token]:
+        """
+        A dialect must implement a tokenize_line method, which receives a line
+        (as a string) and other indicators of the state of the line, and yields Tokens
+        """
+        pos, eol = skipchars, len(line)
+
+        while pos < eol:
+            # try to match against each regex, in order
+            for token_type, prog in self.programs.items():
+
+                match = prog.match(line, pos)
+                if match:
+                    start, end = match.span(1)
+                    prefix = line[pos:start]
+                    spos, epos, pos = (lnum, start), (lnum, end), end
+                    token = line[start:end]
+
+                    yield Token(token_type, prefix, token, spos, epos, line)
+                    break
+            # nothing matched. Either whitespace or an error
+            else:
+                if line[pos:].strip() == "":
+                    pos = eol
+                else:
+                    raise SqlfmtParsingError(
+                        f"Could not parse SQL at {(lnum, pos)}: '{line[pos:].strip()}'"
+                    )
+
+    def search_for_token(
+        self, token_types: List[TokenType], line: str, lnum: int, skipchars: int = 0
+    ) -> Optional[Token]:
+        """
+        Match the first instance of token_type in line; return None if no match is found
+        """
+        if len(token_types) == 1:
+            prog = self.programs[token_types[0]]
+        else:
+            patterns = [self.PATTERNS[t] for t in token_types]
+            prog = re.compile(MAYBE_WHITESPACES + group(*patterns), re.IGNORECASE)
+
+        match = prog.search(line, skipchars)
+        if not match:
+            return None
+
+        start, end = match.span(1)
+        prefix = line[skipchars:start]
+        spos, epos = (lnum, start), (lnum, end)
+        token = line[start:end]
+
+        if len(token_types) == 1:
+            final_type = token_types[0]
+        else:
+            for t in token_types:
+                prog = self.programs[t]
+                match = prog.match(line, start)
+                if match:
+                    final_type = t
+                    break
+
+        if final_type:
+            return Token(final_type, prefix, token, spos, epos, line)
+        else:
+            raise SqlfmtParsingError(
+                "Internal Error! Matched group of types but not individual type"
+            )
+
 
 class Polyglot(Dialect):
     """
@@ -57,17 +126,13 @@ class Polyglot(Dialect):
     """
 
     PATTERNS: Dict[TokenType, str] = {
-        TokenType.FMT_OFF: group(r"(--|#) ?fmt: ?off ?(NEWLINE|$)"),
-        TokenType.FMT_ON: group(r"(--|#) ?fmt: ?on ?(NEWLINE|$)"),
-        # these only match simple jinja tags, without nesting or potential nesting
+        TokenType.FMT_OFF: group(r"(--|#) ?fmt: ?off") + group(r"\n", r"$"),
+        TokenType.FMT_ON: group(r"(--|#) ?fmt: ?on") + group(r"\n", r"$"),
         TokenType.JINJA: group(
-            r"\{\{[^{}%#]*\}\}",
-            r"\{%[^{}%#]*?%\}",
-            r"\{\#[^{}%#]*?\#\}",
+            r"\{\{[^\n]*?\}\}",
+            r"\{%[^\n]*?%\}",
+            r"\{\#[^\n]*?\#\}",
         ),
-        # These match just the start and end of jinja tags, which allows
-        # the parser to deal with nesting in a more powerful way than
-        # regex allows
         TokenType.JINJA_START: group(r"\{[{%#]"),
         TokenType.JINJA_END: group(r"[}%#]\}"),
         TokenType.QUOTED_NAME: group(
@@ -78,7 +143,6 @@ class Polyglot(Dialect):
         TokenType.COMMENT: group(
             r"--[^\r\n]*",
             r"#[^\r\n]*",
-            r"/\*[^*]*\*+(?:[^/*][^*]*\*+)*/",  # simple block comment
         ),
         TokenType.COMMENT_START: group(r"/\*"),
         TokenType.COMMENT_END: group(r"\*/"),
@@ -127,6 +191,7 @@ class Polyglot(Dialect):
         + group(r"\W", r"$"),
         TokenType.COMMA: group(r","),
         TokenType.DOT: group(r"\."),
+        TokenType.NEWLINE: group(r"\r?\n"),
         TokenType.UNTERM_KEYWORD: group(
             expand_spaces(r"with( recursive)?"),
             expand_spaces(r"select( as struct| as value)?( all| top \d+| distinct)?"),
