@@ -1,5 +1,5 @@
 from enum import Enum, auto
-from typing import NamedTuple, Tuple
+from typing import NamedTuple
 
 
 class TokenType(Enum):
@@ -23,7 +23,6 @@ class TokenType(Enum):
     WORD_OPERATOR = auto()
     COMMA = auto()
     DOT = auto()
-    NEWLINE = auto()
     UNTERM_KEYWORD = auto()  # Unterminated keyword
     NAME = auto()
 
@@ -54,9 +53,8 @@ class Token(NamedTuple):
     type: TokenType
     prefix: str
     token: str
-    spos: Tuple[int, int]
-    epos: Tuple[int, int]
-    line: str
+    spos: int
+    epos: int
 
     def __str__(self) -> str:
         return f"Token(type={self.type}, token={self.token}, spos={self.spos})"
@@ -65,6 +63,6 @@ class Token(NamedTuple):
         return (
             f"Token(type={self.type}, "
             f"prefix={repr(self.prefix)}, token={repr(self.token)}, "
-            f"spos={self.spos}, epos={self.epos}, line={repr(self.line)}"
-            f")"
+            f"spos={self.spos}, epos={self.epos}"
+            ")"
         )

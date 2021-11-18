@@ -97,7 +97,7 @@ class LineSplitter:
             else line.previous_node,
             nodes=head,
         )
-        head_line.append_newline()
+        # head_line.append_newline()
         yield from self.maybe_split(head_line)
 
         if not comment_line:

@@ -1,7 +1,7 @@
 import pytest
 
-from sqlfmt.dialect import Dialect, Polyglot, SqlfmtParsingError, group
-from sqlfmt.token import Token, TokenType
+from sqlfmt.dialect import Dialect, Polyglot, group
+from sqlfmt.token import TokenType
 
 
 def test_group() -> None:
@@ -27,23 +27,6 @@ class TestPolyglot:
         # make sure Dialect defines a match for every TokenType
         for t in list(TokenType):
             assert polyglot.PATTERNS[t]
-
-    def test_polyglot_trivial_query(self, polyglot: Polyglot) -> None:
-        assert isinstance(polyglot, Dialect)
-
-        basic_line = "select 1"
-        gen = polyglot.tokenize_line(line=basic_line, lnum=0)
-
-        expected_token = Token(
-            TokenType.UNTERM_KEYWORD, "", "select", (0, 0), (0, 6), "select 1"
-        )
-        assert next(gen) == expected_token
-
-        expected_token = Token(TokenType.NUMBER, " ", "1", (0, 7), (0, 8), "select 1")
-        assert next(gen) == expected_token
-
-        with pytest.raises(StopIteration):
-            next(gen)
 
     @pytest.mark.parametrize(
         "token_type,value",
@@ -78,7 +61,6 @@ class TestPolyglot:
             (TokenType.WORD_OPERATOR, "AND"),
             (TokenType.COMMA, ","),
             (TokenType.DOT, "."),
-            (TokenType.NEWLINE, "\n"),
             (TokenType.UNTERM_KEYWORD, "select DISTINCT"),
             (TokenType.UNTERM_KEYWORD, "select"),
             (TokenType.UNTERM_KEYWORD, "select\t    distinct"),
@@ -127,46 +109,6 @@ class TestPolyglot:
         for token_type, prog in polyglot.programs.items():
             match = prog.match("")
             assert match is None, str(token_type)
-
-    def test_parsing_error(self, polyglot: Polyglot) -> None:
-        gen = polyglot.tokenize_line(line="select ?\n", lnum=33)
-        select = next(gen)
-        assert select
-
-        with pytest.raises(SqlfmtParsingError):
-            _ = next(gen)
-
-    def test_search_for_one_token(self, polyglot: Polyglot) -> None:
-        line = "select 1 from my_table\n"
-
-        expected_token = Token(
-            type=TokenType.NUMBER,
-            prefix="select ",
-            token="1",
-            spos=(0, 7),
-            epos=(0, 8),
-            line="select 1 from my_table\n",
-        )
-
-        actual_token = polyglot.search_for_token([TokenType.NUMBER], line=line, lnum=0)
-        assert actual_token == expected_token
-
-    def test_search_for_multiple_tokens(self, polyglot: Polyglot) -> None:
-        line = "select 1 from my_table\n"
-
-        expected_token = Token(
-            type=TokenType.NUMBER,
-            prefix=" ",
-            token="1",
-            spos=(0, 7),
-            epos=(0, 8),
-            line="select 1 from my_table\n",
-        )
-
-        actual_token = polyglot.search_for_token(
-            [TokenType.NUMBER, TokenType.UNTERM_KEYWORD], line=line, lnum=0, skipchars=6
-        )
-        assert actual_token == expected_token
 
     def test_match_first_jinja_Tag(self, polyglot: Polyglot) -> None:
         source_string = (

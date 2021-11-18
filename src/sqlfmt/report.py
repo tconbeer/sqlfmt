@@ -73,7 +73,7 @@ class Report:
         if self.number_errored > 0:
             error_msg = (
                 f"{self._pluralize_file(self.number_errored)} had errors while "
-                f"formatting."
+                "formatting."
             )
             report.append(style_output(error_msg, fg="red", bold=True))
         if self.number_changed > 0:
