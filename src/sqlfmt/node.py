@@ -23,6 +23,9 @@ class Node:
     parent: Optional["Node"] = None
     children: List["Node"] = field(default_factory=list)
 
+    def __bool__(self) -> bool:
+        return True
+
     def __str__(self) -> str:
         return self.prefix + self.value
 
@@ -32,20 +35,26 @@ class Node:
         unusable output
         """
         prev = (
-            f"Node(token={self.previous_node.token})" if self.previous_node else "None"
+            f"Node(token={repr(self.previous_node.token)})"
+            if self.previous_node
+            else "None"
         )
-        b = [str(t) for t in self.open_brackets]
+        parent = f"Node(token={repr(self.parent.token)})" if self.parent else "None"
+        children = ", ".join([f"Node(token={repr(n.token)})" for n in self.children])
+        b = ", ".join([repr(t) for t in self.open_brackets])
         r = (
             "Node(\n"
-            f"\ttoken='{str(self.token)}',\n"
+            f"\ttoken={repr(self.token)}',\n"
             f"\tprevious_node={prev},\n"
             f"\tinherited_depth={self.inherited_depth},\n"
             f"\tdepth={self.depth},\n"
             f"\tchange_in_depth={self.change_in_depth},\n"
             f"\tprefix='{self.prefix}',\n"
             f"\tvalue='{self.value}',\n"
-            f"\topen_brackets={b}\n"
-            f"\tformatting_disabled={self.formatting_disabled}\n"
+            f"\topen_brackets=[{b}],\n"
+            f"\tformatting_disabled={self.formatting_disabled},\n"
+            f"\tparent={parent},\n"
+            f"\tchildren=[{children}]\n"
             ")"
         )
         return r
@@ -142,29 +151,27 @@ class Node:
         else:
             raise SqlfmtBracketError("Node depth out of bounds")
 
-        previous_token: Optional[Token] = None
-        if previous_node:
-            previous_token = previous_node.token
+        previous_token = previous_node.token
 
         prefix = cls.whitespace(token, previous_token)
         value = cls.capitalize(token)
 
         if token.type == TokenType.FMT_OFF:
             formatting_disabled = True
-        elif previous_token and previous_token.type == TokenType.FMT_ON:
+        elif previous_token.type == TokenType.FMT_ON:
             formatting_disabled = False
 
         node = Node(
-            token,
-            previous_node,
-            inherited_depth,
-            prefix,
-            value,
-            depth,
-            change_in_depth,
-            open_brackets,
-            formatting_disabled,
-            parent,
+            token=token,
+            previous_node=previous_node,
+            inherited_depth=inherited_depth,
+            prefix=prefix,
+            value=value,
+            depth=depth,
+            change_in_depth=change_in_depth,
+            open_brackets=open_brackets,
+            formatting_disabled=formatting_disabled,
+            parent=parent,
         )
         parent.children.append(node)  # type: ignore
 

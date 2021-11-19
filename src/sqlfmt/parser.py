@@ -4,8 +4,8 @@ from typing import Dict, Iterable, List
 
 from sqlfmt.dialect import MAYBE_WHITESPACES, SqlfmtParsingError, group
 from sqlfmt.exception import SqlfmtError
-from sqlfmt.line import Node
 from sqlfmt.mode import Mode
+from sqlfmt.node import Node
 from sqlfmt.token import Token, TokenType
 
 

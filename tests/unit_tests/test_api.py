@@ -14,8 +14,8 @@ from sqlfmt.api import (
 )
 from sqlfmt.dialect import SqlfmtParsingError
 from sqlfmt.exception import SqlfmtError
-from sqlfmt.line import SqlfmtBracketError
 from sqlfmt.mode import Mode
+from sqlfmt.node import SqlfmtBracketError
 from sqlfmt.parser import SqlfmtMultilineError
 from tests.util import copy_test_data_to_tmp
 

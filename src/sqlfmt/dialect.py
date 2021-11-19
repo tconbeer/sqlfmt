@@ -17,6 +17,7 @@ WHITESPACES: str = WHITESPACE + "+"
 MAYBE_WHITESPACES: str = WHITESPACE + "*"
 NEWLINE: str = r"\r?\n"
 ANY_BLANK: str = group(WHITESPACES, r"$")
+EOL = group(NEWLINE, r"$")
 
 
 class SqlfmtParsingError(SqlfmtError):
@@ -53,8 +54,8 @@ class Polyglot(Dialect):
     """
 
     PATTERNS: Dict[TokenType, str] = {
-        TokenType.FMT_OFF: group(r"(--|#) ?fmt: ?off ?(NEWLINE|$)"),
-        TokenType.FMT_ON: group(r"(--|#) ?fmt: ?on ?(NEWLINE|$)"),
+        TokenType.FMT_OFF: group(r"(--|#) ?fmt: ?off ?") + EOL,
+        TokenType.FMT_ON: group(r"(--|#) ?fmt: ?on ?") + EOL,
         # these only match simple jinja tags, without nesting or potential nesting
         TokenType.JINJA: group(
             r"\{\{[^{}%#]*\}\}",

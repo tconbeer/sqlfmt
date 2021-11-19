@@ -57,6 +57,9 @@ class Token(NamedTuple):
     spos: int
     epos: int
 
+    def __bool__(self) -> bool:
+        return True
+
     def __str__(self) -> str:
         return f"Token(type={self.type}, token={self.token}, spos={self.spos})"
 
