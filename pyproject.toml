@@ -51,6 +51,7 @@ sqlfmt_primer = "sqlfmt_primer.primer:sqlfmt_primer"
 [tool.black]
 line-length = 88
 target-version = ["py38"]
+experimental-string-processing = true
 
 [tool.isort]
 multi_line_output = 3

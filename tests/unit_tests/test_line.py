@@ -76,8 +76,7 @@ def test_simple_line(
     assert str(simple_line) == source_string
 
     expected_token_repr = (
-        "Token(type=TokenType.UNTERM_KEYWORD, prefix='', token='with', "
-        "spos=0, epos=4)"
+        "Token(type=TokenType.UNTERM_KEYWORD, prefix='', token='with', spos=0, epos=4)"
     )
     assert repr(simple_line.tokens[0]) == expected_token_repr
     new_token = eval(repr(simple_line.tokens[0]))

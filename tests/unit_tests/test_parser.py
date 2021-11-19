@@ -64,7 +64,7 @@ def test_simple_query_parsing(all_output_modes: Mode) -> None:
         Token(type=TokenType.UNTERM_KEYWORD, prefix="", token="select", spos=0, epos=6),
         Token(
             type=TokenType.NAME,
-            prefix="     ",
+            prefix="\n    ",
             token="a_long_field_name",
             spos=6,
             epos=28,
@@ -72,13 +72,15 @@ def test_simple_query_parsing(all_output_modes: Mode) -> None:
         Token(type=TokenType.COMMA, prefix="", token=",", spos=28, epos=29),
         Token(
             type=TokenType.NAME,
-            prefix="     ",
+            prefix="\n    ",
             token="another_long_field_name",
             spos=29,
             epos=57,
         ),
         Token(type=TokenType.COMMA, prefix="", token=",", spos=57, epos=58),
-        Token(type=TokenType.BRACKET_OPEN, prefix="     ", token="(", spos=58, epos=64),
+        Token(
+            type=TokenType.BRACKET_OPEN, prefix="\n    ", token="(", spos=58, epos=64
+        ),
         Token(type=TokenType.NAME, prefix="", token="one_field", spos=64, epos=73),
         Token(type=TokenType.OPERATOR, prefix=" ", token="+", spos=73, epos=75),
         Token(type=TokenType.NAME, prefix=" ", token="another_field", spos=75, epos=89),
@@ -86,7 +88,7 @@ def test_simple_query_parsing(all_output_modes: Mode) -> None:
         Token(type=TokenType.WORD_OPERATOR, prefix=" ", token="as", spos=90, epos=93),
         Token(type=TokenType.NAME, prefix=" ", token="c", spos=93, epos=95),
         Token(
-            type=TokenType.UNTERM_KEYWORD, prefix=" ", token="from", spos=95, epos=100
+            type=TokenType.UNTERM_KEYWORD, prefix="\n", token="from", spos=95, epos=100
         ),
         Token(type=TokenType.NAME, prefix=" ", token="my_schema", spos=100, epos=110),
         Token(type=TokenType.DOT, prefix="", token=".", spos=110, epos=111),
@@ -98,7 +100,11 @@ def test_simple_query_parsing(all_output_modes: Mode) -> None:
             epos=130,
         ),
         Token(
-            type=TokenType.UNTERM_KEYWORD, prefix=" ", token="where", spos=130, epos=136
+            type=TokenType.UNTERM_KEYWORD,
+            prefix="\n",
+            token="where",
+            spos=130,
+            epos=136,
         ),
         Token(type=TokenType.NAME, prefix=" ", token="one_field", spos=136, epos=146),
         Token(type=TokenType.OPERATOR, prefix=" ", token="<", spos=146, epos=148),
@@ -195,7 +201,7 @@ def test_multiline_parsing(default_mode: Mode) -> None:
         ),
         Token(
             type=TokenType.COMMENT,
-            prefix="  ",
+            prefix="\n\n",
             token=(
                 "/*\n * This is a typical multiline comment.\n * It contains"
                 " newlines.\n * And even /* some {% special characters %}\n * but we're"
@@ -205,9 +211,13 @@ def test_multiline_parsing(default_mode: Mode) -> None:
             epos=310,
         ),
         Token(
-            type=TokenType.UNTERM_KEYWORD, prefix="  ", token="with", spos=310, epos=316
+            type=TokenType.UNTERM_KEYWORD,
+            prefix="\n\n",
+            token="with",
+            spos=310,
+            epos=316,
         ),
-        Token(type=TokenType.NAME, prefix="     ", token="source", spos=316, epos=327),
+        Token(type=TokenType.NAME, prefix="\n    ", token="source", spos=316, epos=327),
         Token(type=TokenType.WORD_OPERATOR, prefix=" ", token="as", spos=327, epos=330),
         Token(type=TokenType.BRACKET_OPEN, prefix=" ", token="(", spos=330, epos=332),
         Token(
@@ -226,7 +236,9 @@ def test_multiline_parsing(default_mode: Mode) -> None:
         ),
         Token(type=TokenType.BRACKET_CLOSE, prefix="", token=")", spos=367, epos=368),
         Token(type=TokenType.COMMA, prefix="", token=",", spos=368, epos=369),
-        Token(type=TokenType.NAME, prefix="     ", token="renamed", spos=369, epos=381),
+        Token(
+            type=TokenType.NAME, prefix="\n    ", token="renamed", spos=369, epos=381
+        ),
         Token(type=TokenType.WORD_OPERATOR, prefix=" ", token="as", spos=381, epos=384),
         Token(type=TokenType.BRACKET_OPEN, prefix=" ", token="(", spos=384, epos=386),
         Token(
@@ -247,12 +259,12 @@ def test_multiline_parsing(default_mode: Mode) -> None:
             epos=507,
         ),
         Token(
-            type=TokenType.NAME, prefix="             ", token="id", spos=507, epos=522
+            type=TokenType.NAME, prefix="\n            ", token="id", spos=507, epos=522
         ),
         Token(type=TokenType.COMMA, prefix="", token=",", spos=522, epos=523),
         Token(
             type=TokenType.NAME,
-            prefix="             ",
+            prefix="\n            ",
             token="another_field",
             spos=523,
             epos=549,
@@ -260,7 +272,7 @@ def test_multiline_parsing(default_mode: Mode) -> None:
         Token(type=TokenType.COMMA, prefix="", token=",", spos=549, epos=550),
         Token(
             type=TokenType.NAME,
-            prefix="             ",
+            prefix="\n            ",
             token="and_another",
             spos=550,
             epos=574,
@@ -268,21 +280,21 @@ def test_multiline_parsing(default_mode: Mode) -> None:
         Token(type=TokenType.COMMA, prefix="", token=",", spos=574, epos=575),
         Token(
             type=TokenType.NAME,
-            prefix="             ",
+            prefix="\n            ",
             token="and_still_another",
             spos=575,
             epos=605,
         ),
         Token(
             type=TokenType.UNTERM_KEYWORD,
-            prefix="         ",
+            prefix="\n        ",
             token="from",
             spos=605,
             epos=618,
         ),
         Token(type=TokenType.NAME, prefix=" ", token="source", spos=618, epos=625),
         Token(
-            type=TokenType.BRACKET_CLOSE, prefix="     ", token=")", spos=625, epos=631
+            type=TokenType.BRACKET_CLOSE, prefix="\n    ", token=")", spos=625, epos=631
         ),
         Token(type=TokenType.COMMA, prefix="", token=",", spos=631, epos=632),
         Token(
@@ -297,7 +309,7 @@ def test_multiline_parsing(default_mode: Mode) -> None:
         ),
         Token(
             type=TokenType.JINJA,
-            prefix="  ",
+            prefix="\n\n",
             token=(
                 "{#\n # And this is a nice multiline jinja comment\n # that we will"
                 " also handle.\n#}"
@@ -307,7 +319,7 @@ def test_multiline_parsing(default_mode: Mode) -> None:
         ),
         Token(
             type=TokenType.UNTERM_KEYWORD,
-            prefix="  ",
+            prefix="\n\n",
             token="select",
             spos=837,
             epos=845,

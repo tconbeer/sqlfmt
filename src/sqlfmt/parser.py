@@ -43,58 +43,57 @@ class Query:
         Generate tokens by matching the head of the passed string,
         and then recursing on the tail
         """
-        if tail.strip() == "":
-            return
-        else:
-            for token_type, prog in self.programs.items():
-
-                match = prog.match(tail)
-                if match:
-                    spos = pos
-                    start, end = match.span(1)
-                    raw_prefix = tail[:start]
-                    prefix = raw_prefix.replace("\n", " ")
-                    raw_token = tail[start:end]
-                    if token_type in (TokenType.JINJA_END, TokenType.COMMENT_END):
-                        raise SqlfmtMultilineError(
-                            f"Encountered closing bracket '{raw_token}' at position "
-                            f"{pos+start}, before matching opening bracket: "
-                            f"{tail[start:start+50]}"
-                        )
-                    elif token_type in (TokenType.JINJA_START, TokenType.COMMENT_START):
-                        # search for the ending token, and/or nest levels deeper
-                        epos = self.search_for_terminating_token(
-                            start_type=token_type,
-                            tail=tail[end:],
-                            pos=pos + end,
-                        )
-                        end = epos - pos
-                        token = tail[start:end].strip()
-                        if token_type == TokenType.JINJA_START:
-                            token_type = TokenType.JINJA
-                        else:
-                            token_type = TokenType.COMMENT
-                    else:
-                        epos = pos + end
-                        if token_type in (
-                            TokenType.COMMENT,
-                            TokenType.FMT_OFF,
-                            TokenType.FMT_ON,
-                            TokenType.JINJA,
-                        ):
-                            token = raw_token.strip()
-                        else:
-                            token = raw_token.replace("\n", " ").strip()
-
-                    yield Token(token_type, prefix, token, spos, epos)
-                    break
-            # nothing matched. Either whitespace or an error
+        while True:
+            if tail.strip() == "":
+                return
             else:
-                raise SqlfmtParsingError(
-                    f"Could not parse SQL at position {pos}:"
-                    f" '{tail[pos:pos+50].strip()}'"
-                )
-            yield from self.lex(tail=tail[end:], pos=epos)
+                for token_type, prog in self.programs.items():
+
+                    match = prog.match(tail)
+                    if match:
+                        spos = pos
+                        start, end = match.span(1)
+                        prefix = tail[:start]
+                        raw_token = tail[start:end]
+                        if token_type in (TokenType.JINJA_END, TokenType.COMMENT_END):
+                            raise SqlfmtMultilineError(
+                                f"Encountered closing bracket '{raw_token}' at position"
+                                f" {pos+start}, before matching opening bracket:"
+                                f" {tail[start:start+50]}"
+                            )
+                        elif token_type in (
+                            TokenType.JINJA_START,
+                            TokenType.COMMENT_START,
+                        ):
+                            # search for the ending token, and/or nest levels deeper
+                            epos = self.search_for_terminating_token(
+                                start_type=token_type,
+                                tail=tail[end:],
+                                pos=pos + end,
+                            )
+                            end = epos - pos
+                            token = tail[start:end]
+                            if token_type == TokenType.JINJA_START:
+                                token_type = TokenType.JINJA
+                            else:
+                                token_type = TokenType.COMMENT
+                        else:
+                            epos = pos + end
+                            token = raw_token
+
+                        assert end > 0
+
+                        yield Token(token_type, prefix, token, spos, epos)
+
+                        tail = tail[end:]
+                        pos = epos
+                        break
+                # nothing matched. Either whitespace or an error
+                else:
+                    raise SqlfmtParsingError(
+                        f"Could not parse SQL at position {pos}:"
+                        f" '{tail[pos:pos+50].strip()}'"
+                    )
 
     def search_for_terminating_token(
         self, start_type: TokenType, tail: str, pos: int

@@ -12,15 +12,11 @@ def group(*choices: str) -> str:
     return "(" + "|".join(choices) + ")"
 
 
-WHITESPACE: str = r"[ \f\t\r\n]"
+WHITESPACE: str = r"\s"
 WHITESPACES: str = WHITESPACE + "+"
 MAYBE_WHITESPACES: str = WHITESPACE + "*"
 NEWLINE: str = r"\r?\n"
-ANY_BLANK: str = group(WHITESPACES, NEWLINE, r"$")
-
-
-def expand_spaces(s: str) -> str:
-    return s.replace(" ", f"{ANY_BLANK}+")
+ANY_BLANK: str = group(WHITESPACES, r"$")
 
 
 class SqlfmtParsingError(SqlfmtError):
@@ -128,26 +124,26 @@ class Polyglot(Dialect):
         TokenType.COMMA: group(r","),
         TokenType.DOT: group(r"\."),
         TokenType.UNTERM_KEYWORD: group(
-            expand_spaces(r"with( recursive)?"),
-            expand_spaces(r"select( as struct| as value)?( all| top \d+| distinct)?"),
+            r"with(\s+recursive)?",
+            r"select(\s+(as\s+struct|as\s+value))?(\s+(all|top\s+\d+|distinct))?",
             r"from",
-            expand_spaces(r"(natural )?((inner|((left|right|full)( outer)?)) )?join"),
+            r"(natural\s+)?((inner|((left|right|full)(\s+outer)?))\s+)?join",
             r"where",
-            expand_spaces(r"group by"),
+            r"group\s+by",
             r"having",
             r"qualify",
             r"window",
-            expand_spaces(r"(union|intersect|except)( all|distinct)?"),
-            expand_spaces(r"order by"),
+            r"(union|intersect|except)(\s+all|distinct)?",
+            r"order\s+by",
             r"limit",
             r"offset",
-            expand_spaces(r"fetch (first|next)"),
-            expand_spaces(r"for (update|no key update|share|key share)"),
+            r"fetch\s+(first|next)",
+            r"for\s+(update|no\s+key\s+update|share|key\s+share)",
             r"when",
             r"then",
             r"else",
-            expand_spaces(r"partition by"),
-            expand_spaces(r"rows between"),
+            r"partition\s+by",
+            r"rows\s+between",
         )
         + group(r"\W", r"$"),
         TokenType.NAME: group(r"\w+"),

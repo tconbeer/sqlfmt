@@ -54,9 +54,7 @@ def _generate_results(paths: Iterable[Path], mode: Mode) -> Iterator[SqlFormatRe
     Yields SqlFormatResults.
     """
     for p in paths:
-
         source = _read_path_or_stdin(p)
-
         try:
             formatted = format_string(source, mode)
             yield SqlFormatResult(
