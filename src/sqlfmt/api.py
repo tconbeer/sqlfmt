@@ -3,7 +3,8 @@ from pathlib import Path
 from typing import Iterable, Iterator, List, Set
 
 from sqlfmt.exception import SqlfmtError
-from sqlfmt.formatter import QueryFormatter
+
+# from sqlfmt.formatter import QueryFormatter
 from sqlfmt.mode import Mode
 from sqlfmt.parser import Query
 from sqlfmt.report import STDIN_PATH, Report, SqlFormatResult
@@ -11,9 +12,10 @@ from sqlfmt.report import STDIN_PATH, Report, SqlFormatResult
 
 def format_string(source: str, mode: Mode) -> str:
     raw_query = Query.from_source(source_string=source, mode=mode)
-    formatter = QueryFormatter(mode)
-    formatted_query = formatter.format(raw_query)
-    return str(formatted_query)
+    # formatter = QueryFormatter(mode)
+    # formatted_query = formatter.format(raw_query)
+    # return str(formatted_query)
+    return str(raw_query)
 
 
 def run(files: List[str], mode: Mode) -> Report:

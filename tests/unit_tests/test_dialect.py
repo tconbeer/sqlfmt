@@ -26,7 +26,10 @@ class TestPolyglot:
     def test_patterns_are_complete(self, polyglot: Polyglot) -> None:
         # make sure Dialect defines a match for every TokenType
         for t in list(TokenType):
-            assert polyglot.PATTERNS[t]
+            if t == TokenType.ROOT:
+                pass
+            else:
+                assert polyglot.PATTERNS[t]
 
     @pytest.mark.parametrize(
         "token_type,value",

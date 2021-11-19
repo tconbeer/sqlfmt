@@ -50,17 +50,18 @@ def test_simple_query_parsing(all_output_modes: Mode) -> None:
 
     assert q
     assert q.source_string == source_string
-    # assert len(q.lines) == 6
+    assert q.nodes
+    assert q.nodes[0].token.type == TokenType.ROOT
+    assert len(q.nodes[0].children) == 3
+    for node in q.nodes[0].children:
+        assert node.is_unterm_keyword
+        assert node.depth == 0
 
-    # expected_line_depths = [0, 1, 1, 1, 0, 0]
-
-    # computed_line_depths = [line.depth for line in q.lines]
-    # assert computed_line_depths == expected_line_depths
-
-    assert len(q.tokens) == 20
+    assert len(q.tokens) == 21
     assert isinstance(q.tokens[0], Token)
 
     expected_tokens = [
+        Token(type=TokenType.ROOT, prefix="", token="", spos=0, epos=0),
         Token(type=TokenType.UNTERM_KEYWORD, prefix="", token="select", spos=0, epos=6),
         Token(
             type=TokenType.NAME,
@@ -124,7 +125,7 @@ def test_parsing_error(default_mode: Mode) -> None:
 
 def test_whitespace_formatting(default_mode: Mode) -> None:
     source_string = "  select 1\n    from my_table\nwhere true"
-    expected_string = "select 1 from my_table where true\n"
+    expected_string = " select 1 from my_table where true\n"
     q = Query.from_source(source_string=source_string, mode=default_mode)
     assert str(q) == expected_string
 
@@ -152,6 +153,7 @@ def test_cte_parsing(default_mode: Mode) -> None:
     assert q.source_string == source_string
 
     expected_node_depths = [
+        (-1, 1),  # root
         (0, 1),  # with
         (1, 0),  # my_cte
         (1, 0),  # as
@@ -188,6 +190,7 @@ def test_multiline_parsing(default_mode: Mode) -> None:
     assert q.source_string == source_string
 
     expected = [
+        Token(type=TokenType.ROOT, prefix="", token="", spos=0, epos=0),
         Token(
             type=TokenType.JINJA,
             prefix="",
@@ -350,18 +353,20 @@ def test_star_parsing(default_mode: Mode) -> None:
     space_star_q = Query.from_source(source_string=space_star, mode=default_mode)
 
     assert space_star_q
-    assert len(space_star_q.nodes) == 4
+    assert len(space_star_q.nodes) == 5
+    assert space_star_q.nodes[2].value == "*"
     assert (
-        space_star_q.nodes[1].prefix == " "
+        space_star_q.nodes[2].prefix == " "
     ), "There should be a space between select and star in select *"
 
     dot_star = "select my_table.* from my_table\n"
     dot_star_q = Query.from_source(source_string=dot_star, mode=default_mode)
 
     assert dot_star_q
-    assert len(dot_star_q.nodes) == 6
+    assert len(dot_star_q.nodes) == 7
+    assert dot_star_q.nodes[4].value == "*"
     assert (
-        dot_star_q.nodes[3].prefix == ""
+        dot_star_q.nodes[4].prefix == ""
     ), "There should be no space between dot and star in my_table.*"
 
 

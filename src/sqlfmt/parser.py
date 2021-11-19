@@ -1,10 +1,10 @@
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, Iterable, List
 
 from sqlfmt.dialect import MAYBE_WHITESPACES, SqlfmtParsingError, group
 from sqlfmt.exception import SqlfmtError
-from sqlfmt.line import Line, Node
+from sqlfmt.line import Node
 from sqlfmt.mode import Mode
 from sqlfmt.token import Token, TokenType
 
@@ -17,7 +17,7 @@ class SqlfmtMultilineError(SqlfmtError):
 class Query:
     source_string: str
     mode: Mode
-    lines: List[Line] = field(default_factory=list)
+    root: Node
 
     def __post_init__(self) -> None:
         self.PATTERNS = self.mode.dialect.get_patterns()
@@ -31,11 +31,13 @@ class Query:
         """
         Initialize a parser and parse the source string.
         """
-        q = Query(source_string, mode)
-        line = Line(source_string=source_string, previous_node=None)
-        q.lines.append(line)
+        root = Node.create_root()
+        q = Query(source_string, mode, root)
+
+        previous_node = root
         for token in q.lex(source_string=source_string, pos=0):
-            line.append_token(token)
+            node = Node.from_token(token, previous_node=previous_node)
+            previous_node = node
         return q
 
     def lex(self, source_string: str, pos: int) -> Iterable[Token]:
@@ -145,22 +147,15 @@ class Query:
     @property
     def tokens(self) -> List[Token]:
         tokens: List[Token] = []
-        for line in self.lines:
-            tokens.extend(line.tokens)
+        for node in self.nodes:
+            tokens.append(node.token)
         return tokens
 
     @property
     def nodes(self) -> List[Node]:
-        nodes: List[Node] = []
-        for line in self.lines:
-            nodes.extend(line.nodes)
+        nodes = list(self.root.traverse_children())
         return nodes
 
     def __str__(self) -> str:
-        draft = []
-        for s in [str(line) for line in self.lines]:
-            if s:
-                draft.append(s)
-
-        q = "".join(draft)
-        return q
+        # todo: pretty printing
+        return "".join([str(n) for n in self.nodes]) + "\n"

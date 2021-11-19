@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple
+from typing import Iterable, List, Optional, Tuple
 
 from sqlfmt.exception import SqlfmtError
-from sqlfmt.token import Token, TokenType, split_after
+from sqlfmt.token import Token, TokenType
 
 
 class SqlfmtBracketError(SqlfmtError):
@@ -20,6 +20,8 @@ class Node:
     change_in_depth: int
     open_brackets: List[Token] = field(default_factory=list)
     formatting_disabled: bool = False
+    parent: Optional["Node"] = None
+    children: List["Node"] = field(default_factory=list)
 
     def __str__(self) -> str:
         return self.prefix + self.value
@@ -50,6 +52,24 @@ class Node:
 
     def __len__(self) -> int:
         return len(str(self))
+
+    def traverse_children(self) -> Iterable["Node"]:
+        yield self
+        for child in self.children:
+            yield from child.traverse_children()
+
+    @classmethod
+    def create_root(cls) -> "Node":
+        root_token = Token(type=TokenType.ROOT, prefix="", token="", spos=0, epos=0)
+        return Node(
+            token=root_token,
+            previous_node=None,
+            inherited_depth=0,
+            prefix="",
+            value="",
+            depth=-1,
+            change_in_depth=1,
+        )
 
     @property
     def is_unterm_keyword(self) -> bool:
@@ -92,29 +112,35 @@ class Node:
             return False
 
     @classmethod
-    def from_token(cls, token: Token, previous_node: Optional["Node"]) -> "Node":
+    def from_token(cls, token: Token, previous_node: "Node") -> "Node":
         """
         Create a Node from a Token. For the Node to be properly formatted,
         method call must also include a reference to the previous Node in the
-        Query (either on the same or previous Line), unless it is the first
-        Node in the Query.
+        Query (either on the same or previous Line); if it is the first token
+        in the query, the previous node must be the root node.
 
         The Node's depth and whitespace are calculated when it is created
         (this does most of the formatting of the Node). Node values are
         lowercased if they are simple names, keywords, or statements.
         """
-        if previous_node:
-            inherited_depth = previous_node.depth + previous_node.change_in_depth
-            open_brackets = previous_node.open_brackets.copy()
-            formatting_disabled = previous_node.formatting_disabled
-        else:
-            inherited_depth = 0
-            open_brackets = []
-            formatting_disabled = False
+        inherited_depth = previous_node.depth + previous_node.change_in_depth
+        open_brackets = previous_node.open_brackets.copy()
+        formatting_disabled = previous_node.formatting_disabled
 
         depth, change_in_depth, open_brackets = cls.calculate_depth(
             token, inherited_depth, open_brackets
         )
+
+        if depth == previous_node.depth:
+            parent = previous_node.parent
+        elif depth == previous_node.depth + 1:
+            parent = previous_node
+        elif depth == previous_node.depth - 1:
+            parent = previous_node.parent.parent  # type: ignore
+        elif depth == previous_node.depth - 2:
+            parent = previous_node.parent.parent.parent  # type: ignore
+        else:
+            raise SqlfmtBracketError("Node depth out of bounds")
 
         previous_token: Optional[Token] = None
         if previous_node:
@@ -128,7 +154,7 @@ class Node:
         elif previous_token and previous_token.type == TokenType.FMT_ON:
             formatting_disabled = False
 
-        return Node(
+        node = Node(
             token,
             previous_node,
             inherited_depth,
@@ -138,7 +164,11 @@ class Node:
             change_in_depth,
             open_brackets,
             formatting_disabled,
+            parent,
         )
+        parent.children.append(node)  # type: ignore
+
+        return node
 
     @classmethod
     def calculate_depth(
@@ -286,226 +316,228 @@ class Node:
             return token.token
 
 
-@dataclass
-class Line:
-    source_string: str
-    previous_node: Optional[Node]  # last node of prior line, if any
-    nodes: List[Node] = field(default_factory=list)
-    depth: int = 0
-    change_in_depth: int = 0
-    open_brackets: List[Token] = field(default_factory=list)
-    depth_split: Optional[int] = None
-    first_comma: Optional[int] = None
-    first_operator: Optional[int] = None
-    formatting_disabled: bool = False
+# @dataclass
+# class Line:
+#     source_string: str
+#     previous_node: Optional[Node]  # last node of prior line, if any
+#     nodes: List[Node] = field(default_factory=list)
+#     depth: int = 0
+#     change_in_depth: int = 0
+#     open_brackets: List[Token] = field(default_factory=list)
+#     depth_split: Optional[int] = None
+#     first_comma: Optional[int] = None
+#     first_operator: Optional[int] = None
+#     formatting_disabled: bool = False
 
-    def __str__(self) -> str:
-        if self.formatting_disabled:
-            return "".join([f"{t.prefix}{t.token}" for t in self.tokens])
-        elif self.nodes:
-            INDENT = " " * 4
-            prefix = INDENT * self.depth
-            output = prefix + str(self.nodes[0]).lstrip()
-            return output + "".join([str(node) for node in self.nodes[1:]]) + "\n"
-        else:
-            return ""
+#     def __str__(self) -> str:
+#         if self.formatting_disabled:
+#             return "".join([f"{t.prefix}{t.token}" for t in self.tokens])
+#         elif self.nodes:
+#             INDENT = " " * 4
+#             prefix = INDENT * self.depth
+#             output = prefix + str(self.nodes[0]).lstrip()
+#             return output + "".join([str(node) for node in self.nodes[1:]]) + "\n"
+#         else:
+#             return ""
 
-    def __len__(self) -> int:
-        return len(str(self))
+#     def __len__(self) -> int:
+#         return len(str(self))
 
-    def append_token(self, token: Token) -> None:
-        """
-        Creates a new Node from the passed token and the context of the current line,
-        then appends that Node to self.nodes and updates line depth and split features
-        as necessary
-        """
-        previous_node: Optional[Node]
-        if self.nodes:
-            previous_node = self.nodes[-1]
-        else:
-            previous_node = self.previous_node
+#     def append_token(self, token: Token) -> None:
+#         """
+#         Creates a new Node from the passed token and the context of the current line,
+#         then appends that Node to self.nodes and updates line depth and split features
+#         as necessary
+#         """
+#         previous_node: Optional[Node]
+#         if self.nodes:
+#             previous_node = self.nodes[-1]
+#         else:
+#             previous_node = self.previous_node
 
-        node = Node.from_token(token, previous_node)
+#         node = Node.from_token(token, previous_node)
 
-        # update the line's depth stats from the node
-        if not self.nodes:
-            self.depth = node.depth
-            self.change_in_depth = node.change_in_depth
-            self.open_brackets = node.open_brackets
-        else:
-            self.change_in_depth = node.depth - self.depth + node.change_in_depth
-            # if we have a keyword in the middle of a line, we need to split on that
-            # keyword
-            if (
-                token.type == TokenType.UNTERM_KEYWORD
-                and not self.starts_with_unterm_keyword
-            ):
-                self.depth_split = len(self.nodes)
+#         # update the line's depth stats from the node
+#         if not self.nodes:
+#             self.depth = node.depth
+#             self.change_in_depth = node.change_in_depth
+#             self.open_brackets = node.open_brackets
+#         else:
+#             self.change_in_depth = node.depth - self.depth + node.change_in_depth
+#             # if we have a keyword in the middle of a line, we need to split on that
+#             # keyword
+#             if (
+#                 token.type == TokenType.UNTERM_KEYWORD
+#                 and not self.starts_with_unterm_keyword
+#             ):
+#                 self.depth_split = len(self.nodes)
 
-        # otherwise, splits should happen outside in... if this line is increasing
-        # depth, we should split on the first node that increases depth. If it is
-        # decreasing depth, we should split on the last node that decreases depth
-        change_over_node = node.depth - node.inherited_depth + node.change_in_depth
-        split_index = len(self.nodes)
-        if split_after(node.token.type):
-            split_index += 1
+#         # otherwise, splits should happen outside in... if this line is increasing
+#         # depth, we should split on the first node that increases depth. If it is
+#         # decreasing depth, we should split on the last node that decreases depth
+#         change_over_node = node.depth - node.inherited_depth + node.change_in_depth
+#         split_index = len(self.nodes)
+#         if split_after(node.token.type):
+#             split_index += 1
 
-        if token.type == TokenType.COMMENT:
-            self.depth_split = split_index
-        elif self.change_in_depth < 0 and change_over_node < 0 and split_index > 0:
-            self.depth_split = split_index
-        elif self.depth_split is None and node.change_in_depth > 0:
-            self.depth_split = split_index
+#         if token.type == TokenType.COMMENT:
+#             self.depth_split = split_index
+#         elif self.change_in_depth < 0 and change_over_node < 0 and split_index > 0:
+#             self.depth_split = split_index
+#         elif self.depth_split is None and node.change_in_depth > 0:
+#             self.depth_split = split_index
 
-        if (
-            token.type == TokenType.COMMA
-            and node.open_brackets == self.open_brackets
-            and self.first_comma is None
-        ):
-            self.first_comma = split_index
-        elif (
-            token.type in (TokenType.OPERATOR, TokenType.WORD_OPERATOR)
-            and self.first_operator is None
-        ):
-            self.first_operator = split_index
+#         if (
+#             token.type == TokenType.COMMA
+#             and node.open_brackets == self.open_brackets
+#             and self.first_comma is None
+#         ):
+#             self.first_comma = split_index
+#         elif (
+#             token.type in (TokenType.OPERATOR, TokenType.WORD_OPERATOR)
+#             and self.first_operator is None
+#         ):
+#             self.first_operator = split_index
 
-        self.formatting_disabled = self.formatting_disabled or node.formatting_disabled
+#        self.formatting_disabled = (
+#            self.formatting_disabled or node.formatting_disabled
+#        )
 
-        self.nodes.append(node)
+#         self.nodes.append(node)
 
-    @classmethod
-    def from_nodes(
-        cls,
-        source_string: str,
-        previous_node: Optional[Node],
-        nodes: List[Node],
-    ) -> "Line":
-        """
-        Creates and returns a new line from a list of Nodes. Useful for line
-        splitting and merging
-        """
-        line = Line(
-            source_string=source_string,
-            previous_node=previous_node,
-            depth=(
-                previous_node.depth + previous_node.change_in_depth
-                if previous_node
-                else 0
-            ),
-        )
-        for node in nodes:
-            line.append_token(node.token)  # todo: optimize this.
+#     @classmethod
+#     def from_nodes(
+#         cls,
+#         source_string: str,
+#         previous_node: Optional[Node],
+#         nodes: List[Node],
+#     ) -> "Line":
+#         """
+#         Creates and returns a new line from a list of Nodes. Useful for line
+#         splitting and merging
+#         """
+#         line = Line(
+#             source_string=source_string,
+#             previous_node=previous_node,
+#             depth=(
+#                 previous_node.depth + previous_node.change_in_depth
+#                 if previous_node
+#                 else 0
+#             ),
+#         )
+#         for node in nodes:
+#             line.append_token(node.token)  # todo: optimize this.
 
-        return line
+#         return line
 
-    @property
-    def tokens(self) -> List[Token]:
-        tokens = []
-        for node in self.nodes:
-            tokens.append(node.token)
-        return tokens
+#     @property
+#     def tokens(self) -> List[Token]:
+#         tokens = []
+#         for node in self.nodes:
+#             tokens.append(node.token)
+#         return tokens
 
-    @property
-    def starts_with_unterm_keyword(self) -> bool:
-        try:
-            return self.nodes[0].is_unterm_keyword
-        except IndexError:
-            return False
+#     @property
+#     def starts_with_unterm_keyword(self) -> bool:
+#         try:
+#             return self.nodes[0].is_unterm_keyword
+#         except IndexError:
+#             return False
 
-    @property
-    def contains_unterm_keyword(self) -> bool:
-        return any([n.is_unterm_keyword for n in self.nodes])
+#     @property
+#     def contains_unterm_keyword(self) -> bool:
+#         return any([n.is_unterm_keyword for n in self.nodes])
 
-    @property
-    def contains_operator(self) -> bool:
-        return any([n.is_operator for n in self.nodes])
+#     @property
+#     def contains_operator(self) -> bool:
+#         return any([n.is_operator for n in self.nodes])
 
-    @property
-    def contains_multiline_node(self) -> bool:
-        return any([n.is_multiline for n in self.nodes])
+#     @property
+#     def contains_multiline_node(self) -> bool:
+#         return any([n.is_multiline for n in self.nodes])
 
-    @property
-    def ends_with_comment(self) -> bool:
-        try:
-            if self.nodes[-1].is_comment:
-                return True
-            else:
-                return False
-        except IndexError:
-            return False
+#     @property
+#     def ends_with_comment(self) -> bool:
+#         try:
+#             if self.nodes[-1].is_comment:
+#                 return True
+#             else:
+#                 return False
+#         except IndexError:
+#             return False
 
-    @property
-    def last_content_index(self) -> int:
-        for i, node in enumerate(self.nodes):
-            if node.is_comment:
-                return i - 1
-        else:
-            return i
+#     @property
+#     def last_content_index(self) -> int:
+#         for i, node in enumerate(self.nodes):
+#             if node.is_comment:
+#                 return i - 1
+#         else:
+#             return i
 
-    @property
-    def is_standalone_comment(self) -> bool:
-        if len(self.nodes) == 1 and self.ends_with_comment:
-            return True
-        else:
-            return False
+#     @property
+#     def is_standalone_comment(self) -> bool:
+#         if len(self.nodes) == 1 and self.ends_with_comment:
+#             return True
+#         else:
+#             return False
 
-    @property
-    def is_standalone_multiline_node(self) -> bool:
-        if len(self.nodes) == 1 and self.contains_multiline_node:
-            return True
-        else:
-            return False
+#     @property
+#     def is_standalone_multiline_node(self) -> bool:
+#         if len(self.nodes) == 1 and self.contains_multiline_node:
+#             return True
+#         else:
+#             return False
 
-    def is_too_long(self, max_length: int) -> bool:
-        """
-        Returns true if the rendered length of the line is strictly greater
-        than max_length, and if the line isn't a standalone long comment or
-        multiline node
-        """
-        if (
-            len(self) > max_length
-            and not self.contains_multiline_node
-            and not self.is_standalone_comment
-        ):
-            return True
-        else:
-            return False
+#     def is_too_long(self, max_length: int) -> bool:
+#         """
+#         Returns true if the rendered length of the line is strictly greater
+#         than max_length, and if the line isn't a standalone long comment or
+#         multiline node
+#         """
+#         if (
+#             len(self) > max_length
+#             and not self.contains_multiline_node
+#             and not self.is_standalone_comment
+#         ):
+#             return True
+#         else:
+#             return False
 
-    @property
-    def can_be_depth_split(self) -> bool:
-        if (
-            self.depth_split
-            and self.depth_split < self.last_content_index + 1
-            and not self.is_standalone_comment
-            and not self.is_standalone_multiline_node
-        ):
-            return True
-        else:
-            return False
+#     @property
+#     def can_be_depth_split(self) -> bool:
+#         if (
+#             self.depth_split
+#             and self.depth_split < self.last_content_index + 1
+#             and not self.is_standalone_comment
+#             and not self.is_standalone_multiline_node
+#         ):
+#             return True
+#         else:
+#             return False
 
-    @property
-    def can_be_comment_split(self) -> bool:
-        if (
-            self.depth_split
-            and self.ends_with_comment
-            and not self.is_standalone_comment
-            and not self.is_standalone_multiline_node
-        ):
-            return True
-        else:
-            return False
+#     @property
+#     def can_be_comment_split(self) -> bool:
+#         if (
+#             self.depth_split
+#             and self.ends_with_comment
+#             and not self.is_standalone_comment
+#             and not self.is_standalone_multiline_node
+#         ):
+#             return True
+#         else:
+#             return False
 
-    @property
-    def closes_bracket_from_previous_line(self) -> bool:
-        if self.previous_node and self.previous_node.open_brackets and self.nodes:
-            explicit_brackets = [
-                b
-                for b in self.previous_node.open_brackets
-                if b.type in (TokenType.STATEMENT_START, TokenType.BRACKET_OPEN)
-            ]
-            if (
-                explicit_brackets
-                and explicit_brackets[-1] not in self.nodes[-1].open_brackets
-            ):
-                return True
-        return False
+#     @property
+#     def closes_bracket_from_previous_line(self) -> bool:
+#         if self.previous_node and self.previous_node.open_brackets and self.nodes:
+#             explicit_brackets = [
+#                 b
+#                 for b in self.previous_node.open_brackets
+#                 if b.type in (TokenType.STATEMENT_START, TokenType.BRACKET_OPEN)
+#             ]
+#             if (
+#                 explicit_brackets
+#                 and explicit_brackets[-1] not in self.nodes[-1].open_brackets
+#             ):
+#                 return True
+#         return False

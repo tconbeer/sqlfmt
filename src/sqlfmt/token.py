@@ -25,6 +25,7 @@ class TokenType(Enum):
     DOT = auto()
     UNTERM_KEYWORD = auto()  # Unterminated keyword
     NAME = auto()
+    ROOT = auto()
 
 
 def split_after(token_type: TokenType) -> bool:
