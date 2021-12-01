@@ -3,7 +3,7 @@ from typing import List
 import pytest
 
 from sqlfmt.node import Node
-from sqlfmt.printer import show_tree
+from sqlfmt.printer import pretty
 from sqlfmt.token import Token, TokenType
 
 
@@ -42,9 +42,6 @@ def simple_tree(root_node: Node, tokens: List[Token]) -> Node:
 
 
 def test_simple_tree_printer(simple_tree: Node) -> None:
-    printed = show_tree(simple_tree)
-    expected = (
-        "\nwith\n    abc\n    as\n    (\n        select\n            *\n        from\n "
-        "           my_table\n    )"
-    )
+    printed = pretty(88, simple_tree)
+    expected = " with abc as (select * from my_table)\n"
     assert printed == expected

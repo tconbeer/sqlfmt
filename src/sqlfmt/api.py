@@ -7,6 +7,7 @@ from sqlfmt.exception import SqlfmtError
 # from sqlfmt.formatter import QueryFormatter
 from sqlfmt.mode import Mode
 from sqlfmt.parser import Query
+from sqlfmt.printer import pretty
 from sqlfmt.report import STDIN_PATH, Report, SqlFormatResult
 
 
@@ -15,7 +16,7 @@ def format_string(source: str, mode: Mode) -> str:
     # formatter = QueryFormatter(mode)
     # formatted_query = formatter.format(raw_query)
     # return str(formatted_query)
-    return str(raw_query)
+    return pretty(mode.line_length, raw_query.root)
 
 
 def run(files: List[str], mode: Mode) -> Report:

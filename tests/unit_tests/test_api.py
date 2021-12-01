@@ -74,7 +74,8 @@ def test_file_discovery(all_output_modes: Mode) -> None:
 
 
 def test_format_empty_string(all_output_modes: Mode) -> None:
-    source = expected = ""
+    source = ""
+    expected = "\n"
     actual = format_string(source, all_output_modes)
     assert expected == actual
 
