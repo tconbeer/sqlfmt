@@ -10,7 +10,7 @@
 /*
  * This is a typical multiline comment.
  * It contains newlines.
- * And even /* some {% special characters %} */
+ * And even /* some {% special characters %}
  * but we're not going to parse those
 */
 
@@ -51,7 +51,7 @@ select * from renamed /* what!?! */ where true
 /*
  * This is a typical multiline comment.
  * It contains newlines.
- * And even /* some {% special characters %} */
+ * And even /* some {% special characters %}
  * but we're not going to parse those
 */
 

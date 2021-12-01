@@ -402,13 +402,11 @@ class Line:
             previous_token = self.previous_node.token
 
         if previous_token:
-            spos = (previous_token.epos[0], previous_token.epos[1])
-            epos = (previous_token.epos[0], previous_token.epos[1] + 1)
-            source_line = previous_token.line
+            spos = previous_token.epos
+            epos = spos
         else:
-            spos = (0, 0)
-            epos = (0, 1)
-            source_line = ""
+            spos = 0
+            epos = 0
 
         nl = Token(
             type=TokenType.NEWLINE,
@@ -416,7 +414,6 @@ class Line:
             token="\n",
             spos=spos,
             epos=epos,
-            line=source_line,
         )
         self.append_token(nl)
 

@@ -12,9 +12,8 @@ def test_calculate_depth() -> None:
         type=TokenType.UNTERM_KEYWORD,
         prefix="",
         token="select",
-        spos=(0, 0),
-        epos=(0, 6),
-        line="select\n",
+        spos=0,
+        epos=6,
     )
     res = Node.calculate_depth(t, inherited_depth=0, open_brackets=[])
 
@@ -24,18 +23,16 @@ def test_calculate_depth() -> None:
         type=TokenType.BRACKET_CLOSE,
         prefix="",
         token=")",
-        spos=(3, 10),
-        epos=(3, 11),
-        line="    (a + b) as c\n",
+        spos=0,
+        epos=0,
     )
 
     b = Token(
         type=TokenType.BRACKET_OPEN,
         prefix="    ",
         token="(",
-        spos=(3, 4),
-        epos=(3, 5),
-        line="    (a + b) as c\n",
+        spos=0,
+        epos=0,
     )
 
     res = Node.calculate_depth(t, inherited_depth=2, open_brackets=[b])
@@ -56,222 +53,65 @@ def test_simple_query_parsing(all_output_modes: Mode) -> None:
     assert len(q.lines) == 6
 
     expected_line_depths = [0, 1, 1, 1, 0, 0]
+    actual_line_depths = [line.depth for line in q.lines]
+    assert actual_line_depths == expected_line_depths
 
-    computed_line_depths = [line.depth for line in q.lines]
-    assert computed_line_depths == expected_line_depths
+    assert q.nodes
 
     assert len(q.tokens) == 26
     assert isinstance(q.tokens[0], Token)
 
     expected_tokens = [
-        Token(
-            type=TokenType.UNTERM_KEYWORD,
-            prefix="",
-            token="select",
-            spos=(0, 0),
-            epos=(0, 6),
-            line="select\n",
-        ),
-        Token(
-            type=TokenType.NEWLINE,
-            prefix="",
-            token="\n",
-            spos=(0, 6),
-            epos=(0, 7),
-            line="select\n",
-        ),
+        Token(type=TokenType.UNTERM_KEYWORD, prefix="", token="select", spos=0, epos=6),
+        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=6, epos=7),
         Token(
             type=TokenType.NAME,
             prefix="    ",
             token="a_long_field_name",
-            spos=(1, 4),
-            epos=(1, 21),
-            line="    a_long_field_name,\n",
+            spos=7,
+            epos=28,
         ),
-        Token(
-            type=TokenType.COMMA,
-            prefix="",
-            token=",",
-            spos=(1, 21),
-            epos=(1, 22),
-            line="    a_long_field_name,\n",
-        ),
-        Token(
-            type=TokenType.NEWLINE,
-            prefix="",
-            token="\n",
-            spos=(1, 22),
-            epos=(1, 23),
-            line="    a_long_field_name,\n",
-        ),
+        Token(type=TokenType.COMMA, prefix="", token=",", spos=28, epos=29),
+        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=29, epos=30),
         Token(
             type=TokenType.NAME,
             prefix="    ",
             token="another_long_field_name",
-            spos=(2, 4),
-            epos=(2, 27),
-            line="    another_long_field_name,\n",
+            spos=30,
+            epos=57,
         ),
+        Token(type=TokenType.COMMA, prefix="", token=",", spos=57, epos=58),
+        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=58, epos=59),
+        Token(type=TokenType.BRACKET_OPEN, prefix="    ", token="(", spos=59, epos=64),
+        Token(type=TokenType.NAME, prefix="", token="one_field", spos=64, epos=73),
+        Token(type=TokenType.OPERATOR, prefix=" ", token="+", spos=73, epos=75),
+        Token(type=TokenType.NAME, prefix=" ", token="another_field", spos=75, epos=89),
+        Token(type=TokenType.BRACKET_CLOSE, prefix="", token=")", spos=89, epos=90),
+        Token(type=TokenType.WORD_OPERATOR, prefix=" ", token="as", spos=90, epos=93),
+        Token(type=TokenType.NAME, prefix=" ", token="c", spos=93, epos=95),
+        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=95, epos=96),
         Token(
-            type=TokenType.COMMA,
-            prefix="",
-            token=",",
-            spos=(2, 27),
-            epos=(2, 28),
-            line="    another_long_field_name,\n",
+            type=TokenType.UNTERM_KEYWORD, prefix="", token="from", spos=96, epos=100
         ),
-        Token(
-            type=TokenType.NEWLINE,
-            prefix="",
-            token="\n",
-            spos=(2, 28),
-            epos=(2, 29),
-            line="    another_long_field_name,\n",
-        ),
-        Token(
-            type=TokenType.BRACKET_OPEN,
-            prefix="    ",
-            token="(",
-            spos=(3, 4),
-            epos=(3, 5),
-            line="    (one_field + another_field) as c\n",
-        ),
-        Token(
-            type=TokenType.NAME,
-            prefix="",
-            token="one_field",
-            spos=(3, 5),
-            epos=(3, 14),
-            line="    (one_field + another_field) as c\n",
-        ),
-        Token(
-            type=TokenType.OPERATOR,
-            prefix=" ",
-            token="+",
-            spos=(3, 15),
-            epos=(3, 16),
-            line="    (one_field + another_field) as c\n",
-        ),
-        Token(
-            type=TokenType.NAME,
-            prefix=" ",
-            token="another_field",
-            spos=(3, 17),
-            epos=(3, 30),
-            line="    (one_field + another_field) as c\n",
-        ),
-        Token(
-            type=TokenType.BRACKET_CLOSE,
-            prefix="",
-            token=")",
-            spos=(3, 30),
-            epos=(3, 31),
-            line="    (one_field + another_field) as c\n",
-        ),
-        Token(
-            type=TokenType.WORD_OPERATOR,
-            prefix=" ",
-            token="as",
-            spos=(3, 32),
-            epos=(3, 34),
-            line="    (one_field + another_field) as c\n",
-        ),
-        Token(
-            type=TokenType.NAME,
-            prefix=" ",
-            token="c",
-            spos=(3, 35),
-            epos=(3, 36),
-            line="    (one_field + another_field) as c\n",
-        ),
-        Token(
-            type=TokenType.NEWLINE,
-            prefix="",
-            token="\n",
-            spos=(3, 36),
-            epos=(3, 37),
-            line="    (one_field + another_field) as c\n",
-        ),
-        Token(
-            type=TokenType.UNTERM_KEYWORD,
-            prefix="",
-            token="from",
-            spos=(4, 0),
-            epos=(4, 4),
-            line='from my_schema."my_QUOTED_ table!"\n',
-        ),
-        Token(
-            type=TokenType.NAME,
-            prefix=" ",
-            token="my_schema",
-            spos=(4, 5),
-            epos=(4, 14),
-            line='from my_schema."my_QUOTED_ table!"\n',
-        ),
-        Token(
-            type=TokenType.DOT,
-            prefix="",
-            token=".",
-            spos=(4, 14),
-            epos=(4, 15),
-            line='from my_schema."my_QUOTED_ table!"\n',
-        ),
+        Token(type=TokenType.NAME, prefix=" ", token="my_schema", spos=100, epos=110),
+        Token(type=TokenType.DOT, prefix="", token=".", spos=110, epos=111),
         Token(
             type=TokenType.QUOTED_NAME,
             prefix="",
             token='"my_QUOTED_ table!"',
-            spos=(4, 15),
-            epos=(4, 34),
-            line='from my_schema."my_QUOTED_ table!"\n',
+            spos=111,
+            epos=130,
         ),
+        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=130, epos=131),
         Token(
-            type=TokenType.NEWLINE,
-            prefix="",
-            token="\n",
-            spos=(4, 34),
-            epos=(4, 35),
-            line='from my_schema."my_QUOTED_ table!"\n',
+            type=TokenType.UNTERM_KEYWORD, prefix="", token="where", spos=131, epos=136
         ),
+        Token(type=TokenType.NAME, prefix=" ", token="one_field", spos=136, epos=146),
+        Token(type=TokenType.OPERATOR, prefix=" ", token="<", spos=146, epos=148),
         Token(
-            type=TokenType.UNTERM_KEYWORD,
-            prefix="",
-            token="where",
-            spos=(5, 0),
-            epos=(5, 5),
-            line="where one_field < another_field\n",
+            type=TokenType.NAME, prefix=" ", token="another_field", spos=148, epos=162
         ),
-        Token(
-            type=TokenType.NAME,
-            prefix=" ",
-            token="one_field",
-            spos=(5, 6),
-            epos=(5, 15),
-            line="where one_field < another_field\n",
-        ),
-        Token(
-            type=TokenType.OPERATOR,
-            prefix=" ",
-            token="<",
-            spos=(5, 16),
-            epos=(5, 17),
-            line="where one_field < another_field\n",
-        ),
-        Token(
-            type=TokenType.NAME,
-            prefix=" ",
-            token="another_field",
-            spos=(5, 18),
-            epos=(5, 31),
-            line="where one_field < another_field\n",
-        ),
-        Token(
-            type=TokenType.NEWLINE,
-            prefix="",
-            token="\n",
-            spos=(5, 31),
-            epos=(5, 32),
-            line="where one_field < another_field\n",
-        ),
+        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=162, epos=162),
     ]
 
     assert q.tokens == expected_tokens
@@ -365,7 +205,6 @@ def test_multiline_parsing(default_mode: Mode) -> None:
     assert q
     assert q.source_string == source_string
     assert len(q.lines) < len(source_string.split("\n"))
-    assert len(q.tokens) == 56
 
     assert TokenType.COMMENT_START not in [token.type for token in q.tokens]
     assert TokenType.COMMENT_END not in [token.type for token in q.tokens]
@@ -373,122 +212,171 @@ def test_multiline_parsing(default_mode: Mode) -> None:
     assert TokenType.JINJA_END not in [token.type for token in q.tokens]
 
     expected = [
-        (
-            "{{\n"
-            "    config(\n"
-            "        materialized='table',\n"
-            "        sort='id',\n"
-            "        dist='all',\n"
-            "        post_hook='grant select on {{ this }} to role bi_role'\n"
-            "    )\n"
-            "}}"
+        Token(
+            type=TokenType.JINJA,
+            prefix="",
+            token=(
+                "{{\n    config(\n        materialized='table',\n        sort='id',\n"
+                "        dist='all',\n"
+                "        post_hook='grant select on {{ this }} to role bi_role'\n"
+                "    )\n}}"
+            ),
+            spos=0,
+            epos=155,
         ),
-        (
-            "/*\n"
-            " * This is a typical multiline comment.\n"
-            " * It contains newlines.\n"
-            " * And even /* some {% special characters %} */\n"
-            " * but we're not going to parse those\n"
-            "*/"
+        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=155, epos=156),
+        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=156, epos=157),
+        Token(
+            type=TokenType.COMMENT,
+            prefix="",
+            token=(
+                "/*\n * This is a typical multiline comment.\n"
+                " * It contains newlines.\n"
+                " * And even /* some {% special characters %}\n"
+                " * but we're not going to parse those\n*/"
+            ),
+            spos=157,
+            epos=310,
         ),
-        (
-            "/* This is a multiline comment in very bad style,\n"
-            "    * which starts and ends on lines with other tokens.\n"
-            "    */"
+        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=310, epos=311),
+        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=311, epos=312),
+        Token(
+            type=TokenType.UNTERM_KEYWORD, prefix="", token="with", spos=312, epos=316
         ),
-        (
-            "{% set my_variable_in_bad_style = [\n"
-            '        "a",\n'
-            '        "short",\n'
-            '        "list",\n'
-            '        "of",\n'
-            '        "strings"\n'
-            "    ] %}"
+        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=316, epos=317),
+        Token(type=TokenType.NAME, prefix="    ", token="source", spos=317, epos=327),
+        Token(type=TokenType.WORD_OPERATOR, prefix=" ", token="as", spos=327, epos=330),
+        Token(type=TokenType.BRACKET_OPEN, prefix=" ", token="(", spos=330, epos=332),
+        Token(
+            type=TokenType.UNTERM_KEYWORD, prefix="", token="select", spos=332, epos=338
         ),
-        (
-            "{#\n"
-            " # And this is a nice multiline jinja comment\n"
-            " # that we will also handle.\n"
-            "#}"
+        Token(type=TokenType.STAR, prefix=" ", token="*", spos=338, epos=340),
+        Token(
+            type=TokenType.UNTERM_KEYWORD, prefix=" ", token="from", spos=340, epos=345
         ),
+        Token(
+            type=TokenType.JINJA,
+            prefix=" ",
+            token="{{ ref('my_model') }}",
+            spos=345,
+            epos=367,
+        ),
+        Token(type=TokenType.BRACKET_CLOSE, prefix="", token=")", spos=367, epos=368),
+        Token(type=TokenType.COMMA, prefix="", token=",", spos=368, epos=369),
+        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=369, epos=370),
+        Token(type=TokenType.NAME, prefix="    ", token="renamed", spos=370, epos=381),
+        Token(type=TokenType.WORD_OPERATOR, prefix=" ", token="as", spos=381, epos=384),
+        Token(type=TokenType.BRACKET_OPEN, prefix=" ", token="(", spos=384, epos=386),
+        Token(
+            type=TokenType.COMMENT,
+            prefix=" ",
+            token=(
+                "/* This is a multiline comment in very bad style,\n"
+                "    * which starts and ends on lines with other tokens.\n    */"
+            ),
+            spos=386,
+            epos=499,
+        ),
+        Token(
+            type=TokenType.UNTERM_KEYWORD,
+            prefix="  ",
+            token="select",
+            spos=499,
+            epos=507,
+        ),
+        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=507, epos=508),
+        Token(
+            type=TokenType.NAME, prefix="            ", token="id", spos=508, epos=522
+        ),
+        Token(type=TokenType.COMMA, prefix="", token=",", spos=522, epos=523),
+        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=523, epos=524),
+        Token(
+            type=TokenType.NAME,
+            prefix="            ",
+            token="another_field",
+            spos=524,
+            epos=549,
+        ),
+        Token(type=TokenType.COMMA, prefix="", token=",", spos=549, epos=550),
+        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=550, epos=551),
+        Token(
+            type=TokenType.NAME,
+            prefix="            ",
+            token="and_another",
+            spos=551,
+            epos=574,
+        ),
+        Token(type=TokenType.COMMA, prefix="", token=",", spos=574, epos=575),
+        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=575, epos=576),
+        Token(
+            type=TokenType.NAME,
+            prefix="            ",
+            token="and_still_another",
+            spos=576,
+            epos=605,
+        ),
+        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=605, epos=606),
+        Token(
+            type=TokenType.UNTERM_KEYWORD,
+            prefix="        ",
+            token="from",
+            spos=606,
+            epos=618,
+        ),
+        Token(type=TokenType.NAME, prefix=" ", token="source", spos=618, epos=625),
+        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=625, epos=626),
+        Token(
+            type=TokenType.BRACKET_CLOSE, prefix="    ", token=")", spos=626, epos=631
+        ),
+        Token(type=TokenType.COMMA, prefix="", token=",", spos=631, epos=632),
+        Token(
+            type=TokenType.JINJA,
+            prefix=" ",
+            token=(
+                '{% set my_variable_in_bad_style = [\n        "a",\n'
+                '        "short",\n        "list",\n        "of",\n'
+                '        "strings"\n    ] %}'
+            ),
+            spos=632,
+            epos=755,
+        ),
+        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=755, epos=756),
+        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=756, epos=757),
+        Token(
+            type=TokenType.JINJA,
+            prefix="",
+            token=(
+                "{#\n # And this is a nice multiline jinja comment\n"
+                " # that we will also handle.\n#}"
+            ),
+            spos=757,
+            epos=837,
+        ),
+        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=837, epos=838),
+        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=838, epos=839),
+        Token(
+            type=TokenType.UNTERM_KEYWORD, prefix="", token="select", spos=839, epos=845
+        ),
+        Token(type=TokenType.STAR, prefix=" ", token="*", spos=845, epos=847),
+        Token(
+            type=TokenType.UNTERM_KEYWORD, prefix=" ", token="from", spos=847, epos=852
+        ),
+        Token(type=TokenType.NAME, prefix=" ", token="renamed", spos=852, epos=860),
+        Token(
+            type=TokenType.COMMENT,
+            prefix=" ",
+            token="/* what!?! */",
+            spos=860,
+            epos=874,
+        ),
+        Token(
+            type=TokenType.UNTERM_KEYWORD, prefix=" ", token="where", spos=874, epos=880
+        ),
+        Token(type=TokenType.NAME, prefix=" ", token="true", spos=880, epos=885),
+        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=885, epos=885),
     ]
 
-    assert q.tokens[0].token == expected[0]
-    assert q.tokens[3].token == expected[1]
-
-    source = (
-        "    renamed as ( /* This is a multiline comment in very bad style,\n"
-        "    * which starts and ends on lines with other tokens.\n"
-        "    */  select\n"
-    )
-    assert q.tokens[21].token == expected[2]
-    assert q.tokens[21].line == source
-
-    assert q.tokens[41].token == expected[3]
-    assert q.tokens[44].token == expected[4]
-
-    assert [node.token.type for node in q.lines[0].nodes] == [
-        TokenType.JINJA,
-        TokenType.NEWLINE,
-    ]
-    assert [node.token.type for node in q.lines[2].nodes] == [
-        TokenType.COMMENT,
-        TokenType.NEWLINE,
-    ]
-    assert [node.token.type for node in q.lines[6].nodes] == [
-        TokenType.NAME,
-        TokenType.WORD_OPERATOR,
-        TokenType.BRACKET_OPEN,
-        TokenType.COMMENT,
-        TokenType.NEWLINE,
-    ]
-    assert [node.token.type for node in q.lines[7].nodes] == [
-        TokenType.UNTERM_KEYWORD,
-        TokenType.NEWLINE,
-    ]
-    assert (q.lines[7].depth, q.lines[7].change_in_depth) == (2, 1)
-    assert [node.token.type for node in q.lines[13].nodes] == [
-        TokenType.BRACKET_CLOSE,
-        TokenType.COMMA,
-        TokenType.JINJA,
-        TokenType.NEWLINE,
-    ]
-    assert [node.token.type for node in q.lines[14].nodes] == [TokenType.NEWLINE]
-    assert [node.token.type for node in q.lines[15].nodes] == [
-        TokenType.JINJA,
-        TokenType.NEWLINE,
-    ]
-    assert [node.token.type for node in q.lines[17].nodes] == [
-        TokenType.UNTERM_KEYWORD,
-        TokenType.STAR,
-        TokenType.UNTERM_KEYWORD,
-        TokenType.NAME,
-        TokenType.COMMENT,
-        TokenType.NEWLINE,
-    ]
-    assert [node.token.type for node in q.lines[18].nodes] == [
-        TokenType.UNTERM_KEYWORD,
-        TokenType.NAME,
-        TokenType.NEWLINE,
-    ]
-
-
-def test_multiline_wrapping(default_mode: Mode) -> None:
-    source_string, _ = read_test_data(
-        "unit_tests/test_parser/test_multiline_wrapping.sql"
-    )
-
-    q = Query.from_source(source_string=source_string, mode=default_mode)
-
-    assert q
-    assert q.source_string == source_string
-
-    lines_after_parsing = [str(line).strip() for line in q.lines]
-
-    assert "a," in lines_after_parsing, "Should split line after multiline comment"
-    assert "as b," not in lines_after_parsing, "Should not split after multiline jinja"
-    assert "," not in lines_after_parsing, "Should not split line after multiline jinja"
-    assert "c" in lines_after_parsing, "shouldn't impact subsequent lines"
+    assert q.tokens == expected
 
 
 def test_star_parsing(default_mode: Mode) -> None:
@@ -532,18 +420,6 @@ def test_open_paren_parsing(
             assert (
                 node.prefix == expected_prefix
             ), "Open paren prefixed by wrong number of spaces"
-
-
-def test_dont_parse_twice(default_mode: Mode, monkeypatch: pytest.MonkeyPatch) -> None:
-    source_string = "select 1, 2, 3 from my_table where a = b"
-    q = Query.from_source(source_string=source_string, mode=default_mode)
-
-    assert q.lines and q.tokens
-
-    # should raise a name error if we parse source again
-    monkeypatch.delattr("sqlfmt.dialect.Dialect.tokenize_line")
-    q.tokenize_from_source()
-    assert q.lines and q.tokens
 
 
 def test_unterminated_multiline_token(default_mode: Mode) -> None:
