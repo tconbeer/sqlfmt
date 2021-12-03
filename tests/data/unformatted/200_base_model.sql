@@ -63,8 +63,8 @@ with
                         then split_part(nullif(full_name, ''), ' ', 1)
                         else
                             regexp_substr(
-                                nullif(full_name, ''),
-                                '.* .* ') -- let's explain what is going on here
+                                nullif(full_name, ''), '.* .* '
+                            ) -- let's explain what is going on here
                     end
                 ),
                 'TEST_USER'

@@ -95,6 +95,23 @@ class Node:
         else:
             return False
 
+    def closes_bracket_from_previous_line(
+        self, line_previous_node: Optional["Node"]
+    ) -> bool:
+        if (
+            self.token.type in (TokenType.BRACKET_CLOSE, TokenType.STATEMENT_END)
+            and line_previous_node
+            and line_previous_node.open_brackets
+        ):
+            explicit_brackets = [
+                b
+                for b in line_previous_node.open_brackets
+                if b.type in (TokenType.STATEMENT_START, TokenType.BRACKET_OPEN)
+            ]
+            if explicit_brackets and explicit_brackets[-1] not in self.open_brackets:
+                return True
+        return False
+
     @classmethod
     def from_token(cls, token: Token, previous_node: Optional["Node"]) -> "Node":
         """

@@ -251,6 +251,56 @@ def test_calculate_depth_exception() -> None:
         Node.calculate_depth(close_paren, inherited_depth=0, open_brackets=[])
 
 
+def test_node_closes_bracket_from_previous_line(
+    simple_line: Line, default_mode: Mode
+) -> None:
+    for node in simple_line.nodes:
+        assert not node.closes_bracket_from_previous_line(None)
+
+    source_string = (
+        "case\n"
+        "    when\n"
+        "        (\n"
+        "            field_one\n"
+        "            + (field_two)\n"
+        "            + field_three\n"
+        "        )\n"
+        "    then true\n"
+        "end\n"
+    )
+    q = Query.from_source(source_string=source_string, mode=default_mode)
+    result: List[bool] = []
+    for line in q.lines:
+        for node in line.nodes:
+            result.append(node.closes_bracket_from_previous_line(line.previous_node))
+    expected = [
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        True,
+        False,
+        False,
+        False,
+        False,
+        True,
+        False,
+    ]
+    assert result == expected
+
+
 def test_closes_bracket_from_previous_line(
     simple_line: Line, default_mode: Mode
 ) -> None:
