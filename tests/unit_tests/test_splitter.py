@@ -51,40 +51,7 @@ def test_split_one_liner(splitter: LineSplitter) -> None:
         assert len(result) == 4
 
 
-def test_cannot_depth_split(splitter: LineSplitter) -> None:
-    source_string = (
-        "one_field + another_field, another_field + one_more_field "
-        " + one_more_field + another_really_really_long_field_name\n"
-    )
-    raw_query = Query.from_source(source_string, splitter.mode)
-    line = raw_query.lines[0]
-
-    gen = splitter.split(line, kind="depth")
-    split_line = next(gen)
-
-    assert split_line == line
-
-    with pytest.raises(StopIteration):
-        next(gen)
-
-
-def test_cannot_comma_split(splitter: LineSplitter) -> None:
-    source_string = (
-        "select another_field + (another_field + one_more_field "
-        " + one_more_field) + another_really_really_long_field_name\n"
-    )
-    raw_query = Query.from_source(source_string, splitter.mode)
-    line = raw_query.lines[0]
-
-    gen = splitter.split(line, kind="comma")
-    split_line = next(gen)
-
-    assert split_line == line
-
-    with pytest.raises(StopIteration):
-        next(gen)
-
-
+@pytest.mark.xfail
 def test_simple_comment_split(splitter: LineSplitter) -> None:
     source_string, expected_result = read_test_data(
         "unit_tests/test_splitter/test_simple_comment_split.sql"

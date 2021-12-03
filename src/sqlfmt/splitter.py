@@ -23,7 +23,9 @@ class LineSplitter:
 
         has_preceding_multiline_comment = False
         has_preceding_comma = False
+        has_depth_increasing_node = False
         for i, node in enumerate(line.nodes):
+            change_over_node = node.depth - node.inherited_depth + node.change_in_depth
             # if there is a multiline node on this line and it isn't the
             # only thing on this line, then split before the multiline node
             if i > 0 and node.is_multiline:
@@ -37,30 +39,33 @@ class LineSplitter:
                 return
             elif node.is_multiline and node.is_comment:
                 has_preceding_multiline_comment = True
+            # if the line is too long, split its comment up before
+            # doing anything else
+            elif i > 0 and node.is_comment and line.is_too_long(self.mode.line_length):
+                yield from self.split_at_index(line, i)
+                return
             # we always split on any comma that doesn't end a line
             elif node.is_comma:
                 has_preceding_comma = True
             elif has_preceding_comma and not (node.is_comment or node.is_newline):
                 yield from self.split_at_index(line, i)
                 return
-            # always split before any depth-increasing kw unless it starts a line
+            # always split before any unterm kw unless it starts a line
             elif i > 0 and node.is_unterm_keyword:
                 yield from self.split_at_index(line, i)
                 return
-            # always split before a bracket if that bracket closes a bracket from
-            # the previous line
-            elif i > 0 and node.closes_bracket_from_previous_line(line.previous_node):
+            # always split before any node that decreases depth
+            elif i > 0 and change_over_node < 0:
                 yield from self.split_at_index(line, i)
                 return
+            # split after any node that increases depth unless we're at EOL
+            elif has_depth_increasing_node and not (node.is_comment or node.is_newline):
+                yield from self.split_at_index(line, i)
+                return
+            elif change_over_node > 0 or node.is_unterm_keyword:
+                has_depth_increasing_node = True
 
-        # next, split any long lines
-        if (line.can_be_depth_split or line.can_be_comment_split) and line_is_too_long:
-            yield from self.split(line, kind="depth")
-        # next, if a line changes depth midway, split that line,
-        # unless we are only splitting off a comment
-        elif line.can_be_depth_split and (line.change_in_depth != 0):
-            yield from self.split(line, kind="depth")
-        elif line_is_too_long and line.contains_operator:
+        if line_is_too_long and line.contains_operator:
             yield from self.split(line, kind="operator")
         # nothing to split on. TODO: split on long lines just names
         else:
@@ -72,10 +77,9 @@ class LineSplitter:
         highest priority token of each kind. Yields new lines.
         """
         if kind == "depth":
-            if not line.depth_split:
-                yield line
-            else:
-                yield from self.split_at_index(line, line.depth_split)
+            raise ValueError
+        if kind == "comma":
+            raise ValueError
         elif kind == "operator":
             if not line.first_operator:
                 yield line
