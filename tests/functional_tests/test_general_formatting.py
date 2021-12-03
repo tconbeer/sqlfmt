@@ -13,7 +13,7 @@ from tests.util import check_formatting, read_test_data
         "preformatted/003_literals.sql",
         "preformatted/004_with_select.sql",
         "unformatted/100_select_case.sql",
-        pytest.param("unformatted/101_multiline.sql", marks=pytest.mark.xfail),
+        "unformatted/101_multiline.sql",
         "unformatted/102_lots_of_comments.sql",
         "unformatted/103_window_functions.sql",
         pytest.param("unformatted/104_joins.sql", marks=pytest.mark.xfail),

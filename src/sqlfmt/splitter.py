@@ -19,16 +19,26 @@ class LineSplitter:
 
         if line.formatting_disabled:
             yield line
-        # if there is a multiline node on this line and it isn't the
-        # only thing on this line, then split before the multiline node
-        elif (
-            line.can_be_depth_split or line.can_be_comment_split
-        ) and line.contains_multiline_node:
-            yield from self.split(line, kind="depth")
+            return
+
+        has_preceding_multiline_comment = False
+        for i, node in enumerate(line.nodes):
+            # if there is a multiline node on this line and it isn't the
+            # only thing on this line, then split before the multiline node
+            if node.is_multiline and i > 0:
+                yield from self.split_at_index(line, i)
+                return
+            # if an earlier node on this line was a multiline comment
+            # and this node isn't a newline, we want to split after
+            # the multiline comment
+            elif has_preceding_multiline_comment and not node.is_newline:
+                yield from self.split_at_index(line, i)
+                return
+            elif node.is_multiline and node.is_comment:
+                has_preceding_multiline_comment = True
+
         # next, split any long lines
-        elif (
-            line.can_be_depth_split or line.can_be_comment_split
-        ) and line_is_too_long:
+        if (line.can_be_depth_split or line.can_be_comment_split) and line_is_too_long:
             yield from self.split(line, kind="depth")
         # next, if a line changes depth midway, split that line,
         # unless we are only splitting off a comment
