@@ -76,11 +76,6 @@ class LineSplitter:
                 yield line
             else:
                 yield from self.split_at_index(line, line.depth_split)
-        elif kind == "comma":
-            if not line.first_comma:
-                yield line
-            else:
-                yield from self.split_at_index(line, line.first_comma)
         elif kind == "operator":
             if not line.first_operator:
                 yield line

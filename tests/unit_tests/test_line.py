@@ -72,7 +72,6 @@ def test_simple_line(
     assert len(simple_line.nodes) == len(tokens)
     assert simple_line.open_brackets == [tokens[0]]
     assert simple_line.depth_split == 1
-    assert simple_line.first_comma is None
 
     assert str(simple_line) == source_string
 

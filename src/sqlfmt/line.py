@@ -323,7 +323,6 @@ class Line:
     change_in_depth: int = 0
     open_brackets: List[Token] = field(default_factory=list)
     depth_split: Optional[int] = None
-    first_comma: Optional[int] = None
     first_operator: Optional[int] = None
     formatting_disabled: bool = False
 
@@ -383,12 +382,6 @@ class Line:
             self.depth_split = split_index
 
         if (
-            token.type == TokenType.COMMA
-            and node.open_brackets == self.open_brackets
-            and self.first_comma is None
-        ):
-            self.first_comma = split_index
-        elif (
             token.type in (TokenType.OPERATOR, TokenType.WORD_OPERATOR)
             and self.first_operator is None
         ):
