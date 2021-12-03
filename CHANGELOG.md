@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixes
+-   refactored lexer for better parsing of tokens on multiple lines
+
 ## [0.2.0] - 2021-11-16
 
 ### Features

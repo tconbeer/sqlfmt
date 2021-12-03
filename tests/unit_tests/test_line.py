@@ -24,86 +24,20 @@ def bare_line(source_string: str) -> Line:
 @pytest.fixture
 def tokens(source_string: str) -> List[Token]:
     tokens = [
+        Token(type=TokenType.UNTERM_KEYWORD, prefix="", token="with", spos=0, epos=4),
+        Token(type=TokenType.NAME, prefix=" ", token="abc", spos=4, epos=8),
+        Token(type=TokenType.WORD_OPERATOR, prefix=" ", token="as", spos=8, epos=11),
+        Token(type=TokenType.BRACKET_OPEN, prefix=" ", token="(", spos=11, epos=13),
         Token(
-            type=TokenType.UNTERM_KEYWORD,
-            prefix="",
-            token="with",
-            spos=(0, 0),
-            epos=(0, 4),
-            line=source_string,
+            type=TokenType.UNTERM_KEYWORD, prefix="", token="select", spos=13, epos=19
         ),
+        Token(type=TokenType.STAR, prefix=" ", token="*", spos=19, epos=21),
         Token(
-            type=TokenType.NAME,
-            prefix=" ",
-            token="abc",
-            spos=(0, 5),
-            epos=(0, 8),
-            line=source_string,
+            type=TokenType.UNTERM_KEYWORD, prefix=" ", token="from", spos=21, epos=26
         ),
-        Token(
-            type=TokenType.WORD_OPERATOR,
-            prefix=" ",
-            token="as",
-            spos=(0, 9),
-            epos=(0, 11),
-            line=source_string,
-        ),
-        Token(
-            type=TokenType.BRACKET_OPEN,
-            prefix=" ",
-            token="(",
-            spos=(0, 12),
-            epos=(0, 13),
-            line=source_string,
-        ),
-        Token(
-            type=TokenType.UNTERM_KEYWORD,
-            prefix="",
-            token="select",
-            spos=(0, 13),
-            epos=(0, 19),
-            line=source_string,
-        ),
-        Token(
-            type=TokenType.OPERATOR,
-            prefix=" ",
-            token="*",
-            spos=(0, 20),
-            epos=(0, 21),
-            line=source_string,
-        ),
-        Token(
-            type=TokenType.UNTERM_KEYWORD,
-            prefix=" ",
-            token="from",
-            spos=(0, 22),
-            epos=(0, 26),
-            line=source_string,
-        ),
-        Token(
-            type=TokenType.NAME,
-            prefix=" ",
-            token="my_table",
-            spos=(0, 27),
-            epos=(0, 35),
-            line=source_string,
-        ),
-        Token(
-            type=TokenType.BRACKET_CLOSE,
-            prefix="",
-            token=")",
-            spos=(0, 35),
-            epos=(0, 36),
-            line=source_string,
-        ),
-        Token(
-            type=TokenType.NEWLINE,
-            prefix="",
-            token="\n",
-            spos=(0, 36),
-            epos=(0, 37),
-            line=source_string,
-        ),
+        Token(type=TokenType.NAME, prefix=" ", token="my_table", spos=26, epos=35),
+        Token(type=TokenType.BRACKET_CLOSE, prefix="", token=")", spos=35, epos=36),
+        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=36, epos=36),
     ]
     return tokens
 
@@ -143,19 +77,25 @@ def test_simple_line(
     assert str(simple_line) == source_string
 
     expected_token_repr = (
-        "Token(type=TokenType.UNTERM_KEYWORD, prefix='', token='with', "
-        "spos=(0, 0), epos=(0, 4), line='with abc as (select * from my_table)\\n')"
+        "Token(type=TokenType.UNTERM_KEYWORD, prefix='', token='with', spos=0, epos=4)"
     )
     assert repr(simple_line.tokens[0]) == expected_token_repr
     new_token = eval(repr(simple_line.tokens[0]))
     assert simple_line.tokens[0] == new_token
 
     expected_node_repr = (
-        "Node(\n\ttoken='Token(type=TokenType.UNTERM_KEYWORD, token=with, "
-        "spos=(0, 0))',\n\tprevious_node=None,\n\tinherited_depth=0,\n\tdepth=0,"
-        "\n\tchange_in_depth=1,\n\tprefix='',\n\tvalue='with',\n\topen_brackets=["
-        "'Token(type=TokenType.UNTERM_KEYWORD, token=with, spos=(0, 0))']"
-        "\n\tformatting_disabled=False\n)"
+        "Node(\n"
+        "\ttoken='Token(type=TokenType.UNTERM_KEYWORD, token=with, spos=0)',\n"
+        "\tprevious_node=None,\n"
+        "\tinherited_depth=0,\n"
+        "\tdepth=0,\n"
+        "\tchange_in_depth=1,\n"
+        "\tprefix='',\n"
+        "\tvalue='with',\n"
+        "\topen_brackets=['Token(type=TokenType.UNTERM_KEYWORD, token=with, "
+        "spos=0)']\n"
+        "\tformatting_disabled=False\n"
+        ")"
     )
     assert repr(simple_line.nodes[0]) == expected_node_repr
 
@@ -178,7 +118,7 @@ def test_bare_append_newline(bare_line: Line) -> None:
     assert bare_line.nodes
     new_last_node = bare_line.nodes[-1]
     assert new_last_node.token.type == TokenType.NEWLINE
-    assert (new_last_node.token.spos, new_last_node.token.epos) == ((0, 0), (0, 1))
+    assert (new_last_node.token.spos, new_last_node.token.epos) == (0, 0)
 
 
 def test_bare_with_previous_append_newline(bare_line: Line, simple_line: Line) -> None:
@@ -188,8 +128,8 @@ def test_bare_with_previous_append_newline(bare_line: Line, simple_line: Line) -
     new_last_node = bare_line.nodes[-1]
     previous_token = simple_line.nodes[-1].token
     expected_position = (
-        (previous_token.epos),
-        (previous_token.epos[0], previous_token.epos[1] + 1),
+        previous_token.epos,
+        previous_token.epos,
     )
     assert (new_last_node.token.spos, new_last_node.token.epos) == expected_position
 
@@ -221,8 +161,7 @@ def test_ends_with_comment(simple_line: Line) -> None:
         prefix="",
         token="-- my comment",
         spos=last_node.token.epos,
-        epos=(last_node.token.epos[0], last_node.token.epos[1] + 13),
-        line=last_node.token.line,
+        epos=last_node.token.epos + 13,
     )
 
     simple_line.append_token(comment)
@@ -246,9 +185,8 @@ def test_is_standalone_comment(bare_line: Line, simple_line: Line) -> None:
         type=TokenType.COMMENT,
         prefix="",
         token="-- my comment",
-        spos=(0, 0),
-        epos=(0, 13),
-        line="does not matter",
+        spos=0,
+        epos=13,
     )
 
     bare_line.append_token(comment)
@@ -273,9 +211,8 @@ def test_is_standalone_multiline_node(bare_line: Line, simple_line: Line) -> Non
         type=TokenType.COMMENT,
         prefix="",
         token="/*\nmy comment\n*/",
-        spos=(0, 0),
-        epos=(2, 2),
-        line="/*\nmy comment\n*/",
+        spos=0,
+        epos=16,
     )
 
     bare_line.append_token(comment)
@@ -306,9 +243,8 @@ def test_calculate_depth_exception() -> None:
         type=TokenType.BRACKET_CLOSE,
         prefix="",
         token=")",
-        spos=(0, 0),
-        epos=(0, 1),
-        line=")",
+        spos=0,
+        epos=1,
     )
 
     with pytest.raises(SqlfmtBracketError):
