@@ -305,7 +305,6 @@ class Line:
     depth: int = 0
     change_in_depth: int = 0
     open_brackets: List[Token] = field(default_factory=list)
-    first_operator: Optional[int] = None
     formatting_disabled: bool = False
 
     def __str__(self) -> str:
@@ -344,12 +343,6 @@ class Line:
         split_index = len(self.nodes)
         if split_after(node.token.type):
             split_index += 1
-
-        if (
-            token.type in (TokenType.OPERATOR, TokenType.WORD_OPERATOR)
-            and self.first_operator is None
-        ):
-            self.first_operator = split_index
 
         self.formatting_disabled = self.formatting_disabled or node.formatting_disabled
 
