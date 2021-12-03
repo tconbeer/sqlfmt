@@ -24,6 +24,7 @@ class LineSplitter:
         has_preceding_multiline_comment = False
         has_preceding_comma = False
         has_depth_increasing_node = False
+        last_operator_index = 0
         for i, node in enumerate(line.nodes):
             change_over_node = node.depth - node.inherited_depth + node.change_in_depth
             # if there is a multiline node on this line and it isn't the
@@ -64,27 +65,16 @@ class LineSplitter:
                 return
             elif change_over_node > 0 or node.is_unterm_keyword:
                 has_depth_increasing_node = True
+            elif node.is_operator:
+                last_operator_index = i
 
-        if line_is_too_long and line.contains_operator:
-            yield from self.split(line, kind="operator")
+        # finally, if the line is still too long, split before the last operator;
+        # also split before the last operator if it ends a line (exc. the newline)F
+        if (
+            line_is_too_long or last_operator_index == len(line) - 2
+        ) and last_operator_index > 0:
+            yield from self.split_at_index(line, last_operator_index)
         # nothing to split on. TODO: split on long lines just names
-        else:
-            yield line
-
-    def split(self, line: Line, kind: str = "depth") -> Iterator[Line]:
-        """
-        Split this line according to the kind dictated, using the
-        highest priority token of each kind. Yields new lines.
-        """
-        if kind == "depth":
-            raise ValueError
-        if kind == "comma":
-            raise ValueError
-        elif kind == "operator":
-            if not line.first_operator:
-                yield line
-            else:
-                yield from self.split_at_index(line, line.first_operator)
         else:
             yield line
 
