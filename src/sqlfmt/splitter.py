@@ -22,6 +22,7 @@ class LineSplitter:
             return
 
         has_preceding_multiline_comment = False
+        has_preceding_comma = False
         for i, node in enumerate(line.nodes):
             # if there is a multiline node on this line and it isn't the
             # only thing on this line, then split before the multiline node
@@ -36,6 +37,12 @@ class LineSplitter:
                 return
             elif node.is_multiline and node.is_comment:
                 has_preceding_multiline_comment = True
+            # we always split on any comma that doesn't end a line
+            elif node.is_comma:
+                has_preceding_comma = True
+            elif has_preceding_comma and not (node.is_comment or node.is_newline):
+                yield from self.split_at_index(line, i)
+                return
 
         # next, split any long lines
         if (line.can_be_depth_split or line.can_be_comment_split) and line_is_too_long:
@@ -48,10 +55,6 @@ class LineSplitter:
             or line.closes_bracket_from_previous_line
         ):
             yield from self.split(line, kind="depth")
-        # split on any comma that doesn't end a line
-        # first_comma points to the index after the comma
-        elif line.first_comma and line.first_comma < line.last_content_index + 1:
-            yield from self.split(line, kind="comma")
         elif line_is_too_long and line.contains_operator:
             yield from self.split(line, kind="operator")
         # nothing to split on. TODO: split on long lines just names

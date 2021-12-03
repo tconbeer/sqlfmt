@@ -116,7 +116,10 @@ def test_split_count_window_function(splitter: LineSplitter) -> None:
         ") over (\n"
         "    partition by\n"
         "        user_id,\n"
-        "        date_trunc('year', performed_at)\n"
+        "        date_trunc(\n"
+        "            'year',\n"
+        "            performed_at\n"
+        "        )\n"
         ") as d,\n"
     )
     raw_query = Query.from_source(source_string, splitter.mode)
