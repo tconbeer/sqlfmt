@@ -85,11 +85,16 @@ class LineSplitter:
         """
         assert index > 0, "Cannot split at start of line!"
         head, tail = line.nodes[:index], line.nodes[index:]
+        assert head[0] is not None, "Cannot split at start of line!"
 
         # if we're splitting on a comment, we want the standalone comment
         # line to come first, before the code it is commenting
         comment_line: Optional[Line] = None
         if tail[0].is_comment and not tail[0].is_multiline:
+            tail[0].open_brackets = (
+                head[0].previous_node.open_brackets if head[0].previous_node else []
+            )
+            tail[0].previous_node = head[0].previous_node
             comment_line = Line.from_nodes(
                 source_string=line.source_string,
                 previous_node=line.previous_node,

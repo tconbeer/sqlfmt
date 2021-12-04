@@ -50,6 +50,7 @@ def test_basic_merge(merger: LineMerger) -> None:
     """
     raw_query = Query.from_source(source_string, merger.mode)
     merged_lines = merger.maybe_merge_lines(raw_query.lines)
+    assert len(merged_lines) == 1
 
     expected_string = "nullif(full_name, '') as c,"
 

@@ -87,7 +87,7 @@ def test_simple_line(
         "\tinherited_depth=0,\n"
         "\tdepth=0,\n"
         "\tchange_in_depth=1,\n"
-        "\tprefix='',\n"
+        "\tprefix=' ',\n"
         "\tvalue='with',\n"
         "\topen_brackets=['Token(type=TokenType.UNTERM_KEYWORD, token=with, "
         "spos=0)']\n"

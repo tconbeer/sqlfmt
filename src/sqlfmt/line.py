@@ -120,19 +120,27 @@ class Node:
             token, inherited_depth, open_brackets
         )
 
-        previous_token: Optional[Token] = None
-        if previous_node is None or previous_node.token.type == TokenType.NEWLINE:
-            is_first_on_line = True
-        else:
-            is_first_on_line = False
-            previous_token = previous_node.token
+        def previous_token(prev_node: Optional[Node]) -> Optional[Token]:
+            """
+            Returns the token of prev_node, unless prev_node is a newline
+            or comment, in which case it recurses
+            """
+            if not prev_node:
+                return None
+            t = prev_node.token
+            if t.type in (TokenType.NEWLINE, TokenType.COMMENT):
+                return previous_token(prev_node.previous_node)
+            else:
+                return t
 
-        prefix = cls.whitespace(token, is_first_on_line, previous_token)
+        prev_token = previous_token(previous_node)
+
+        prefix = cls.whitespace(token, prev_token)
         value = cls.capitalize(token)
 
         if token.type == TokenType.FMT_OFF:
             formatting_disabled = True
-        elif previous_token and previous_token.type == TokenType.FMT_ON:
+        elif prev_token and prev_token.type == TokenType.FMT_ON:
             formatting_disabled = False
 
         return Node(
@@ -228,7 +236,6 @@ class Node:
     def whitespace(
         cls,
         token: Token,
-        is_first_on_line: bool,
         previous_token: Optional[Token],
     ) -> str:
         """
@@ -241,10 +248,8 @@ class Node:
         NO_SPACE = ""
         SPACE = " "
 
-        if is_first_on_line:
-            return NO_SPACE
         # tokens that are never preceded by a space
-        elif token.type in (
+        if token.type in (
             TokenType.BRACKET_CLOSE,
             TokenType.DOUBLE_COLON,
             TokenType.COMMA,
@@ -313,7 +318,7 @@ class Line:
         else:
             INDENT = " " * 4
             prefix = INDENT * self.depth
-            return prefix + "".join([str(node) for node in self.nodes])
+            return prefix + "".join([str(node) for node in self.nodes]).lstrip(" ")
 
     def __len__(self) -> int:
         return len(str(self))
@@ -395,17 +400,19 @@ class Line:
         Creates and returns a new line from a list of Nodes. Useful for line
         splitting and merging
         """
+        nodes[0].previous_node = previous_node
         line = Line(
             source_string=source_string,
             previous_node=previous_node,
-            depth=(
-                previous_node.depth + previous_node.change_in_depth
-                if previous_node
-                else 0
+            nodes=nodes,
+            depth=nodes[0].depth,
+            change_in_depth=(
+                nodes[-1].depth - nodes[0].depth + nodes[-1].change_in_depth
             ),
+            open_brackets=nodes[0].open_brackets,
+            formatting_disabled=nodes[0].formatting_disabled
+            or nodes[-1].formatting_disabled,
         )
-        for node in nodes:
-            line.append_token(node.token)  # todo: optimize this.
 
         return line
 

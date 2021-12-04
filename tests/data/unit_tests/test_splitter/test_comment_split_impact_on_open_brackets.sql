@@ -22,7 +22,7 @@ select
             do_that
         else
             something
-            -- a really long comment that doesn't belong here at all but will cause bracket issues
+    -- a really long comment that doesn't belong here at all but will cause bracket issues
     end
 from
     (
@@ -30,5 +30,5 @@ from
             *
         from
             my_table
-            -- another really long comment that doesn't belong here at all but will cause bracket issues
+    -- another really long comment that doesn't belong here at all but will cause bracket issues
     )
