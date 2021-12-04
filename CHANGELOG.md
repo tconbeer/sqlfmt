@@ -4,10 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.1] - 2021-12-04
+
 ### Performance
+
 -   refactors line splitting algorithm and creating a line from nodes; provides 3x speedup of sqlfmt (now formats roughly 100 files/sec)
 
 ### Fixes
+
 -   refactored lexer for better parsing of tokens on multiple lines
 
 ## [0.2.0] - 2021-11-16
@@ -39,6 +43,8 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.2.0...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.2.1...HEAD
+
+[0.2.1]: https://github.com/tconbeer/sqlfmt/compare/0.2.0...0.2.1
 
 [0.2.0]: https://github.com/tconbeer/sqlfmt/compare/0.1.0...0.2.0
