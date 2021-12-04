@@ -77,4 +77,7 @@ with
  # that we will also handle.
 #}
     
-select * from renamed /* what!?! */ where true
+select *
+from renamed /* what!?! */
+where true
+

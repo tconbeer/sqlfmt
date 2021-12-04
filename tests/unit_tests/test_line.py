@@ -61,7 +61,6 @@ def test_bare_line(source_string: str, bare_line: Line) -> None:
     assert not bare_line.is_standalone_comment
     assert not bare_line.is_standalone_multiline_node
     assert not bare_line.is_too_long(88)
-    assert not bare_line.can_be_depth_split
 
 
 def test_simple_line(
@@ -71,8 +70,6 @@ def test_simple_line(
     assert simple_line.change_in_depth == 1
     assert len(simple_line.nodes) == len(tokens)
     assert simple_line.open_brackets == [tokens[0]]
-    assert simple_line.depth_split == 1
-    assert simple_line.first_comma is None
 
     assert str(simple_line) == source_string
 
@@ -90,7 +87,7 @@ def test_simple_line(
         "\tinherited_depth=0,\n"
         "\tdepth=0,\n"
         "\tchange_in_depth=1,\n"
-        "\tprefix='',\n"
+        "\tprefix=' ',\n"
         "\tvalue='with',\n"
         "\topen_brackets=['Token(type=TokenType.UNTERM_KEYWORD, token=with, "
         "spos=0)']\n"
@@ -106,7 +103,6 @@ def test_simple_line(
     assert not simple_line.is_standalone_comment
     assert not simple_line.is_standalone_multiline_node
     assert not simple_line.is_too_long(88)
-    assert simple_line.can_be_depth_split
 
 
 def test_bare_append_newline(bare_line: Line) -> None:

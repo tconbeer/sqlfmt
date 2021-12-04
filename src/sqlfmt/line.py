@@ -120,19 +120,27 @@ class Node:
             token, inherited_depth, open_brackets
         )
 
-        previous_token: Optional[Token] = None
-        if previous_node is None or previous_node.token.type == TokenType.NEWLINE:
-            is_first_on_line = True
-        else:
-            is_first_on_line = False
-            previous_token = previous_node.token
+        def previous_token(prev_node: Optional[Node]) -> Optional[Token]:
+            """
+            Returns the token of prev_node, unless prev_node is a newline
+            or comment, in which case it recurses
+            """
+            if not prev_node:
+                return None
+            t = prev_node.token
+            if t.type in (TokenType.NEWLINE, TokenType.COMMENT):
+                return previous_token(prev_node.previous_node)
+            else:
+                return t
 
-        prefix = cls.whitespace(token, is_first_on_line, previous_token)
+        prev_token = previous_token(previous_node)
+
+        prefix = cls.whitespace(token, prev_token)
         value = cls.capitalize(token)
 
         if token.type == TokenType.FMT_OFF:
             formatting_disabled = True
-        elif previous_token and previous_token.type == TokenType.FMT_ON:
+        elif prev_token and prev_token.type == TokenType.FMT_ON:
             formatting_disabled = False
 
         return Node(
@@ -228,7 +236,6 @@ class Node:
     def whitespace(
         cls,
         token: Token,
-        is_first_on_line: bool,
         previous_token: Optional[Token],
     ) -> str:
         """
@@ -241,10 +248,8 @@ class Node:
         NO_SPACE = ""
         SPACE = " "
 
-        if is_first_on_line:
-            return NO_SPACE
         # tokens that are never preceded by a space
-        elif token.type in (
+        if token.type in (
             TokenType.BRACKET_CLOSE,
             TokenType.DOUBLE_COLON,
             TokenType.COMMA,
@@ -305,9 +310,6 @@ class Line:
     depth: int = 0
     change_in_depth: int = 0
     open_brackets: List[Token] = field(default_factory=list)
-    depth_split: Optional[int] = None
-    first_comma: Optional[int] = None
-    first_operator: Optional[int] = None
     formatting_disabled: bool = False
 
     def __str__(self) -> str:
@@ -316,7 +318,7 @@ class Line:
         else:
             INDENT = " " * 4
             prefix = INDENT * self.depth
-            return prefix + "".join([str(node) for node in self.nodes])
+            return prefix + "".join([str(node) for node in self.nodes]).lstrip(" ")
 
     def __len__(self) -> int:
         return len(str(self))
@@ -342,40 +344,10 @@ class Line:
             self.open_brackets = node.open_brackets
         else:
             self.change_in_depth = node.depth - self.depth + node.change_in_depth
-            # if we have a keyword in the middle of a line, we need to split on that
-            # keyword
-            if (
-                token.type == TokenType.UNTERM_KEYWORD
-                and not self.starts_with_unterm_keyword
-            ):
-                self.depth_split = len(self.nodes)
 
-        # otherwise, splits should happen outside in... if this line is increasing
-        # depth, we should split on the first node that increases depth. If it is
-        # decreasing depth, we should split on the last node that decreases depth
-        change_over_node = node.depth - node.inherited_depth + node.change_in_depth
         split_index = len(self.nodes)
         if split_after(node.token.type):
             split_index += 1
-
-        if token.type == TokenType.COMMENT:
-            self.depth_split = split_index
-        elif self.change_in_depth < 0 and change_over_node < 0 and split_index > 0:
-            self.depth_split = split_index
-        elif self.depth_split is None and node.change_in_depth > 0:
-            self.depth_split = split_index
-
-        if (
-            token.type == TokenType.COMMA
-            and node.open_brackets == self.open_brackets
-            and self.first_comma is None
-        ):
-            self.first_comma = split_index
-        elif (
-            token.type in (TokenType.OPERATOR, TokenType.WORD_OPERATOR)
-            and self.first_operator is None
-        ):
-            self.first_operator = split_index
 
         self.formatting_disabled = self.formatting_disabled or node.formatting_disabled
 
@@ -428,17 +400,19 @@ class Line:
         Creates and returns a new line from a list of Nodes. Useful for line
         splitting and merging
         """
+        nodes[0].previous_node = previous_node
         line = Line(
             source_string=source_string,
             previous_node=previous_node,
-            depth=(
-                previous_node.depth + previous_node.change_in_depth
-                if previous_node
-                else 0
+            nodes=nodes,
+            depth=nodes[0].depth,
+            change_in_depth=(
+                nodes[-1].depth - nodes[0].depth + nodes[-1].change_in_depth
             ),
+            open_brackets=nodes[0].open_brackets,
+            formatting_disabled=nodes[0].formatting_disabled
+            or nodes[-1].formatting_disabled,
         )
-        for node in nodes:
-            line.append_token(node.token)  # todo: optimize this.
 
         return line
 
@@ -528,30 +502,6 @@ class Line:
             len(self) > max_length
             and not self.contains_multiline_node
             and not self.is_standalone_comment
-        ):
-            return True
-        else:
-            return False
-
-    @property
-    def can_be_depth_split(self) -> bool:
-        if (
-            self.depth_split
-            and self.depth_split < self.last_content_index + 1
-            and not self.is_standalone_comment
-            and not self.is_standalone_multiline_node
-        ):
-            return True
-        else:
-            return False
-
-    @property
-    def can_be_comment_split(self) -> bool:
-        if (
-            self.depth_split
-            and self.ends_with_comment
-            and not self.is_standalone_comment
-            and not self.is_standalone_multiline_node
         ):
             return True
         else:

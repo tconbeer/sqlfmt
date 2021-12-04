@@ -14,7 +14,7 @@ select
     my_second_field, -- a short comment
     -- here is another long comment to be wrapped but not indented
     my_third_field + another_long_operation
-    -- another comment that is a little bit too long to stay here
+-- another comment that is a little bit too long to stay here
 from
     my_really_long_data_source
 where -- this should stay
