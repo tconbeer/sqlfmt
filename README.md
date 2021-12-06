@@ -10,7 +10,12 @@
 
 
 sqlfmt is an opinionated CLI tool that formats your dbt SQL files. It is similar in nature to black, gofmt, 
-and rustfmt.
+and rustfmt. When you use sqlfmt:
+
+1. You never have to mention (or argue about) code style in code reviews again
+1. You make it easier to collaborate and solicit contributions from new people
+1. You will be able to read your team's code as if you wrote it
+1. You can forget about formatting your code, and spend your time on business logic instead
 
 sqlfmt is not configurable, except for line length. It enforces a single style. sqlfmt maintains comments and some extra newlines, but largely ignores all indentation and line breaks in the input file.
 
@@ -38,28 +43,30 @@ You should use a virutal environment to isolate sqlfmt's dependencies from other
 ### Using sqlfmt
 sqlfmt is a command-line tool. It works on any posix terminal and on Windows Powershell. If you have used `black`, the sqlfmt commands will look familiar. 
 
+> Note: The `$` in the code snippets below indicate that these are commands that can be typed into your terminal. The `$` is the prompt symbol in bash; it is equivalent to `>` on Windows or `%` on zsh. Do not include the `$` in the command you type into your terminal
+
 To list commands and options:
 
 ```bash
-> sqlfmt --help
+$ sqlfmt --help
 ```
 
 If you want to format all `.sql` and `.sql.jinja` files in your current working directory (and all nested directories), simply type:
 ```bash
-> sqlfmt .
+$ sqlfmt .
 ```
 You can also supply a path to a one or more files or directories as arguments:
 ```bash
-> sqlfmt /path/to/my/dir /path/to/a/file.sql
+$ sqlfmt /path/to/my/dir /path/to/a/file.sql
 ```
 If you don't want to format the files you have on disk, you can run sqlfmt with the `--check` option. sqlfmt will exit with code 1 if the files on disk are not properly formatted:
 ```bash
-> sqlfmt --check .
-> sqlfmt --check path/to/my/dir
+$ sqlfmt --check .
+$ sqlfmt --check path/to/my/dir
 ```
 If you want to print a diff of changes that sqlfmt would make to format a file (but not update the file on disk), you can use the `--diff` option. `--diff` also exits with 1 on changes:
 ```bash
-> sqlfmt --diff .
+$ sqlfmt --diff .
 ```
 
 If you would like sqlfmt to ignore a file, or part of a file, you can add `-- fmt: off` and `-- fmt: on` comments to your code (or `# fmt: off` on MySQL or BigQuery). sqlfmt will not change any code between those comments; a single `-- fmt: off` at the top of a file will keep the entire file intact.
@@ -79,7 +86,7 @@ The sqlfmt style is as simple as possible, with little-to-no special-casing of f
 
 ### Why lowercase?
 There are several reasons that sqlfmt insists on lowercase SQL keywords:
-1. We believe that SQL is code (this is a surprisingly controversial statement!). Shouting-case keywords perpetuate the myth that SQL isn't "real code", or isn't "modern" and somehow is trapped in the era of low-level imperative languages: BASIC, COBOL, and FORTRAN. The reality is that SQL is an incredibly powerful, declarative, and modern language. It should look like one.
+1. We believe that SQL is code (this is a surprisingly controversial statement!). Shouting-case keywords perpetuate the myth that SQL isn't "real code", or isn't "modern" and somehow is trapped in the era of low-level imperative languages: BASIC, COBOL, and FORTRAN. The reality is that SQL is an incredibly powerful, declarative, and modern language. It should look like one
 1. Syntax highlighting for SQL makes shouting-case keywords redundant; the syntax highlighter in any text editor is going to be more consistent than any manual shout-casing. If you have a SQL query as a string inside of a block of code in another language, you may want to capitalize your keywords; sqlfmt only operates on dedicated SQL (and templated sql) files, so this is not relevant. However, even without syntax highlighting, the hierarchical and consistent indentation provided by sqlfmt provides sufficient visual structure without shout-casing keywords
 1. Even among people who like shout-cased keywords, there are disagreements between what gets shout-cased. SELECT, sure, but SUM? AS? OVER? AND? All-lowercase keywords eliminates this potential source of irregularity and disagreement.
 1. Research shows that generally, lowercase words are more readable
@@ -88,7 +95,7 @@ There are several reasons that sqlfmt insists on lowercase SQL keywords:
 1. Using trailing commas follows the convention of every other written language and programming language
 1. Leading commas require placing the first field name on the same line as `select`, which can obscure that field
 1. SQL query compilation is extremely fast; the "cost" of "last field" errors is very low
-1. trailing commas generalize better within `select` statements (e.g. `group by` and `partition by` clauses) and in other kinds of SQL statements (e.g. `insert` statements)
+1. Trailing commas generalize better within `select` statements (e.g. `group by` and `partition by` clauses) and in other kinds of SQL statements (e.g. `insert` statements)
 
 ### Examples
 
