@@ -13,6 +13,7 @@ class TokenType(Enum):
     COMMENT = auto()
     COMMENT_START = auto()
     COMMENT_END = auto()
+    SEMICOLON = auto()
     STATEMENT_START = auto()
     STATEMENT_END = auto()
     STAR = auto()

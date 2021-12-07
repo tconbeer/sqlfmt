@@ -4,9 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Formatting changes
+
+-   refactors comment parsing for improved formatting of comments and merging around comments
+
 ### Fixes
 
--   refactors comment parsing for improved formatting of comments
+-   supports all postgres and bigquery string literals and quoted identifiers, including triple quotes, escaped quotes, dollar-delimited, etc.
+-   no longer fails with a parsing error when encountering a semicolon
 
 ## [0.2.1] - 2021-12-04
 

@@ -48,9 +48,9 @@ def get_projects() -> List[SQLProject]:
             name="http_archive",
             git_url="https://github.com/HTTPArchive/almanac.httparchive.org.git",
             git_ref="db9fd2e1405a549c96ae5091b571989f13a8a539",  # Nov 14, 2021
-            expected_changed=829,
+            expected_changed=1631,
             expected_unchanged=0,
-            expected_errored=802,  # caused mostly by create function w triple quotes
+            expected_errored=0,
             sub_directory=Path("sql"),
         ),
         SQLProject(
