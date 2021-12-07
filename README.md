@@ -94,7 +94,7 @@ There are several reasons that sqlfmt insists on lowercase SQL keywords:
 ### Why trailing commas?
 1. Using trailing commas follows the convention of every other written language and programming language
 1. Leading commas require placing the first field name on the same line as `select`, which can obscure that field
-1. SQL query compilation is extremely fast; the "cost" of "last field" errors is very low
+1. SQL query compilation is extremely fast; the "cost" of "last field" errors is very low. Some dialects (e.g., BigQuery) even allow a trailing comma in the final field of a select statement
 1. Trailing commas generalize better within `select` statements (e.g. `group by` and `partition by` clauses) and in other kinds of SQL statements (e.g. `insert` statements)
 
 ### Examples
@@ -112,7 +112,7 @@ becomes
 select a, b, c from my_table
 ```
 
-If a query doesn't fit on a single line, sqlfmt will format the query to make its hierarchy apparent. The main keywords in a `SELECT` statement are the top nodes in hierarchy. Individual fields are indented a single level; unless all fields fit on the same line as `select`, they must all be individually split onto their own lines. This is properly formatted code:
+If a query doesn't fit on a single line, sqlfmt will format the query to make its hierarchy apparent. The main keywords in a `select` statement are the top nodes in hierarchy. Individual fields are indented a single level; unless all fields fit on the same line as `select`, they must all be individually split onto their own lines. This is properly formatted code:
 ```sql
 with t as (select * from my_schema."my_QUOTED_ table!")
 select
