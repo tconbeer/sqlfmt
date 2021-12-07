@@ -70,9 +70,15 @@ class Polyglot(Dialect):
         TokenType.JINJA_START: group(r"\{[{%]"),
         TokenType.JINJA_END: group(r"[}%]\}"),
         TokenType.QUOTED_NAME: group(
-            r"'[^\n']*?'",
-            r'"[^\n"]*?"',
-            r"`[^\n`]*?`",
+            r"(rb?|b|br)?'''.*?'''",  # tripled single quotes (optionally raw/bytes)
+            r'(rb?|b|br)?""".*?"""',  # tripled double quotes
+            # possibly escaped double quotes
+            r'(rb?|b|br|u&)?"([^"\\]*(\\.[^"\\]*|""[^"\\]*)*)"',
+            # possibly escaped single quotes
+            r"(rb?|b|br|u&|x)?'([^'\\]*(\\.[^'\\]*|''[^'\\]*)*)'",
+            r"\$\w*\$[^$]*?\$\w*\$",  # pg dollar-delimited strings
+            # possibly escaped backtick
+            r"`([^`\\]*(\\.[^`\\]*)*)`",
         ),
         TokenType.COMMENT: group(
             r"--[^\r\n]*",
@@ -81,6 +87,7 @@ class Polyglot(Dialect):
         ),
         TokenType.COMMENT_START: group(r"/\*"),
         TokenType.COMMENT_END: group(r"\*/"),
+        TokenType.SEMICOLON: group(r";"),
         TokenType.STATEMENT_START: group(r"case") + group(r"\W", r"$"),
         TokenType.STATEMENT_END: group(r"end") + group(r"\W", r"$"),
         TokenType.STAR: group(r"\*"),
