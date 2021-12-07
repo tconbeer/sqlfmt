@@ -21,10 +21,17 @@ def test_create_merged_line(merger: LineMerger) -> None:
             multiline
             comment
         */
+
+
+
+
         charlie,
 
 
 
+
+
+        delta,
     """
     raw_query = Query.from_source(source_string, merger.mode)
 
@@ -32,13 +39,13 @@ def test_create_merged_line(merger: LineMerger) -> None:
     actual = merger.create_merged_line(raw_query.lines[0:4])
     assert str(actual) == expected
 
-    with pytest.raises(CannotMergeException):
-        # can't merge whitespace
-        _ = merger.create_merged_line(raw_query.lines[-3:-1])
+    expected = "select able, baker, charlie, delta,\n"
+    actual = merger.create_merged_line(raw_query.lines)
+    assert str(actual) == expected
 
     with pytest.raises(CannotMergeException):
-        # can't merge a multiline comment
-        _ = merger.create_merged_line(raw_query.lines[4:8])
+        # can't merge whitespace
+        _ = merger.create_merged_line(raw_query.lines[-5:-2])
 
 
 def test_basic_merge(merger: LineMerger) -> None:

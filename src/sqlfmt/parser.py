@@ -4,7 +4,7 @@ from typing import Dict, Iterable, List, Optional
 
 from sqlfmt.dialect import MAYBE_WHITESPACES, SqlfmtParsingError, group
 from sqlfmt.exception import SqlfmtError
-from sqlfmt.line import Line, Node
+from sqlfmt.line import Comment, Line, Node
 from sqlfmt.mode import Mode
 from sqlfmt.token import Token, TokenType
 
@@ -36,23 +36,52 @@ class Query:
         previous_node: Optional[Node] = None
         previous_line_node: Optional[Node] = None
         line_nodes: List[Node] = []
+        line_comments: List[Comment] = []
         for token in q.lex(source_string=source_string, pos=0):
-            node = Node.from_token(token=token, previous_node=previous_node)
-            line_nodes.append(node)
-            if node.is_newline:
-                q.lines.append(
-                    Line.from_nodes(
-                        source_string="",
-                        previous_node=previous_line_node,
-                        nodes=line_nodes,
+            if token.type in (TokenType.COMMENT, TokenType.JINJA_COMMENT):
+                is_standalone = (not bool(line_nodes)) or "\n" in token.token
+                comment = Comment(token=token, is_standalone=is_standalone)
+                line_comments.append(comment)
+            else:
+                node = Node.from_token(token=token, previous_node=previous_node)
+                if node.is_newline and line_nodes:
+                    line_nodes.append(node)
+                    q.lines.append(
+                        Line.from_nodes(
+                            source_string="",
+                            previous_node=previous_line_node,
+                            nodes=line_nodes,
+                            comments=line_comments,
+                        )
                     )
-                )
-                line_nodes = []
-                previous_line_node = node
-            previous_node = node
+                    line_nodes = []
+                    line_comments = []
+                    previous_line_node = node
+                elif node.is_newline and not line_comments:
+                    q.lines.append(
+                        Line.from_nodes(
+                            source_string="",
+                            previous_node=previous_line_node,
+                            nodes=[node],
+                            comments=[],
+                        )
+                    )
+                    previous_line_node = node
+                elif node.is_newline and line_comments:
+                    # standalone comments; don't create a line, since
+                    # these need to be attached to the next line with
+                    # contents
+                    pass
+                else:
+                    line_nodes.append(node)
+                previous_node = node
+        # append a final line if the file doesn't end with a newline
         if line_nodes:
             line = Line.from_nodes(
-                source_string="", previous_node=previous_line_node, nodes=line_nodes
+                source_string="",
+                previous_node=previous_line_node,
+                nodes=line_nodes,
+                comments=line_comments,
             )
             line.append_newline()
             q.lines.append(line)
@@ -177,10 +206,7 @@ class Query:
         return nodes
 
     def __str__(self) -> str:
-        draft = []
-        for s in [str(line) for line in self.lines]:
-            if s:
-                draft.append(s)
-
-        q = "".join(draft)
-        return q
+        draft = [
+            line.render_with_comments(self.mode.line_length) for line in self.lines
+        ]
+        return "".join(draft)

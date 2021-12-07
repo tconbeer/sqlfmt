@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Iterator, Optional
+from typing import Iterator
 
 from sqlfmt.line import Line
 from sqlfmt.mode import Mode
@@ -21,7 +21,6 @@ class LineSplitter:
             yield line
             return
 
-        has_preceding_multiline_comment = False
         has_preceding_comma = False
         has_depth_increasing_node = False
         last_operator_index = 0
@@ -30,19 +29,6 @@ class LineSplitter:
             # if there is a multiline node on this line and it isn't the
             # only thing on this line, then split before the multiline node
             if i > 0 and node.is_multiline:
-                yield from self.split_at_index(line, i)
-                return
-            # if an earlier node on this line was a multiline comment
-            # and this node isn't a newline, we want to split after
-            # the multiline comment
-            elif has_preceding_multiline_comment and not node.is_newline:
-                yield from self.split_at_index(line, i)
-                return
-            elif node.is_multiline and node.is_comment:
-                has_preceding_multiline_comment = True
-            # if the line is too long, split its comment up before
-            # doing anything else
-            elif i > 0 and node.is_comment and line.is_too_long(self.mode.line_length):
                 yield from self.split_at_index(line, i)
                 return
             # we always split on any comma that doesn't end a line
@@ -87,35 +73,19 @@ class LineSplitter:
         head, tail = line.nodes[:index], line.nodes[index:]
         assert head[0] is not None, "Cannot split at start of line!"
 
-        # if we're splitting on a comment, we want the standalone comment
-        # line to come first, before the code it is commenting
-        comment_line: Optional[Line] = None
-        if tail[0].is_comment and not tail[0].is_multiline:
-            tail[0].open_brackets = (
-                head[0].previous_node.open_brackets if head[0].previous_node else []
-            )
-            tail[0].previous_node = head[0].previous_node
-            comment_line = Line.from_nodes(
-                source_string=line.source_string,
-                previous_node=line.previous_node,
-                nodes=tail,
-            )
-            yield comment_line
-
         head_line = Line.from_nodes(
             source_string=line.source_string,
-            previous_node=comment_line.nodes[-1]
-            if comment_line
-            else line.previous_node,
+            previous_node=line.previous_node,
             nodes=head,
+            comments=line.comments,
         )
         head_line.append_newline()
         yield from self.maybe_split(head_line)
 
-        if not comment_line:
-            tail_line = Line.from_nodes(
-                source_string=line.source_string,
-                previous_node=head_line.nodes[-1],
-                nodes=tail,
-            )
-            yield from self.maybe_split(tail_line)
+        tail_line = Line.from_nodes(
+            source_string=line.source_string,
+            previous_node=head_line.nodes[-1],
+            nodes=tail,
+            comments=[],
+        )
+        yield from self.maybe_split(tail_line)

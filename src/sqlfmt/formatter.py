@@ -20,15 +20,6 @@ class QueryFormatter:
             new_lines.extend(splits)
         return new_lines
 
-    def _indent_standalone_comments(self, lines: List[Line]) -> List[Line]:
-        prev_depth = 0
-        for line in reversed(lines):
-            if line.is_standalone_comment and not line.formatting_disabled:
-                line.depth = prev_depth
-            else:
-                prev_depth = line.depth
-        return lines
-
     def _merge_lines(self, lines: List[Line]) -> List[Line]:
         merger = LineMerger(mode=self.mode)
         lines = merger.maybe_merge_lines(lines)
@@ -36,18 +27,15 @@ class QueryFormatter:
 
     def format(self, raw_query: Query) -> Query:
         """
-        Applies 3 transformations to a Query:
+        Applies 2 transformations to a Query:
         1. Splits lines
         2. Merges lines
-        3. Fixes indentation of standalone comments
         """
         lines = raw_query.lines
 
         pipeline = [
             self._split_lines,
-            self._indent_standalone_comments,
             self._merge_lines,
-            self._indent_standalone_comments,
         ]
 
         for transform in pipeline:

@@ -10,6 +10,18 @@ class SqlfmtBracketError(SqlfmtError):
 
 
 @dataclass
+class Comment:
+    token: Token
+    is_standalone: bool
+
+    def __str__(self) -> str:
+        return self.token.token + "\n"
+
+    def __len__(self) -> int:
+        return len(str(self))
+
+
+@dataclass
 class Node:
     token: Token
     previous_node: Optional["Node"]
@@ -307,6 +319,7 @@ class Line:
     source_string: str
     previous_node: Optional[Node]  # last node of prior line, if any
     nodes: List[Node] = field(default_factory=list)
+    comments: List[Comment] = field(default_factory=list)
     depth: int = 0
     change_in_depth: int = 0
     open_brackets: List[Token] = field(default_factory=list)
@@ -316,12 +329,37 @@ class Line:
         if self.formatting_disabled:
             return "".join([f"{t.prefix}{t.token}" for t in self.tokens])
         else:
-            INDENT = " " * 4
-            prefix = INDENT * self.depth
-            return prefix + "".join([str(node) for node in self.nodes]).lstrip(" ")
+            return self.prefix + "".join([str(node) for node in self.nodes]).lstrip(" ")
 
     def __len__(self) -> int:
         return len(str(self))
+
+    @property
+    def prefix(self) -> str:
+        INDENT = " " * 4
+        prefix = INDENT * self.depth
+        return prefix
+
+    def render_with_comments(self, max_length: int) -> str:
+        content = str(self)
+        if len(self.comments) == 0:
+            return content
+        elif len(self.comments) == 1:
+            # standalone or multiline comment
+            if self.nodes[0].is_newline:
+                return self.prefix + str(self.comments[0])
+            # inline comment
+            elif (not self.comments[0].is_standalone) and (
+                len(content) + 1 + len(self.comments[0]) <= max_length
+            ):
+                return content.rstrip() + " " + str(self.comments[0])
+            # wrap comment above
+            else:
+                return self.prefix + str(self.comments[0]) + content
+        # wrap comments above; note that str(comment) is newline-terminated
+        else:
+            comment_str = "".join([self.prefix + str(c) for c in self.comments])
+            return comment_str + content
 
     def append_token(self, token: Token) -> None:
         """
@@ -395,6 +433,7 @@ class Line:
         source_string: str,
         previous_node: Optional[Node],
         nodes: List[Node],
+        comments: List[Comment],
     ) -> "Line":
         """
         Creates and returns a new line from a list of Nodes. Useful for line
@@ -405,6 +444,7 @@ class Line:
             source_string=source_string,
             previous_node=previous_node,
             nodes=nodes,
+            comments=comments,
             depth=nodes[0].depth,
             change_in_depth=(
                 nodes[-1].depth - nodes[0].depth + nodes[-1].change_in_depth
