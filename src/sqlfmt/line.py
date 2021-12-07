@@ -86,10 +86,6 @@ class Node:
         return self.token.type == TokenType.COMMA
 
     @property
-    def is_comment(self) -> bool:
-        return self.token.type == TokenType.COMMENT
-
-    @property
     def is_operator(self) -> bool:
         return self.token.type in (TokenType.OPERATOR, TokenType.WORD_OPERATOR)
 
@@ -134,13 +130,13 @@ class Node:
 
         def previous_token(prev_node: Optional[Node]) -> Optional[Token]:
             """
-            Returns the token of prev_node, unless prev_node is a newline
-            or comment, in which case it recurses
+            Returns the token of prev_node, unless prev_node is a
+            newline, in which case it recurses
             """
             if not prev_node:
                 return None
             t = prev_node.token
-            if t.type in (TokenType.NEWLINE, TokenType.COMMENT):
+            if t.type == TokenType.NEWLINE:
                 return previous_token(prev_node.previous_node)
             else:
                 return t
@@ -483,43 +479,6 @@ class Line:
         return any([n.is_multiline for n in self.nodes])
 
     @property
-    def ends_with_comment(self) -> bool:
-        try:
-            if self.nodes[-1].is_comment:
-                return True
-            elif (
-                len(self.nodes) > 1
-                and self.nodes[-1].is_newline
-                and self.nodes[-2].is_comment
-            ):
-                return True
-            else:
-                return False
-        except IndexError:
-            return False
-
-    @property
-    def last_content_index(self) -> int:
-        for i, node in enumerate(self.nodes):
-            if node.is_comment or node.is_newline:
-                return i - 1
-        else:
-            return i
-
-    @property
-    def is_standalone_comment(self) -> bool:
-        if len(self.nodes) == 1 and self.ends_with_comment:
-            return True
-        elif (
-            len(self.nodes) == 2
-            and self.ends_with_comment
-            and self.nodes[-1].is_newline
-        ):
-            return True
-        else:
-            return False
-
-    @property
     def is_standalone_multiline_node(self) -> bool:
         if len(self.nodes) == 1 and self.contains_multiline_node:
             return True
@@ -535,14 +494,10 @@ class Line:
     def is_too_long(self, max_length: int) -> bool:
         """
         Returns true if the rendered length of the line is strictly greater
-        than max_length, and if the line isn't a standalone long comment or
+        than max_length, and if the line isn't a standalone long
         multiline node
         """
-        if (
-            len(self) > max_length
-            and not self.contains_multiline_node
-            and not self.is_standalone_comment
-        ):
+        if len(self) > max_length and not self.contains_multiline_node:
             return True
         else:
             return False

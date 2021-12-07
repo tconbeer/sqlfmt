@@ -3,7 +3,7 @@ from typing import List
 
 import pytest
 
-from sqlfmt.line import Line, Node, SqlfmtBracketError
+from sqlfmt.line import Comment, Line, Node, SqlfmtBracketError
 from sqlfmt.mode import Mode
 from sqlfmt.parser import Query
 from sqlfmt.token import Token, TokenType
@@ -57,8 +57,6 @@ def test_bare_line(source_string: str, bare_line: Line) -> None:
     assert not bare_line.starts_with_unterm_keyword
     assert not bare_line.contains_unterm_keyword
     assert not bare_line.contains_multiline_node
-    assert not bare_line.ends_with_comment
-    assert not bare_line.is_standalone_comment
     assert not bare_line.is_standalone_multiline_node
     assert not bare_line.is_too_long(88)
 
@@ -99,8 +97,6 @@ def test_simple_line(
     assert simple_line.starts_with_unterm_keyword
     assert simple_line.contains_unterm_keyword
     assert not simple_line.contains_multiline_node
-    assert not simple_line.ends_with_comment
-    assert not simple_line.is_standalone_comment
     assert not simple_line.is_standalone_multiline_node
     assert not simple_line.is_too_long(88)
 
@@ -146,13 +142,11 @@ def test_simple_append_newline(simple_line: Line) -> None:
     assert new_last_node.previous_node.token == last_node.token
 
 
-def test_ends_with_comment(simple_line: Line) -> None:
+def test_comment_rendering(simple_line: Line) -> None:
 
     last_node = simple_line.nodes[-1]
-    assert not last_node.token.type == TokenType.COMMENT
-    assert not simple_line.ends_with_comment
 
-    comment = Token(
+    comment_token = Token(
         type=TokenType.COMMENT,
         prefix="",
         token="-- my comment",
@@ -160,42 +154,27 @@ def test_ends_with_comment(simple_line: Line) -> None:
         epos=last_node.token.epos + 13,
     )
 
-    simple_line.append_token(comment)
+    inline_comment = Comment(token=comment_token, is_standalone=False)
+    simple_line.comments = [inline_comment]
+    expected_inline_render = str(simple_line).rstrip() + " -- my comment\n"
+    assert simple_line.render_with_comments(88) == expected_inline_render
 
-    assert simple_line.nodes[-1].token.type == TokenType.COMMENT
-    assert simple_line.ends_with_comment
-
-    simple_line.append_newline()
-    assert simple_line.nodes[-1].token.type == TokenType.NEWLINE
-    assert simple_line.ends_with_comment
-
-    assert not simple_line.is_standalone_comment
-
-
-def test_is_standalone_comment(bare_line: Line, simple_line: Line) -> None:
-
-    assert not bare_line.is_standalone_comment
-    assert not simple_line.is_standalone_comment
-
-    comment = Token(
-        type=TokenType.COMMENT,
-        prefix="",
-        token="-- my comment",
-        spos=0,
-        epos=13,
+    standalone_comment = Comment(token=comment_token, is_standalone=True)
+    simple_line.comments = [standalone_comment]
+    expected_standalone_render = (
+        simple_line.prefix + "-- my comment\n" + str(simple_line)
     )
+    assert simple_line.render_with_comments(88) == expected_standalone_render
 
-    bare_line.append_token(comment)
-    simple_line.append_token(comment)
-
-    assert bare_line.is_standalone_comment
-    assert not simple_line.is_standalone_comment
-
-    bare_line.append_newline()
-    simple_line.append_newline()
-
-    assert bare_line.is_standalone_comment
-    assert not simple_line.is_standalone_comment
+    simple_line.comments = [standalone_comment, inline_comment]
+    expected_multiple_render = (
+        simple_line.prefix
+        + "-- my comment\n"
+        + simple_line.prefix
+        + "-- my comment\n"
+        + str(simple_line)
+    )
+    assert simple_line.render_with_comments(88) == expected_multiple_render
 
 
 def test_is_standalone_multiline_node(bare_line: Line, simple_line: Line) -> None:
@@ -203,34 +182,25 @@ def test_is_standalone_multiline_node(bare_line: Line, simple_line: Line) -> Non
     assert not bare_line.is_standalone_multiline_node
     assert not simple_line.is_standalone_multiline_node
 
-    comment = Token(
-        type=TokenType.COMMENT,
+    multiline_node = Token(
+        type=TokenType.JINJA,
         prefix="",
-        token="/*\nmy comment\n*/",
+        token="{{\nmy JINJA\n}}",
         spos=0,
         epos=16,
     )
 
-    bare_line.append_token(comment)
-    simple_line.append_token(comment)
+    bare_line.append_token(multiline_node)
+    simple_line.append_token(multiline_node)
 
-    assert bare_line.is_standalone_comment
     assert bare_line.is_standalone_multiline_node
-    assert not simple_line.is_standalone_comment
     assert not simple_line.is_standalone_multiline_node
 
     bare_line.append_newline()
     simple_line.append_newline()
 
-    assert bare_line.is_standalone_comment
     assert bare_line.is_standalone_multiline_node
-    assert not simple_line.is_standalone_comment
     assert not simple_line.is_standalone_multiline_node
-
-
-def test_last_content_index(simple_line: Line) -> None:
-    idx = simple_line.last_content_index
-    assert str(simple_line.nodes[idx]) == ")"
 
 
 def test_calculate_depth_exception() -> None:

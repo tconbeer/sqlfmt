@@ -30,8 +30,8 @@ def get_projects() -> List[SQLProject]:
             name="gitlab",
             git_url="https://gitlab.com/gitlab-data/analytics.git",
             git_ref="7161e509b62f53344f19de80d40db2bdba190806",  # Nov 12, 2021
-            expected_changed=1786,
-            expected_unchanged=76,
+            expected_changed=1804,
+            expected_unchanged=58,
             expected_errored=2,  # unquoted field named end
             sub_directory=Path("transform/snowflake-dbt/models"),
         ),
@@ -50,7 +50,7 @@ def get_projects() -> List[SQLProject]:
             git_ref="db9fd2e1405a549c96ae5091b571989f13a8a539",  # Nov 14, 2021
             expected_changed=829,
             expected_unchanged=0,
-            expected_errored=802,  # caused by mismatched quotes
+            expected_errored=802,  # caused mostly by create function w triple quotes
             sub_directory=Path("sql"),
         ),
         SQLProject(
@@ -59,7 +59,7 @@ def get_projects() -> List[SQLProject]:
             git_ref="6ef50aa998794837d436abd3676fe46a19de44e4",  # Oct 1, 2021
             expected_changed=7,
             expected_unchanged=0,
-            expected_errored=0,  # caused by comments with #
+            expected_errored=0,
             sub_directory=Path("src/aqi_dbt/models"),
         ),
     ]
