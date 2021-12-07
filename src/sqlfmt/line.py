@@ -10,6 +10,18 @@ class SqlfmtBracketError(SqlfmtError):
 
 
 @dataclass
+class Comment:
+    token: Token
+    is_standalone: bool
+
+    def __str__(self) -> str:
+        return self.token.token + "\n"
+
+    def __len__(self) -> int:
+        return len(str(self))
+
+
+@dataclass
 class Node:
     token: Token
     previous_node: Optional["Node"]
@@ -74,10 +86,6 @@ class Node:
         return self.token.type == TokenType.COMMA
 
     @property
-    def is_comment(self) -> bool:
-        return self.token.type == TokenType.COMMENT
-
-    @property
     def is_operator(self) -> bool:
         return self.token.type in (TokenType.OPERATOR, TokenType.WORD_OPERATOR)
 
@@ -122,13 +130,13 @@ class Node:
 
         def previous_token(prev_node: Optional[Node]) -> Optional[Token]:
             """
-            Returns the token of prev_node, unless prev_node is a newline
-            or comment, in which case it recurses
+            Returns the token of prev_node, unless prev_node is a
+            newline, in which case it recurses
             """
             if not prev_node:
                 return None
             t = prev_node.token
-            if t.type in (TokenType.NEWLINE, TokenType.COMMENT):
+            if t.type == TokenType.NEWLINE:
                 return previous_token(prev_node.previous_node)
             else:
                 return t
@@ -307,6 +315,7 @@ class Line:
     source_string: str
     previous_node: Optional[Node]  # last node of prior line, if any
     nodes: List[Node] = field(default_factory=list)
+    comments: List[Comment] = field(default_factory=list)
     depth: int = 0
     change_in_depth: int = 0
     open_brackets: List[Token] = field(default_factory=list)
@@ -316,12 +325,37 @@ class Line:
         if self.formatting_disabled:
             return "".join([f"{t.prefix}{t.token}" for t in self.tokens])
         else:
-            INDENT = " " * 4
-            prefix = INDENT * self.depth
-            return prefix + "".join([str(node) for node in self.nodes]).lstrip(" ")
+            return self.prefix + "".join([str(node) for node in self.nodes]).lstrip(" ")
 
     def __len__(self) -> int:
         return len(str(self))
+
+    @property
+    def prefix(self) -> str:
+        INDENT = " " * 4
+        prefix = INDENT * self.depth
+        return prefix
+
+    def render_with_comments(self, max_length: int) -> str:
+        content = str(self)
+        if len(self.comments) == 0:
+            return content
+        elif len(self.comments) == 1:
+            # standalone or multiline comment
+            if self.nodes[0].is_newline:
+                return self.prefix + str(self.comments[0])
+            # inline comment
+            elif (not self.comments[0].is_standalone) and (
+                len(content) + 1 + len(self.comments[0]) <= max_length
+            ):
+                return content.rstrip() + " " + str(self.comments[0])
+            # wrap comment above
+            else:
+                return self.prefix + str(self.comments[0]) + content
+        # wrap comments above; note that str(comment) is newline-terminated
+        else:
+            comment_str = "".join([self.prefix + str(c) for c in self.comments])
+            return comment_str + content
 
     def append_token(self, token: Token) -> None:
         """
@@ -395,6 +429,7 @@ class Line:
         source_string: str,
         previous_node: Optional[Node],
         nodes: List[Node],
+        comments: List[Comment],
     ) -> "Line":
         """
         Creates and returns a new line from a list of Nodes. Useful for line
@@ -405,6 +440,7 @@ class Line:
             source_string=source_string,
             previous_node=previous_node,
             nodes=nodes,
+            comments=comments,
             depth=nodes[0].depth,
             change_in_depth=(
                 nodes[-1].depth - nodes[0].depth + nodes[-1].change_in_depth
@@ -443,43 +479,6 @@ class Line:
         return any([n.is_multiline for n in self.nodes])
 
     @property
-    def ends_with_comment(self) -> bool:
-        try:
-            if self.nodes[-1].is_comment:
-                return True
-            elif (
-                len(self.nodes) > 1
-                and self.nodes[-1].is_newline
-                and self.nodes[-2].is_comment
-            ):
-                return True
-            else:
-                return False
-        except IndexError:
-            return False
-
-    @property
-    def last_content_index(self) -> int:
-        for i, node in enumerate(self.nodes):
-            if node.is_comment or node.is_newline:
-                return i - 1
-        else:
-            return i
-
-    @property
-    def is_standalone_comment(self) -> bool:
-        if len(self.nodes) == 1 and self.ends_with_comment:
-            return True
-        elif (
-            len(self.nodes) == 2
-            and self.ends_with_comment
-            and self.nodes[-1].is_newline
-        ):
-            return True
-        else:
-            return False
-
-    @property
     def is_standalone_multiline_node(self) -> bool:
         if len(self.nodes) == 1 and self.contains_multiline_node:
             return True
@@ -495,14 +494,10 @@ class Line:
     def is_too_long(self, max_length: int) -> bool:
         """
         Returns true if the rendered length of the line is strictly greater
-        than max_length, and if the line isn't a standalone long comment or
+        than max_length, and if the line isn't a standalone long
         multiline node
         """
-        if (
-            len(self) > max_length
-            and not self.contains_multiline_node
-            and not self.is_standalone_comment
-        ):
+        if len(self) > max_length and not self.contains_multiline_node:
             return True
         else:
             return False

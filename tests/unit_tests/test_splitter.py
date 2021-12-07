@@ -51,7 +51,6 @@ def test_split_one_liner(splitter: LineSplitter) -> None:
         assert len(result) == 4
 
 
-@pytest.mark.xfail
 def test_simple_comment_split(splitter: LineSplitter) -> None:
     source_string, expected_result = read_test_data(
         "unit_tests/test_splitter/test_simple_comment_split.sql"
@@ -65,6 +64,25 @@ def test_simple_comment_split(splitter: LineSplitter) -> None:
     actual_result = "".join([str(line) for line in split_lines])
 
     assert actual_result == expected_result
+
+    expected_comments = [
+        (
+            "-- not distinct, just an ordinary select here,"
+            " no big deal at all, it's okay really\n"
+        ),
+        "-- here is a long comment to be wrapped above this line\n",
+        "-- a short comment\n",
+        "-- here is another long comment to be wrapped but not indented\n",
+        "-- another comment that is a little bit too long to stay here\n",
+        "",
+        "-- this should stay\n",
+        "",
+        "-- one last comment\n",
+    ]
+
+    for i, line in enumerate(split_lines):
+        if line.comments:
+            assert str(line.comments[0]) == expected_comments[i]
 
 
 def test_split_count_window_function(splitter: LineSplitter) -> None:
@@ -112,5 +130,3 @@ def test_comment_split_impact_on_open_brackets(splitter: LineSplitter) -> None:
 
     actual_result = "".join([str(line) for line in split_lines])
     assert actual_result == expected_result
-
-    assert "case" in [brackets.token for brackets in split_lines[12].open_brackets]

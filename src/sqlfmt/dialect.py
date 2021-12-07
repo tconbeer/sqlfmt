@@ -57,16 +57,18 @@ class Polyglot(Dialect):
         TokenType.FMT_OFF: group(r"(--|#) ?fmt: ?off ?") + EOL,
         TokenType.FMT_ON: group(r"(--|#) ?fmt: ?on ?") + EOL,
         # these only match simple jinja tags, without nesting or potential nesting
+        TokenType.JINJA_COMMENT: group(
+            r"\{\#.*?\#\}",
+        ),
         TokenType.JINJA: group(
             r"\{\{[^{}%#]*\}\}",
             r"\{%[^{}%#]*?%\}",
-            r"\{\#[^{}%#]*?\#\}",
         ),
         # These match just the start and end of jinja tags, which allows
         # the parser to deal with nesting in a more powerful way than
         # regex allows
-        TokenType.JINJA_START: group(r"\{[{%#]"),
-        TokenType.JINJA_END: group(r"[}%#]\}"),
+        TokenType.JINJA_START: group(r"\{[{%]"),
+        TokenType.JINJA_END: group(r"[}%]\}"),
         TokenType.QUOTED_NAME: group(
             r"'[^\n']*?'",
             r'"[^\n"]*?"',

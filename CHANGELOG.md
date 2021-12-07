@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixes
+
+-   refactors comment parsing for improved formatting of comments
+
 ## [0.2.1] - 2021-12-04
 
 ### Performance

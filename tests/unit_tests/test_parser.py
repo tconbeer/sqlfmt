@@ -1,8 +1,9 @@
 import pytest
 
 from sqlfmt.dialect import SqlfmtParsingError
+from sqlfmt.line import Comment, Node
 from sqlfmt.mode import Mode
-from sqlfmt.parser import Node, Query, SqlfmtMultilineError
+from sqlfmt.parser import Query, SqlfmtMultilineError
 from sqlfmt.token import Token, TokenType
 from tests.util import read_test_data
 
@@ -211,7 +212,61 @@ def test_multiline_parsing(default_mode: Mode) -> None:
     assert TokenType.JINJA_START not in [token.type for token in q.tokens]
     assert TokenType.JINJA_END not in [token.type for token in q.tokens]
 
-    expected = [
+    expected_comments = [
+        Comment(
+            token=Token(
+                type=TokenType.COMMENT,
+                prefix="",
+                token=(
+                    "/*\n * This is a typical multiline comment.\n"
+                    " * It contains newlines.\n"
+                    " * And even /* some {% special characters %}\n"
+                    " * but we're not going to parse those\n*/"
+                ),
+                spos=157,
+                epos=310,
+            ),
+            is_standalone=True,
+        ),
+        Comment(
+            token=Token(
+                type=TokenType.COMMENT,
+                prefix=" ",
+                token=(
+                    "/* This is a multiline comment in very bad style,\n"
+                    "    * which starts and ends on lines with other tokens.\n    */"
+                ),
+                spos=386,
+                epos=499,
+            ),
+            is_standalone=True,
+        ),
+        Comment(
+            token=Token(
+                type=TokenType.JINJA_COMMENT,
+                prefix="",
+                token=(
+                    "{#\n # And this is a nice multiline jinja comment\n"
+                    " # that we will also handle.\n#}"
+                ),
+                spos=757,
+                epos=837,
+            ),
+            is_standalone=True,
+        ),
+        Comment(
+            token=Token(
+                type=TokenType.COMMENT,
+                prefix=" ",
+                token="/* what!?! */",
+                spos=860,
+                epos=874,
+            ),
+            is_standalone=False,
+        ),
+    ]
+
+    expected_content = [
         Token(
             type=TokenType.JINJA,
             prefix="",
@@ -226,20 +281,6 @@ def test_multiline_parsing(default_mode: Mode) -> None:
         ),
         Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=155, epos=156),
         Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=156, epos=157),
-        Token(
-            type=TokenType.COMMENT,
-            prefix="",
-            token=(
-                "/*\n * This is a typical multiline comment.\n"
-                " * It contains newlines.\n"
-                " * And even /* some {% special characters %}\n"
-                " * but we're not going to parse those\n*/"
-            ),
-            spos=157,
-            epos=310,
-        ),
-        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=310, epos=311),
-        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=311, epos=312),
         Token(
             type=TokenType.UNTERM_KEYWORD, prefix="", token="with", spos=312, epos=316
         ),
@@ -267,16 +308,6 @@ def test_multiline_parsing(default_mode: Mode) -> None:
         Token(type=TokenType.NAME, prefix="    ", token="renamed", spos=370, epos=381),
         Token(type=TokenType.WORD_OPERATOR, prefix=" ", token="as", spos=381, epos=384),
         Token(type=TokenType.BRACKET_OPEN, prefix=" ", token="(", spos=384, epos=386),
-        Token(
-            type=TokenType.COMMENT,
-            prefix=" ",
-            token=(
-                "/* This is a multiline comment in very bad style,\n"
-                "    * which starts and ends on lines with other tokens.\n    */"
-            ),
-            spos=386,
-            epos=499,
-        ),
         Token(
             type=TokenType.UNTERM_KEYWORD,
             prefix="  ",
@@ -343,18 +374,6 @@ def test_multiline_parsing(default_mode: Mode) -> None:
         Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=755, epos=756),
         Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=756, epos=757),
         Token(
-            type=TokenType.JINJA,
-            prefix="",
-            token=(
-                "{#\n # And this is a nice multiline jinja comment\n"
-                " # that we will also handle.\n#}"
-            ),
-            spos=757,
-            epos=837,
-        ),
-        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=837, epos=838),
-        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=838, epos=839),
-        Token(
             type=TokenType.UNTERM_KEYWORD, prefix="", token="select", spos=839, epos=845
         ),
         Token(type=TokenType.STAR, prefix=" ", token="*", spos=845, epos=847),
@@ -363,20 +382,17 @@ def test_multiline_parsing(default_mode: Mode) -> None:
         ),
         Token(type=TokenType.NAME, prefix=" ", token="renamed", spos=852, epos=860),
         Token(
-            type=TokenType.COMMENT,
-            prefix=" ",
-            token="/* what!?! */",
-            spos=860,
-            epos=874,
-        ),
-        Token(
             type=TokenType.UNTERM_KEYWORD, prefix=" ", token="where", spos=874, epos=880
         ),
         Token(type=TokenType.NAME, prefix=" ", token="true", spos=880, epos=885),
         Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=885, epos=885),
     ]
 
-    assert q.tokens == expected
+    actual_comments = []
+    for line in q.lines:
+        actual_comments.extend(line.comments)
+    assert actual_comments == expected_comments
+    assert q.tokens == expected_content
 
 
 def test_star_parsing(default_mode: Mode) -> None:

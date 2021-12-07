@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 
-from sqlfmt.line import Line, Node
+from sqlfmt.line import Comment, Line, Node
 from sqlfmt.mode import Mode
 from sqlfmt.token import TokenType
 
@@ -27,25 +27,18 @@ class LineMerger:
             return lines[0]
 
         content_nodes: List[Node] = []
-        comment_nodes: List[Node] = []
+        comments: List[Comment] = []
         for line in lines:
             # skip over nodes containing NEWLINEs
             nodes = [
-                node
-                for node in line.nodes
-                if node.token.type != TokenType.NEWLINE
-                and node.token.type != TokenType.COMMENT
+                node for node in line.nodes if node.token.type != TokenType.NEWLINE
             ]
             content_nodes.extend(nodes)
-            comments = [
-                node for node in line.nodes if node.token.type == TokenType.COMMENT
-            ]
-            comment_nodes.extend(comments)
-        merged_nodes = content_nodes + comment_nodes
+            comments.extend(line.comments)
 
-        if not merged_nodes:
+        if not content_nodes:
             raise CannotMergeException("Can't merge only whitespace/newlines")
-        elif any([n.is_multiline or n.formatting_disabled for n in merged_nodes]):
+        elif any([n.is_multiline or n.formatting_disabled for n in content_nodes]):
             raise CannotMergeException(
                 "Can't merge lines containing multiline nodes or disabled formatting"
             )
@@ -53,7 +46,8 @@ class LineMerger:
         merged_line = Line.from_nodes(
             source_string=lines[0].source_string,
             previous_node=lines[0].previous_node,
-            nodes=merged_nodes,
+            nodes=content_nodes,
+            comments=comments,
         )
 
         merged_line.append_newline()

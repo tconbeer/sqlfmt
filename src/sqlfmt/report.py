@@ -80,7 +80,7 @@ class Report:
             changed_msg = f"{self._pluralize_file(self.number_changed)} {formatted}."
             report.append(style_output(changed_msg, bold=True))
         report.append(f"{self._pluralize_file(self.number_unchanged)} {unchanged}.")
-        for res in self.errored_results:
+        for res in self.errored_results[0:50]:
             err = style_output(str(res.exception), fg="red")
             report.append(f"{res.source_path}\n    {err}")
         if not self.mode.quiet or self.mode.diff:
