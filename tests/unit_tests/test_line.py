@@ -57,6 +57,7 @@ def test_bare_line(source_string: str, bare_line: Line) -> None:
     assert not bare_line.starts_with_unterm_keyword
     assert not bare_line.contains_unterm_keyword
     assert not bare_line.contains_multiline_node
+    assert not bare_line.contains_operator
     assert not bare_line.is_standalone_multiline_node
     assert not bare_line.is_too_long(88)
 
@@ -96,6 +97,7 @@ def test_simple_line(
 
     assert simple_line.starts_with_unterm_keyword
     assert simple_line.contains_unterm_keyword
+    assert simple_line.contains_operator
     assert not simple_line.contains_multiline_node
     assert not simple_line.is_standalone_multiline_node
     assert not simple_line.is_too_long(88)
@@ -142,7 +144,10 @@ def test_simple_append_newline(simple_line: Line) -> None:
     assert new_last_node.previous_node.token == last_node.token
 
 
-def test_comment_rendering(simple_line: Line) -> None:
+def test_comment_rendering(simple_line: Line, bare_line: Line) -> None:
+
+    assert simple_line.render_with_comments(88) == str(simple_line)
+    assert bare_line.render_with_comments(88) == str(bare_line)
 
     last_node = simple_line.nodes[-1]
 
@@ -155,6 +160,11 @@ def test_comment_rendering(simple_line: Line) -> None:
     )
 
     inline_comment = Comment(token=comment_token, is_standalone=False)
+    bare_line.append_newline()
+    bare_line.comments = [inline_comment]
+    expected_bare_render = "-- my comment\n"
+    assert bare_line.render_with_comments(88) == expected_bare_render
+
     simple_line.comments = [inline_comment]
     expected_inline_render = str(simple_line).rstrip() + " -- my comment\n"
     assert simple_line.render_with_comments(88) == expected_inline_render

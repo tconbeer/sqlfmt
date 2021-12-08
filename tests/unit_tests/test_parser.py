@@ -1,7 +1,7 @@
 import pytest
 
 from sqlfmt.dialect import SqlfmtParsingError
-from sqlfmt.line import Comment, Node
+from sqlfmt.line import Comment, Node, SqlfmtBracketError
 from sqlfmt.mode import Mode
 from sqlfmt.parser import Query, SqlfmtMultilineError
 from sqlfmt.token import Token, TokenType
@@ -445,3 +445,11 @@ def test_unterminated_multiline_token(default_mode: Mode) -> None:
         _ = Query.from_source(source_string=source_string, mode=default_mode)
 
     assert "Unterminated multiline" in str(excinfo.value)
+
+
+def test_unmatched_bracket_error(default_mode: Mode) -> None:
+    source_string = "select ( end\n"
+    with pytest.raises(SqlfmtBracketError) as excinfo:
+        _ = Query.from_source(source_string=source_string, mode=default_mode)
+
+    assert "Closing bracket 'end'" in str(excinfo.value)

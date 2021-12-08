@@ -68,20 +68,6 @@ class Node:
         return self.token.type == TokenType.UNTERM_KEYWORD
 
     @property
-    def is_select(self) -> bool:
-        """
-        Return True if this could be the beginning of a select statement (this node is
-        "select" or "with")
-        """
-        if self.token.type == TokenType.UNTERM_KEYWORD and self.value.lower() in (
-            "with",
-            "select",
-        ):
-            return True
-        else:
-            return False
-
-    @property
     def is_comma(self) -> bool:
         return self.token.type == TokenType.COMMA
 
@@ -386,16 +372,6 @@ class Line:
         self.formatting_disabled = self.formatting_disabled or node.formatting_disabled
 
         self.nodes.append(node)
-
-    def maybe_append_newline(self) -> None:
-        """
-        Check to see if this Line already ends in a NEWLINE. If not,
-        call append_newline
-        """
-        if self.nodes and self.nodes[-1].token.type == TokenType.NEWLINE:
-            pass
-        else:
-            self.append_newline()
 
     def append_newline(self) -> None:
         """

@@ -130,3 +130,23 @@ def test_comment_split_impact_on_open_brackets(splitter: LineSplitter) -> None:
 
     actual_result = "".join([str(line) for line in split_lines])
     assert actual_result == expected_result
+
+
+def test_split_long_line_on_operator(splitter: LineSplitter) -> None:
+    source_string = (
+        "a_really_long_field + a_really_really_really_long_field "
+        "+ a_really_really_really_really_long_field as another_field\n"
+    )
+    raw_query = Query.from_source(source_string, splitter.mode)
+
+    split_lines: List[Line] = []
+    for raw_line in raw_query.lines:
+        split_lines.extend(splitter.maybe_split(raw_line))
+
+    actual_result = [str(line) for line in split_lines]
+    expected_result = [
+        "a_really_long_field + a_really_really_really_long_field\n",
+        "+ a_really_really_really_really_long_field\n",
+        "as another_field\n",
+    ]
+    assert actual_result == expected_result
