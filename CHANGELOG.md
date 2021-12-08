@@ -8,6 +8,10 @@ All notable changes to this project will be documented in this file.
 
 -   refactors comment parsing for improved formatting of comments and merging around comments
 
+### Features
+
+-   adds a simple cache and skips formatting files that have not changed since last successful run
+
 ### Fixes
 
 -   supports all postgres and bigquery string literals and quoted identifiers, including triple quotes, escaped quotes, dollar-delimited, etc.

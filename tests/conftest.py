@@ -1,11 +1,13 @@
 import os
 import sys
+from pathlib import Path
 from typing import Any
 
 import pytest
 from click.testing import CliRunner
 
 from sqlfmt.mode import Mode
+from tests.util import copy_test_data_to_tmp
 
 # make tests module importable
 sys.path.append(os.path.dirname(__file__))
@@ -65,3 +67,31 @@ def no_color_diff_mode(unset_no_color_env: None) -> Mode:
 @pytest.fixture(params=[(False, False), (False, True), (True, False), (True, True)])
 def all_output_modes(request: Any, unset_no_color_env: None) -> Mode:
     return Mode(check=request.param[0], diff=request.param[1])
+
+
+@pytest.fixture
+def preformatted_dir(tmp_path: Path) -> Path:
+    """
+    Copies the directory of preformatted sql files from the test/data
+    directory into a temp directory (provided by pytest fixture tmp_path),
+    and then returns the path to the temp directory.
+    """
+    test_dir = copy_test_data_to_tmp(["preformatted"], tmp_path)
+    return test_dir
+
+
+@pytest.fixture
+def unformatted_dir(tmp_path: Path) -> Path:
+    """
+    Copies the directory of unformatted sql files from the test/data
+    directory into a temp directory (provided by pytest fixture tmp_path),
+    and then returns the path to the temp directory.
+    """
+    test_dir = copy_test_data_to_tmp(["unformatted"], tmp_path)
+    return test_dir
+
+
+@pytest.fixture
+def error_dir(tmp_path: Path) -> Path:
+    test_dir = copy_test_data_to_tmp(["errors"], tmp_path)
+    return test_dir

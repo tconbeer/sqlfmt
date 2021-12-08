@@ -61,12 +61,12 @@ def write_cache(cache: Cache, results: List[SqlFormatResult], mode: Mode) -> Non
     """
     cache_file = get_cache_file()
     cache_file.parent.mkdir(parents=True, exist_ok=True)
+    new_cache = cache.copy()
     for path in _gen_cache_keys_for_updates(results, mode):
         updated_info = _get_cache_info(path)
-        cache[path] = updated_info
-
+        new_cache[path] = updated_info
     with open(cache_file, "wb") as f:
-        pickle.dump(cache, f)
+        pickle.dump(new_cache, f)
 
 
 def _get_cache_info(path: Path) -> Tuple[float, int]:
@@ -94,7 +94,7 @@ def _gen_cache_keys_for_updates(
 
 
 def _should_update_cache(result: SqlFormatResult, mode: Mode) -> bool:
-    if result.has_error:
+    if result.has_error or result.from_cache:
         return False
     elif not result.has_changed:
         return True

@@ -17,18 +17,6 @@ from sqlfmt.exception import SqlfmtError
 from sqlfmt.line import SqlfmtBracketError
 from sqlfmt.mode import Mode
 from sqlfmt.parser import SqlfmtMultilineError
-from tests.util import copy_test_data_to_tmp
-
-
-@pytest.fixture
-def preformatted_dir(tmp_path: Path) -> Path:
-    """
-    Copies the directory of preformatted sql files from the test/data
-    directory into a temp directory (provided by pytest fixture tmp_path),
-    and then returns the path to the temp directory.
-    """
-    test_dir = copy_test_data_to_tmp(["preformatted"], tmp_path)
-    return test_dir
 
 
 @pytest.fixture
@@ -37,25 +25,8 @@ def preformatted_files(preformatted_dir: Path) -> List[Path]:
 
 
 @pytest.fixture
-def unformatted_dir(tmp_path: Path) -> Path:
-    """
-    Copies the directory of unformatted sql files from the test/data
-    directory into a temp directory (provided by pytest fixture tmp_path),
-    and then returns the path to the temp directory.
-    """
-    test_dir = copy_test_data_to_tmp(["unformatted"], tmp_path)
-    return test_dir
-
-
-@pytest.fixture
 def unformatted_files(unformatted_dir: Path) -> List[Path]:
     return list(unformatted_dir.iterdir())
-
-
-@pytest.fixture
-def error_dir(tmp_path: Path) -> Path:
-    test_dir = copy_test_data_to_tmp(["errors"], tmp_path)
-    return test_dir
 
 
 def test_file_discovery(all_output_modes: Mode) -> None:
