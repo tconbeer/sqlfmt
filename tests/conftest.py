@@ -16,9 +16,10 @@ def pytest_sessionstart(session: pytest.Session) -> None:
     Called after the Session object has been created and
     before performing collection and entering the run test loop.
     """
-    from tests.util import delete_results_dir
+    from tests.util import clear_cache, delete_results_dir
 
     delete_results_dir()
+    clear_cache()
 
 
 @pytest.fixture

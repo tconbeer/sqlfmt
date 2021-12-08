@@ -10,6 +10,7 @@ from git import Repo
 from platformdirs import user_cache_dir
 
 from sqlfmt.api import run
+from sqlfmt.cache import get_cache_file
 from sqlfmt.mode import Mode
 
 
@@ -112,6 +113,7 @@ def sqlfmt_primer(
 
     mode = Mode(quiet=True, check=True)
     exit_code = 0
+    clear_sqlfmt_cache()
 
     with TemporaryDirectory() as working_dir:
         for project in projects:
@@ -209,3 +211,12 @@ def clone_and_checkout(project: SQLProject, working_dir: str) -> Path:
     target_dir = repo_dir / project.sub_directory if project.sub_directory else repo_dir
     assert target_dir.exists(), f"Failed to clone repo {project.name}"
     return target_dir
+
+
+def clear_sqlfmt_cache() -> None:
+    """
+    Deletes the cache file from the disk, if it exists. Called before
+    each primer run to ensure we're formatting every file every time.
+    """
+    p = get_cache_file()
+    p.unlink(missing_ok=True)

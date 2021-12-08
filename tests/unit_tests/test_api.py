@@ -97,7 +97,7 @@ def test_format_bad_string(
 def test_generate_results_preformatted(
     preformatted_files: List[Path], all_output_modes: Mode
 ) -> None:
-    results = list(_generate_results(preformatted_files, all_output_modes))
+    results = list(_generate_results(preformatted_files, {}, all_output_modes))
 
     assert len(results) == len(
         preformatted_files
@@ -111,7 +111,7 @@ def test_generate_results_preformatted(
 def test_generate_results_unformatted(
     unformatted_files: List[Path], all_output_modes: Mode
 ) -> None:
-    results = list(_generate_results(unformatted_files, all_output_modes))
+    results = list(_generate_results(unformatted_files, {}, all_output_modes))
 
     assert len(results) == len(
         unformatted_files
@@ -125,7 +125,7 @@ def test_generate_results_unformatted(
 def test_update_source_files_preformatted(
     preformatted_files: List[Path], default_mode: Mode
 ) -> None:
-    results = list(_generate_results(preformatted_files, default_mode))
+    results = list(_generate_results(preformatted_files, {}, default_mode))
 
     expected_last_update_timestamps = [
         os.stat(res.source_path).st_mtime for res in results if res.source_path
@@ -154,7 +154,7 @@ def test_update_source_files_preformatted(
 def test_update_source_files_unformatted(
     unformatted_files: List[Path], default_mode: Mode
 ) -> None:
-    results = list(_generate_results(unformatted_files, default_mode))
+    results = list(_generate_results(unformatted_files, {}, default_mode))
 
     original_update_timestamps = [
         os.stat(res.source_path).st_mtime for res in results if res.source_path
@@ -198,24 +198,53 @@ def test_run_unformatted_update(
 def test_run_preformatted(
     preformatted_files: List[Path], all_output_modes: Mode
 ) -> None:
-    report = run(files=[str(f) for f in preformatted_files], mode=all_output_modes)
+    files = [str(f) for f in preformatted_files]
+    report = run(files=files, mode=all_output_modes)
     assert report.number_changed == 0
     assert report.number_unchanged == len(preformatted_files)
     assert report.number_errored == 0
+    assert not any([res.from_cache for res in report.results])
+
+    cached_run = run(files=files, mode=all_output_modes)
+    assert cached_run.number_changed == report.number_changed
+    assert cached_run.number_unchanged == report.number_unchanged
+    assert cached_run.number_errored == report.number_errored
+    assert all([res.from_cache for res in cached_run.results])
 
 
 def test_run_unformatted(unformatted_files: List[Path], all_output_modes: Mode) -> None:
-    report = run(files=[str(f) for f in unformatted_files], mode=all_output_modes)
+    files = [str(f) for f in unformatted_files]
+    report = run(files=files, mode=all_output_modes)
     assert report.number_changed == len(unformatted_files)
     assert report.number_unchanged == 0
     assert report.number_errored == 0
+    assert not any([res.from_cache for res in report.results])
+
+    cached_run = run(files=files, mode=all_output_modes)
+    if all_output_modes.diff or all_output_modes.check:
+        assert cached_run.number_changed == report.number_changed
+        assert cached_run.number_unchanged == report.number_unchanged
+    else:
+        assert cached_run.number_changed == 0
+        assert cached_run.number_unchanged == report.number_changed
+    assert cached_run.number_errored == report.number_errored
+    if not all_output_modes.diff and not all_output_modes.check:
+        assert all([res.from_cache for res in cached_run.results])
 
 
 def test_run_error(error_dir: Path, all_output_modes: Mode) -> None:
-    report = run(files=[str(error_dir)], mode=all_output_modes)
+    files = [str(error_dir)]
+    report = run(files=files, mode=all_output_modes)
     assert report.number_changed == 0
     assert report.number_unchanged == 0
     assert report.number_errored == 4
+    assert not any([res.from_cache for res in report.results])
+
+    cached_run = run(files=files, mode=all_output_modes)
+    assert cached_run.number_changed == report.number_changed
+    assert cached_run.number_unchanged == report.number_unchanged
+    assert cached_run.number_errored == report.number_errored
+    assert not any([res.from_cache for res in cached_run.results])
 
 
 def test_run_stdin(all_output_modes: Mode, monkeypatch: pytest.MonkeyPatch) -> None:

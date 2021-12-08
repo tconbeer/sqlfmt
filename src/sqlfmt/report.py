@@ -34,6 +34,7 @@ class SqlFormatResult:
     source_string: str
     formatted_string: str
     exception: Optional[SqlfmtError] = None
+    from_cache: bool = False
 
     def maybe_print_to_stdout(self) -> None:
         if self.source_path == STDIN_PATH:

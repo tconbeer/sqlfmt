@@ -47,6 +47,17 @@ def delete_results_dir() -> None:
     shutil.rmtree(RESULTS_DIR, ignore_errors=True)
 
 
+def clear_cache() -> None:
+    """
+    Deletes the cache file on disk, if it exists. This function is called
+    before each test session.
+    """
+    from sqlfmt.cache import get_cache_file
+
+    p = get_cache_file()
+    p.unlink(missing_ok=True)
+
+
 def check_formatting(expected: str, actual: str, ctx: str = "") -> None:
 
     try:
