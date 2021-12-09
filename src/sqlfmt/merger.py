@@ -139,28 +139,48 @@ class LineMerger:
             finally:
                 return new_lines
 
-    def _maybe_merge_lines_split_by_operators(self, lines: List[Line]) -> List[Line]:
+    def _maybe_merge_lines_split_by_operators(
+        self, lines: List[Line], merge_across_word_operators: bool = True
+    ) -> List[Line]:
         """
         Tries to merge runs of lines at the same depth as lines[0] that
-        start with an operator
+        start with an operator.
         """
         target_depth = lines[0].depth
         head = 0
         new_lines: List[Line] = []
         assert not lines[0].starts_with_operator
         for tail, line in enumerate(lines[1:], start=1):
-            if line.depth == target_depth and line.starts_with_operator:
+            if (
+                line.depth == target_depth
+                and line.starts_with_operator
+                and (merge_across_word_operators or not line.starts_with_word_operator)
+            ):
                 continue
             else:
                 try:
                     new_lines.append(self.create_merged_line(lines[head:tail]))
                 except CannotMergeException:
-                    new_lines.extend(lines[head:tail])
+                    if merge_across_word_operators:
+                        new_lines.extend(
+                            self._maybe_merge_lines_split_by_operators(
+                                lines[head:tail], merge_across_word_operators=False
+                            )
+                        )
+                    else:
+                        new_lines.extend(lines[head:tail])
                 finally:
                     head = tail
         try:
             new_lines.append(self.create_merged_line(lines[head:]))
         except CannotMergeException:
-            new_lines.extend(lines[head:])
+            if merge_across_word_operators:
+                new_lines.extend(
+                    self._maybe_merge_lines_split_by_operators(
+                        lines[head:], merge_across_word_operators=False
+                    )
+                )
+            else:
+                new_lines.extend(lines[head:])
         finally:
             return new_lines
