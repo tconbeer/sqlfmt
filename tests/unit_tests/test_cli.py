@@ -59,18 +59,18 @@ def test_stdin(sqlfmt_runner: CliRunner) -> None:
 
 
 def test_preformatted_check(sqlfmt_runner: CliRunner, preformatted_dir: Path) -> None:
-    args = str(preformatted_dir) + " --check"
+    args = f"{preformatted_dir.as_posix()} --check"
     results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
     assert results.exit_code == 0
 
 
 def test_unformatted_check(sqlfmt_runner: CliRunner, unformatted_dir: Path) -> None:
-    args = str(unformatted_dir) + " --check"
+    args = f"{unformatted_dir.as_posix()} --check"
     results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
     assert results.exit_code == 1
 
 
 def test_error_check(sqlfmt_runner: CliRunner, error_dir: Path) -> None:
-    args = str(error_dir) + " --check"
+    args = f"{error_dir.as_posix()} --check"
     results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
     assert results.exit_code == 2
