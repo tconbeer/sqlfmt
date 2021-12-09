@@ -112,6 +112,12 @@ class LineMerger:
                     # pass
                     if len(new_lines) < len(lines):
                         new_lines = self.maybe_merge_lines(new_lines)
+                    # at this point, new_lines is pretty well merged,
+                    # but it is possible to have consecutive lines that
+                    # are the same depth that need further merging; namely,
+                    # if there are lines that start with operators, it's possible
+                    # they can be merged together
+                    new_lines = self._maybe_merge_lines_split_by_operators(new_lines)
                 # if there was only a single segment at the depth of the
                 # top line, we need to move down one line and try again.
                 # Because of the structure of a well-split set of lines,
@@ -132,3 +138,29 @@ class LineMerger:
                         new_lines.extend(self.maybe_merge_lines(lines[1:]))
             finally:
                 return new_lines
+
+    def _maybe_merge_lines_split_by_operators(self, lines: List[Line]) -> List[Line]:
+        """
+        Tries to merge runs of lines at the same depth as lines[0] that
+        start with an operator
+        """
+        target_depth = lines[0].depth
+        head = 0
+        new_lines: List[Line] = []
+        assert not lines[0].starts_with_operator
+        for tail, line in enumerate(lines[1:], start=1):
+            if line.depth == target_depth and line.starts_with_operator:
+                continue
+            else:
+                try:
+                    new_lines.append(self.create_merged_line(lines[head:tail]))
+                except CannotMergeException:
+                    new_lines.extend(lines[head:tail])
+                finally:
+                    head = tail
+        try:
+            new_lines.append(self.create_merged_line(lines[head:]))
+        except CannotMergeException:
+            new_lines.extend(lines[head:])
+        finally:
+            return new_lines

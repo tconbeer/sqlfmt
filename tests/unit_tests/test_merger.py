@@ -242,3 +242,13 @@ def test_merge_single_line(merger: LineMerger) -> None:
     q = Query.from_source(source_string, merger.mode)
     merged_line = merger.create_merged_line(q.lines)
     assert merged_line == q.lines[0]
+
+
+def test_merge_lines_split_by_operators(merger: LineMerger) -> None:
+    source_string, expected_string = read_test_data(
+        "unit_tests/test_merger/test_merge_lines_split_by_operators.sql"
+    )
+    raw_query = Query.from_source(source_string, merger.mode)
+    merged_lines = merger.maybe_merge_lines(raw_query.lines)
+    result_string = "".join([str(line) for line in merged_lines])
+    assert result_string == expected_string
