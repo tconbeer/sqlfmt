@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 from typing import Iterable, Iterator, List, Set
 
+from sqlfmt.cache import Cache, check_cache, load_cache, write_cache
 from sqlfmt.exception import SqlfmtError
 from sqlfmt.formatter import QueryFormatter
 from sqlfmt.mode import Mode
@@ -29,11 +30,13 @@ def run(files: List[str], mode: Mode) -> Report:
     matched_paths: Set[Path] = set()
     matched_paths.update(_generate_matched_paths([Path(s) for s in files], mode))
 
-    results = list(_generate_results(matched_paths, mode))
+    cache = load_cache()
+    results = list(_generate_results(matched_paths, cache, mode))
     report = Report(results, mode)
 
     if not (mode.check or mode.diff):
         _update_source_files(results)
+    write_cache(cache, results, mode)
 
     return report
 
@@ -48,27 +51,33 @@ def _generate_matched_paths(paths: Iterable[Path], mode: Mode) -> Iterator[Path]
             yield from (_generate_matched_paths(p.iterdir(), mode))
 
 
-def _generate_results(paths: Iterable[Path], mode: Mode) -> Iterator[SqlFormatResult]:
+def _generate_results(
+    paths: Iterable[Path], cache: Cache, mode: Mode
+) -> Iterator[SqlFormatResult]:
     """
     Runs sqlfmt on all files in an iterable of given paths, using the specified mode.
     Yields SqlFormatResults.
     """
     for p in paths:
-
-        source = _read_path_or_stdin(p)
-
-        try:
-            formatted = format_string(source, mode)
+        cached = check_cache(cache=cache, p=p)
+        if cached:
             yield SqlFormatResult(
-                source_path=p, source_string=source, formatted_string=formatted
+                source_path=p, source_string="", formatted_string="", from_cache=True
             )
-        except SqlfmtError as e:
-            yield SqlFormatResult(
-                source_path=p,
-                source_string=source,
-                formatted_string="",
-                exception=e,
-            )
+        else:
+            source = _read_path_or_stdin(p)
+            try:
+                formatted = format_string(source, mode)
+                yield SqlFormatResult(
+                    source_path=p, source_string=source, formatted_string=formatted
+                )
+            except SqlfmtError as e:
+                yield SqlFormatResult(
+                    source_path=p,
+                    source_string=source,
+                    formatted_string="",
+                    exception=e,
+                )
 
 
 def _update_source_files(results: Iterable[SqlFormatResult]) -> None:

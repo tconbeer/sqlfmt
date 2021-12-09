@@ -235,3 +235,10 @@ def test_split_into_segments(merger: LineMerger) -> None:
 
     indented_segments = merger._split_into_segments(select_lines[1:])
     assert len(indented_segments) == 13
+
+
+def test_merge_single_line(merger: LineMerger) -> None:
+    source_string = "select 1\n"
+    q = Query.from_source(source_string, merger.mode)
+    merged_line = merger.create_merged_line(q.lines)
+    assert merged_line == q.lines[0]

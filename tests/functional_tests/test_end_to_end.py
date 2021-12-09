@@ -112,7 +112,6 @@ def test_end_to_end_check_unformatted(
 
     assert result
     assert "7 files" in result.stderr
-
     assert "failed formatting check" in result.stderr
 
     if "-q" in options or "--quiet" in options:
@@ -136,10 +135,9 @@ def test_end_to_end_errors(
 
     assert result
     assert "4 files had errors" in result.stderr
-
     assert "sqlfmt encountered an error" in result.stderr
-
     assert "900_bad_token.sql" in result.stderr
+    assert result.exit_code == 2
 
 
 @pytest.mark.parametrize(
