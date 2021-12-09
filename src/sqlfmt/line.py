@@ -72,8 +72,16 @@ class Node:
         return self.token.type == TokenType.COMMA
 
     @property
+    def is_closing_bracket(self) -> bool:
+        return self.token.type in (TokenType.BRACKET_CLOSE, TokenType.STATEMENT_END)
+
+    @property
     def is_operator(self) -> bool:
         return self.token.type in (TokenType.OPERATOR, TokenType.WORD_OPERATOR)
+
+    @property
+    def is_word_operator(self) -> bool:
+        return self.token.type == TokenType.WORD_OPERATOR
 
     @property
     def is_newline(self) -> bool:
@@ -439,6 +447,20 @@ class Line:
     def starts_with_unterm_keyword(self) -> bool:
         try:
             return self.nodes[0].is_unterm_keyword
+        except IndexError:
+            return False
+
+    @property
+    def starts_with_operator(self) -> bool:
+        try:
+            return self.nodes[0].is_operator
+        except IndexError:
+            return False
+
+    @property
+    def starts_with_word_operator(self) -> bool:
+        try:
+            return self.nodes[0].is_word_operator
         except IndexError:
             return False
 

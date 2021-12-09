@@ -29,7 +29,8 @@ def test_maybe_split(splitter: LineSplitter, depth_split_line: Line) -> None:
 
     expected = [
         "with\n",
-        " " * 4 + "my_cte as (\n",
+        " " * 4 + "my_cte\n",
+        " " * 4 + "as (\n",
         " " * 8 + "select\n",
         " " * 12 + "1,\n",
         " " * 12 + "b\n",
@@ -71,8 +72,10 @@ def test_simple_comment_split(splitter: LineSplitter) -> None:
             " no big deal at all, it's okay really\n"
         ),
         "-- here is a long comment to be wrapped above this line\n",
+        "",
         "-- a short comment\n",
         "-- here is another long comment to be wrapped but not indented\n",
+        "",
         "-- another comment that is a little bit too long to stay here\n",
         "",
         "-- this should stay\n",
@@ -94,7 +97,8 @@ def test_split_count_window_function(splitter: LineSplitter) -> None:
         "count(\n"
         "    case\n"
         "        when\n"
-        "            a is null\n"
+        "            a\n"
+        "            is null\n"
         "        then\n"
         "            1\n"
         "    end\n"
@@ -145,7 +149,8 @@ def test_split_long_line_on_operator(splitter: LineSplitter) -> None:
 
     actual_result = [str(line) for line in split_lines]
     expected_result = [
-        "a_really_long_field + a_really_really_really_long_field\n",
+        "a_really_long_field\n",
+        "+ a_really_really_really_long_field\n",
         "+ a_really_really_really_really_long_field\n",
         "as another_field\n",
     ]

@@ -112,6 +112,12 @@ class LineMerger:
                     # pass
                     if len(new_lines) < len(lines):
                         new_lines = self.maybe_merge_lines(new_lines)
+                    # at this point, new_lines is pretty well merged,
+                    # but it is possible to have consecutive lines that
+                    # are the same depth that need further merging; namely,
+                    # if there are lines that start with operators, it's possible
+                    # they can be merged together
+                    new_lines = self._maybe_merge_lines_split_by_operators(new_lines)
                 # if there was only a single segment at the depth of the
                 # top line, we need to move down one line and try again.
                 # Because of the structure of a well-split set of lines,
@@ -132,3 +138,72 @@ class LineMerger:
                         new_lines.extend(self.maybe_merge_lines(lines[1:]))
             finally:
                 return new_lines
+
+    def _maybe_merge_lines_split_by_operators(
+        self, lines: List[Line], merge_across_word_operators: bool = True
+    ) -> List[Line]:
+        """
+        Tries to merge runs of lines at the same depth as lines[0] that
+        start with an operator.
+        """
+        target_depth = lines[0].depth
+        head = 0
+        last_line_is_singleton_operator = False
+        new_lines: List[Line] = []
+        for tail, line in enumerate(lines[1:], start=1):
+            if (
+                line.depth == target_depth
+                and (line.starts_with_operator or last_line_is_singleton_operator)
+                and (merge_across_word_operators or not line.starts_with_word_operator)
+            ):
+                # keep going until we hit a line that does not start with
+                # an operator
+                pass
+            else:
+                # try to merge everything above line (from head:tail) into
+                # a single line
+                try:
+                    new_lines.append(self.create_merged_line(lines[head:tail]))
+                except CannotMergeException:
+                    # the merged line is probably too long. Try the same section
+                    # again, but don't try to merge across word operators. This
+                    # helps format complex where and join clauses with comparisons
+                    # and logic operators
+                    if merge_across_word_operators:
+                        new_lines.extend(
+                            self._maybe_merge_lines_split_by_operators(
+                                lines[head:tail], merge_across_word_operators=False
+                            )
+                        )
+                    else:
+                        # we were already not merging across word operators
+                        # so it's time to give up and just add the original
+                        # lines to the new list
+                        new_lines.extend(lines[head:tail])
+                finally:
+                    # reset the head pointer and start the process over
+                    # on the remainder of lines
+                    head = tail
+
+            # lines can't end with operators unless it's an operator on a line
+            # by itself. If that is the case, we want to try to merge the next
+            # line into the group
+            if len(line.nodes) == 2 and line.starts_with_operator:
+                last_line_is_singleton_operator = True
+            else:
+                last_line_is_singleton_operator = False
+
+        # we need to try one more time to merge everything after head
+        try:
+            new_lines.append(self.create_merged_line(lines[head:]))
+        except CannotMergeException:
+            if merge_across_word_operators:
+                new_lines.extend(
+                    self._maybe_merge_lines_split_by_operators(
+                        lines[head:], merge_across_word_operators=False
+                    )
+                )
+            else:
+                new_lines.extend(lines[head:])
+        finally:
+            return new_lines

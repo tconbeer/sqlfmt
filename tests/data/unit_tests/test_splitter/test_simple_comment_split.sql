@@ -8,9 +8,11 @@ where -- this should stay
 -- one last comment
 )))))__SQLFMT_OUTPUT__(((((
 select
-    my_first_field + an_operation,
+    my_first_field
+    + an_operation,
     my_second_field,
-    my_third_field + another_long_operation
+    my_third_field
+    + another_long_operation
 from
     my_really_long_data_source
 where

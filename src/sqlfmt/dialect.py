@@ -128,7 +128,6 @@ class Polyglot(Dialect):
             r"or",
             r"over",
             r"similar",
-            r"using",
         )
         + group(r"\W", r"$"),
         TokenType.COMMA: group(r","),

@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Formatting changes
 
 -   refactors comment parsing for improved formatting of comments and merging around comments
+-   improves splitting and merging of lines with operators (like "+", "as", "on", etc.)
 
 ### Features
 
