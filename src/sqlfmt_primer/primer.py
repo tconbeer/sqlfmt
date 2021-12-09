@@ -219,4 +219,7 @@ def clear_sqlfmt_cache() -> None:
     each primer run to ensure we're formatting every file every time.
     """
     p = get_cache_file()
-    p.unlink(missing_ok=True)
+    try:
+        p.unlink()
+    except FileNotFoundError:
+        pass

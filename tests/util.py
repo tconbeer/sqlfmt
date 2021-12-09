@@ -55,7 +55,10 @@ def clear_cache() -> None:
     from sqlfmt.cache import get_cache_file
 
     p = get_cache_file()
-    p.unlink(missing_ok=True)
+    try:
+        p.unlink()
+    except FileNotFoundError:
+        pass
 
 
 def check_formatting(expected: str, actual: str, ctx: str = "") -> None:
