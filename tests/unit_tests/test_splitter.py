@@ -155,3 +155,26 @@ def test_split_long_line_on_operator(splitter: LineSplitter) -> None:
         "as another_field\n",
     ]
     assert actual_result == expected_result
+
+
+def test_split_at_star(splitter: LineSplitter) -> None:
+    source_string = "select *, my_table.*, 1 * 1, a_field * b_field from my_table\n"
+    raw_query = Query.from_source(source_string, splitter.mode)
+
+    split_lines: List[Line] = []
+    for raw_line in raw_query.lines:
+        split_lines.extend(splitter.maybe_split(raw_line))
+
+    actual_result = [str(line) for line in split_lines]
+    expected_result = [
+        "select\n",
+        "    *,\n",
+        "    my_table.*,\n",
+        "    1\n",
+        "    * 1,\n",
+        "    a_field\n",
+        "    * b_field\n",
+        "from\n",
+        "    my_table\n",
+    ]
+    assert actual_result == expected_result

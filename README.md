@@ -37,7 +37,7 @@ pipx install shandy-sqlfmt
 ### Other Installation Options
 You should use a virutal environment to isolate sqlfmt's dependencies from others on your system. We recommend poetry (`poetry add -D shandy-sqlfmt`), or pipenv (`pipenv install -d shandy-sqlfmt`), but a simple `pip install shandy-sqlfmt` will also work.
 
-### Other prerequisits
+### Other prerequisites
 **sqlfmt is an alpha product** and will not always produce the formatted output you might want. It might even break your SQL syntax. It is **highly recommended** to only run sqlfmt on files in a version control system (like git), so that it is easy for you to revert any changes made by sqlfmt. On your first run, be sure to make a commit before running sqlfmt.
 
 ### Using sqlfmt
