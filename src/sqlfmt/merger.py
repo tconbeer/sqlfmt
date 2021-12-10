@@ -71,15 +71,39 @@ class LineMerger:
 
         target_depth = lines[0].depth
         for i, line in enumerate(lines[1:], start=1):
+            # scan through the lines until we get back to the
+            # depth of the first line
             if line.depth <= target_depth:
+                # if this line starts with a closing bracket,
+                # we probably want to include that closing bracket
+                # in the same segment as the first line.
                 if (
                     line.closes_bracket_from_previous_line
                     and line.depth == target_depth
                 ):
                     idx = i + 1
+                    try:
+                        segments = [[self.create_merged_line(lines[:idx])]]
+                    except CannotMergeException:
+                        # it's possible a line has a closing and open
+                        # paren, like ") + (\n". In that case, if
+                        # we can't merge the first parens together,
+                        # we want to return a segment that can try
+                        # to merge the second parens together. To
+                        # ensure we don't merge the original opening
+                        # bracket into the contents, without the
+                        # closing bracket, we need to return the first
+                        # line (which must contain the opening bracket)
+                        # as its own segment
+                        if line.opens_new_bracket:
+                            idx = i
+                            segments = [lines[:1], lines[1:idx]]
+                        else:
+                            segments = [lines[:idx]]
                 else:
                     idx = i
-                return [lines[:idx]] + self._split_into_segments(lines[idx:])
+                    segments = [lines[:idx]]
+                return segments + self._split_into_segments(lines[idx:])
         else:
             return [lines[:]]
 
