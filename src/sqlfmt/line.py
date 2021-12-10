@@ -87,8 +87,6 @@ class Node:
     def is_multiplication_star(self) -> bool:
         if self.token.type != TokenType.STAR:
             return False
-        elif not self.previous_node:
-            return False
         prev_token = self.previous_token(self.previous_node)
         if not prev_token:
             return False

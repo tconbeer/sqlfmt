@@ -58,6 +58,7 @@ def test_bare_line(source_string: str, bare_line: Line) -> None:
     assert not bare_line.contains_unterm_keyword
     assert not bare_line.contains_multiline_node
     assert not bare_line.contains_operator
+    assert not bare_line.starts_with_comma
     assert not bare_line.starts_with_operator
     assert not bare_line.starts_with_word_operator
     assert not bare_line.is_standalone_multiline_node
@@ -100,11 +101,15 @@ def test_simple_line(
     assert simple_line.starts_with_unterm_keyword
     assert simple_line.contains_unterm_keyword
     assert simple_line.contains_operator
+    assert not simple_line.starts_with_comma
     assert not simple_line.starts_with_operator
     assert not simple_line.starts_with_word_operator
     assert not simple_line.contains_multiline_node
     assert not simple_line.is_standalone_multiline_node
     assert not simple_line.is_too_long(88)
+
+    assert simple_line.nodes[5].token.type == TokenType.STAR
+    assert not simple_line.nodes[5].is_multiplication_star
 
 
 def test_bare_append_newline(bare_line: Line) -> None:
@@ -303,3 +308,16 @@ def test_formatting_disabled(default_mode: Mode) -> None:
     ]
     actual = [line.formatting_disabled for line in q.lines]
     assert actual == expected
+
+
+def test_is_multiplication_star_bare_line(bare_line: Line) -> None:
+    star = Token(
+        type=TokenType.STAR,
+        prefix="",
+        token="*",
+        spos=0,
+        epos=1,
+    )
+    bare_line.append_token(star)
+    assert bare_line.nodes[0].token == star
+    assert not bare_line.nodes[0].is_multiplication_star
