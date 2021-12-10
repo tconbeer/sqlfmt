@@ -5,10 +5,10 @@ select
     + another_field
     + another_field,
     b_field
-    + another_field
-    + another_field
-    + another_field
-    + another_field,
+    * another_field
+    * another_field
+    * another_field
+    * another_field,
     c_field
     + another_field
     + another_field
@@ -27,7 +27,8 @@ select
     + another_field
     + another_field
     + another_field,
-    d_field,
+    d_field
+    ,
     e_field
 where
     something
@@ -38,7 +39,7 @@ where
 )))))__SQLFMT_OUTPUT__(((((
 select
     a_field + another_field + another_field + another_field + another_field,
-    b_field + another_field + another_field + another_field + another_field,
+    b_field * another_field * another_field * another_field * another_field,
     c_field
     + another_field
     + another_field

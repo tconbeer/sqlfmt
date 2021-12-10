@@ -153,7 +153,11 @@ class LineMerger:
         for tail, line in enumerate(lines[1:], start=1):
             if (
                 line.depth == target_depth
-                and (line.starts_with_operator or last_line_is_singleton_operator)
+                and (
+                    line.starts_with_operator
+                    or line.starts_with_comma
+                    or last_line_is_singleton_operator
+                )
                 and (merge_across_word_operators or not line.starts_with_word_operator)
             ):
                 # keep going until we hit a line that does not start with

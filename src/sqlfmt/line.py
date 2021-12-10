@@ -77,7 +77,24 @@ class Node:
 
     @property
     def is_operator(self) -> bool:
-        return self.token.type in (TokenType.OPERATOR, TokenType.WORD_OPERATOR)
+        return (
+            self.token.type
+            in (TokenType.OPERATOR, TokenType.WORD_OPERATOR, TokenType.SEMICOLON)
+            or self.is_multiplication_star
+        )
+
+    @property
+    def is_multiplication_star(self) -> bool:
+        if self.token.type != TokenType.STAR:
+            return False
+        prev_token = self.previous_token(self.previous_node)
+        if not prev_token:
+            return False
+        else:
+            return not (
+                prev_token.type
+                in (TokenType.UNTERM_KEYWORD, TokenType.COMMA, TokenType.DOT)
+            )
 
     @property
     def is_word_operator(self) -> bool:
@@ -122,20 +139,7 @@ class Node:
             token, inherited_depth, open_brackets
         )
 
-        def previous_token(prev_node: Optional[Node]) -> Optional[Token]:
-            """
-            Returns the token of prev_node, unless prev_node is a
-            newline, in which case it recurses
-            """
-            if not prev_node:
-                return None
-            t = prev_node.token
-            if t.type == TokenType.NEWLINE:
-                return previous_token(prev_node.previous_node)
-            else:
-                return t
-
-        prev_token = previous_token(previous_node)
+        prev_token = cls.previous_token(previous_node)
 
         prefix = cls.whitespace(token, prev_token)
         value = cls.capitalize(token)
@@ -156,6 +160,20 @@ class Node:
             open_brackets,
             formatting_disabled,
         )
+
+    @classmethod
+    def previous_token(cls, prev_node: Optional["Node"]) -> Optional[Token]:
+        """
+        Returns the token of prev_node, unless prev_node is a
+        newline, in which case it recurses
+        """
+        if not prev_node:
+            return None
+        t = prev_node.token
+        if t.type == TokenType.NEWLINE:
+            return cls.previous_token(prev_node.previous_node)
+        else:
+            return t
 
     @classmethod
     def calculate_depth(
@@ -461,6 +479,13 @@ class Line:
     def starts_with_word_operator(self) -> bool:
         try:
             return self.nodes[0].is_word_operator
+        except IndexError:
+            return False
+
+    @property
+    def starts_with_comma(self) -> bool:
+        try:
+            return self.nodes[0].is_comma
         except IndexError:
             return False
 

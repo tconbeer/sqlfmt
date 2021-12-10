@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 -   refactors comment parsing for improved formatting of comments and merging around comments
 -   improves splitting and merging of lines with operators (like "+", "as", "on", etc.)
+-   improves formatting of queries that use leading commas
 
 ### Features
 
@@ -17,6 +18,7 @@ All notable changes to this project will be documented in this file.
 
 -   supports all postgres and bigquery string literals and quoted identifiers, including triple quotes, escaped quotes, dollar-delimited, etc.
 -   no longer fails with a parsing error when encountering a semicolon
+-   properly delineates between "*" as "all fields" and as the multiplication operator
 
 ## [0.2.1] - 2021-12-04
 
