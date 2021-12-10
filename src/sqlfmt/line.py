@@ -539,3 +539,19 @@ class Line:
             ):
                 return True
         return False
+
+    @property
+    def opens_new_bracket(self) -> bool:
+        if not self.nodes:
+            return False
+        elif not self.nodes[-1].open_brackets:
+            return False
+        else:
+            b = self.nodes[-1].open_brackets[-1]
+            if (
+                b.type in (TokenType.STATEMENT_START, TokenType.BRACKET_OPEN)
+                and b not in self.open_brackets
+            ):
+                return True
+            else:
+                return False

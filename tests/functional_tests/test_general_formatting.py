@@ -16,7 +16,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/101_multiline.sql",
         "unformatted/102_lots_of_comments.sql",
         "unformatted/103_window_functions.sql",
-        pytest.param("unformatted/104_joins.sql", marks=pytest.mark.xfail),
+        "unformatted/104_joins.sql",
         "unformatted/106_leading_commas.sql",
         "unformatted/200_base_model.sql",
     ],
