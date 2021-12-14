@@ -42,11 +42,11 @@ with
     renamed as (
         
         select
-            --ids
+            -- ids
             id,
             nullif(xid, '') as xid,
             
-            --date
+            -- date
             created_on,
             updated_on,
             
@@ -77,7 +77,8 @@ with
             ) as last_name
             
         from source
-        -- a very long comment about why we would exclude this user from this table that we will wrap
+        -- a very long comment about why we would exclude this user from this table
+        -- that we will wrap
         where nvl(is_deleted, false) is false and id <> 123456
     )
 select *

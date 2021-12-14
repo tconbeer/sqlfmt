@@ -63,6 +63,7 @@ def test_bare_line(source_string: str, bare_line: Line) -> None:
     assert not bare_line.starts_with_word_operator
     assert not bare_line.is_standalone_multiline_node
     assert not bare_line.is_too_long(88)
+    assert not bare_line.opens_new_bracket
 
 
 def test_simple_line(
@@ -153,7 +154,23 @@ def test_simple_append_newline(simple_line: Line) -> None:
     assert new_last_node.previous_node.token == last_node.token
 
 
-def test_comment_rendering(simple_line: Line, bare_line: Line) -> None:
+@pytest.mark.parametrize(
+    "raw_comment,normalized_comment",
+    [
+        ("-- my comment", "-- my comment"),
+        ("--my comment", "-- my comment"),
+        ("--    my comment", "-- my comment"),
+        ("# my comment", "# my comment"),
+        ("#my comment", "# my comment"),
+        ("#    my comment", "# my comment"),
+        ("/* my comment */", "/* my comment */"),
+        ("/*my comment*/", "/* my comment*/"),
+        ("/*    my comment */", "/* my comment */"),
+    ],
+)
+def test_comment_rendering(
+    simple_line: Line, bare_line: Line, raw_comment: str, normalized_comment: str
+) -> None:
 
     assert simple_line.render_with_comments(88) == str(simple_line)
     assert bare_line.render_with_comments(88) == str(bare_line)
@@ -163,7 +180,7 @@ def test_comment_rendering(simple_line: Line, bare_line: Line) -> None:
     comment_token = Token(
         type=TokenType.COMMENT,
         prefix="",
-        token="-- my comment",
+        token=raw_comment,
         spos=last_node.token.epos,
         epos=last_node.token.epos + 13,
     )
@@ -171,29 +188,78 @@ def test_comment_rendering(simple_line: Line, bare_line: Line) -> None:
     inline_comment = Comment(token=comment_token, is_standalone=False)
     bare_line.append_newline()
     bare_line.comments = [inline_comment]
-    expected_bare_render = "-- my comment\n"
+    expected_bare_render = normalized_comment + "\n"
     assert bare_line.render_with_comments(88) == expected_bare_render
 
     simple_line.comments = [inline_comment]
-    expected_inline_render = str(simple_line).rstrip() + " -- my comment\n"
+    expected_inline_render = (
+        str(simple_line).rstrip() + "  " + normalized_comment + "\n"
+    )
     assert simple_line.render_with_comments(88) == expected_inline_render
 
     standalone_comment = Comment(token=comment_token, is_standalone=True)
     simple_line.comments = [standalone_comment]
     expected_standalone_render = (
-        simple_line.prefix + "-- my comment\n" + str(simple_line)
+        simple_line.prefix + normalized_comment + "\n" + str(simple_line)
     )
     assert simple_line.render_with_comments(88) == expected_standalone_render
 
     simple_line.comments = [standalone_comment, inline_comment]
     expected_multiple_render = (
         simple_line.prefix
-        + "-- my comment\n"
+        + normalized_comment
+        + "\n"
         + simple_line.prefix
-        + "-- my comment\n"
+        + normalized_comment
+        + "\n"
         + str(simple_line)
     )
     assert simple_line.render_with_comments(88) == expected_multiple_render
+
+
+def test_long_comment_wrapping(simple_line: Line) -> None:
+    last_node = simple_line.nodes[-1]
+    comment_token = Token(
+        type=TokenType.COMMENT,
+        prefix="",
+        token="-- " + ("asdf " * 20),
+        spos=last_node.token.epos,
+        epos=last_node.token.epos + 13,
+    )
+    comment = Comment(token=comment_token, is_standalone=False)
+    simple_line.comments = [comment]
+    expected_render = (
+        "-- asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf "
+        "asdf asdf\n"
+        "-- asdf asdf asdf asdf\n"
+        "with abc as (select * from my_table)\n"
+    )
+    assert simple_line.render_with_comments(88) == expected_render
+
+
+@pytest.mark.parametrize(
+    "raw_comment",
+    [
+        "-- " + ("asdf" * 30),
+        "{# " + ("asdf" * 30) + "#}",
+        "/* " + ("asdf" * 30) + "*/",
+    ],
+)
+def test_long_comments_that_are_not_wrapped(
+    simple_line: Line, raw_comment: str
+) -> None:
+    last_node = simple_line.nodes[-1]
+    comment_token = Token(
+        type=TokenType.COMMENT,
+        prefix="",
+        token=raw_comment,
+        spos=last_node.token.epos,
+        epos=last_node.token.epos + 13,
+    )
+    comment = Comment(token=comment_token, is_standalone=False)
+    simple_line.comments = [comment]
+    expected_render = raw_comment + "\n" "with abc as (select * from my_table)\n"
+    assert simple_line.render_with_comments(88) == expected_render
 
 
 def test_is_standalone_multiline_node(bare_line: Line, simple_line: Line) -> None:

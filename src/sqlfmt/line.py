@@ -1,5 +1,6 @@
+import re
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple
+from typing import Iterator, List, Optional, Tuple
 
 from sqlfmt.exception import SqlfmtError
 from sqlfmt.token import Token, TokenType, split_after
@@ -9,16 +10,86 @@ class SqlfmtBracketError(SqlfmtError):
     pass
 
 
+class InlineCommentError(SqlfmtError):
+    pass
+
+
+COMMENT_PROGRAM = re.compile(r"(--|#|/\*|\{#-?)([^\S\n]*)")
+
+
 @dataclass
 class Comment:
     token: Token
     is_standalone: bool
 
     def __str__(self) -> str:
-        return self.token.token + "\n"
+        if self.is_multiline:
+            return self.token.token + "\n"
+        else:
+            marker, comment_text = self._comment_parts()
+            return marker + " " + comment_text + "\n"
 
     def __len__(self) -> int:
         return len(str(self))
+
+    def _get_marker(self) -> Tuple[str, int]:
+        match = COMMENT_PROGRAM.match(self.token.token)
+        assert match, f"{self.token.token} does not match comment marker"
+        _, epos = match.span(1)
+        _, len = match.span(2)
+        return self.token.token[:epos], len
+
+    def _comment_parts(self) -> Tuple[str, str]:
+        assert not self.is_multiline
+        marker, skipchars = self._get_marker()
+        comment_text = self.token.token[skipchars:]
+        return marker, comment_text
+
+    @property
+    def is_multiline(self) -> bool:
+        return "\n" in self.token.token
+
+    def render_inline(self, max_length: int, content_length: int) -> str:
+        if self.is_standalone:
+            raise InlineCommentError("Can't inline standalone comment")
+        else:
+            inline_prefix = " " * 2
+            rendered = inline_prefix + str(self)
+            if content_length + len(rendered) > max_length:
+                raise InlineCommentError("Comment too long to be inlined")
+            else:
+                return inline_prefix + str(self)
+
+    def render_standalone(self, max_length: int, prefix: str) -> str:
+        if self.is_multiline:
+            # todo: split lines, indent each line the same
+            return prefix + str(self)
+        else:
+            if len(self) + len(prefix) <= max_length:
+                return prefix + str(self)
+            else:
+                marker, comment_text = self._comment_parts()
+                if marker in ("--", "#"):
+                    available_length = max_length - len(prefix) - len(marker) - 2
+                    line_gen = self._split_before(comment_text, available_length)
+                    return "".join(
+                        [prefix + marker + " " + txt + "\n" for txt in line_gen]
+                    )
+                else:  # block-style or jinja comment. Don't wrap long lines for now
+                    return prefix + str(self)
+
+    @classmethod
+    def _split_before(cls, text: str, max_length: int) -> Iterator[str]:
+        if len(text) < max_length:
+            yield text.rstrip()
+        else:
+            for idx, char in enumerate(reversed(text[:max_length])):
+                if char.isspace():
+                    yield text[: max_length - idx].rstrip()
+                    yield from cls._split_before(text[max_length - idx :], max_length)
+                    break
+            else:  # no spaces in the comment
+                yield text.rstrip()
 
 
 @dataclass
@@ -357,16 +428,25 @@ class Line:
             if self.nodes[0].is_newline:
                 return self.prefix + str(self.comments[0])
             # inline comment
-            elif (not self.comments[0].is_standalone) and (
-                len(content) + 1 + len(self.comments[0]) <= max_length
-            ):
-                return content.rstrip() + " " + str(self.comments[0])
-            # wrap comment above
             else:
-                return self.prefix + str(self.comments[0]) + content
+                try:
+                    comment = self.comments[0].render_inline(
+                        max_length=max_length, content_length=len(content.rstrip())
+                    )
+                    return content.rstrip() + comment
+                except InlineCommentError:
+                    comment = self.comments[0].render_standalone(
+                        max_length=max_length, prefix=self.prefix
+                    )
+                    return comment + content
         # wrap comments above; note that str(comment) is newline-terminated
         else:
-            comment_str = "".join([self.prefix + str(c) for c in self.comments])
+            comment_str = "".join(
+                [
+                    c.render_standalone(max_length=max_length, prefix=self.prefix)
+                    for c in self.comments
+                ]
+            )
             return comment_str + content
 
     def append_token(self, token: Token) -> None:
