@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Formatting changes
 
 -   refactors comment parsing for improved formatting of comments and merging around comments
+-   standardizes comments and splits long comments onto multiple lines if necessary
 -   improves splitting and merging of lines with operators (like "+", "as", "on", etc.)
 -   improves formatting of queries that use leading commas
 -   improves merging of statements with chained brackets ("( something ) + ( something_else )" )

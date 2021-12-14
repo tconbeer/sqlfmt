@@ -14,7 +14,7 @@ def group(*choices: str) -> str:
 
 WHITESPACE: str = r"\s"
 WHITESPACES: str = WHITESPACE + "+"
-MAYBE_WHITESPACES: str = r"[^\S\n]" + "*"  # any whitespace except newline
+MAYBE_WHITESPACES: str = r"[^\S\n]*"  # any whitespace except newline
 NEWLINE: str = r"\r?\n"
 ANY_BLANK: str = group(WHITESPACES, r"$")
 EOL = group(NEWLINE, r"$")
