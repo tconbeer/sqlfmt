@@ -150,7 +150,14 @@ class Node:
     def is_operator(self) -> bool:
         return (
             self.token.type
-            in (TokenType.OPERATOR, TokenType.WORD_OPERATOR, TokenType.SEMICOLON)
+            in (
+                TokenType.OPERATOR,
+                TokenType.WORD_OPERATOR,
+                TokenType.AS,
+                TokenType.ON,
+                TokenType.BOOLEAN_OPERATOR,
+                TokenType.SEMICOLON,
+            )
             or self.is_multiplication_star
         )
 
@@ -168,8 +175,8 @@ class Node:
             )
 
     @property
-    def is_word_operator(self) -> bool:
-        return self.token.type == TokenType.WORD_OPERATOR
+    def is_low_priority_merge_operator(self) -> bool:
+        return self.token.type in (TokenType.BOOLEAN_OPERATOR, TokenType.ON)
 
     @property
     def is_newline(self) -> bool:
@@ -387,6 +394,9 @@ class Node:
             TokenType.STATEMENT_START,
             TokenType.STATEMENT_END,
             TokenType.WORD_OPERATOR,
+            TokenType.AS,
+            TokenType.ON,
+            TokenType.BOOLEAN_OPERATOR,
         ):
             return token.token.lower()
         else:
@@ -556,9 +566,9 @@ class Line:
             return False
 
     @property
-    def starts_with_word_operator(self) -> bool:
+    def starts_with_low_priority_merge_operator(self) -> bool:
         try:
-            return self.nodes[0].is_word_operator
+            return self.nodes[0].is_low_priority_merge_operator
         except IndexError:
             return False
 

@@ -60,7 +60,7 @@ def test_bare_line(source_string: str, bare_line: Line) -> None:
     assert not bare_line.contains_operator
     assert not bare_line.starts_with_comma
     assert not bare_line.starts_with_operator
-    assert not bare_line.starts_with_word_operator
+    assert not bare_line.starts_with_low_priority_merge_operator
     assert not bare_line.is_standalone_multiline_node
     assert not bare_line.is_too_long(88)
     assert not bare_line.opens_new_bracket
@@ -104,7 +104,7 @@ def test_simple_line(
     assert simple_line.contains_operator
     assert not simple_line.starts_with_comma
     assert not simple_line.starts_with_operator
-    assert not simple_line.starts_with_word_operator
+    assert not simple_line.starts_with_low_priority_merge_operator
     assert not simple_line.contains_multiline_node
     assert not simple_line.is_standalone_multiline_node
     assert not simple_line.is_too_long(88)

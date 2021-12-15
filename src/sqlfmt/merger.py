@@ -171,7 +171,7 @@ class LineMerger:
                 return new_lines
 
     def _maybe_merge_lines_split_by_operators(
-        self, lines: List[Line], merge_across_word_operators: bool = True
+        self, lines: List[Line], merge_across_low_priority_operators: bool = True
     ) -> List[Line]:
         """
         Tries to merge runs of lines at the same depth as lines[0] that
@@ -189,7 +189,10 @@ class LineMerger:
                     or line.starts_with_comma
                     or last_line_is_singleton_operator
                 )
-                and (merge_across_word_operators or not line.starts_with_word_operator)
+                and (
+                    merge_across_low_priority_operators
+                    or not line.starts_with_low_priority_merge_operator
+                )
             ):
                 # keep going until we hit a line that does not start with
                 # an operator
@@ -204,10 +207,11 @@ class LineMerger:
                     # again, but don't try to merge across word operators. This
                     # helps format complex where and join clauses with comparisons
                     # and logic operators
-                    if merge_across_word_operators:
+                    if merge_across_low_priority_operators:
                         new_lines.extend(
                             self._maybe_merge_lines_split_by_operators(
-                                lines[head:tail], merge_across_word_operators=False
+                                lines[head:tail],
+                                merge_across_low_priority_operators=False,
                             )
                         )
                     else:
@@ -232,10 +236,10 @@ class LineMerger:
         try:
             new_lines.append(self.create_merged_line(lines[head:]))
         except CannotMergeException:
-            if merge_across_word_operators:
+            if merge_across_low_priority_operators:
                 new_lines.extend(
                     self._maybe_merge_lines_split_by_operators(
-                        lines[head:], merge_across_word_operators=False
+                        lines[head:], merge_across_low_priority_operators=False
                     )
                 )
             else:
