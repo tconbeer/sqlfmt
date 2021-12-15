@@ -114,9 +114,7 @@ class Polyglot(Dialect):
             r"~",
         ),
         TokenType.WORD_OPERATOR: group(
-            r"and",
             r"between",
-            r"as",
             r"ilike",
             r"in",
             r"is",
@@ -124,10 +122,17 @@ class Polyglot(Dialect):
             r"like",
             r"not",
             r"notnull",
-            r"on",
-            r"or",
             r"over",
             r"similar",
+        )
+        + group(r"\W", r"$"),
+        TokenType.AS: group(r"as") + group(r"\W", r"$"),
+        TokenType.ON: group(r"on") + group(r"\W", r"$"),
+        TokenType.BOOLEAN_OPERATOR: group(
+            r"and",
+            r"or",
+            r"on",
+            r"as",
         )
         + group(r"\W", r"$"),
         TokenType.COMMA: group(r","),

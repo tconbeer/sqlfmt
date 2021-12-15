@@ -38,10 +38,12 @@ class LineMerger:
 
         if not content_nodes:
             raise CannotMergeException("Can't merge only whitespace/newlines")
-        elif any([n.is_multiline or n.formatting_disabled for n in content_nodes]):
+        elif any([n.formatting_disabled for n in content_nodes]):
             raise CannotMergeException(
-                "Can't merge lines containing multiline nodes or disabled formatting"
+                "Can't merge lines containing disabled formatting"
             )
+        elif any([n.is_multiline for n in content_nodes[1:]]):
+            raise CannotMergeException("Can't merge lines containing multiline nodes")
 
         merged_line = Line.from_nodes(
             source_string=lines[0].source_string,
@@ -56,6 +58,146 @@ class LineMerger:
             raise CannotMergeException("Merged line is too long")
 
         return merged_line
+
+    def maybe_merge_lines(self, lines: List[Line]) -> List[Line]:
+        """
+        Attempts to merge all passed lines into a single line.
+
+        If that fails, divides the lines into segments, delineated
+        by lines of equal depth and recurses on each segment.
+
+        Returns a new list of lines
+        """
+        if len(lines) <= 1:
+            return lines
+        else:
+            try:
+                merged_line = self.create_merged_line(lines)
+                new_lines = [merged_line]
+            except CannotMergeException:
+                # lines can't be merged into a single line, so we take several
+                # steps to merge some lines together into a final collection,
+                # new_lines
+                new_lines = []
+                # first: if there are consecutive lines that are the same depth
+                # that start with operators, we want to merge those
+                partially_merged_lines = self._maybe_merge_lines_split_by_operators(
+                    lines
+                )
+                # if there are multiple segments of equal depth, and
+                # we know we can't merge across segments, we should try
+                # to merge within each segment
+                segments = self._split_into_segments(partially_merged_lines)
+                if len(segments) > 1:
+                    for segment in segments:
+                        new_lines.extend(self.maybe_merge_lines(segment))
+                    # if merging of any segment was successful, it is
+                    # possible that more merging can be done on a second
+                    # pass
+                    if len(new_lines) < len(partially_merged_lines):
+                        new_lines = self.maybe_merge_lines(new_lines)
+                # if there was only a single segment at the depth of the
+                # top line, we need to move down one line and try again.
+                # Because of the structure of a well-split set of lines,
+                # in this case moving down one line is guaranteed to move
+                # us in one depth.
+                # if the final line of the segment matches the top line,
+                # we need to strip that off so we only segment the
+                # indented lines
+                else:
+                    new_lines.append(partially_merged_lines[0])
+                    if (
+                        partially_merged_lines[-1].closes_bracket_from_previous_line
+                        and partially_merged_lines[-1].depth
+                        == partially_merged_lines[0].depth
+                    ):
+                        new_lines.extend(
+                            self.maybe_merge_lines(partially_merged_lines[1:-1])
+                        )
+                        new_lines.append(partially_merged_lines[-1])
+                    else:
+                        new_lines.extend(
+                            self.maybe_merge_lines(partially_merged_lines[1:])
+                        )
+            finally:
+                return new_lines
+
+    def _maybe_merge_lines_split_by_operators(
+        self, lines: List[Line], merge_across_low_priority_operators: bool = True
+    ) -> List[Line]:
+        """
+        Tries to merge runs of lines at the same depth as lines[0] that
+        start with an operator.
+        """
+        target_depth = lines[0].depth
+        head = 0
+        last_line_is_singleton_operator = False
+        new_lines: List[Line] = []
+        for tail, line in enumerate(lines[1:], start=1):
+            if (
+                line.depth == target_depth
+                and (
+                    line.starts_with_operator
+                    or line.starts_with_comma
+                    or last_line_is_singleton_operator
+                )
+                and (
+                    merge_across_low_priority_operators
+                    or not line.starts_with_low_priority_merge_operator
+                )
+            ):
+                # keep going until we hit a line that does not start with
+                # an operator
+                pass
+            else:
+                # try to merge everything above line (from head:tail) into
+                # a single line
+                try:
+                    new_lines.append(self.create_merged_line(lines[head:tail]))
+                except CannotMergeException:
+                    # the merged line is probably too long. Try the same section
+                    # again, but don't try to merge across word operators. This
+                    # helps format complex where and join clauses with comparisons
+                    # and logic operators
+                    if merge_across_low_priority_operators:
+                        new_lines.extend(
+                            self._maybe_merge_lines_split_by_operators(
+                                lines[head:tail],
+                                merge_across_low_priority_operators=False,
+                            )
+                        )
+                    else:
+                        # we were already not merging across low-priority operators
+                        # so it's time to give up and just add the original
+                        # lines to the new list
+                        new_lines.extend(lines[head:tail])
+                finally:
+                    # reset the head pointer and start the process over
+                    # on the remainder of lines
+                    head = tail
+
+            # lines can't end with operators unless it's an operator on a line
+            # by itself. If that is the case, we want to try to merge the next
+            # line into the group
+            if len(line.nodes) == 2 and line.starts_with_operator:
+                last_line_is_singleton_operator = True
+            else:
+                last_line_is_singleton_operator = False
+
+        # we need to try one more time to merge everything after head
+        try:
+            new_lines.append(self.create_merged_line(lines[head:]))
+        except CannotMergeException:
+            if merge_across_low_priority_operators:
+                new_lines.extend(
+                    self._maybe_merge_lines_split_by_operators(
+                        lines[head:], merge_across_low_priority_operators=False
+                    )
+                )
+            else:
+                new_lines.extend(lines[head:])
+        finally:
+            return new_lines
 
     def _split_into_segments(self, lines: List[Line]) -> List[List[Line]]:
         """
@@ -106,132 +248,3 @@ class LineMerger:
                 return segments + self._split_into_segments(lines[idx:])
         else:
             return [lines[:]]
-
-    def maybe_merge_lines(self, lines: List[Line]) -> List[Line]:
-        """
-        Attempts to merge all passed lines into a single line.
-
-        If that fails, divides the lines into segments, delineated
-        by lines of equal depth and recurses on each segment.
-
-        Returns a new list of lines
-        """
-        if len(lines) <= 1:
-            return lines
-        else:
-            try:
-                merged_line = self.create_merged_line(lines)
-                new_lines = [merged_line]
-            except CannotMergeException:
-                new_lines = []
-                segments = self._split_into_segments(lines)
-                # if there are multiple segments of equal depth, and
-                # we know we can't merge across segments, we should try
-                # to merge within each segment
-                if len(segments) > 1:
-                    for segment in segments:
-                        new_lines.extend(self.maybe_merge_lines(segment))
-                    # if merging of any segment was successful, it is
-                    # possible that more merging can be done on a second
-                    # pass
-                    if len(new_lines) < len(lines):
-                        new_lines = self.maybe_merge_lines(new_lines)
-                    # at this point, new_lines is pretty well merged,
-                    # but it is possible to have consecutive lines that
-                    # are the same depth that need further merging; namely,
-                    # if there are lines that start with operators, it's possible
-                    # they can be merged together
-                    new_lines = self._maybe_merge_lines_split_by_operators(new_lines)
-                # if there was only a single segment at the depth of the
-                # top line, we need to move down one line and try again.
-                # Because of the structure of a well-split set of lines,
-                # in this case moving down one line is guaranteed to move
-                # us in one depth.
-                # if the final line of the segment matches the top line,
-                # we need to strip that off so we only segment the
-                # indented lines
-                else:
-                    new_lines.append(lines[0])
-                    if (
-                        lines[-1].closes_bracket_from_previous_line
-                        and lines[-1].depth == lines[0].depth
-                    ):
-                        new_lines.extend(self.maybe_merge_lines(lines[1:-1]))
-                        new_lines.append(lines[-1])
-                    else:
-                        new_lines.extend(self.maybe_merge_lines(lines[1:]))
-            finally:
-                return new_lines
-
-    def _maybe_merge_lines_split_by_operators(
-        self, lines: List[Line], merge_across_word_operators: bool = True
-    ) -> List[Line]:
-        """
-        Tries to merge runs of lines at the same depth as lines[0] that
-        start with an operator.
-        """
-        target_depth = lines[0].depth
-        head = 0
-        last_line_is_singleton_operator = False
-        new_lines: List[Line] = []
-        for tail, line in enumerate(lines[1:], start=1):
-            if (
-                line.depth == target_depth
-                and (
-                    line.starts_with_operator
-                    or line.starts_with_comma
-                    or last_line_is_singleton_operator
-                )
-                and (merge_across_word_operators or not line.starts_with_word_operator)
-            ):
-                # keep going until we hit a line that does not start with
-                # an operator
-                pass
-            else:
-                # try to merge everything above line (from head:tail) into
-                # a single line
-                try:
-                    new_lines.append(self.create_merged_line(lines[head:tail]))
-                except CannotMergeException:
-                    # the merged line is probably too long. Try the same section
-                    # again, but don't try to merge across word operators. This
-                    # helps format complex where and join clauses with comparisons
-                    # and logic operators
-                    if merge_across_word_operators:
-                        new_lines.extend(
-                            self._maybe_merge_lines_split_by_operators(
-                                lines[head:tail], merge_across_word_operators=False
-                            )
-                        )
-                    else:
-                        # we were already not merging across word operators
-                        # so it's time to give up and just add the original
-                        # lines to the new list
-                        new_lines.extend(lines[head:tail])
-                finally:
-                    # reset the head pointer and start the process over
-                    # on the remainder of lines
-                    head = tail
-
-            # lines can't end with operators unless it's an operator on a line
-            # by itself. If that is the case, we want to try to merge the next
-            # line into the group
-            if len(line.nodes) == 2 and line.starts_with_operator:
-                last_line_is_singleton_operator = True
-            else:
-                last_line_is_singleton_operator = False
-
-        # we need to try one more time to merge everything after head
-        try:
-            new_lines.append(self.create_merged_line(lines[head:]))
-        except CannotMergeException:
-            if merge_across_word_operators:
-                new_lines.extend(
-                    self._maybe_merge_lines_split_by_operators(
-                        lines[head:], merge_across_word_operators=False
-                    )
-                )
-            else:
-                new_lines.extend(lines[head:])
-        finally:
-            return new_lines

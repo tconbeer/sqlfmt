@@ -262,3 +262,13 @@ def test_merge_chained_parens(merger: LineMerger) -> None:
     merged_lines = merger.maybe_merge_lines(raw_query.lines)
     result_string = "".join([str(line) for line in merged_lines])
     assert result_string == expected_string
+
+
+def test_merge_operators_before_children(merger: LineMerger) -> None:
+    source_string, expected_string = read_test_data(
+        "unit_tests/test_merger/test_merge_operators_before_children.sql"
+    )
+    raw_query = Query.from_source(source_string, merger.mode)
+    merged_lines = merger.maybe_merge_lines(raw_query.lines)
+    result_string = "".join([str(line) for line in merged_lines])
+    assert result_string == expected_string

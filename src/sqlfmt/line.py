@@ -150,7 +150,14 @@ class Node:
     def is_operator(self) -> bool:
         return (
             self.token.type
-            in (TokenType.OPERATOR, TokenType.WORD_OPERATOR, TokenType.SEMICOLON)
+            in (
+                TokenType.OPERATOR,
+                TokenType.WORD_OPERATOR,
+                TokenType.AS,
+                TokenType.ON,
+                TokenType.BOOLEAN_OPERATOR,
+                TokenType.SEMICOLON,
+            )
             or self.is_multiplication_star
         )
 
@@ -168,8 +175,8 @@ class Node:
             )
 
     @property
-    def is_word_operator(self) -> bool:
-        return self.token.type == TokenType.WORD_OPERATOR
+    def is_low_priority_merge_operator(self) -> bool:
+        return self.token.type in (TokenType.BOOLEAN_OPERATOR, TokenType.ON)
 
     @property
     def is_newline(self) -> bool:
@@ -177,10 +184,7 @@ class Node:
 
     @property
     def is_multiline(self) -> bool:
-        if (
-            self.token.type in (TokenType.COMMENT, TokenType.JINJA)
-            and "\n" in self.value
-        ):
+        if self.token.type == TokenType.JINJA and "\n" in self.value:
             return True
         else:
             return False
@@ -387,6 +391,9 @@ class Node:
             TokenType.STATEMENT_START,
             TokenType.STATEMENT_END,
             TokenType.WORD_OPERATOR,
+            TokenType.AS,
+            TokenType.ON,
+            TokenType.BOOLEAN_OPERATOR,
         ):
             return token.token.lower()
         else:
@@ -411,7 +418,11 @@ class Line:
             return self.prefix + "".join([str(node) for node in self.nodes]).lstrip(" ")
 
     def __len__(self) -> int:
-        return len(str(self))
+        try:
+            return max([len(s) for s in str(self).splitlines()])
+        except ValueError:
+            return 0
+        # return len(str(self))
 
     @property
     def prefix(self) -> str:
@@ -556,9 +567,9 @@ class Line:
             return False
 
     @property
-    def starts_with_word_operator(self) -> bool:
+    def starts_with_low_priority_merge_operator(self) -> bool:
         try:
-            return self.nodes[0].is_word_operator
+            return self.nodes[0].is_low_priority_merge_operator
         except IndexError:
             return False
 
@@ -600,7 +611,7 @@ class Line:
         than max_length, and if the line isn't a standalone long
         multiline node
         """
-        if len(self) > max_length and not self.contains_multiline_node:
+        if len(self) > max_length:
             return True
         else:
             return False
