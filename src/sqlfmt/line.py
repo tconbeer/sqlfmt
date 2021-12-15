@@ -184,10 +184,7 @@ class Node:
 
     @property
     def is_multiline(self) -> bool:
-        if (
-            self.token.type in (TokenType.COMMENT, TokenType.JINJA)
-            and "\n" in self.value
-        ):
+        if self.token.type == TokenType.JINJA and "\n" in self.value:
             return True
         else:
             return False
@@ -421,7 +418,11 @@ class Line:
             return self.prefix + "".join([str(node) for node in self.nodes]).lstrip(" ")
 
     def __len__(self) -> int:
-        return len(str(self))
+        try:
+            return max([len(s) for s in str(self).splitlines()])
+        except ValueError:
+            return 0
+        # return len(str(self))
 
     @property
     def prefix(self) -> str:
@@ -610,7 +611,7 @@ class Line:
         than max_length, and if the line isn't a standalone long
         multiline node
         """
-        if len(self) > max_length and not self.contains_multiline_node:
+        if len(self) > max_length:
             return True
         else:
             return False

@@ -38,10 +38,12 @@ class LineMerger:
 
         if not content_nodes:
             raise CannotMergeException("Can't merge only whitespace/newlines")
-        elif any([n.is_multiline or n.formatting_disabled for n in content_nodes]):
+        elif any([n.formatting_disabled for n in content_nodes]):
             raise CannotMergeException(
-                "Can't merge lines containing multiline nodes or disabled formatting"
+                "Can't merge lines containing disabled formatting"
             )
+        elif any([n.is_multiline for n in content_nodes[1:]]):
+            raise CannotMergeException("Can't merge lines containing multiline nodes")
 
         merged_line = Line.from_nodes(
             source_string=lines[0].source_string,
@@ -56,56 +58,6 @@ class LineMerger:
             raise CannotMergeException("Merged line is too long")
 
         return merged_line
-
-    def _split_into_segments(self, lines: List[Line]) -> List[List[Line]]:
-        """
-        A segment is a list of consecutive lines that are indented from the
-        first line.
-
-        This method takes a list of lines and returns a list of segments.
-
-        Is is basically an unfold/corecursion
-        """
-        if not lines:
-            return []
-
-        target_depth = lines[0].depth
-        for i, line in enumerate(lines[1:], start=1):
-            # scan through the lines until we get back to the
-            # depth of the first line
-            if line.depth <= target_depth:
-                # if this line starts with a closing bracket,
-                # we probably want to include that closing bracket
-                # in the same segment as the first line.
-                if (
-                    line.closes_bracket_from_previous_line
-                    and line.depth == target_depth
-                ):
-                    idx = i + 1
-                    try:
-                        segments = [[self.create_merged_line(lines[:idx])]]
-                    except CannotMergeException:
-                        # it's possible a line has a closing and open
-                        # paren, like ") + (\n". In that case, if
-                        # we can't merge the first parens together,
-                        # we want to return a segment that can try
-                        # to merge the second parens together. To
-                        # ensure we don't merge the original opening
-                        # bracket into the contents, without the
-                        # closing bracket, we need to return the first
-                        # line (which must contain the opening bracket)
-                        # as its own segment
-                        if line.opens_new_bracket:
-                            idx = i
-                            segments = [lines[:1], lines[1:idx]]
-                        else:
-                            segments = [lines[:idx]]
-                else:
-                    idx = i
-                    segments = [lines[:idx]]
-                return segments + self._split_into_segments(lines[idx:])
-        else:
-            return [lines[:]]
 
     def maybe_merge_lines(self, lines: List[Line]) -> List[Line]:
         """
@@ -215,7 +167,7 @@ class LineMerger:
                             )
                         )
                     else:
-                        # we were already not merging across word operators
+                        # we were already not merging across low-priority operators
                         # so it's time to give up and just add the original
                         # lines to the new list
                         new_lines.extend(lines[head:tail])
@@ -246,3 +198,53 @@ class LineMerger:
                 new_lines.extend(lines[head:])
         finally:
             return new_lines
+
+    def _split_into_segments(self, lines: List[Line]) -> List[List[Line]]:
+        """
+        A segment is a list of consecutive lines that are indented from the
+        first line.
+
+        This method takes a list of lines and returns a list of segments.
+
+        Is is basically an unfold/corecursion
+        """
+        if not lines:
+            return []
+
+        target_depth = lines[0].depth
+        for i, line in enumerate(lines[1:], start=1):
+            # scan through the lines until we get back to the
+            # depth of the first line
+            if line.depth <= target_depth:
+                # if this line starts with a closing bracket,
+                # we probably want to include that closing bracket
+                # in the same segment as the first line.
+                if (
+                    line.closes_bracket_from_previous_line
+                    and line.depth == target_depth
+                ):
+                    idx = i + 1
+                    try:
+                        segments = [[self.create_merged_line(lines[:idx])]]
+                    except CannotMergeException:
+                        # it's possible a line has a closing and open
+                        # paren, like ") + (\n". In that case, if
+                        # we can't merge the first parens together,
+                        # we want to return a segment that can try
+                        # to merge the second parens together. To
+                        # ensure we don't merge the original opening
+                        # bracket into the contents, without the
+                        # closing bracket, we need to return the first
+                        # line (which must contain the opening bracket)
+                        # as its own segment
+                        if line.opens_new_bracket:
+                            idx = i
+                            segments = [lines[:1], lines[1:idx]]
+                        else:
+                            segments = [lines[:idx]]
+                else:
+                    idx = i
+                    segments = [lines[:idx]]
+                return segments + self._split_into_segments(lines[idx:])
+        else:
+            return [lines[:]]
