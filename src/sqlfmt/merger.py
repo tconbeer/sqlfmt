@@ -123,25 +123,27 @@ class LineMerger:
                 merged_line = self.create_merged_line(lines)
                 new_lines = [merged_line]
             except CannotMergeException:
+                # lines can't be merged into a single line, so we take several
+                # steps to merge some lines together into a final collection,
+                # new_lines
                 new_lines = []
-                segments = self._split_into_segments(lines)
+                # first: if there are consecutive lines that are the same depth
+                # that start with operators, we want to merge those
+                partially_merged_lines = self._maybe_merge_lines_split_by_operators(
+                    lines
+                )
                 # if there are multiple segments of equal depth, and
                 # we know we can't merge across segments, we should try
                 # to merge within each segment
+                segments = self._split_into_segments(partially_merged_lines)
                 if len(segments) > 1:
                     for segment in segments:
                         new_lines.extend(self.maybe_merge_lines(segment))
                     # if merging of any segment was successful, it is
                     # possible that more merging can be done on a second
                     # pass
-                    if len(new_lines) < len(lines):
+                    if len(new_lines) < len(partially_merged_lines):
                         new_lines = self.maybe_merge_lines(new_lines)
-                    # at this point, new_lines is pretty well merged,
-                    # but it is possible to have consecutive lines that
-                    # are the same depth that need further merging; namely,
-                    # if there are lines that start with operators, it's possible
-                    # they can be merged together
-                    new_lines = self._maybe_merge_lines_split_by_operators(new_lines)
                 # if there was only a single segment at the depth of the
                 # top line, we need to move down one line and try again.
                 # Because of the structure of a well-split set of lines,
@@ -151,15 +153,20 @@ class LineMerger:
                 # we need to strip that off so we only segment the
                 # indented lines
                 else:
-                    new_lines.append(lines[0])
+                    new_lines.append(partially_merged_lines[0])
                     if (
-                        lines[-1].closes_bracket_from_previous_line
-                        and lines[-1].depth == lines[0].depth
+                        partially_merged_lines[-1].closes_bracket_from_previous_line
+                        and partially_merged_lines[-1].depth
+                        == partially_merged_lines[0].depth
                     ):
-                        new_lines.extend(self.maybe_merge_lines(lines[1:-1]))
-                        new_lines.append(lines[-1])
+                        new_lines.extend(
+                            self.maybe_merge_lines(partially_merged_lines[1:-1])
+                        )
+                        new_lines.append(partially_merged_lines[-1])
                     else:
-                        new_lines.extend(self.maybe_merge_lines(lines[1:]))
+                        new_lines.extend(
+                            self.maybe_merge_lines(partially_merged_lines[1:])
+                        )
             finally:
                 return new_lines
 
