@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.3.0] - 2021-12-16
+
 ### Formatting changes
 
 -   refactors comment parsing for improved formatting of comments and merging around comments
@@ -21,7 +23,7 @@ All notable changes to this project will be documented in this file.
 
 -   supports all postgres and bigquery string literals and quoted identifiers, including triple quotes, escaped quotes, dollar-delimited, etc.
 -   no longer fails with a parsing error when encountering a semicolon
--   properly delineates between "*" as "all fields" and as the multiplication operator
+-   properly delineates between "\*" as "all fields" and as the multiplication operator
 
 ## [0.2.1] - 2021-12-04
 
@@ -62,7 +64,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.2.1...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.3.0...HEAD
+
+[0.3.0]: https://github.com/tconbeer/sqlfmt/compare/0.2.1...0.3.0
 
 [0.2.1]: https://github.com/tconbeer/sqlfmt/compare/0.2.0...0.2.1
 
