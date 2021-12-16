@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 ### Features
 
 -   adds a simple cache and skips formatting files that have not changed since last successful run
+-   improves the welcome message displayed when running sqlfmt with no arguments
 
 ### Fixes
 

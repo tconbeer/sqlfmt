@@ -12,7 +12,7 @@ from sqlfmt.mode import Mode
     "--check",
     is_flag=True,
     help=(
-        "Fail with an exit code of 1 if source files are not formatted to spec."
+        "Fail with an exit code of 1 if source files are not formatted to spec. "
         "Do not write formatted queries to files"
     ),
 )
@@ -78,7 +78,7 @@ def sqlfmt(
     quiet: bool,
 ) -> None:
     """
-    sqlfmt is an opinionated CLI tool that formats your sql files.
+    sqlfmt is a tool that formats your sql files.
 
     The FILES argument can be one or many paths to sql files (or directories),
     or use "-" to use stdin.
@@ -86,24 +86,86 @@ def sqlfmt(
     Exit codes: 0 indicates success, 1 indicates failed check,
     2 indicates a handled exception caused by errors in one or more user code files
     """
-    mode = Mode(
-        line_length=line_length,
-        check=check,
-        diff=diff,
-        verbose=verbose,
-        quiet=quiet,
-        _no_color=no_color,
-        _force_color=force_color,
-    )
+    if files:
+        mode = Mode(
+            line_length=line_length,
+            check=check,
+            diff=diff,
+            verbose=verbose,
+            quiet=quiet,
+            _no_color=no_color,
+            _force_color=force_color,
+        )
 
-    report = api.run(files=files, mode=mode)
-    report.display_report()
+        report = api.run(files=files, mode=mode)
+        report.display_report()
 
-    if report.number_errored > 0:
-        exit_code = 2
-    elif (mode.check or mode.diff) and report.number_changed > 0:
-        exit_code = 1
+        if report.number_errored > 0:
+            exit_code = 2
+        elif (mode.check or mode.diff) and report.number_changed > 0:
+            exit_code = 1
+        else:
+            exit_code = 0
     else:
+        show_welcome_message()
         exit_code = 0
 
     ctx.exit(exit_code)
+
+
+def show_welcome_message() -> None:
+    from sqlfmt.report import display_output, style_output
+
+    art = r"""
+               _  __           _
+              | |/ _|         | |
+     ___  __ _| | |_ _ __ ___ | |_
+    / __|/ _` | |  _| '_ ` _ \| __|
+    \__ \ (_| | | | | | | | | | |_
+    |___/\__, |_|_| |_| |_| |_|\__|
+            | |
+            |_|"""
+    display_output(msg=art)
+    message = """
+    sqlfmt is a tool that formats your sql files.
+    For more information, visit http://sqlfmt.com
+
+    To get started, try:
+    """
+    display_output(msg=message)
+    commands = [
+        (
+            "sqlfmt .",
+            "format all files nested in the current dir (note the '.')",
+        ),
+        (
+            "sqlfmt path/my/file.sql",
+            "format file.sql only",
+        ),
+        (
+            "sqlfmt . --check",
+            "check formatting of all files, exits with code 1 on changes",
+        ),
+        (
+            "sqlfmt . --diff",
+            "print diff resulting from formatting all files",
+        ),
+        (
+            "sqlfmt -",
+            "format text received through stdin, write result to stdout",
+        ),
+        (
+            "sqlfmt --help",
+            "show more options and other usage information",
+        ),
+    ]
+    margin = max([len(cmd) for cmd, _ in commands])
+    for cmd, desc in commands:
+        styled_cmd = style_output(
+            msg=f"{cmd}{' ' * (margin - len(cmd))}",
+            fg="white",
+            bg="bright_black",
+            bold=True,
+        )
+        display_output(msg=f"    {styled_cmd} {desc}")
+    display_output(msg="\n")
