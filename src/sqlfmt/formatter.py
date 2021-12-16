@@ -4,7 +4,7 @@ from typing import List
 from sqlfmt.line import Line
 from sqlfmt.merger import LineMerger
 from sqlfmt.mode import Mode
-from sqlfmt.parser import Query
+from sqlfmt.query import Query
 from sqlfmt.splitter import LineSplitter
 
 

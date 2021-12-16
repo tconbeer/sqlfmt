@@ -16,7 +16,7 @@ from sqlfmt.dialect import SqlfmtParsingError
 from sqlfmt.exception import SqlfmtError
 from sqlfmt.line import SqlfmtBracketError
 from sqlfmt.mode import Mode
-from sqlfmt.parser import SqlfmtMultilineError
+from sqlfmt.query import SqlfmtMultilineError
 
 
 @pytest.fixture

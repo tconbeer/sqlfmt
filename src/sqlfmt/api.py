@@ -6,7 +6,7 @@ from sqlfmt.cache import Cache, check_cache, load_cache, write_cache
 from sqlfmt.exception import SqlfmtError
 from sqlfmt.formatter import QueryFormatter
 from sqlfmt.mode import Mode
-from sqlfmt.parser import Query
+from sqlfmt.query import Query
 from sqlfmt.report import STDIN_PATH, Report, SqlFormatResult
 
 

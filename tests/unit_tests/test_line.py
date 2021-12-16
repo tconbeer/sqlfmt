@@ -5,7 +5,7 @@ import pytest
 
 from sqlfmt.line import Comment, Line, Node, SqlfmtBracketError
 from sqlfmt.mode import Mode
-from sqlfmt.parser import Query
+from sqlfmt.query import Query
 from sqlfmt.token import Token, TokenType
 from tests.util import read_test_data
 

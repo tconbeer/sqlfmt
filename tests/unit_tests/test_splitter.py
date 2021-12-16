@@ -4,7 +4,7 @@ import pytest
 
 from sqlfmt.line import Line
 from sqlfmt.mode import Mode
-from sqlfmt.parser import Query
+from sqlfmt.query import Query
 from sqlfmt.splitter import LineSplitter
 from tests.util import read_test_data
 

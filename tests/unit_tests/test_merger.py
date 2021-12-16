@@ -2,7 +2,7 @@ import pytest
 
 from sqlfmt.merger import CannotMergeException, LineMerger
 from sqlfmt.mode import Mode
-from sqlfmt.parser import Query
+from sqlfmt.query import Query
 from tests.util import read_test_data
 
 

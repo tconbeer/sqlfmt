@@ -3,7 +3,7 @@ import pytest
 from sqlfmt.dialect import SqlfmtParsingError
 from sqlfmt.line import Comment, Node, SqlfmtBracketError
 from sqlfmt.mode import Mode
-from sqlfmt.parser import Query, SqlfmtMultilineError
+from sqlfmt.query import Query, SqlfmtMultilineError
 from sqlfmt.token import Token, TokenType
 from tests.util import read_test_data
 
@@ -44,7 +44,7 @@ def test_calculate_depth() -> None:
 def test_simple_query_parsing(all_output_modes: Mode) -> None:
 
     source_string, _ = read_test_data(
-        "unit_tests/test_parser/test_simple_query_parsing.sql"
+        "unit_tests/test_query/test_simple_query_parsing.sql"
     )
 
     q = Query.from_source(source_string=source_string, mode=all_output_modes)
@@ -134,7 +134,7 @@ def test_whitespace_formatting(default_mode: Mode) -> None:
 def test_case_statement_parsing(default_mode: Mode) -> None:
 
     source_string, _ = read_test_data(
-        "unit_tests/test_parser/test_case_statement_parsing.sql"
+        "unit_tests/test_query/test_case_statement_parsing.sql"
     )
 
     q = Query.from_source(source_string=source_string, mode=default_mode)
@@ -154,7 +154,7 @@ def test_case_statement_parsing(default_mode: Mode) -> None:
 
 
 def test_cte_parsing(default_mode: Mode) -> None:
-    source_string, _ = read_test_data("unit_tests/test_parser/test_cte_parsing.sql")
+    source_string, _ = read_test_data("unit_tests/test_query/test_cte_parsing.sql")
 
     q = Query.from_source(source_string=source_string, mode=default_mode)
 
@@ -198,7 +198,7 @@ def test_cte_parsing(default_mode: Mode) -> None:
 
 def test_multiline_parsing(default_mode: Mode) -> None:
     source_string, _ = read_test_data(
-        "unit_tests/test_parser/test_multiline_parsing.sql"
+        "unit_tests/test_query/test_multiline_parsing.sql"
     )
 
     q = Query.from_source(source_string=source_string, mode=default_mode)
