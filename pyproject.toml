@@ -26,14 +26,14 @@ packages = [
 ]
 
 [tool.poetry.extras]
-sqlfmt_primer = ["GitPython", "platformdirs"]
+sqlfmt_primer = ["GitPython"]
 
 [tool.poetry.dependencies]
 python = "^3.7"
 click = "^8.0"
+platformdirs = "^2.4.0"
 importlib_metadata = { version = "*", python = "<3.8" }
 GitPython = { version = "^3.1.24", optional = true }
-platformdirs = { version = "^2.4.0", optional = true }
 
 [tool.poetry.dev-dependencies]
 black = "^21.9b0"

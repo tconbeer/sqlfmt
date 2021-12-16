@@ -71,6 +71,22 @@ $ sqlfmt --diff .
 
 If you would like sqlfmt to ignore a file, or part of a file, you can add `-- fmt: off` and `-- fmt: on` comments to your code (or `# fmt: off` on MySQL or BigQuery). sqlfmt will not change any code between those comments; a single `-- fmt: off` at the top of a file will keep the entire file intact.
 
+### Using sqlfmt with pre-commit
+You can configure [pre-commit](https://pre-commit.com/) to run sqlfmt on your repository before you commit changes.
+
+Add the following config to your `.pre-commit-config.yaml` file:
+
+```
+repos:
+  - repo: https://github.com/tconbeer/sqlfmt
+    rev: 0.3.0
+    hooks:
+      - id: sqlfmt
+        language_version: python
+```
+
+You should replace `rev` with the latest available release, but we do suggest pinning to a specific rev, to avoid unexpected formatting changes.
+
 ## The sqlfmt style
 The only thing you can configure with sqlfmt is the desired line length of the formatted file. You can do this with the `--line-length` or `-l` options. The default is 88.
 

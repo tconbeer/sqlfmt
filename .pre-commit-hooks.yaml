@@ -1,0 +1,6 @@
+- id: sqlfmt
+  name: sqlfmt
+  entry: sqlfmt
+  language: python
+  require_serial: true
+  types_or: [sql, jinja]
