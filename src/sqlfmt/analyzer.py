@@ -1,6 +1,6 @@
 import re
 from dataclasses import dataclass, field
-from typing import Callable, Dict, Iterable, List, Optional
+from typing import Callable, List, Optional
 
 from sqlfmt.exception import SqlfmtError
 from sqlfmt.line import Comment, Line, Node
@@ -22,6 +22,7 @@ class SqlfmtParsingError(SqlfmtError):
     pass
 
 
+@dataclass
 class Rule:
     name: str
     priority: int  # lower get matched first
@@ -36,34 +37,23 @@ class Rule:
 
 @dataclass
 class Analyzer:
-    # rules: List[Rule]
     line_length: int
-    patterns: Dict[TokenType, str]
-    programs: Dict[TokenType, re.Pattern]
+    rules: List[Rule]
     node_buffer: List[Node] = field(default_factory=list)
     comment_buffer: List[Comment] = field(default_factory=list)
     line_buffer: List[Line] = field(default_factory=list)
     previous_node: Optional[Node] = None
     previous_line_node: Optional[Node] = None
 
-    def flush_buffers(self) -> None:
-        self.node_buffer = []
-        self.comment_buffer = []
+    def __post_init__(self) -> None:
+        self.patterns = {rule.name: rule.pattern for rule in self.rules}
+        self.programs = {rule.name: rule.program for rule in self.rules}
 
-    def parse_query(self, source_string: str) -> Query:
+    def write_buffers_to_query(self, query: Query) -> None:
         """
-        Initialize a parser and parse the source string, return
-        a structured Query.
+        Write the contents of self.line_buffer to query.lines,
+        taking care to flush node_buffer and comment_buffer first
         """
-        q = Query(source_string, line_length=self.line_length)
-
-        for token in self.lex_old(source_string=source_string, pos=0):
-            if token.type in (TokenType.COMMENT, TokenType.JINJA_COMMENT):
-                self._handle_comment(token)
-            elif token.type == TokenType.NEWLINE:
-                self._handle_newline(token)
-            else:
-                self._handle_token(token)
         # append a final line if the file doesn't end with a newline
         if self.node_buffer:
             line = Line.from_nodes(
@@ -74,7 +64,17 @@ class Analyzer:
             )
             line.append_newline()
             self.line_buffer.append(line)
-        q.lines = self.line_buffer
+        query.lines = self.line_buffer
+
+    def parse_query(self, source_string: str) -> Query:
+        """
+        Initialize a parser and parse the source string, return
+        a structured Query.
+        """
+        q = Query(source_string, line_length=self.line_length)
+
+        self.lex(source_string=source_string)
+        self.write_buffers_to_query(q)
         return q
 
     def _handle_comment(self, token: Token) -> None:
@@ -94,7 +94,8 @@ class Analyzer:
                     comments=self.comment_buffer,
                 )
             )
-            self.flush_buffers()
+            self.node_buffer = []
+            self.comment_buffer = []
             self.previous_line_node = node
         elif not self.comment_buffer:
             self.line_buffer.append(
@@ -118,12 +119,14 @@ class Analyzer:
         self.node_buffer.append(node)
         self.previous_node = node
 
-    def lex_old(self, source_string: str, pos: int) -> Iterable[Token]:
+    def lex(self, source_string: str) -> None:
         """
-        Generate tokens by matching the head of the passed string,
-        and then moving the pointer to the head and repeating on
-        the rest of the string
+        Repeatedly match Rules to the source_string (until the source_string) is
+        exhausted) and apply the matched action.
+
+        Mutates the analyzer's buffers
         """
+        pos = 0
         eof_pos = -1
         for idx, char in enumerate(reversed(source_string)):
             if not char.isspace():
@@ -132,26 +135,21 @@ class Analyzer:
 
         while pos < eof_pos:
 
-            for token_type, prog in self.programs.items():
+            for rule in self.rules:
 
-                match = prog.match(source_string, pos)
+                match = rule.program.match(source_string, pos)
                 if match:
                     spos, epos = match.span(1)
                     prefix = source_string[pos:spos]
                     raw_token = source_string[spos:epos]
-                    if token_type in (TokenType.JINJA_END, TokenType.COMMENT_END):
-                        raise SqlfmtMultilineError(
-                            f"Encountered closing bracket '{raw_token}' at position"
-                            f" {spos}, before matching opening bracket:"
-                            f" {source_string[spos:spos+50]}"
-                        )
-                    elif token_type in (
+                    token_type = rule.action(source_string, match)
+                    if token_type in (
                         TokenType.JINJA_START,
                         TokenType.COMMENT_START,
                     ):
                         # search for the ending token, and/or nest levels deeper
                         epos = self.search_for_terminating_token(
-                            start_type=token_type,
+                            start_rule=rule.name,
                             tail=source_string[epos:],
                             pos=epos,
                         )
@@ -167,7 +165,13 @@ class Analyzer:
                         epos > 0
                     ), "Internal Error! Something went wrong with jinja parsing"
 
-                    yield Token(token_type, prefix, token, pos, epos)
+                    new_token = Token(token_type, prefix, token, pos, epos)
+                    if token_type in (TokenType.COMMENT, TokenType.JINJA_COMMENT):
+                        self._handle_comment(new_token)
+                    elif token_type == TokenType.NEWLINE:
+                        self._handle_newline(new_token)
+                    else:
+                        self._handle_token(new_token)
 
                     pos = epos
                     break
@@ -178,20 +182,18 @@ class Analyzer:
                     f" '{source_string[pos:pos+50].strip()}'"
                 )
 
-    def search_for_terminating_token(
-        self, start_type: TokenType, tail: str, pos: int
-    ) -> int:
+    def search_for_terminating_token(self, start_rule: str, tail: str, pos: int) -> int:
         """
         Return the ending position of the correct closing bracket that matches
         start_type
         """
         terminations = {
-            TokenType.JINJA_START: TokenType.JINJA_END,
-            TokenType.COMMENT_START: TokenType.COMMENT_END,
+            "jinja_start": "jinja_end",
+            "comment_start": "comment_end",
         }
-        sentinel = terminations[start_type]
+        sentinel = terminations[start_rule]
 
-        patterns = [self.patterns[t] for t in [start_type, sentinel]]
+        patterns = [self.patterns[t] for t in [start_rule, sentinel]]
         prog = re.compile(
             MAYBE_WHITESPACES + group(*patterns), re.IGNORECASE | re.DOTALL
         )
@@ -199,22 +201,22 @@ class Analyzer:
         match = prog.search(tail)
         if not match:
             raise SqlfmtMultilineError(
-                f"Unterminated multiline token '{start_type}' "
+                f"Unterminated multiline token '{start_rule}' "
                 f"started near position {pos}. Expecting {sentinel}"
             )
 
         start, end = match.span(1)
 
-        nesting_prog = self.programs[start_type]
+        nesting_prog = self.programs[start_rule]
         nesting_match = nesting_prog.match(tail, start)
         if nesting_match:
             inner_epos = self.search_for_terminating_token(
-                start_type=start_type,
+                start_rule=start_rule,
                 tail=tail[end:],
                 pos=pos + end,
             )
             outer_epos = self.search_for_terminating_token(
-                start_type=start_type,
+                start_rule=start_rule,
                 tail=tail[inner_epos - pos :],
                 pos=inner_epos,
             )

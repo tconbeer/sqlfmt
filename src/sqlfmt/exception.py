@@ -7,3 +7,7 @@ class SqlfmtError(ValueError):
     def __str__(self) -> str:
         message = super().__str__()
         return f"sqlfmt encountered an error: {message}"
+
+
+class SqlfmtMultilineError(SqlfmtError):
+    pass
