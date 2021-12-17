@@ -49,6 +49,39 @@ def simple_line(source_string: str, tokens: List[Token], bare_line: Line) -> Lin
     return simple_line
 
 
+def test_calculate_depth() -> None:
+    t = Token(
+        type=TokenType.UNTERM_KEYWORD,
+        prefix="",
+        token="select",
+        spos=0,
+        epos=6,
+    )
+    res = Node.calculate_depth(t, inherited_depth=0, open_brackets=[])
+
+    assert res == (0, 1, [t])
+
+    t = Token(
+        type=TokenType.BRACKET_CLOSE,
+        prefix="",
+        token=")",
+        spos=0,
+        epos=0,
+    )
+
+    b = Token(
+        type=TokenType.BRACKET_OPEN,
+        prefix="    ",
+        token="(",
+        spos=0,
+        epos=0,
+    )
+
+    res = Node.calculate_depth(t, inherited_depth=2, open_brackets=[b])
+
+    assert res == (1, 0, [])
+
+
 def test_bare_line(source_string: str, bare_line: Line) -> None:
     assert bare_line.source_string == source_string
     assert str(bare_line) == ""

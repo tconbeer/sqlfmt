@@ -6,12 +6,6 @@ from sqlfmt.exception import SqlfmtError, SqlfmtMultilineError
 from sqlfmt.line import Comment, Line, Node
 from sqlfmt.query import Query
 
-MAYBE_WHITESPACES: str = r"[^\S\n]*"  # any whitespace except newline
-
-
-def group(*choices: str) -> str:
-    return "(" + "|".join(choices) + ")"
-
 
 class SqlfmtParsingError(SqlfmtError):
     pass
@@ -19,12 +13,27 @@ class SqlfmtParsingError(SqlfmtError):
 
 @dataclass
 class Rule:
+    """
+    A lex rule.
+
+    When the analyzer lexes the source string, it applies each Rule in turn,
+    in ascending order of priority.
+
+    The Analyzer tries to match the Rule's regex pattern to the current position
+    in the source string. If there is a match, the Analyzer calls the Rule's
+    action with the arguments (self [the analyzer], source_string, match). The
+    Rule's action may mutate the analyzer's buffer (if desired). The action
+    must return the position in the source_string where the Analyzer should
+    look for the next match.
+    """
+
     name: str
     priority: int  # lower get matched first
     pattern: str
     action: Callable[["Analyzer", str, re.Match], int]
 
     def __post_init__(self) -> None:
+        MAYBE_WHITESPACES = r"[^\S\n]*"  # any whitespace except newline
         self.program = re.compile(
             MAYBE_WHITESPACES + self.pattern, re.IGNORECASE | re.DOTALL
         )
@@ -32,17 +41,43 @@ class Rule:
 
 @dataclass
 class Analyzer:
+    """
+    The Analyzer is initialized by the dialect specified by the user. The
+    dialect specifies the list of rules that the Analyzer will attempt
+    to match to the source string during parsing. The analyzer maintains
+    buffers of lexed nodes, comments, and lines.
+    """
+
     line_length: int
     rules: List[Rule]
     node_buffer: List[Node] = field(default_factory=list)
     comment_buffer: List[Comment] = field(default_factory=list)
     line_buffer: List[Line] = field(default_factory=list)
-    previous_node: Optional[Node] = None
-    previous_line_node: Optional[Node] = None
 
-    def __post_init__(self) -> None:
-        self.patterns = {rule.name: rule.pattern for rule in self.rules}
-        self.programs = {rule.name: rule.program for rule in self.rules}
+    @property
+    def previous_node(self) -> Optional[Node]:
+        """
+        Return the most recently-lexed Node, if it exists
+        """
+        if self.node_buffer:
+            return self.node_buffer[-1]
+        else:
+            return self.previous_line_node
+
+    @property
+    def previous_line_node(self) -> Optional[Node]:
+        """
+        Return the last node of the last complete line
+        """
+        if self.line_buffer:
+            return self.line_buffer[-1].nodes[-1]
+        else:
+            return None
+
+    def clear_buffers(self) -> None:
+        self.node_buffer = []
+        self.comment_buffer = []
+        self.line_buffer = []
 
     def write_buffers_to_query(self, query: Query) -> None:
         """
@@ -50,7 +85,7 @@ class Analyzer:
         taking care to flush node_buffer and comment_buffer first
         """
         # append a final line if the file doesn't end with a newline
-        if self.node_buffer:
+        if self.node_buffer or self.comment_buffer:
             line = Line.from_nodes(
                 source_string="",
                 previous_node=self.previous_line_node,
@@ -68,6 +103,7 @@ class Analyzer:
         """
         q = Query(source_string, line_length=self.line_length)
 
+        self.clear_buffers()
         self.lex(source_string=source_string)
         self.write_buffers_to_query(q)
         return q
@@ -101,41 +137,41 @@ class Analyzer:
                     f" '{source_string[pos:pos+50].strip()}'"
                 )
 
-    def search_for_terminating_token(self, start_rule: str, tail: str, pos: int) -> int:
+    def search_for_terminating_token(
+        self,
+        start_rule: str,
+        program: re.Pattern,
+        nesting_program: re.Pattern,
+        tail: str,
+        pos: int,
+    ) -> int:
         """
         Return the ending position of the correct closing bracket that matches
-        start_type
+        start_rule
         """
-        terminations = {
-            "jinja_start": "jinja_end",
-            "comment_start": "comment_end",
-        }
-        sentinel = terminations[start_rule]
 
-        patterns = [self.patterns[t] for t in [start_rule, sentinel]]
-        prog = re.compile(
-            MAYBE_WHITESPACES + group(*patterns), re.IGNORECASE | re.DOTALL
-        )
-
-        match = prog.search(tail)
+        match = program.search(tail)
         if not match:
             raise SqlfmtMultilineError(
                 f"Unterminated multiline token '{start_rule}' "
-                f"started near position {pos}. Expecting {sentinel}"
+                f"started near position {pos}."
             )
 
         start, end = match.span(1)
 
-        nesting_prog = self.programs[start_rule]
-        nesting_match = nesting_prog.match(tail, start)
+        nesting_match = nesting_program.match(tail, start)
         if nesting_match:
             inner_epos = self.search_for_terminating_token(
                 start_rule=start_rule,
+                program=program,
+                nesting_program=nesting_program,
                 tail=tail[end:],
                 pos=pos + end,
             )
             outer_epos = self.search_for_terminating_token(
                 start_rule=start_rule,
+                program=program,
+                nesting_program=nesting_program,
                 tail=tail[inner_epos - pos :],
                 pos=inner_epos,
             )

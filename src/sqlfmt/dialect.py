@@ -25,10 +25,7 @@ class Dialect(ABC):
     """
     Abstract class for a SQL dialect.
 
-    Each dialect should override the PATTERNS dict to define their own grammar.
-    Each value in the PATTERNS dict must have a regex group (surrounded by
-    parentheses) that matches the token; if the token may be delimited by
-    whitespace, that should be defined outside the first group.
+    Each dialect should override the RULES list to define their own grammar.
     """
 
     RULES: List[Rule]
@@ -346,10 +343,13 @@ class Polyglot(Dialect):
         match: re.Match,
         token_type: TokenType,
     ) -> int:
+        """
+        Create a token of token_type from the match, then create a Node
+        from that token and append it to the Analyzer's buffer
+        """
         token = Token.from_match(source_string, match, token_type)
         node = Node.from_token(token=token, previous_node=analyzer.previous_node)
         analyzer.node_buffer.append(node)
-        analyzer.previous_node = node
         return token.epos
 
     @staticmethod
@@ -358,6 +358,10 @@ class Polyglot(Dialect):
         source_string: str,
         match: re.Match,
     ) -> int:
+        """
+        Create a token of token_type from the match, then create a Comment
+        from that token and append it to the Analyzer's buffer
+        """
         token = Token.from_match(source_string, match, TokenType.COMMENT)
         is_standalone = (not bool(analyzer.node_buffer)) or "\n" in token.token
         comment = Comment(token=token, is_standalone=is_standalone)
@@ -370,10 +374,19 @@ class Polyglot(Dialect):
         source_string: str,
         match: re.Match,
     ) -> int:
-        token = Token.from_match(source_string, match, TokenType.NEWLINE)
-        node = Node.from_token(token=token, previous_node=analyzer.previous_node)
-        if analyzer.node_buffer:
-            analyzer.node_buffer.append(node)
+        """
+        When a newline is encountered in the source, we typically want to create a
+        new line in the Analyzer's line_buffer, flushing the node_buffer and
+        comment_buffer in the process.
+
+        However, if we have lexed a standalone comment, we do not want to create
+        a Line with only that comment; instead, it must be added to the next Line
+        that contains Nodes
+        """
+        nl_token = Token.from_match(source_string, match, TokenType.NEWLINE)
+        nl_node = Node.from_token(token=nl_token, previous_node=analyzer.previous_node)
+        if analyzer.node_buffer or not analyzer.comment_buffer:
+            analyzer.node_buffer.append(nl_node)
             analyzer.line_buffer.append(
                 Line.from_nodes(
                     source_string="",
@@ -384,24 +397,12 @@ class Polyglot(Dialect):
             )
             analyzer.node_buffer = []
             analyzer.comment_buffer = []
-            analyzer.previous_line_node = node
-        elif not analyzer.comment_buffer:
-            analyzer.line_buffer.append(
-                Line.from_nodes(
-                    source_string="",
-                    previous_node=analyzer.previous_line_node,
-                    nodes=[node],
-                    comments=[],
-                )
-            )
-            analyzer.previous_line_node = node
         else:
             # standalone comments; don't create a line, since
             # these need to be attached to the next line with
             # contents
             pass
-        analyzer.previous_node = node
-        return token.epos
+        return nl_token.epos
 
     @staticmethod
     def handle_complex_tokens(
@@ -410,23 +411,46 @@ class Polyglot(Dialect):
         match: re.Match,
         rule_name: str,
     ) -> int:
-        pass
+        """
+        Polyglot tries to match multiline jinja tags and comments in one go,
+        however, due to nesting, this isn't always possible. This Action
+        recursively searches for the terminating token, then appends the entire
+        token to the Analyzer's buffer
+        """
+        # extract properties from matching start of token
         pos, _ = match.span(0)
         spos, epos = match.span(1)
         prefix = source_string[pos:spos]
+        # compile a new pattern to match either the ending
+        # pattern or a nesting pattern
+        start_rule: Rule = list(
+            filter(lambda rule: rule.name == rule_name, analyzer.rules)
+        )[0]
+        terminations = {
+            "jinja_start": "jinja_end",
+            "comment_start": "comment_end",
+        }
+        end_rule: Rule = list(
+            filter(lambda rule: rule.name == terminations[rule_name], analyzer.rules)
+        )[0]
+        patterns = [start_rule.pattern, end_rule.pattern]
+        program = re.compile(
+            MAYBE_WHITESPACES + group(*patterns), re.IGNORECASE | re.DOTALL
+        )
         # search for the ending token, and/or nest levels deeper
         epos = analyzer.search_for_terminating_token(
             start_rule=rule_name,
+            program=program,
+            nesting_program=start_rule.program,
             tail=source_string[epos:],
             pos=epos,
         )
         token = source_string[spos:epos]
-        if rule_name == "jinja_start":
+        if start_rule.name == "jinja_start":
             token_type = TokenType.JINJA
             new_token = Token(token_type, prefix, token, pos, epos)
             node = Node.from_token(new_token, analyzer.previous_node)
             analyzer.node_buffer.append(node)
-            analyzer.previous_node = node
         else:
             token_type = TokenType.COMMENT
             new_token = Token(token_type, prefix, token, pos, epos)
