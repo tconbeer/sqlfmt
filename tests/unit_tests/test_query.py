@@ -1,6 +1,7 @@
 import pytest
 
-from sqlfmt.analyzer import SqlfmtMultilineError, SqlfmtParsingError
+from sqlfmt.analyzer import SqlfmtParsingError
+from sqlfmt.exception import SqlfmtMultilineError
 from sqlfmt.line import Comment, Node, SqlfmtBracketError
 from sqlfmt.mode import Mode
 from sqlfmt.token import Token, TokenType
@@ -254,7 +255,7 @@ def test_multiline_parsing(default_mode: Mode) -> None:
         ),
         Comment(
             token=Token(
-                type=TokenType.JINJA_COMMENT,
+                type=TokenType.COMMENT,
                 prefix="",
                 token=(
                     "{#\n # And this is a nice multiline jinja comment\n"

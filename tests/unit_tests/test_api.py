@@ -5,7 +5,7 @@ from typing import List, Type
 
 import pytest
 
-from sqlfmt.analyzer import SqlfmtMultilineError, SqlfmtParsingError
+from sqlfmt.analyzer import SqlfmtParsingError
 from sqlfmt.api import (
     _generate_matched_paths,
     _generate_results,
@@ -13,7 +13,7 @@ from sqlfmt.api import (
     format_string,
     run,
 )
-from sqlfmt.exception import SqlfmtError
+from sqlfmt.exception import SqlfmtError, SqlfmtMultilineError
 from sqlfmt.line import SqlfmtBracketError
 from sqlfmt.mode import Mode
 

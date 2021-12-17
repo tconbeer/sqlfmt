@@ -2,20 +2,15 @@ import re
 from dataclasses import dataclass, field
 from typing import Callable, List, Optional
 
-from sqlfmt.exception import SqlfmtError
+from sqlfmt.exception import SqlfmtError, SqlfmtMultilineError
 from sqlfmt.line import Comment, Line, Node
 from sqlfmt.query import Query
-from sqlfmt.token import Token, TokenType
 
 MAYBE_WHITESPACES: str = r"[^\S\n]*"  # any whitespace except newline
 
 
 def group(*choices: str) -> str:
     return "(" + "|".join(choices) + ")"
-
-
-class SqlfmtMultilineError(SqlfmtError):
-    pass
 
 
 class SqlfmtParsingError(SqlfmtError):
@@ -27,7 +22,7 @@ class Rule:
     name: str
     priority: int  # lower get matched first
     pattern: str
-    action: Callable
+    action: Callable[["Analyzer", str, re.Match], int]
 
     def __post_init__(self) -> None:
         self.program = re.compile(
@@ -77,48 +72,6 @@ class Analyzer:
         self.write_buffers_to_query(q)
         return q
 
-    def _handle_comment(self, token: Token) -> None:
-        is_standalone = (not bool(self.node_buffer)) or "\n" in token.token
-        comment = Comment(token=token, is_standalone=is_standalone)
-        self.comment_buffer.append(comment)
-
-    def _handle_newline(self, token: Token) -> None:
-        node = Node.from_token(token=token, previous_node=self.previous_node)
-        if self.node_buffer:
-            self.node_buffer.append(node)
-            self.line_buffer.append(
-                Line.from_nodes(
-                    source_string="",
-                    previous_node=self.previous_line_node,
-                    nodes=self.node_buffer,
-                    comments=self.comment_buffer,
-                )
-            )
-            self.node_buffer = []
-            self.comment_buffer = []
-            self.previous_line_node = node
-        elif not self.comment_buffer:
-            self.line_buffer.append(
-                Line.from_nodes(
-                    source_string="",
-                    previous_node=self.previous_line_node,
-                    nodes=[node],
-                    comments=[],
-                )
-            )
-            self.previous_line_node = node
-        else:
-            # standalone comments; don't create a line, since
-            # these need to be attached to the next line with
-            # contents
-            pass
-        self.previous_node = node
-
-    def _handle_token(self, token: Token) -> None:
-        node = Node.from_token(token=token, previous_node=self.previous_node)
-        self.node_buffer.append(node)
-        self.previous_node = node
-
     def lex(self, source_string: str) -> None:
         """
         Repeatedly match Rules to the source_string (until the source_string) is
@@ -136,43 +89,9 @@ class Analyzer:
         while pos < eof_pos:
 
             for rule in self.rules:
-
                 match = rule.program.match(source_string, pos)
                 if match:
-                    spos, epos = match.span(1)
-                    prefix = source_string[pos:spos]
-                    raw_token = source_string[spos:epos]
-                    token_type = rule.action(source_string, match)
-                    if token_type in (
-                        TokenType.JINJA_START,
-                        TokenType.COMMENT_START,
-                    ):
-                        # search for the ending token, and/or nest levels deeper
-                        epos = self.search_for_terminating_token(
-                            start_rule=rule.name,
-                            tail=source_string[epos:],
-                            pos=epos,
-                        )
-                        token = source_string[spos:epos]
-                        if token_type == TokenType.JINJA_START:
-                            token_type = TokenType.JINJA
-                        else:
-                            token_type = TokenType.COMMENT
-                    else:
-                        token = raw_token
-
-                    assert (
-                        epos > 0
-                    ), "Internal Error! Something went wrong with jinja parsing"
-
-                    new_token = Token(token_type, prefix, token, pos, epos)
-                    if token_type in (TokenType.COMMENT, TokenType.JINJA_COMMENT):
-                        self._handle_comment(new_token)
-                    elif token_type == TokenType.NEWLINE:
-                        self._handle_newline(new_token)
-                    else:
-                        self._handle_token(new_token)
-
+                    epos = rule.action(self, source_string, match)
                     pos = epos
                     break
             # nothing matched. Either whitespace or an error

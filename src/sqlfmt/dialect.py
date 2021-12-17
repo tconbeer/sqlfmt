@@ -1,10 +1,12 @@
 import re
 from abc import ABC, abstractmethod
+from functools import partial
 from typing import List
 
 from sqlfmt.analyzer import Analyzer, Rule
 from sqlfmt.exception import SqlfmtMultilineError
-from sqlfmt.token import TokenType
+from sqlfmt.line import Comment, Line, Node
+from sqlfmt.token import Token, TokenType
 
 
 def group(*choices: str) -> str:
@@ -55,20 +57,20 @@ class Polyglot(Dialect):
                 name="fmt_off",
                 priority=0,
                 pattern=group(r"(--|#) ?fmt: ?off ?") + EOL,
-                action=lambda source_string, match: TokenType.FMT_OFF,
+                action=partial(self.add_node_to_buffer, token_type=TokenType.FMT_OFF),
             ),
             Rule(
                 name="fmt_on",
                 priority=1,
                 pattern=group(r"(--|#) ?fmt: ?on ?") + EOL,
-                action=lambda source_string, match: TokenType.FMT_ON,
+                action=partial(self.add_node_to_buffer, token_type=TokenType.FMT_ON),
             ),
             # these only match simple jinja tags, without nesting or potential nesting
             Rule(
                 name="jinja_comment",
                 priority=100,
                 pattern=group(r"\{\#.*?\#\}"),
-                action=lambda source_string, match: TokenType.JINJA_COMMENT,
+                action=self.add_comment_to_buffer,
             ),
             Rule(
                 name="jinja",
@@ -77,7 +79,7 @@ class Polyglot(Dialect):
                     r"\{\{[^{}%#]*\}\}",
                     r"\{%[^{}%#]*?%\}",
                 ),
-                action=lambda source_string, match: TokenType.JINJA,
+                action=partial(self.add_node_to_buffer, token_type=TokenType.JINJA),
             ),
             # These match just the start and end of jinja tags, which allows
             # the parser to deal with nesting in a more powerful way than
@@ -86,7 +88,7 @@ class Polyglot(Dialect):
                 name="jinja_start",
                 priority=120,
                 pattern=group(r"\{[{%]"),
-                action=lambda source_string, match: TokenType.JINJA_START,
+                action=partial(self.handle_complex_tokens, rule_name="jinja_start"),
             ),
             Rule(
                 name="jinja_end",
@@ -110,7 +112,9 @@ class Polyglot(Dialect):
                     # possibly escaped backtick
                     r"`([^`\\]*(\\.[^`\\]*)*)`",
                 ),
-                action=lambda source_string, match: TokenType.QUOTED_NAME,
+                action=partial(
+                    self.add_node_to_buffer, token_type=TokenType.QUOTED_NAME
+                ),
             ),
             Rule(
                 name="comment",
@@ -120,13 +124,13 @@ class Polyglot(Dialect):
                     r"#[^\r\n]*",
                     r"/\*[^*]*\*+(?:[^/*][^*]*\*+)*/",  # simple block comment
                 ),
-                action=lambda source_string, match: TokenType.COMMENT,
+                action=self.add_comment_to_buffer,
             ),
             Rule(
                 name="comment_start",
                 priority=310,
                 pattern=group(r"/\*"),
-                action=lambda source_string, match: TokenType.COMMENT_START,
+                action=partial(self.handle_complex_tokens, rule_name="comment_start"),
             ),
             Rule(
                 name="comment_end",
@@ -138,25 +142,29 @@ class Polyglot(Dialect):
                 name="semicolon",
                 priority=400,
                 pattern=group(r";"),
-                action=lambda source_string, match: TokenType.SEMICOLON,
+                action=partial(self.add_node_to_buffer, token_type=TokenType.SEMICOLON),
             ),
             Rule(
                 name="statement_start",
                 priority=500,
                 pattern=group(r"case") + group(r"\W", r"$"),
-                action=lambda source_string, match: TokenType.STATEMENT_START,
+                action=partial(
+                    self.add_node_to_buffer, token_type=TokenType.STATEMENT_START
+                ),
             ),
             Rule(
                 name="statement_end",
                 priority=510,
                 pattern=group(r"end") + group(r"\W", r"$"),
-                action=lambda source_string, match: TokenType.STATEMENT_END,
+                action=partial(
+                    self.add_node_to_buffer, token_type=TokenType.STATEMENT_END
+                ),
             ),
             Rule(
                 name="star",
                 priority=600,
                 pattern=group(r"\*"),
-                action=lambda source_string, match: TokenType.STAR,
+                action=partial(self.add_node_to_buffer, token_type=TokenType.STAR),
             ),
             Rule(
                 name="number",
@@ -165,7 +173,7 @@ class Polyglot(Dialect):
                     r"-?\d+\.?\d*",
                     r"-?\.\d+",
                 ),
-                action=lambda source_string, match: TokenType.NUMBER,
+                action=partial(self.add_node_to_buffer, token_type=TokenType.NUMBER),
             ),
             Rule(
                 name="bracket_open",
@@ -175,7 +183,9 @@ class Polyglot(Dialect):
                     r"\(",
                     r"\{",
                 ),
-                action=lambda source_string, match: TokenType.BRACKET_OPEN,
+                action=partial(
+                    self.add_node_to_buffer, token_type=TokenType.BRACKET_OPEN
+                ),
             ),
             Rule(
                 name="bracket_close",
@@ -185,13 +195,17 @@ class Polyglot(Dialect):
                     r"\)",
                     r"\}",
                 ),
-                action=lambda source_string, match: TokenType.BRACKET_CLOSE,
+                action=partial(
+                    self.add_node_to_buffer, token_type=TokenType.BRACKET_CLOSE
+                ),
             ),
             Rule(
                 name="double_colon",
                 priority=900,
                 pattern=group(r"::"),
-                action=lambda source_string, match: TokenType.DOUBLE_COLON,
+                action=partial(
+                    self.add_node_to_buffer, token_type=TokenType.DOUBLE_COLON
+                ),
             ),
             Rule(
                 name="operator",
@@ -203,7 +217,7 @@ class Polyglot(Dialect):
                     r"[+\-*/%&@|^=<>:]=?",
                     r"~",
                 ),
-                action=lambda source_string, match: TokenType.OPERATOR,
+                action=partial(self.add_node_to_buffer, token_type=TokenType.OPERATOR),
             ),
             Rule(
                 name="word_operator",
@@ -221,19 +235,21 @@ class Polyglot(Dialect):
                     r"similar",
                 )
                 + group(r"\W", r"$"),
-                action=lambda source_string, match: TokenType.WORD_OPERATOR,
+                action=partial(
+                    self.add_node_to_buffer, token_type=TokenType.WORD_OPERATOR
+                ),
             ),
             Rule(
                 name="as",
                 priority=930,
                 pattern=group(r"as") + group(r"\W", r"$"),
-                action=lambda source_string, match: TokenType.AS,
+                action=partial(self.add_node_to_buffer, token_type=TokenType.AS),
             ),
             Rule(
                 name="on",
                 priority=940,
                 pattern=group(r"on") + group(r"\W", r"$"),
-                action=lambda source_string, match: TokenType.ON,
+                action=partial(self.add_node_to_buffer, token_type=TokenType.ON),
             ),
             Rule(
                 name="boolean_operator",
@@ -245,19 +261,21 @@ class Polyglot(Dialect):
                     r"as",
                 )
                 + group(r"\W", r"$"),
-                action=lambda source_string, match: TokenType.BOOLEAN_OPERATOR,
+                action=partial(
+                    self.add_node_to_buffer, token_type=TokenType.BOOLEAN_OPERATOR
+                ),
             ),
             Rule(
                 name="comma",
                 priority=960,
                 pattern=group(r","),
-                action=lambda source_string, match: TokenType.COMMA,
+                action=partial(self.add_node_to_buffer, token_type=TokenType.COMMA),
             ),
             Rule(
                 name="dot",
                 priority=970,
                 pattern=group(r"\."),
-                action=lambda source_string, match: TokenType.DOT,
+                action=partial(self.add_node_to_buffer, token_type=TokenType.DOT),
             ),
             Rule(
                 name="unterm_keyword",
@@ -288,26 +306,31 @@ class Polyglot(Dialect):
                     r"rows\s+between",
                 )
                 + group(r"\W", r"$"),
-                action=lambda source_string, match: TokenType.UNTERM_KEYWORD,
+                action=partial(
+                    self.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD
+                ),
             ),
             Rule(
                 name="name",
                 priority=5000,
                 pattern=group(r"\w+"),
-                action=lambda source_string, match: TokenType.NAME,
+                action=partial(self.add_node_to_buffer, token_type=TokenType.NAME),
             ),
             Rule(
                 name="newline",
                 priority=9000,
                 pattern=group(NEWLINE),
-                action=lambda source_string, match: TokenType.NEWLINE,
+                action=self.handle_newline,
             ),
         ]
 
     def get_rules(self) -> List[Rule]:
         return super().get_rules()
 
-    def raise_sqlfmt_multiline_error(self, source_string: str, match: re.Match) -> None:
+    @staticmethod
+    def raise_sqlfmt_multiline_error(
+        _: Analyzer, source_string: str, match: re.Match
+    ) -> int:
         spos, epos = match.span(1)
         raw_token = source_string[spos:epos]
         raise SqlfmtMultilineError(
@@ -315,3 +338,99 @@ class Polyglot(Dialect):
             f" {spos}, before matching opening bracket:"
             f" {source_string[spos:spos+50]}"
         )
+
+    @staticmethod
+    def add_node_to_buffer(
+        analyzer: Analyzer,
+        source_string: str,
+        match: re.Match,
+        token_type: TokenType,
+    ) -> int:
+        token = Token.from_match(source_string, match, token_type)
+        node = Node.from_token(token=token, previous_node=analyzer.previous_node)
+        analyzer.node_buffer.append(node)
+        analyzer.previous_node = node
+        return token.epos
+
+    @staticmethod
+    def add_comment_to_buffer(
+        analyzer: Analyzer,
+        source_string: str,
+        match: re.Match,
+    ) -> int:
+        token = Token.from_match(source_string, match, TokenType.COMMENT)
+        is_standalone = (not bool(analyzer.node_buffer)) or "\n" in token.token
+        comment = Comment(token=token, is_standalone=is_standalone)
+        analyzer.comment_buffer.append(comment)
+        return token.epos
+
+    @staticmethod
+    def handle_newline(
+        analyzer: Analyzer,
+        source_string: str,
+        match: re.Match,
+    ) -> int:
+        token = Token.from_match(source_string, match, TokenType.NEWLINE)
+        node = Node.from_token(token=token, previous_node=analyzer.previous_node)
+        if analyzer.node_buffer:
+            analyzer.node_buffer.append(node)
+            analyzer.line_buffer.append(
+                Line.from_nodes(
+                    source_string="",
+                    previous_node=analyzer.previous_line_node,
+                    nodes=analyzer.node_buffer,
+                    comments=analyzer.comment_buffer,
+                )
+            )
+            analyzer.node_buffer = []
+            analyzer.comment_buffer = []
+            analyzer.previous_line_node = node
+        elif not analyzer.comment_buffer:
+            analyzer.line_buffer.append(
+                Line.from_nodes(
+                    source_string="",
+                    previous_node=analyzer.previous_line_node,
+                    nodes=[node],
+                    comments=[],
+                )
+            )
+            analyzer.previous_line_node = node
+        else:
+            # standalone comments; don't create a line, since
+            # these need to be attached to the next line with
+            # contents
+            pass
+        analyzer.previous_node = node
+        return token.epos
+
+    @staticmethod
+    def handle_complex_tokens(
+        analyzer: Analyzer,
+        source_string: str,
+        match: re.Match,
+        rule_name: str,
+    ) -> int:
+        pass
+        pos, _ = match.span(0)
+        spos, epos = match.span(1)
+        prefix = source_string[pos:spos]
+        # search for the ending token, and/or nest levels deeper
+        epos = analyzer.search_for_terminating_token(
+            start_rule=rule_name,
+            tail=source_string[epos:],
+            pos=epos,
+        )
+        token = source_string[spos:epos]
+        if rule_name == "jinja_start":
+            token_type = TokenType.JINJA
+            new_token = Token(token_type, prefix, token, pos, epos)
+            node = Node.from_token(new_token, analyzer.previous_node)
+            analyzer.node_buffer.append(node)
+            analyzer.previous_node = node
+        else:
+            token_type = TokenType.COMMENT
+            new_token = Token(token_type, prefix, token, pos, epos)
+            is_standalone = (not bool(analyzer.node_buffer)) or "\n" in new_token.token
+            comment = Comment(token=new_token, is_standalone=is_standalone)
+            analyzer.comment_buffer.append(comment)
+        return epos
