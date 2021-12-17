@@ -4,7 +4,7 @@ import re
 from abc import ABC, abstractmethod
 from typing import Dict
 
-from sqlfmt.exception import SqlfmtError
+from sqlfmt.analyzer import Analyzer
 from sqlfmt.token import TokenType
 
 
@@ -18,10 +18,6 @@ MAYBE_WHITESPACES: str = r"[^\S\n]*"  # any whitespace except newline
 NEWLINE: str = r"\r?\n"
 ANY_BLANK: str = group(WHITESPACES, r"$")
 EOL = group(NEWLINE, r"$")
-
-
-class SqlfmtParsingError(SqlfmtError):
-    pass
 
 
 class Dialect(ABC):
@@ -38,13 +34,19 @@ class Dialect(ABC):
 
     def __init__(self) -> None:
         self.programs: Dict[TokenType, re.Pattern] = {
-            k: re.compile(MAYBE_WHITESPACES + v, re.IGNORECASE)
+            k: re.compile(MAYBE_WHITESPACES + v, re.IGNORECASE | re.DOTALL)
             for k, v in self.PATTERNS.items()
         }
 
     @abstractmethod
     def get_patterns(self) -> Dict[TokenType, str]:
         return self.PATTERNS
+
+    def initialize_analyzer(self, line_length: int) -> "Analyzer":
+        analyzer = Analyzer(
+            line_length=line_length, patterns=self.PATTERNS, programs=self.programs
+        )
+        return analyzer
 
 
 class Polyglot(Dialect):

@@ -1,9 +1,8 @@
 import pytest
 
-from sqlfmt.dialect import SqlfmtParsingError
+from sqlfmt.analyzer import SqlfmtMultilineError, SqlfmtParsingError
 from sqlfmt.line import Comment, Node, SqlfmtBracketError
 from sqlfmt.mode import Mode
-from sqlfmt.query import Query, SqlfmtMultilineError
 from sqlfmt.token import Token, TokenType
 from tests.util import read_test_data
 
@@ -47,7 +46,9 @@ def test_simple_query_parsing(all_output_modes: Mode) -> None:
         "unit_tests/test_query/test_simple_query_parsing.sql"
     )
 
-    q = Query.from_source(source_string=source_string, mode=all_output_modes)
+    q = all_output_modes.dialect.initialize_analyzer(
+        all_output_modes.line_length
+    ).parse_query(source_string=source_string)
 
     assert q
     assert q.source_string == source_string
@@ -121,13 +122,17 @@ def test_simple_query_parsing(all_output_modes: Mode) -> None:
 def test_parsing_error(default_mode: Mode) -> None:
     source_string = "select !"
     with pytest.raises(SqlfmtParsingError):
-        _ = Query.from_source(source_string=source_string, mode=default_mode)
+        _ = default_mode.dialect.initialize_analyzer(
+            default_mode.line_length
+        ).parse_query(source_string=source_string)
 
 
 def test_whitespace_formatting(default_mode: Mode) -> None:
     source_string = "  select 1\n    from my_table\nwhere true"
     expected_string = "select 1\nfrom my_table\nwhere true\n"
-    q = Query.from_source(source_string=source_string, mode=default_mode)
+    q = default_mode.dialect.initialize_analyzer(default_mode.line_length).parse_query(
+        source_string=source_string
+    )
     assert str(q) == expected_string
 
 
@@ -137,7 +142,9 @@ def test_case_statement_parsing(default_mode: Mode) -> None:
         "unit_tests/test_query/test_case_statement_parsing.sql"
     )
 
-    q = Query.from_source(source_string=source_string, mode=default_mode)
+    q = default_mode.dialect.initialize_analyzer(default_mode.line_length).parse_query(
+        source_string=source_string
+    )
 
     assert q
     assert q.source_string == source_string
@@ -156,7 +163,9 @@ def test_case_statement_parsing(default_mode: Mode) -> None:
 def test_cte_parsing(default_mode: Mode) -> None:
     source_string, _ = read_test_data("unit_tests/test_query/test_cte_parsing.sql")
 
-    q = Query.from_source(source_string=source_string, mode=default_mode)
+    q = default_mode.dialect.initialize_analyzer(default_mode.line_length).parse_query(
+        source_string=source_string
+    )
 
     assert q
     assert q.source_string == source_string
@@ -201,7 +210,9 @@ def test_multiline_parsing(default_mode: Mode) -> None:
         "unit_tests/test_query/test_multiline_parsing.sql"
     )
 
-    q = Query.from_source(source_string=source_string, mode=default_mode)
+    q = default_mode.dialect.initialize_analyzer(default_mode.line_length).parse_query(
+        source_string=source_string
+    )
 
     assert q
     assert q.source_string == source_string
@@ -397,7 +408,9 @@ def test_multiline_parsing(default_mode: Mode) -> None:
 
 def test_star_parsing(default_mode: Mode) -> None:
     space_star = "select * from my_table\n"
-    space_star_q = Query.from_source(source_string=space_star, mode=default_mode)
+    space_star_q = default_mode.dialect.initialize_analyzer(
+        default_mode.line_length
+    ).parse_query(source_string=space_star)
 
     assert space_star_q
     assert len(space_star_q.nodes) == 5
@@ -406,7 +419,9 @@ def test_star_parsing(default_mode: Mode) -> None:
     ), "There should be a space between select and star in select *"
 
     dot_star = "select my_table.* from my_table\n"
-    dot_star_q = Query.from_source(source_string=dot_star, mode=default_mode)
+    dot_star_q = default_mode.dialect.initialize_analyzer(
+        default_mode.line_length
+    ).parse_query(source_string=dot_star)
 
     assert dot_star_q
     assert len(dot_star_q.nodes) == 7
@@ -428,7 +443,9 @@ def test_star_parsing(default_mode: Mode) -> None:
 def test_open_paren_parsing(
     source: str, expected_prefix: str, default_mode: Mode
 ) -> None:
-    q = Query.from_source(source_string=source, mode=default_mode)
+    q = default_mode.dialect.initialize_analyzer(default_mode.line_length).parse_query(
+        source_string=source
+    )
 
     assert q
     for node in q.nodes:
@@ -442,7 +459,9 @@ def test_unterminated_multiline_token(default_mode: Mode) -> None:
     source_string = "{% \n config = {}\n"
 
     with pytest.raises(SqlfmtMultilineError) as excinfo:
-        _ = Query.from_source(source_string=source_string, mode=default_mode)
+        _ = default_mode.dialect.initialize_analyzer(
+            default_mode.line_length
+        ).parse_query(source_string=source_string)
 
     assert "Unterminated multiline" in str(excinfo.value)
 
@@ -450,6 +469,8 @@ def test_unterminated_multiline_token(default_mode: Mode) -> None:
 def test_unmatched_bracket_error(default_mode: Mode) -> None:
     source_string = "select ( end\n"
     with pytest.raises(SqlfmtBracketError) as excinfo:
-        _ = Query.from_source(source_string=source_string, mode=default_mode)
+        _ = default_mode.dialect.initialize_analyzer(
+            default_mode.line_length
+        ).parse_query(source_string=source_string)
 
     assert "Closing bracket 'end'" in str(excinfo.value)

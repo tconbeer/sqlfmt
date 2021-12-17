@@ -5,7 +5,6 @@ import pytest
 
 from sqlfmt.line import Comment, Line, Node, SqlfmtBracketError
 from sqlfmt.mode import Mode
-from sqlfmt.query import Query
 from sqlfmt.token import Token, TokenType
 from tests.util import read_test_data
 
@@ -318,7 +317,9 @@ def test_closes_bracket_from_previous_line(
         "    then true\n"
         "end\n"
     )
-    q = Query.from_source(source_string=source_string, mode=default_mode)
+    q = default_mode.dialect.initialize_analyzer(
+        line_length=default_mode.line_length
+    ).parse_query(source_string=source_string)
     result = [line.closes_bracket_from_previous_line for line in q.lines]
     expected = [False, False, False, False, False, False, True, False, True]
     assert result == expected
@@ -339,7 +340,9 @@ def test_identifier_whitespace(default_mode: Mode) -> None:
         '"my_schema"."my_table",\n'
         '"my_schema".*,\n'
     )
-    q = Query.from_source(source_string=source_string, mode=default_mode)
+    q = default_mode.dialect.initialize_analyzer(
+        line_length=default_mode.line_length
+    ).parse_query(source_string=source_string)
     parsed_string = "".join(str(line) for line in q.lines)
     assert source_string == parsed_string
 
@@ -351,7 +354,9 @@ def test_capitalization(default_mode: Mode) -> None:
     expected = (
         "select a, b, \"C\", {{ D }}, e, 'f', 'G'\n" 'from "H"."j" join i on k and l\n'
     )
-    q = Query.from_source(source_string=source_string, mode=default_mode)
+    q = default_mode.dialect.initialize_analyzer(
+        line_length=default_mode.line_length
+    ).parse_query(source_string=source_string)
     parsed_string = "".join(str(line) for line in q.lines)
     assert parsed_string == expected
 
@@ -360,7 +365,9 @@ def test_formatting_disabled(default_mode: Mode) -> None:
     source_string, _ = read_test_data(
         "unit_tests/test_line/test_formatting_disabled.sql"
     )
-    q = Query.from_source(source_string=source_string, mode=default_mode)
+    q = default_mode.dialect.initialize_analyzer(
+        line_length=default_mode.line_length
+    ).parse_query(source_string=source_string)
     expected = [
         False,  # select
         True,  # -- fmt: off
