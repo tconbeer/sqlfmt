@@ -87,7 +87,6 @@ class Analyzer:
         # append a final line if the file doesn't end with a newline
         if self.node_buffer or self.comment_buffer:
             line = Line.from_nodes(
-                source_string="",
                 previous_node=self.previous_line_node,
                 nodes=self.node_buffer,
                 comments=self.comment_buffer,

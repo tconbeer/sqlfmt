@@ -15,13 +15,13 @@ def source_string() -> str:
 
 
 @pytest.fixture
-def bare_line(source_string: str) -> Line:
-    line = Line(source_string, previous_node=None)
+def bare_line() -> Line:
+    line = Line(previous_node=None)
     return line
 
 
 @pytest.fixture
-def tokens(source_string: str) -> List[Token]:
+def tokens() -> List[Token]:
     tokens = [
         Token(type=TokenType.UNTERM_KEYWORD, prefix="", token="with", spos=0, epos=4),
         Token(type=TokenType.NAME, prefix=" ", token="abc", spos=4, epos=8),
@@ -42,7 +42,7 @@ def tokens(source_string: str) -> List[Token]:
 
 
 @pytest.fixture
-def simple_line(source_string: str, tokens: List[Token], bare_line: Line) -> Line:
+def simple_line(tokens: List[Token], bare_line: Line) -> Line:
     simple_line = deepcopy(bare_line)
     for token in tokens:
         simple_line.append_token(token)
@@ -83,7 +83,6 @@ def test_calculate_depth() -> None:
 
 
 def test_bare_line(source_string: str, bare_line: Line) -> None:
-    assert bare_line.source_string == source_string
     assert str(bare_line) == ""
 
     assert not bare_line.starts_with_unterm_keyword

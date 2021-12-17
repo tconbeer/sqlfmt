@@ -389,7 +389,6 @@ class Polyglot(Dialect):
             analyzer.node_buffer.append(nl_node)
             analyzer.line_buffer.append(
                 Line.from_nodes(
-                    source_string="",
                     previous_node=analyzer.previous_line_node,
                     nodes=analyzer.node_buffer,
                     comments=analyzer.comment_buffer,

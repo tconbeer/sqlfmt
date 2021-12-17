@@ -402,7 +402,6 @@ class Node:
 
 @dataclass
 class Line:
-    source_string: str
     previous_node: Optional[Node]  # last node of prior line, if any
     nodes: List[Node] = field(default_factory=list)
     comments: List[Comment] = field(default_factory=list)
@@ -519,7 +518,6 @@ class Line:
     @classmethod
     def from_nodes(
         cls,
-        source_string: str,
         previous_node: Optional[Node],
         nodes: List[Node],
         comments: List[Comment],
@@ -531,7 +529,6 @@ class Line:
         if nodes:
             nodes[0].previous_node = previous_node
             line = Line(
-                source_string=source_string,
                 previous_node=previous_node,
                 nodes=nodes,
                 comments=comments,
@@ -545,7 +542,6 @@ class Line:
             )
         else:
             line = Line(
-                source_string=source_string,
                 previous_node=previous_node,
                 nodes=nodes,
                 comments=comments,
