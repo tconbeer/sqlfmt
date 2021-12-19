@@ -40,7 +40,6 @@ class Rule:
     action: Callable[["Analyzer", str, re.Match], int]
 
     def __post_init__(self) -> None:
-        MAYBE_WHITESPACES = r"[^\S\n]*"  # any whitespace except newline
         self.program = re.compile(
             MAYBE_WHITESPACES + self.pattern, re.IGNORECASE | re.DOTALL
         )
