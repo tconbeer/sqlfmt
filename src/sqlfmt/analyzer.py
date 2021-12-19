@@ -7,6 +7,13 @@ from sqlfmt.line import Comment, Line, Node
 from sqlfmt.query import Query
 
 
+def group(*choices: str) -> str:
+    return "(" + "|".join(choices) + ")"
+
+
+MAYBE_WHITESPACES: str = r"[^\S\n]*"  # any whitespace except newline
+
+
 class SqlfmtParsingError(SqlfmtError):
     pass
 
@@ -109,7 +116,7 @@ class Analyzer:
 
     def lex(self, source_string: str) -> None:
         """
-        Repeatedly match Rules to the source_string (until the source_string) is
+        Repeatedly match Rules to the source_string (until the source_string is
         exhausted) and apply the matched action.
 
         Mutates the analyzer's buffers
@@ -122,12 +129,10 @@ class Analyzer:
                 break
 
         while pos < eof_pos:
-
             for rule in self.rules:
                 match = rule.program.match(source_string, pos)
                 if match:
-                    epos = rule.action(self, source_string, match)
-                    pos = epos
+                    pos = rule.action(self, source_string, match)
                     break
             # nothing matched. Either whitespace or an error
             else:
