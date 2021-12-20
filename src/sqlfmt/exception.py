@@ -11,3 +11,11 @@ class SqlfmtError(ValueError):
 
 class SqlfmtMultilineError(SqlfmtError):
     pass
+
+
+class SqlfmtBracketError(SqlfmtError):
+    pass
+
+
+class InlineCommentError(SqlfmtError):
+    pass

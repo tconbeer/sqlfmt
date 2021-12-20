@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixes
+
+-   no longer fails with a parsing error if "end" is used as a name in the query
+
 ### Under the Hood
 
 -   refactors lexing using typical callable architecture for more flexibility

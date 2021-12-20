@@ -1,8 +1,8 @@
 import pytest
 
 from sqlfmt.analyzer import Analyzer, SqlfmtParsingError
-from sqlfmt.exception import SqlfmtMultilineError
-from sqlfmt.line import Comment, SqlfmtBracketError
+from sqlfmt.exception import SqlfmtBracketError, SqlfmtMultilineError
+from sqlfmt.line import Comment
 from sqlfmt.mode import Mode
 from sqlfmt.token import Token, TokenType
 from tests.util import read_test_data
@@ -410,8 +410,23 @@ def test_unterminated_multiline_token(default_analyzer: Analyzer) -> None:
 
 
 def test_unmatched_bracket_error(default_analyzer: Analyzer) -> None:
-    source_string = "select ( end\n"
+    source_string = "select case )\n"
     with pytest.raises(SqlfmtBracketError) as excinfo:
         _ = default_analyzer.parse_query(source_string=source_string)
 
-    assert "Closing bracket 'end'" in str(excinfo.value)
+    assert "Closing bracket ')'" in str(excinfo.value)
+
+
+@pytest.mark.parametrize(
+    "source_string",
+    [
+        "select ( end\n",
+        "select end\n",
+        "end\n",
+    ],
+)
+def test_no_raise_bracket_error_on_end_name(
+    default_analyzer: Analyzer, source_string: str
+) -> None:
+    q = default_analyzer.parse_query(source_string=source_string)
+    assert "end" in str(q)

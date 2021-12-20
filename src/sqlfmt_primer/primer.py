@@ -31,9 +31,9 @@ def get_projects() -> List[SQLProject]:
             name="gitlab",
             git_url="https://gitlab.com/gitlab-data/analytics.git",
             git_ref="7161e509b62f53344f19de80d40db2bdba190806",  # Nov 12, 2021
-            expected_changed=1805,
+            expected_changed=1807,
             expected_unchanged=57,
-            expected_errored=2,  # unquoted field named end
+            expected_errored=0,
             sub_directory=Path("transform/snowflake-dbt/models"),
         ),
         SQLProject(
