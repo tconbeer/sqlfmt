@@ -150,7 +150,9 @@ class Polyglot(Dialect):
                 priority=510,
                 pattern=group(r"end") + group(r"\W", r"$"),
                 action=partial(
-                    actions.add_node_to_buffer, token_type=TokenType.STATEMENT_END
+                    actions.safe_add_node_to_buffer,
+                    token_type=TokenType.STATEMENT_END,
+                    fallback_token_type=TokenType.NAME,
                 ),
             ),
             Rule(

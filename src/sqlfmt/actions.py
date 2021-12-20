@@ -1,7 +1,7 @@
 import re
 
 from sqlfmt.analyzer import MAYBE_WHITESPACES, Analyzer, Rule, group
-from sqlfmt.exception import SqlfmtMultilineError
+from sqlfmt.exception import SqlfmtBracketError, SqlfmtMultilineError
 from sqlfmt.line import Comment, Line, Node
 from sqlfmt.token import Token, TokenType
 
@@ -32,6 +32,29 @@ def add_node_to_buffer(
     node = Node.from_token(token=token, previous_node=analyzer.previous_node)
     analyzer.node_buffer.append(node)
     return token.epos
+
+
+def safe_add_node_to_buffer(
+    analyzer: Analyzer,
+    source_string: str,
+    match: re.Match,
+    token_type: TokenType,
+    fallback_token_type: TokenType,
+) -> int:
+    """
+    Try to create a token of token_type from the match; if that fails
+    with a SqlfmtBracketError, create a token of fallback_token_type.
+    Then create a Node from that token and append it to the Analyzer's buffer
+    """
+    try:
+        token = Token.from_match(source_string, match, token_type)
+        node = Node.from_token(token=token, previous_node=analyzer.previous_node)
+    except SqlfmtBracketError:
+        token = Token.from_match(source_string, match, fallback_token_type)
+        node = Node.from_token(token=token, previous_node=analyzer.previous_node)
+    finally:
+        analyzer.node_buffer.append(node)
+        return token.epos
 
 
 def add_comment_to_buffer(

@@ -3,7 +3,8 @@ from typing import List
 
 import pytest
 
-from sqlfmt.line import Comment, Line, Node, SqlfmtBracketError
+from sqlfmt.exception import SqlfmtBracketError
+from sqlfmt.line import Comment, Line, Node
 from sqlfmt.mode import Mode
 from sqlfmt.token import Token, TokenType
 from tests.util import read_test_data

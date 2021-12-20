@@ -2,17 +2,8 @@ import re
 from dataclasses import dataclass, field
 from typing import Iterator, List, Optional, Tuple
 
-from sqlfmt.exception import SqlfmtError
+from sqlfmt.exception import InlineCommentError, SqlfmtBracketError
 from sqlfmt.token import Token, TokenType, split_after
-
-
-class SqlfmtBracketError(SqlfmtError):
-    pass
-
-
-class InlineCommentError(SqlfmtError):
-    pass
-
 
 COMMENT_PROGRAM = re.compile(r"(--|#|/\*|\{#-?)([^\S\n]*)")
 

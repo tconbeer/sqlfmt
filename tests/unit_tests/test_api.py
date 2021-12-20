@@ -13,8 +13,7 @@ from sqlfmt.api import (
     format_string,
     run,
 )
-from sqlfmt.exception import SqlfmtError, SqlfmtMultilineError
-from sqlfmt.line import SqlfmtBracketError
+from sqlfmt.exception import SqlfmtBracketError, SqlfmtError, SqlfmtMultilineError
 from sqlfmt.mode import Mode
 
 

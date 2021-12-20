@@ -4,7 +4,7 @@ import pytest
 
 from sqlfmt import actions
 from sqlfmt.analyzer import Analyzer
-from sqlfmt.exception import SqlfmtMultilineError
+from sqlfmt.exception import SqlfmtBracketError, SqlfmtMultilineError
 from sqlfmt.token import TokenType
 
 
@@ -47,6 +47,30 @@ def test_add_node_to_buffer(default_analyzer: Analyzer) -> None:
     assert node.token.type == TokenType.NAME
 
     assert pos == 8
+
+
+def test_safe_add_node_to_buffer(default_analyzer: Analyzer) -> None:
+    source_string = "end\n"
+    match = re.match(r"(\w+)", source_string)
+    assert match
+    with pytest.raises(SqlfmtBracketError):
+        actions.add_node_to_buffer(
+            default_analyzer, source_string, match, TokenType.STATEMENT_END
+        )
+    assert default_analyzer.node_buffer == []
+    # does not raise
+    pos = actions.safe_add_node_to_buffer(
+        default_analyzer, source_string, match, TokenType.STATEMENT_END, TokenType.NAME
+    )
+
+    assert default_analyzer.comment_buffer == []
+    assert default_analyzer.line_buffer == []
+    assert len(default_analyzer.node_buffer) == 1
+
+    node = default_analyzer.node_buffer[0]
+    assert node.token.type == TokenType.NAME
+
+    assert pos == 3
 
 
 def test_add_comment_to_buffer(default_analyzer: Analyzer) -> None:
