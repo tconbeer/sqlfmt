@@ -74,7 +74,6 @@ class LineSplitter:
         assert head[0] is not None, "Cannot split at start of line!"
 
         head_line = Line.from_nodes(
-            source_string=line.source_string,
             previous_node=line.previous_node,
             nodes=head,
             comments=line.comments,
@@ -83,7 +82,6 @@ class LineSplitter:
         yield from self.maybe_split(head_line)
 
         tail_line = Line.from_nodes(
-            source_string=line.source_string,
             previous_node=head_line.nodes[-1],
             nodes=tail,
             comments=[],

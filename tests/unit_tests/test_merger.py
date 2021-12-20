@@ -2,7 +2,6 @@ import pytest
 
 from sqlfmt.merger import CannotMergeException, LineMerger
 from sqlfmt.mode import Mode
-from sqlfmt.parser import Query
 from tests.util import read_test_data
 
 
@@ -33,7 +32,9 @@ def test_create_merged_line(merger: LineMerger) -> None:
 
         delta,
     """
-    raw_query = Query.from_source(source_string, merger.mode)
+    raw_query = merger.mode.dialect.initialize_analyzer(
+        merger.mode.line_length
+    ).parse_query(source_string)
 
     expected = "select able, baker,\n"
     actual = merger.create_merged_line(raw_query.lines[0:4])
@@ -55,7 +56,9 @@ def test_basic_merge(merger: LineMerger) -> None:
             ''
         ) as c,
     """
-    raw_query = Query.from_source(source_string, merger.mode)
+    raw_query = merger.mode.dialect.initialize_analyzer(
+        merger.mode.line_length
+    ).parse_query(source_string)
     merged_lines = merger.maybe_merge_lines(raw_query.lines)
     assert len(merged_lines) == 1
 
@@ -78,7 +81,9 @@ def test_nested_merge(merger: LineMerger) -> None:
             ''
         ) as last_name,
     """
-    raw_query = Query.from_source(source_string, merger.mode)
+    raw_query = merger.mode.dialect.initialize_analyzer(
+        merger.mode.line_length
+    ).parse_query(source_string)
     merged_lines = merger.maybe_merge_lines(raw_query.lines)
 
     expected_string = (
@@ -113,7 +118,9 @@ def test_incomplete_merge(merger: LineMerger) -> None:
     where
         some_condition is true
     """
-    raw_query = Query.from_source(source_string, merger.mode)
+    raw_query = merger.mode.dialect.initialize_analyzer(
+        merger.mode.line_length
+    ).parse_query(source_string)
     merged_lines = merger.maybe_merge_lines(raw_query.lines)
 
     result = list(map(str, merged_lines))
@@ -142,7 +149,9 @@ def test_cte_merge(merger: LineMerger) -> None:
         )
     select * from my_cte
     """
-    raw_query = Query.from_source(source_string, merger.mode)
+    raw_query = merger.mode.dialect.initialize_analyzer(
+        merger.mode.line_length
+    ).parse_query(source_string)
     merged_lines = merger.maybe_merge_lines(raw_query.lines)
 
     result = list(map(str, merged_lines))
@@ -165,7 +174,9 @@ def test_case_then_merge(merger: LineMerger) -> None:
             something_else_entirely
     end
     """
-    raw_query = Query.from_source(source_string, merger.mode)
+    raw_query = merger.mode.dialect.initialize_analyzer(
+        merger.mode.line_length
+    ).parse_query(source_string)
     merged_lines = merger.maybe_merge_lines(raw_query.lines)
 
     result = list(map(str, merged_lines))
@@ -197,7 +208,9 @@ def test_merge_count_window_function(merger: LineMerger) -> None:
         "        date_trunc('year', performed_at)\n"
         ") as d,\n"
     )
-    raw_query = Query.from_source(source_string, merger.mode)
+    raw_query = merger.mode.dialect.initialize_analyzer(
+        merger.mode.line_length
+    ).parse_query(source_string)
     merged_lines = merger.maybe_merge_lines(raw_query.lines)
 
     result = list(map(str, merged_lines))
@@ -215,7 +228,9 @@ def test_split_into_segments(merger: LineMerger) -> None:
     source_string, _ = read_test_data(
         "unit_tests/test_merger/test_split_into_segments.sql"
     )
-    q = Query.from_source(source_string, merger.mode)
+    q = merger.mode.dialect.initialize_analyzer(merger.mode.line_length).parse_query(
+        source_string
+    )
 
     top_level_segments = merger._split_into_segments(q.lines)
 
@@ -239,7 +254,9 @@ def test_split_into_segments(merger: LineMerger) -> None:
 
 def test_merge_single_line(merger: LineMerger) -> None:
     source_string = "select 1\n"
-    q = Query.from_source(source_string, merger.mode)
+    q = merger.mode.dialect.initialize_analyzer(merger.mode.line_length).parse_query(
+        source_string
+    )
     merged_line = merger.create_merged_line(q.lines)
     assert merged_line == q.lines[0]
 
@@ -248,7 +265,9 @@ def test_merge_lines_split_by_operators(merger: LineMerger) -> None:
     source_string, expected_string = read_test_data(
         "unit_tests/test_merger/test_merge_lines_split_by_operators.sql"
     )
-    raw_query = Query.from_source(source_string, merger.mode)
+    raw_query = merger.mode.dialect.initialize_analyzer(
+        merger.mode.line_length
+    ).parse_query(source_string)
     merged_lines = merger.maybe_merge_lines(raw_query.lines)
     result_string = "".join([str(line) for line in merged_lines])
     assert result_string == expected_string
@@ -258,7 +277,9 @@ def test_merge_chained_parens(merger: LineMerger) -> None:
     source_string, expected_string = read_test_data(
         "unit_tests/test_merger/test_merge_chained_parens.sql"
     )
-    raw_query = Query.from_source(source_string, merger.mode)
+    raw_query = merger.mode.dialect.initialize_analyzer(
+        merger.mode.line_length
+    ).parse_query(source_string)
     merged_lines = merger.maybe_merge_lines(raw_query.lines)
     result_string = "".join([str(line) for line in merged_lines])
     assert result_string == expected_string
@@ -268,7 +289,9 @@ def test_merge_operators_before_children(merger: LineMerger) -> None:
     source_string, expected_string = read_test_data(
         "unit_tests/test_merger/test_merge_operators_before_children.sql"
     )
-    raw_query = Query.from_source(source_string, merger.mode)
+    raw_query = merger.mode.dialect.initialize_analyzer(
+        merger.mode.line_length
+    ).parse_query(source_string)
     merged_lines = merger.maybe_merge_lines(raw_query.lines)
     result_string = "".join([str(line) for line in merged_lines])
     assert result_string == expected_string

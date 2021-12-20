@@ -6,6 +6,7 @@ from typing import Any
 import pytest
 from click.testing import CliRunner
 
+from sqlfmt.analyzer import Analyzer
 from sqlfmt.mode import Mode
 from tests.util import copy_test_data_to_tmp
 
@@ -67,6 +68,11 @@ def no_color_diff_mode(unset_no_color_env: None) -> Mode:
 @pytest.fixture(params=[(False, False), (False, True), (True, False), (True, True)])
 def all_output_modes(request: Any, unset_no_color_env: None) -> Mode:
     return Mode(check=request.param[0], diff=request.param[1])
+
+
+@pytest.fixture
+def default_analyzer(default_mode: Mode) -> Analyzer:
+    return default_mode.dialect.initialize_analyzer(default_mode.line_length)
 
 
 @pytest.fixture

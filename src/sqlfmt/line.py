@@ -402,7 +402,6 @@ class Node:
 
 @dataclass
 class Line:
-    source_string: str
     previous_node: Optional[Node]  # last node of prior line, if any
     nodes: List[Node] = field(default_factory=list)
     comments: List[Comment] = field(default_factory=list)
@@ -519,7 +518,6 @@ class Line:
     @classmethod
     def from_nodes(
         cls,
-        source_string: str,
         previous_node: Optional[Node],
         nodes: List[Node],
         comments: List[Comment],
@@ -528,20 +526,32 @@ class Line:
         Creates and returns a new line from a list of Nodes. Useful for line
         splitting and merging
         """
-        nodes[0].previous_node = previous_node
-        line = Line(
-            source_string=source_string,
-            previous_node=previous_node,
-            nodes=nodes,
-            comments=comments,
-            depth=nodes[0].depth,
-            change_in_depth=(
-                nodes[-1].depth - nodes[0].depth + nodes[-1].change_in_depth
-            ),
-            open_brackets=nodes[0].open_brackets,
-            formatting_disabled=nodes[0].formatting_disabled
-            or nodes[-1].formatting_disabled,
-        )
+        if nodes:
+            nodes[0].previous_node = previous_node
+            line = Line(
+                previous_node=previous_node,
+                nodes=nodes,
+                comments=comments,
+                depth=nodes[0].depth,
+                change_in_depth=(
+                    nodes[-1].depth - nodes[0].depth + nodes[-1].change_in_depth
+                ),
+                open_brackets=nodes[0].open_brackets,
+                formatting_disabled=nodes[0].formatting_disabled
+                or nodes[-1].formatting_disabled,
+            )
+        else:
+            line = Line(
+                previous_node=previous_node,
+                nodes=nodes,
+                comments=comments,
+                depth=previous_node.depth if previous_node else 0,
+                change_in_depth=0,
+                open_brackets=previous_node.open_brackets if previous_node else [],
+                formatting_disabled=previous_node.formatting_disabled
+                if previous_node
+                else False,
+            )
 
         return line
 

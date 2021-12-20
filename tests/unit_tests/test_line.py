@@ -5,7 +5,6 @@ import pytest
 
 from sqlfmt.line import Comment, Line, Node, SqlfmtBracketError
 from sqlfmt.mode import Mode
-from sqlfmt.parser import Query
 from sqlfmt.token import Token, TokenType
 from tests.util import read_test_data
 
@@ -16,13 +15,13 @@ def source_string() -> str:
 
 
 @pytest.fixture
-def bare_line(source_string: str) -> Line:
-    line = Line(source_string, previous_node=None)
+def bare_line() -> Line:
+    line = Line(previous_node=None)
     return line
 
 
 @pytest.fixture
-def tokens(source_string: str) -> List[Token]:
+def tokens() -> List[Token]:
     tokens = [
         Token(type=TokenType.UNTERM_KEYWORD, prefix="", token="with", spos=0, epos=4),
         Token(type=TokenType.NAME, prefix=" ", token="abc", spos=4, epos=8),
@@ -43,15 +42,47 @@ def tokens(source_string: str) -> List[Token]:
 
 
 @pytest.fixture
-def simple_line(source_string: str, tokens: List[Token], bare_line: Line) -> Line:
+def simple_line(tokens: List[Token], bare_line: Line) -> Line:
     simple_line = deepcopy(bare_line)
     for token in tokens:
         simple_line.append_token(token)
     return simple_line
 
 
+def test_calculate_depth() -> None:
+    t = Token(
+        type=TokenType.UNTERM_KEYWORD,
+        prefix="",
+        token="select",
+        spos=0,
+        epos=6,
+    )
+    res = Node.calculate_depth(t, inherited_depth=0, open_brackets=[])
+
+    assert res == (0, 1, [t])
+
+    t = Token(
+        type=TokenType.BRACKET_CLOSE,
+        prefix="",
+        token=")",
+        spos=0,
+        epos=0,
+    )
+
+    b = Token(
+        type=TokenType.BRACKET_OPEN,
+        prefix="    ",
+        token="(",
+        spos=0,
+        epos=0,
+    )
+
+    res = Node.calculate_depth(t, inherited_depth=2, open_brackets=[b])
+
+    assert res == (1, 0, [])
+
+
 def test_bare_line(source_string: str, bare_line: Line) -> None:
-    assert bare_line.source_string == source_string
     assert str(bare_line) == ""
 
     assert not bare_line.starts_with_unterm_keyword
@@ -318,7 +349,9 @@ def test_closes_bracket_from_previous_line(
         "    then true\n"
         "end\n"
     )
-    q = Query.from_source(source_string=source_string, mode=default_mode)
+    q = default_mode.dialect.initialize_analyzer(
+        line_length=default_mode.line_length
+    ).parse_query(source_string=source_string)
     result = [line.closes_bracket_from_previous_line for line in q.lines]
     expected = [False, False, False, False, False, False, True, False, True]
     assert result == expected
@@ -339,7 +372,9 @@ def test_identifier_whitespace(default_mode: Mode) -> None:
         '"my_schema"."my_table",\n'
         '"my_schema".*,\n'
     )
-    q = Query.from_source(source_string=source_string, mode=default_mode)
+    q = default_mode.dialect.initialize_analyzer(
+        line_length=default_mode.line_length
+    ).parse_query(source_string=source_string)
     parsed_string = "".join(str(line) for line in q.lines)
     assert source_string == parsed_string
 
@@ -351,7 +386,9 @@ def test_capitalization(default_mode: Mode) -> None:
     expected = (
         "select a, b, \"C\", {{ D }}, e, 'f', 'G'\n" 'from "H"."j" join i on k and l\n'
     )
-    q = Query.from_source(source_string=source_string, mode=default_mode)
+    q = default_mode.dialect.initialize_analyzer(
+        line_length=default_mode.line_length
+    ).parse_query(source_string=source_string)
     parsed_string = "".join(str(line) for line in q.lines)
     assert parsed_string == expected
 
@@ -360,7 +397,9 @@ def test_formatting_disabled(default_mode: Mode) -> None:
     source_string, _ = read_test_data(
         "unit_tests/test_line/test_formatting_disabled.sql"
     )
-    q = Query.from_source(source_string=source_string, mode=default_mode)
+    q = default_mode.dialect.initialize_analyzer(
+        line_length=default_mode.line_length
+    ).parse_query(source_string=source_string)
     expected = [
         False,  # select
         True,  # -- fmt: off

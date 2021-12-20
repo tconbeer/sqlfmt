@@ -34,7 +34,7 @@ def read_test_data(relpath: Union[Path, str]) -> Tuple[str, str]:
     if source_query and not formatted_query:
         formatted_query = source_query[:]
 
-    return "".join(source_query).strip() + "\n", "".join(formatted_query).strip() + "\n"
+    return "".join(source_query).strip() + "\n", "".join(formatted_query)
 
 
 def _safe_create_results_dir() -> Path:

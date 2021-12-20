@@ -1,3 +1,4 @@
+import re
 from enum import Enum, auto
 from typing import NamedTuple
 
@@ -72,3 +73,16 @@ class Token(NamedTuple):
             f"spos={self.spos}, epos={self.epos}"
             f")"
         )
+
+    @classmethod
+    def from_match(
+        cls,
+        source_string: str,
+        match: re.Match,
+        token_type: TokenType,
+    ) -> "Token":
+        pos, _ = match.span(0)
+        spos, epos = match.span(1)
+        prefix = source_string[pos:spos]
+        token_text = source_string[spos:epos]
+        return Token(token_type, prefix, token_text, pos, epos)

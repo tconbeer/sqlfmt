@@ -17,3 +17,4 @@ from
     my_really_long_data_source
 where
     true
+    

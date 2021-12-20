@@ -1,50 +1,33 @@
-# inspired by lib2to3/pgen tokenizer, Copyright(c) Python Software Foundation
-
-import re
 from abc import ABC, abstractmethod
-from typing import Dict
+from functools import partial
+from typing import List
 
-from sqlfmt.exception import SqlfmtError
+from sqlfmt.analyzer import Analyzer, Rule, group
 from sqlfmt.token import TokenType
 
-
-def group(*choices: str) -> str:
-    return "(" + "|".join(choices) + ")"
-
-
-WHITESPACE: str = r"\s"
-WHITESPACES: str = WHITESPACE + "+"
-MAYBE_WHITESPACES: str = r"[^\S\n]*"  # any whitespace except newline
 NEWLINE: str = r"\r?\n"
-ANY_BLANK: str = group(WHITESPACES, r"$")
 EOL = group(NEWLINE, r"$")
-
-
-class SqlfmtParsingError(SqlfmtError):
-    pass
 
 
 class Dialect(ABC):
     """
     Abstract class for a SQL dialect.
 
-    Each dialect should override the PATTERNS dict to define their own grammar.
-    Each value in the PATTERNS dict must have a regex group (surrounded by
-    parentheses) that matches the token; if the token may be delimited by
-    whitespace, that should be defined outside the first group.
+    Each dialect should override the RULES list to define their own grammar.
     """
 
-    PATTERNS: Dict[TokenType, str] = {}
-
-    def __init__(self) -> None:
-        self.programs: Dict[TokenType, re.Pattern] = {
-            k: re.compile(MAYBE_WHITESPACES + v, re.IGNORECASE)
-            for k, v in self.PATTERNS.items()
-        }
+    RULES: List[Rule]
 
     @abstractmethod
-    def get_patterns(self) -> Dict[TokenType, str]:
-        return self.PATTERNS
+    def get_rules(self) -> List[Rule]:
+        return sorted(self.RULES, key=lambda rule: rule.priority)
+
+    def initialize_analyzer(self, line_length: int) -> Analyzer:
+        analyzer = Analyzer(
+            line_length=line_length,
+            rules=self.get_rules(),
+        )
+        return analyzer
 
 
 class Polyglot(Dialect):
@@ -53,116 +36,288 @@ class Polyglot(Dialect):
     Postgres, MySQL, BigQuery Standard SQL, Snowflake SQL, SparkSQL.
     """
 
-    PATTERNS: Dict[TokenType, str] = {
-        TokenType.FMT_OFF: group(r"(--|#) ?fmt: ?off ?") + EOL,
-        TokenType.FMT_ON: group(r"(--|#) ?fmt: ?on ?") + EOL,
-        # these only match simple jinja tags, without nesting or potential nesting
-        TokenType.JINJA_COMMENT: group(
-            r"\{\#.*?\#\}",
-        ),
-        TokenType.JINJA: group(
-            r"\{\{[^{}%#]*\}\}",
-            r"\{%[^{}%#]*?%\}",
-        ),
-        # These match just the start and end of jinja tags, which allows
-        # the parser to deal with nesting in a more powerful way than
-        # regex allows
-        TokenType.JINJA_START: group(r"\{[{%]"),
-        TokenType.JINJA_END: group(r"[}%]\}"),
-        TokenType.QUOTED_NAME: group(
-            r"(rb?|b|br)?'''.*?'''",  # tripled single quotes (optionally raw/bytes)
-            r'(rb?|b|br)?""".*?"""',  # tripled double quotes
-            # possibly escaped double quotes
-            r'(rb?|b|br|u&)?"([^"\\]*(\\.[^"\\]*|""[^"\\]*)*)"',
-            # possibly escaped single quotes
-            r"(rb?|b|br|u&|x)?'([^'\\]*(\\.[^'\\]*|''[^'\\]*)*)'",
-            r"\$\w*\$[^$]*?\$\w*\$",  # pg dollar-delimited strings
-            # possibly escaped backtick
-            r"`([^`\\]*(\\.[^`\\]*)*)`",
-        ),
-        TokenType.COMMENT: group(
-            r"--[^\r\n]*",
-            r"#[^\r\n]*",
-            r"/\*[^*]*\*+(?:[^/*][^*]*\*+)*/",  # simple block comment
-        ),
-        TokenType.COMMENT_START: group(r"/\*"),
-        TokenType.COMMENT_END: group(r"\*/"),
-        TokenType.SEMICOLON: group(r";"),
-        TokenType.STATEMENT_START: group(r"case") + group(r"\W", r"$"),
-        TokenType.STATEMENT_END: group(r"end") + group(r"\W", r"$"),
-        TokenType.STAR: group(r"\*"),
-        TokenType.NUMBER: group(
-            r"-?\d+\.?\d*",
-            r"-?\.\d+",
-        ),
-        TokenType.BRACKET_OPEN: group(
-            r"\[",
-            r"\(",
-            r"\{",
-        ),
-        TokenType.BRACKET_CLOSE: group(
-            r"\]",
-            r"\)",
-            r"\}",
-        ),
-        TokenType.DOUBLE_COLON: group(r"::"),
-        TokenType.OPERATOR: group(
-            r"<>",
-            r"!=",
-            r"\|\|",
-            r"[+\-*/%&@|^=<>:]=?",
-            r"~",
-        ),
-        TokenType.WORD_OPERATOR: group(
-            r"between",
-            r"ilike",
-            r"in",
-            r"is",
-            r"isnull",
-            r"like",
-            r"not",
-            r"notnull",
-            r"over",
-            r"similar",
-        )
-        + group(r"\W", r"$"),
-        TokenType.AS: group(r"as") + group(r"\W", r"$"),
-        TokenType.ON: group(r"on") + group(r"\W", r"$"),
-        TokenType.BOOLEAN_OPERATOR: group(
-            r"and",
-            r"or",
-            r"on",
-            r"as",
-        )
-        + group(r"\W", r"$"),
-        TokenType.COMMA: group(r","),
-        TokenType.DOT: group(r"\."),
-        TokenType.UNTERM_KEYWORD: group(
-            r"with(\s+recursive)?",
-            r"select(\s+(as\s+struct|as\s+value))?(\s+(all|top\s+\d+|distinct))?",
-            r"from",
-            r"(natural\s+)?((inner|((left|right|full)(\s+outer)?))\s+)?join",
-            r"where",
-            r"group\s+by",
-            r"having",
-            r"qualify",
-            r"window",
-            r"(union|intersect|except)(\s+all|distinct)?",
-            r"order\s+by",
-            r"limit",
-            r"offset",
-            r"fetch\s+(first|next)",
-            r"for\s+(update|no\s+key\s+update|share|key\s+share)",
-            r"when",
-            r"then",
-            r"else",
-            r"partition\s+by",
-            r"rows\s+between",
-        )
-        + group(r"\W", r"$"),
-        TokenType.NAME: group(r"\w+"),
-        TokenType.NEWLINE: group(NEWLINE),
-    }
+    def __init__(self) -> None:
+        from sqlfmt import actions
 
-    def get_patterns(self) -> Dict[TokenType, str]:
-        return super().get_patterns()
+        self.RULES: List[Rule] = [
+            Rule(
+                name="fmt_off",
+                priority=0,
+                pattern=group(r"(--|#) ?fmt: ?off ?") + EOL,
+                action=partial(
+                    actions.add_node_to_buffer, token_type=TokenType.FMT_OFF
+                ),
+            ),
+            Rule(
+                name="fmt_on",
+                priority=1,
+                pattern=group(r"(--|#) ?fmt: ?on ?") + EOL,
+                action=partial(actions.add_node_to_buffer, token_type=TokenType.FMT_ON),
+            ),
+            # these only match simple jinja tags, without nesting or potential nesting
+            Rule(
+                name="jinja_comment",
+                priority=100,
+                pattern=group(r"\{\#.*?\#\}"),
+                action=actions.add_comment_to_buffer,
+            ),
+            Rule(
+                name="jinja",
+                priority=110,
+                pattern=group(
+                    r"\{\{[^{}%#]*\}\}",
+                    r"\{%[^{}%#]*?%\}",
+                ),
+                action=partial(actions.add_node_to_buffer, token_type=TokenType.JINJA),
+            ),
+            # These match just the start and end of jinja tags, which allows
+            # the parser to deal with nesting in a more powerful way than
+            # regex allows
+            Rule(
+                name="jinja_start",
+                priority=120,
+                pattern=group(r"\{[{%]"),
+                action=partial(actions.handle_complex_tokens, rule_name="jinja_start"),
+            ),
+            Rule(
+                name="jinja_end",
+                priority=130,
+                pattern=group(r"[}%]\}"),
+                action=actions.raise_sqlfmt_multiline_error,
+            ),
+            Rule(
+                name="quoted_name",
+                priority=200,
+                pattern=group(
+                    # tripled single quotes (optionally raw/bytes)
+                    r"(rb?|b|br)?'''.*?'''",
+                    # tripled double quotes
+                    r'(rb?|b|br)?""".*?"""',
+                    # possibly escaped double quotes
+                    r'(rb?|b|br|u&)?"([^"\\]*(\\.[^"\\]*|""[^"\\]*)*)"',
+                    # possibly escaped single quotes
+                    r"(rb?|b|br|u&|x)?'([^'\\]*(\\.[^'\\]*|''[^'\\]*)*)'",
+                    r"\$\w*\$[^$]*?\$\w*\$",  # pg dollar-delimited strings
+                    # possibly escaped backtick
+                    r"`([^`\\]*(\\.[^`\\]*)*)`",
+                ),
+                action=partial(
+                    actions.add_node_to_buffer, token_type=TokenType.QUOTED_NAME
+                ),
+            ),
+            Rule(
+                name="comment",
+                priority=300,
+                pattern=group(
+                    r"--[^\r\n]*",
+                    r"#[^\r\n]*",
+                    r"/\*[^*]*\*+(?:[^/*][^*]*\*+)*/",  # simple block comment
+                ),
+                action=actions.add_comment_to_buffer,
+            ),
+            Rule(
+                name="comment_start",
+                priority=310,
+                pattern=group(r"/\*"),
+                action=partial(
+                    actions.handle_complex_tokens, rule_name="comment_start"
+                ),
+            ),
+            Rule(
+                name="comment_end",
+                priority=320,
+                pattern=group(r"\*/"),
+                action=actions.raise_sqlfmt_multiline_error,
+            ),
+            Rule(
+                name="semicolon",
+                priority=400,
+                pattern=group(r";"),
+                action=partial(
+                    actions.add_node_to_buffer, token_type=TokenType.SEMICOLON
+                ),
+            ),
+            Rule(
+                name="statement_start",
+                priority=500,
+                pattern=group(r"case") + group(r"\W", r"$"),
+                action=partial(
+                    actions.add_node_to_buffer, token_type=TokenType.STATEMENT_START
+                ),
+            ),
+            Rule(
+                name="statement_end",
+                priority=510,
+                pattern=group(r"end") + group(r"\W", r"$"),
+                action=partial(
+                    actions.add_node_to_buffer, token_type=TokenType.STATEMENT_END
+                ),
+            ),
+            Rule(
+                name="star",
+                priority=600,
+                pattern=group(r"\*"),
+                action=partial(actions.add_node_to_buffer, token_type=TokenType.STAR),
+            ),
+            Rule(
+                name="number",
+                priority=700,
+                pattern=group(
+                    r"-?\d+\.?\d*",
+                    r"-?\.\d+",
+                ),
+                action=partial(actions.add_node_to_buffer, token_type=TokenType.NUMBER),
+            ),
+            Rule(
+                name="bracket_open",
+                priority=800,
+                pattern=group(
+                    r"\[",
+                    r"\(",
+                    r"\{",
+                ),
+                action=partial(
+                    actions.add_node_to_buffer, token_type=TokenType.BRACKET_OPEN
+                ),
+            ),
+            Rule(
+                name="bracket_close",
+                priority=810,
+                pattern=group(
+                    r"\]",
+                    r"\)",
+                    r"\}",
+                ),
+                action=partial(
+                    actions.add_node_to_buffer, token_type=TokenType.BRACKET_CLOSE
+                ),
+            ),
+            Rule(
+                name="double_colon",
+                priority=900,
+                pattern=group(r"::"),
+                action=partial(
+                    actions.add_node_to_buffer, token_type=TokenType.DOUBLE_COLON
+                ),
+            ),
+            Rule(
+                name="operator",
+                priority=910,
+                pattern=group(
+                    r"<>",
+                    r"!=",
+                    r"\|\|",
+                    r"[+\-*/%&@|^=<>:]=?",
+                    r"~",
+                ),
+                action=partial(
+                    actions.add_node_to_buffer, token_type=TokenType.OPERATOR
+                ),
+            ),
+            Rule(
+                name="word_operator",
+                priority=920,
+                pattern=group(
+                    r"between",
+                    r"ilike",
+                    r"in",
+                    r"is",
+                    r"isnull",
+                    r"like",
+                    r"not",
+                    r"notnull",
+                    r"over",
+                    r"similar",
+                )
+                + group(r"\W", r"$"),
+                action=partial(
+                    actions.add_node_to_buffer, token_type=TokenType.WORD_OPERATOR
+                ),
+            ),
+            Rule(
+                name="as",
+                priority=930,
+                pattern=group(r"as") + group(r"\W", r"$"),
+                action=partial(actions.add_node_to_buffer, token_type=TokenType.AS),
+            ),
+            Rule(
+                name="on",
+                priority=940,
+                pattern=group(r"on") + group(r"\W", r"$"),
+                action=partial(actions.add_node_to_buffer, token_type=TokenType.ON),
+            ),
+            Rule(
+                name="boolean_operator",
+                priority=950,
+                pattern=group(
+                    r"and",
+                    r"or",
+                    r"on",
+                    r"as",
+                )
+                + group(r"\W", r"$"),
+                action=partial(
+                    actions.add_node_to_buffer, token_type=TokenType.BOOLEAN_OPERATOR
+                ),
+            ),
+            Rule(
+                name="comma",
+                priority=960,
+                pattern=group(r","),
+                action=partial(actions.add_node_to_buffer, token_type=TokenType.COMMA),
+            ),
+            Rule(
+                name="dot",
+                priority=970,
+                pattern=group(r"\."),
+                action=partial(actions.add_node_to_buffer, token_type=TokenType.DOT),
+            ),
+            Rule(
+                name="unterm_keyword",
+                priority=1000,
+                pattern=group(
+                    r"with(\s+recursive)?",
+                    (
+                        r"select(\s+(as\s+struct|as\s+value))?"
+                        r"(\s+(all|top\s+\d+|distinct))?"
+                    ),
+                    r"from",
+                    r"(natural\s+)?((inner|((left|right|full)(\s+outer)?))\s+)?join",
+                    r"where",
+                    r"group\s+by",
+                    r"having",
+                    r"qualify",
+                    r"window",
+                    r"(union|intersect|except)(\s+all|distinct)?",
+                    r"order\s+by",
+                    r"limit",
+                    r"offset",
+                    r"fetch\s+(first|next)",
+                    r"for\s+(update|no\s+key\s+update|share|key\s+share)",
+                    r"when",
+                    r"then",
+                    r"else",
+                    r"partition\s+by",
+                    r"rows\s+between",
+                )
+                + group(r"\W", r"$"),
+                action=partial(
+                    actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD
+                ),
+            ),
+            Rule(
+                name="name",
+                priority=5000,
+                pattern=group(r"\w+"),
+                action=partial(actions.add_node_to_buffer, token_type=TokenType.NAME),
+            ),
+            Rule(
+                name="newline",
+                priority=9000,
+                pattern=group(NEWLINE),
+                action=actions.handle_newline,
+            ),
+        ]
+
+    def get_rules(self) -> List[Rule]:
+        return super().get_rules()

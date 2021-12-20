@@ -46,7 +46,6 @@ class LineMerger:
             raise CannotMergeException("Can't merge lines containing multiline nodes")
 
         merged_line = Line.from_nodes(
-            source_string=lines[0].source_string,
             previous_node=lines[0].previous_node,
             nodes=content_nodes,
             comments=comments,

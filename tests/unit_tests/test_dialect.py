@@ -1,7 +1,8 @@
+from typing import Counter, Dict
+
 import pytest
 
-from sqlfmt.dialect import Dialect, Polyglot, group
-from sqlfmt.token import TokenType
+from sqlfmt.dialect import Dialect, Polyglot, Rule, group
 
 
 def test_group() -> None:
@@ -23,118 +24,126 @@ class TestPolyglot:
     def polyglot(self) -> Polyglot:
         return Polyglot()
 
-    def test_patterns_are_complete(self, polyglot: Polyglot) -> None:
-        # make sure Dialect defines a match for every TokenType
-        for t in list(TokenType):
-            assert polyglot.PATTERNS[t]
+    @pytest.fixture(scope="class")
+    def polyglot_rules_dict(self, polyglot: Polyglot) -> Dict[str, Rule]:
+        return {rule.name: rule for rule in polyglot.get_rules()}
+
+    def test_rule_props_are_unique(self, polyglot: Polyglot) -> None:
+        name_counts = Counter([rule.name for rule in polyglot.RULES])
+        assert max(name_counts.values()) == 1
+        priority_counts = Counter([rule.priority for rule in polyglot.RULES])
+        assert max(priority_counts.values()) == 1
+        pattern_counts = Counter([rule.pattern for rule in polyglot.RULES])
+        assert max(pattern_counts.values()) == 1
 
     @pytest.mark.parametrize(
-        "token_type,value",
+        "rule_name,value",
         [
-            (TokenType.FMT_OFF, "-- fmt: off"),
-            (TokenType.FMT_OFF, "--FMT: off"),
-            (TokenType.FMT_OFF, "# fmt: off"),
-            (TokenType.FMT_ON, "--fmt: ON"),
-            (TokenType.JINJA, "{% set my_var=macro('abc 123') %}"),
-            (TokenType.JINJA_COMMENT, "{# A COMMENT #}"),
-            (TokenType.JINJA_START, "{%"),
-            (TokenType.JINJA_END, "}}"),
-            (TokenType.QUOTED_NAME, "`my_backticked_field_name`"),
-            (TokenType.QUOTED_NAME, "'my_quoted_literal'"),
-            (TokenType.QUOTED_NAME, '"my_quoted_field_name"'),
-            (TokenType.QUOTED_NAME, '"""triple " quotes!"""'),
-            (TokenType.QUOTED_NAME, "'''triple '' singles!\\'''"),
-            (TokenType.QUOTED_NAME, "$$ dollar delimited'$$"),
-            (TokenType.QUOTED_NAME, "$label$ dollar delimited with label$label$"),
-            (TokenType.QUOTED_NAME, "'single quote with '' doubled escape'"),
-            (TokenType.QUOTED_NAME, "'single quote \\' c escape'"),
-            (TokenType.QUOTED_NAME, '"double quote with "" doubled escape"'),
-            (TokenType.QUOTED_NAME, '"double quote \\" c escape"'),
-            (TokenType.QUOTED_NAME, "`backtick with \\` c escape`"),
-            (TokenType.QUOTED_NAME, 'r"bq raw string"'),
-            (TokenType.QUOTED_NAME, "U&'pg unicode string'"),
-            (TokenType.QUOTED_NAME, 'rb"""bq raw bytes string"""'),
-            (TokenType.COMMENT, "-- my comment"),
-            (TokenType.COMMENT, "--no-space comment"),
-            (TokenType.COMMENT, "# mysql-style # comments"),
-            (TokenType.COMMENT, "#nospace"),
-            (TokenType.COMMENT_START, "/*"),
-            (TokenType.COMMENT_END, "*/"),
-            (TokenType.STATEMENT_START, "case"),
-            (TokenType.STATEMENT_END, "END"),
-            (TokenType.STAR, "*"),
-            (TokenType.NUMBER, "145.8"),
-            (TokenType.NUMBER, "-.58"),
-            (TokenType.BRACKET_OPEN, "["),
-            (TokenType.BRACKET_CLOSE, ")"),
-            (TokenType.DOUBLE_COLON, "::"),
-            (TokenType.SEMICOLON, ";"),
-            (TokenType.OPERATOR, "<>"),
-            (TokenType.OPERATOR, "||"),
-            (TokenType.WORD_OPERATOR, "is"),
-            (TokenType.WORD_OPERATOR, "in"),
-            (TokenType.AS, "as"),
-            (TokenType.ON, "on"),
-            (TokenType.BOOLEAN_OPERATOR, "AND"),
-            (TokenType.COMMA, ","),
-            (TokenType.DOT, "."),
-            (TokenType.UNTERM_KEYWORD, "select DISTINCT"),
-            (TokenType.UNTERM_KEYWORD, "select"),
-            (TokenType.UNTERM_KEYWORD, "select\n\t    distinct"),
-            (TokenType.UNTERM_KEYWORD, "select top 25"),
-            (TokenType.UNTERM_KEYWORD, "select all"),
-            (TokenType.UNTERM_KEYWORD, "natural\t    full outer join"),
-            (TokenType.UNTERM_KEYWORD, "left join"),
-            (TokenType.UNTERM_KEYWORD, "join"),
-            (TokenType.NAME, "my_table_45"),
-            (TokenType.NEWLINE, "\n"),
+            ("fmt_off", "-- fmt: off"),
+            ("fmt_off", "--FMT: off"),
+            ("fmt_off", "# fmt: off"),
+            ("fmt_on", "--fmt: ON"),
+            ("jinja", "{% set my_var=macro('abc 123') %}"),
+            ("jinja_comment", "{# A COMMENT #}"),
+            ("jinja_start", "{%"),
+            ("jinja_end", "}}"),
+            ("quoted_name", "`my_backticked_field_name`"),
+            ("quoted_name", "'my_quoted_literal'"),
+            ("quoted_name", '"my_quoted_field_name"'),
+            ("quoted_name", '"""triple " quotes!"""'),
+            ("quoted_name", "'''triple '' singles!\\'''"),
+            ("quoted_name", "$$ dollar delimited'$$"),
+            ("quoted_name", "$label$ dollar delimited with label$label$"),
+            ("quoted_name", "'single quote with '' doubled escape'"),
+            ("quoted_name", "'single quote \\' c escape'"),
+            ("quoted_name", '"double quote with "" doubled escape"'),
+            ("quoted_name", '"double quote \\" c escape"'),
+            ("quoted_name", "`backtick with \\` c escape`"),
+            ("quoted_name", 'r"bq raw string"'),
+            ("quoted_name", "U&'pg unicode string'"),
+            ("quoted_name", 'rb"""bq raw bytes string"""'),
+            ("comment", "-- my comment"),
+            ("comment", "--no-space comment"),
+            ("comment", "# mysql-style # comments"),
+            ("comment", "#nospace"),
+            ("comment_start", "/*"),
+            ("comment_end", "*/"),
+            ("statement_start", "case"),
+            ("statement_end", "END"),
+            ("star", "*"),
+            ("number", "145.8"),
+            ("number", "-.58"),
+            ("bracket_open", "["),
+            ("bracket_close", ")"),
+            ("double_colon", "::"),
+            ("semicolon", ";"),
+            ("operator", "<>"),
+            ("operator", "||"),
+            ("word_operator", "is"),
+            ("word_operator", "in"),
+            ("as", "as"),
+            ("on", "on"),
+            ("boolean_operator", "AND"),
+            ("comma", ","),
+            ("dot", "."),
+            ("unterm_keyword", "select DISTINCT"),
+            ("unterm_keyword", "select"),
+            ("unterm_keyword", "select\n\t    distinct"),
+            ("unterm_keyword", "select top 25"),
+            ("unterm_keyword", "select all"),
+            ("unterm_keyword", "natural\t    full outer join"),
+            ("unterm_keyword", "left join"),
+            ("unterm_keyword", "join"),
+            ("name", "my_table_45"),
+            ("newline", "\n"),
         ],
     )
     def test_regex_exact_match(
-        self, polyglot: Polyglot, token_type: TokenType, value: str
+        self, polyglot_rules_dict: Dict[str, Rule], rule_name: str, value: str
     ) -> None:
-
-        prog = polyglot.programs[token_type]
-        match = prog.match(value)
-        assert match is not None, str(token_type) + " regex doesn't match " + str(value)
+        rule = polyglot_rules_dict[rule_name]
+        match = rule.program.match(value)
+        assert match is not None, f"{rule_name} regex doesn't match {value}"
         start, end = match.span(1)
 
-        assert value[start:end] == value, (
-            str(token_type) + " regex doesn't exactly match " + str(value)
-        )
+        assert (
+            value[start:end] == value
+        ), f"{rule_name} regex doesn't exactly match {value}"
 
-    def test_regex_anti_match(self, polyglot: Polyglot) -> None:
-
-        should_not_match = [
-            (TokenType.FMT_OFF, "# fmt:"),
-            (TokenType.FMT_OFF, "-- fmt: off but not really"),
-            (TokenType.JINJA, "{% mismatched brackets }}"),
-            (TokenType.JINJA_START, "{"),
-            (TokenType.JINJA_END, "}"),
-            (TokenType.QUOTED_NAME, "my_unquoted_name"),
-            (TokenType.DOUBLE_COLON, ":"),
-            (TokenType.OPERATOR, "."),
-            (TokenType.UNTERM_KEYWORD, "selection"),
-        ]
-
-        # make sure our compiled programs do not match these values
-        for tt, v in should_not_match:
-            prog = polyglot.programs[tt]
-            match = prog.match(v)
-            assert match is None, str(tt) + " regex should not match " + str(v)
+    @pytest.mark.parametrize(
+        "rule_name,value",
+        [
+            ("fmt_off", "# fmt:"),
+            ("fmt_off", "-- fmt: off but not really"),
+            ("jinja", "{% mismatched brackets }}"),
+            ("jinja_start", "{"),
+            ("jinja_end", "}"),
+            ("quoted_name", "my_unquoted_name"),
+            ("double_colon", ":"),
+            ("operator", "."),
+            ("unterm_keyword", "selection"),
+        ],
+    )
+    def test_regex_anti_match(
+        self, polyglot_rules_dict: Dict[str, Rule], rule_name: str, value: str
+    ) -> None:
+        """make sure our compiled programs do not match these values"""
+        rule = polyglot_rules_dict[rule_name]
+        match = rule.program.match(value)
+        assert match is None, f"{rule_name} regex should not match {value}"
 
     def test_regex_should_not_match_empty_string(self, polyglot: Polyglot) -> None:
-        for token_type, prog in polyglot.programs.items():
-            match = prog.match("")
-            assert match is None, str(token_type)
+        for rule in polyglot.RULES:
+            match = rule.program.match("")
+            assert match is None, f"{rule.name} rule matches empty string"
 
-    def test_match_first_jinja_Tag(self, polyglot: Polyglot) -> None:
+    def test_match_first_jinja_Tag(self, polyglot_rules_dict: Dict[str, Rule]) -> None:
         source_string = (
             "{{ event_cte.source_cte_name}}.{{ event_cte.primary_key }} "
             "|| '-' || '{{ event_cte.event_name }}'"
         )
-        prog = polyglot.programs[TokenType.JINJA]
-        match = prog.match(source_string)
+        rule = polyglot_rules_dict["jinja"]
+        match = rule.program.match(source_string)
 
         assert match is not None
         start, end = match.span(1)

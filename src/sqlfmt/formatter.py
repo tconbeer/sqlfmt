@@ -4,7 +4,7 @@ from typing import List
 from sqlfmt.line import Line
 from sqlfmt.merger import LineMerger
 from sqlfmt.mode import Mode
-from sqlfmt.parser import Query
+from sqlfmt.query import Query
 from sqlfmt.splitter import LineSplitter
 
 
@@ -42,7 +42,9 @@ class QueryFormatter:
             lines = transform(lines)
 
         formatted_query = Query(
-            source_string=raw_query.source_string, mode=raw_query.mode, lines=lines
+            source_string=raw_query.source_string,
+            line_length=raw_query.line_length,
+            lines=lines,
         )
 
         return formatted_query

@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Under the Hood
+
+-   refactors lexing using typical callable architecture for more flexibility
+
 ## [0.3.0] - 2021-12-16
 
 ### Formatting changes
