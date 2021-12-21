@@ -19,3 +19,7 @@ class SqlfmtBracketError(SqlfmtError):
 
 class InlineCommentError(SqlfmtError):
     pass
+
+
+class StopJinjaLexing(SqlfmtError):
+    pass

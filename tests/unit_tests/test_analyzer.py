@@ -430,3 +430,16 @@ def test_no_raise_bracket_error_on_end_name(
 ) -> None:
     q = default_analyzer.parse_query(source_string=source_string)
     assert "end" in str(q)
+
+
+def test_get_rule(default_analyzer: Analyzer) -> None:
+    for ruleset in default_analyzer.rules.keys():
+        for rule in default_analyzer.rules[ruleset]:
+            matched_rule = default_analyzer.get_rule(ruleset, rule.name)
+            assert matched_rule == rule
+
+    with pytest.raises(KeyError):
+        _ = default_analyzer.get_rule("foo", "name")
+
+    with pytest.raises(ValueError):
+        _ = default_analyzer.get_rule("main", "bar")

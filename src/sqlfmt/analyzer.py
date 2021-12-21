@@ -1,6 +1,6 @@
 import re
 from dataclasses import dataclass, field
-from typing import Callable, List, Optional
+from typing import Callable, Dict, List, Optional
 
 from sqlfmt.exception import SqlfmtError, SqlfmtMultilineError
 from sqlfmt.line import Comment, Line, Node
@@ -37,7 +37,7 @@ class Rule:
     name: str
     priority: int  # lower get matched first
     pattern: str
-    action: Callable[["Analyzer", str, re.Match], int]
+    action: Callable[["Analyzer", str, re.Match], None]
 
     def __post_init__(self) -> None:
         self.program = re.compile(
@@ -55,10 +55,11 @@ class Analyzer:
     """
 
     line_length: int
-    rules: List[Rule]
+    rules: Dict[str, List[Rule]]
     node_buffer: List[Node] = field(default_factory=list)
     comment_buffer: List[Comment] = field(default_factory=list)
     line_buffer: List[Line] = field(default_factory=list)
+    pos: int = 0
 
     @property
     def previous_node(self) -> Optional[Node]:
@@ -84,6 +85,7 @@ class Analyzer:
         self.node_buffer = []
         self.comment_buffer = []
         self.line_buffer = []
+        self.pos = 0
 
     def write_buffers_to_query(self, query: Query) -> None:
         """
@@ -113,31 +115,44 @@ class Analyzer:
         self.write_buffers_to_query(q)
         return q
 
-    def lex(self, source_string: str) -> None:
+    def get_rule(self, ruleset: str, rule_name: str) -> Rule:
+        """
+        Return the rule from ruleset that matches rule_name
+        """
+        matching_rules = filter(
+            lambda rule: rule.name == rule_name, self.rules[ruleset]
+        )
+        try:
+            return next(matching_rules)
+        except StopIteration:
+            raise ValueError(f"No rule '{rule_name}' in ruleset '{ruleset}'")
+
+    def lex(self, source_string: str, ruleset: str = "main", eof_pos: int = -1) -> None:
         """
         Repeatedly match Rules to the source_string (until the source_string is
         exhausted) and apply the matched action.
 
         Mutates the analyzer's buffers
         """
-        pos = 0
-        eof_pos = -1
-        for idx, char in enumerate(reversed(source_string)):
-            if not char.isspace():
-                eof_pos = len(source_string) - idx
-                break
+        if eof_pos == -1:
+            for idx, char in enumerate(reversed(source_string)):
+                if not char.isspace():
+                    eof_pos = len(source_string) - idx
+                    break
 
-        while pos < eof_pos:
-            for rule in self.rules:
-                match = rule.program.match(source_string, pos)
+        last_loop_pos = -1
+        while self.pos < eof_pos and self.pos > last_loop_pos:
+            last_loop_pos = self.pos
+            for rule in self.rules[ruleset]:
+                match = rule.program.match(source_string, self.pos)
                 if match:
-                    pos = rule.action(self, source_string, match)
+                    rule.action(self, source_string, match)
                     break
             # nothing matched. Either whitespace or an error
             else:
                 raise SqlfmtParsingError(
-                    f"Could not parse SQL at position {pos}:"
-                    f" '{source_string[pos:pos+50].strip()}'"
+                    f"Could not parse SQL at position {self.pos}:"
+                    f" '{source_string[self.pos:self.pos+50].strip()}'"
                 )
 
     def search_for_terminating_token(

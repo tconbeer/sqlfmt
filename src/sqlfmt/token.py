@@ -6,6 +6,7 @@ from typing import NamedTuple
 class TokenType(Enum):
     FMT_OFF = auto()
     FMT_ON = auto()
+    DATA = auto()
     JINJA = auto()
     JINJA_COMMENT = auto()
     JINJA_START = auto()

@@ -4,23 +4,25 @@ import pytest
 
 from sqlfmt import actions
 from sqlfmt.analyzer import Analyzer
-from sqlfmt.exception import SqlfmtBracketError, SqlfmtMultilineError
+from sqlfmt.exception import SqlfmtBracketError, StopJinjaLexing
 from sqlfmt.token import TokenType
 
 
-def test_raise_sqlfmt_multiline_error(default_analyzer: Analyzer) -> None:
-    with pytest.raises(SqlfmtMultilineError):
+def test_raise_sqlfmt_bracket_error(default_analyzer: Analyzer) -> None:
+    with pytest.raises(SqlfmtBracketError):
+        # we need a match, but any match will do.
         s = ")"
         match = re.match(r"(\))", s)
         assert match
-        actions.raise_sqlfmt_multiline_error(default_analyzer, "", match)
+        actions.raise_sqlfmt_bracket_error(default_analyzer, "", match)
 
 
 def test_add_node_to_buffer(default_analyzer: Analyzer) -> None:
     source_string = "select a, b, c\n"
-    match = re.match(r"(select)", source_string)
+    rule = default_analyzer.get_rule("main", "unterm_keyword")
+    match = rule.program.match(source_string, pos=default_analyzer.pos)
     assert match
-    pos = actions.add_node_to_buffer(
+    actions.add_node_to_buffer(
         default_analyzer, source_string, match, TokenType.UNTERM_KEYWORD
     )
 
@@ -31,13 +33,12 @@ def test_add_node_to_buffer(default_analyzer: Analyzer) -> None:
     node = default_analyzer.node_buffer[0]
     assert node.is_unterm_keyword
 
-    assert pos == 6
+    assert default_analyzer.pos == 6
 
-    match = re.match(r"\s*(\w+)", source_string[pos:])
+    rule = default_analyzer.get_rule("main", "name")
+    match = rule.program.match(source_string, pos=default_analyzer.pos)
     assert match
-    pos = pos + actions.add_node_to_buffer(
-        default_analyzer, source_string[pos:], match, TokenType.NAME
-    )
+    actions.add_node_to_buffer(default_analyzer, source_string, match, TokenType.NAME)
 
     assert default_analyzer.comment_buffer == []
     assert default_analyzer.line_buffer == []
@@ -46,12 +47,13 @@ def test_add_node_to_buffer(default_analyzer: Analyzer) -> None:
     node = default_analyzer.node_buffer[1]
     assert node.token.type == TokenType.NAME
 
-    assert pos == 8
+    assert default_analyzer.pos == 8
 
 
 def test_safe_add_node_to_buffer(default_analyzer: Analyzer) -> None:
     source_string = "end\n"
-    match = re.match(r"(\w+)", source_string)
+    rule = default_analyzer.get_rule("main", "statement_end")
+    match = rule.program.match(source_string, pos=default_analyzer.pos)
     assert match
     with pytest.raises(SqlfmtBracketError):
         actions.add_node_to_buffer(
@@ -59,7 +61,7 @@ def test_safe_add_node_to_buffer(default_analyzer: Analyzer) -> None:
         )
     assert default_analyzer.node_buffer == []
     # does not raise
-    pos = actions.safe_add_node_to_buffer(
+    actions.safe_add_node_to_buffer(
         default_analyzer, source_string, match, TokenType.STATEMENT_END, TokenType.NAME
     )
 
@@ -70,14 +72,15 @@ def test_safe_add_node_to_buffer(default_analyzer: Analyzer) -> None:
     node = default_analyzer.node_buffer[0]
     assert node.token.type == TokenType.NAME
 
-    assert pos == 3
+    assert default_analyzer.pos == 3
 
 
 def test_add_comment_to_buffer(default_analyzer: Analyzer) -> None:
     source_string = "-- a comment\n"
-    match = re.match(r"(--[^\n]*)", source_string)
+    rule = default_analyzer.get_rule("main", "comment")
+    match = rule.program.match(source_string, pos=default_analyzer.pos)
     assert match
-    pos = actions.add_comment_to_buffer(default_analyzer, source_string, match)
+    actions.add_comment_to_buffer(default_analyzer, source_string, match)
 
     assert default_analyzer.node_buffer == []
     assert default_analyzer.line_buffer == []
@@ -86,24 +89,24 @@ def test_add_comment_to_buffer(default_analyzer: Analyzer) -> None:
     comment = default_analyzer.comment_buffer[0]
     assert comment.token.token == source_string.strip()
 
-    assert pos == 12
+    assert default_analyzer.pos == 12
 
 
 def test_handle_newline_with_nodes(default_analyzer: Analyzer) -> None:
     source_string = "a_name\n"
-    match = re.match(r"(\w+)", source_string)
+    rule = default_analyzer.get_rule("main", "name")
+    match = rule.program.match(source_string, pos=default_analyzer.pos)
     assert match
-    pos = actions.add_node_to_buffer(
-        default_analyzer, source_string, match, TokenType.NAME
-    )
+    actions.add_node_to_buffer(default_analyzer, source_string, match, TokenType.NAME)
     assert default_analyzer.line_buffer == []
     assert len(default_analyzer.node_buffer) > 0
     assert default_analyzer.comment_buffer == []
 
-    match = re.match(r"(\n)", source_string[pos:])
+    rule = default_analyzer.get_rule("main", "newline")
+    match = rule.program.match(source_string, pos=default_analyzer.pos)
     assert match
-    pos = pos + actions.handle_newline(default_analyzer, source_string[pos:], match)
-    assert pos == len(source_string)
+    actions.handle_newline(default_analyzer, source_string, match)
+    assert default_analyzer.pos == len(source_string)
     assert len(default_analyzer.line_buffer) == 1
     assert default_analyzer.node_buffer == []
     assert default_analyzer.comment_buffer == []
@@ -116,12 +119,13 @@ def test_handle_newline_empty(default_analyzer: Analyzer) -> None:
     assert default_analyzer.line_buffer == []
     assert default_analyzer.comment_buffer == []
     assert default_analyzer.node_buffer == []
-    pos = 0
+    assert default_analyzer.pos == 0
+    rule = default_analyzer.get_rule("main", "newline")
     for i in range(1, 4):
-        match = re.match(r"(\n)", source_string[pos:])
+        match = rule.program.match(source_string, default_analyzer.pos)
         assert match
-        pos = pos + actions.handle_newline(default_analyzer, source_string[pos:], match)
-        assert pos == i
+        actions.handle_newline(default_analyzer, source_string, match)
+        assert default_analyzer.pos == i
         assert len(default_analyzer.line_buffer) == i
         assert default_analyzer.node_buffer == []
         assert default_analyzer.comment_buffer == []
@@ -135,44 +139,42 @@ def test_handle_newline_leading_comments(default_analyzer: Analyzer) -> None:
     assert default_analyzer.comment_buffer == []
     assert default_analyzer.node_buffer == []
 
-    pos = 0
-    match = re.match(r"(--[^\n]*)", source_string[pos:])
+    comment_rule = default_analyzer.get_rule("main", "comment")
+    match = comment_rule.program.match(source_string, pos=default_analyzer.pos)
     assert match
-    pos = pos + actions.add_comment_to_buffer(
-        default_analyzer, source_string[pos:], match
-    )
+    actions.add_comment_to_buffer(default_analyzer, source_string, match)
     assert default_analyzer.line_buffer == []
     assert len(default_analyzer.comment_buffer) == 1
     assert default_analyzer.node_buffer == []
 
-    match = re.match(r"(\n)", source_string[pos:])
+    nl_rule = default_analyzer.get_rule("main", "newline")
+    match = nl_rule.program.match(source_string, pos=default_analyzer.pos)
     assert match
-    pos = pos + actions.handle_newline(default_analyzer, source_string[pos:], match)
+    actions.handle_newline(default_analyzer, source_string, match)
     # do NOT append a line yet
     assert default_analyzer.line_buffer == []
     assert default_analyzer.node_buffer == []
     assert len(default_analyzer.comment_buffer) == 1
 
-    match = re.match(r"(\n)", source_string[pos:])
+    match = nl_rule.program.match(source_string, pos=default_analyzer.pos)
     assert match
-    pos = pos + actions.handle_newline(default_analyzer, source_string[pos:], match)
-    # do NOT append a line yet
+    actions.handle_newline(default_analyzer, source_string, match)
+    # STILL do NOT append a line yet
     assert default_analyzer.line_buffer == []
     assert default_analyzer.node_buffer == []
     assert len(default_analyzer.comment_buffer) == 1
 
-    match = re.match(r"(\w+)", source_string[pos:])
+    name_rule = default_analyzer.get_rule("main", "name")
+    match = name_rule.program.match(source_string, pos=default_analyzer.pos)
     assert match
-    pos = pos + actions.add_node_to_buffer(
-        default_analyzer, source_string[pos:], match, TokenType.NAME
-    )
+    actions.add_node_to_buffer(default_analyzer, source_string, match, TokenType.NAME)
     assert default_analyzer.line_buffer == []
     assert len(default_analyzer.node_buffer) == 1
     assert len(default_analyzer.comment_buffer) == 1
 
-    match = re.match(r"(\n)", source_string[pos:])
+    match = nl_rule.program.match(source_string, pos=default_analyzer.pos)
     assert match
-    pos = pos + actions.handle_newline(default_analyzer, source_string[pos:], match)
+    actions.handle_newline(default_analyzer, source_string, match)
     # now we finally create a line
     assert len(default_analyzer.line_buffer) == 1
     assert default_analyzer.node_buffer == []
@@ -184,25 +186,141 @@ def test_handle_newline_leading_comments(default_analyzer: Analyzer) -> None:
 
 
 @pytest.mark.parametrize(
-    "source_string,pattern,rule_name,attribute",
+    "source_string,start_name,end_name",
     [
-        ("{% config(field='{{this}}') %}", r"(\{%)", "jinja_start", "node_buffer"),
-        ("/* outer /* nested */ outer */", r"(/\*)", "comment_start", "comment_buffer"),
+        (
+            "{% config(field='{{this}}') %}",
+            "jinja_statement_start",
+            "jinja_statement_end",
+        ),
+        ("{%- set var = that -%}", "jinja_statement_start", "jinja_statement_end"),
+        ("{{ simple_var }}", "jinja_expression_start", "jinja_expression_end"),
+        ("{{ macro(arg1, arg2) }}", "jinja_expression_start", "jinja_expression_end"),
     ],
 )
-def test_handle_complex_token_nested(
+def test_handle_jinja(
     default_analyzer: Analyzer,
     source_string: str,
-    pattern: str,
-    rule_name: str,
-    attribute: str,
+    start_name: str,
+    end_name: str,
 ) -> None:
-    match = re.match(pattern, source_string)
-    assert match, "poorly formed test"
-    pos = actions.handle_complex_tokens(
-        default_analyzer, source_string, match, rule_name
-    )
-    assert len(source_string) == pos
-    buf = getattr(default_analyzer, attribute)
-    assert len(buf) == 1
-    assert len(str(buf[0]).strip()) == len(source_string)
+    start_rule = default_analyzer.get_rule("jinja", start_name)
+    match = start_rule.program.match(source_string)
+    assert match, "Start Rule does not match start of test string"
+    with pytest.raises(StopJinjaLexing):
+        actions.handle_jinja(
+            default_analyzer, source_string, match, start_name, end_name
+        )
+    assert len(source_string) == default_analyzer.pos
+    assert len(default_analyzer.node_buffer) == 1
+    assert len(str(default_analyzer.node_buffer[0]).strip()) == len(source_string)
+
+
+def test_handle_jinja_set_block(default_analyzer: Analyzer) -> None:
+    source_string = """
+    {% set my_var %}
+    !
+    {% endset %}
+    """.strip()
+    start_rule = default_analyzer.get_rule("jinja", "jinja_set_block_start")
+    match = start_rule.program.match(source_string)
+    assert match is not None
+    with pytest.raises(StopJinjaLexing):
+        actions.handle_jinja_set_block(default_analyzer, source_string, match)
+    assert default_analyzer.line_buffer == []
+    assert default_analyzer.comment_buffer == []
+    assert len(default_analyzer.node_buffer) == 3
+    assert [node.token.type for node in default_analyzer.node_buffer] == [
+        TokenType.JINJA,
+        TokenType.DATA,
+        TokenType.JINJA,
+    ]
+
+
+def test_handle_jinja_set_block_unterminated(default_analyzer: Analyzer) -> None:
+    source_string = """
+    {% set foo %}
+    !
+    something_else
+    """.strip()
+    start_rule = default_analyzer.get_rule("jinja", "jinja_set_block_start")
+    match = start_rule.program.match(source_string)
+    assert match is not None
+    with pytest.raises(SqlfmtBracketError) as excinfo:
+        actions.handle_jinja_set_block(default_analyzer, source_string, match)
+
+    assert "{% endset %}" in str(excinfo.value)
+
+
+def test_handle_jinja_if_block(default_analyzer: Analyzer) -> None:
+    source_string = """
+    {% if foo == bar %}
+        column_a,
+    {%- elif foo < baz -%}
+        column_b,
+    {% endif %}
+    """.strip()
+    start_rule = default_analyzer.get_rule("jinja", "jinja_if_block_start")
+    match = start_rule.program.match(source_string)
+    assert match is not None
+    with pytest.raises(StopJinjaLexing):
+        actions.handle_jinja_block(
+            default_analyzer,
+            source_string,
+            match,
+            "jinja_if_block_start",
+            "jinja_if_block_end",
+            ["jinja_elif_block_start", "jinja_else_block_start"],
+        )
+    assert len(default_analyzer.line_buffer) == 4
+    assert len(default_analyzer.node_buffer) == 1
+
+
+def test_handle_jinja_if_block_unterminated(default_analyzer: Analyzer) -> None:
+    source_string = """
+    {% if foo == bar %}
+        column_a,
+    {%- else -%}
+        1+1
+    """.strip()
+    start_rule = default_analyzer.get_rule("jinja", "jinja_if_block_start")
+    match = start_rule.program.match(source_string)
+    assert match is not None
+    with pytest.raises(SqlfmtBracketError) as excinfo:
+        actions.handle_jinja_block(
+            default_analyzer,
+            source_string,
+            match,
+            "jinja_if_block_start",
+            "jinja_if_block_end",
+            ["jinja_elif_block_start", "jinja_else_block_start"],
+        )
+    assert "{% endif %}" in str(excinfo.value)
+
+
+def test_handle_jinja_if_block_nested(default_analyzer: Analyzer) -> None:
+    source_string = """
+    {% if foo == bar %}
+        {%- if baz == qux %}
+            column_a,
+        {% else %}
+            column_b,
+        {% endif %}
+    {%- else -%}
+        column_c
+    {% endif -%}
+    """.strip()
+    start_rule = default_analyzer.get_rule("jinja", "jinja_if_block_start")
+    match = start_rule.program.match(source_string)
+    assert match is not None
+    with pytest.raises(StopJinjaLexing):
+        actions.handle_jinja_block(
+            default_analyzer,
+            source_string,
+            match,
+            "jinja_if_block_start",
+            "jinja_if_block_end",
+            ["jinja_elif_block_start", "jinja_else_block_start"],
+        )
+    assert len(default_analyzer.line_buffer) == 8
+    assert len(default_analyzer.node_buffer) == 1
