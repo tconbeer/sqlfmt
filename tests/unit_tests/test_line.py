@@ -58,7 +58,9 @@ def test_calculate_depth() -> None:
         spos=0,
         epos=6,
     )
-    res = Node.calculate_depth(t, inherited_depth=0, open_brackets=[])
+    res = Node.calculate_depth(
+        t, inherited_depth=0, open_brackets=[], open_jinja_blocks=[]
+    )
 
     assert res == (0, 1, [t])
 
@@ -78,7 +80,9 @@ def test_calculate_depth() -> None:
         epos=0,
     )
 
-    res = Node.calculate_depth(t, inherited_depth=2, open_brackets=[b])
+    res = Node.calculate_depth(
+        t, inherited_depth=2, open_brackets=[b], open_jinja_blocks=[]
+    )
 
     assert res == (1, 0, [])
 
@@ -125,7 +129,8 @@ def test_simple_line(
         "\tprefix=' ',\n"
         "\tvalue='with',\n"
         "\topen_brackets=['Token(type=TokenType.UNTERM_KEYWORD, token=with, "
-        "spos=0)']\n"
+        "spos=0)'],\n"
+        "\topen_jinja_blocks=[],\n"
         "\tformatting_disabled=False\n"
         ")"
     )
@@ -331,7 +336,9 @@ def test_calculate_depth_exception() -> None:
     )
 
     with pytest.raises(SqlfmtBracketError):
-        Node.calculate_depth(close_paren, inherited_depth=0, open_brackets=[])
+        Node.calculate_depth(
+            close_paren, inherited_depth=0, open_brackets=[], open_jinja_blocks=[]
+        )
 
 
 def test_closes_bracket_from_previous_line(

@@ -93,6 +93,7 @@ class Node:
     depth: int
     change_in_depth: int
     open_brackets: List[Token] = field(default_factory=list)
+    open_jinja_blocks: List[Token] = field(default_factory=list)
     formatting_disabled: bool = False
 
     def __str__(self) -> str:
@@ -107,6 +108,7 @@ class Node:
             f"Node(token={self.previous_node.token})" if self.previous_node else "None"
         )
         b = [str(t) for t in self.open_brackets]
+        j = [str(t) for t in self.open_jinja_blocks]
         r = (
             f"Node(\n"
             f"\ttoken='{str(self.token)}',\n"
@@ -116,7 +118,8 @@ class Node:
             f"\tchange_in_depth={self.change_in_depth},\n"
             f"\tprefix='{self.prefix}',\n"
             f"\tvalue='{self.value}',\n"
-            f"\topen_brackets={b}\n"
+            f"\topen_brackets={b},\n"
+            f"\topen_jinja_blocks={j},\n"
             f"\tformatting_disabled={self.formatting_disabled}\n"
             f")"
         )
@@ -135,7 +138,11 @@ class Node:
 
     @property
     def is_closing_bracket(self) -> bool:
-        return self.token.type in (TokenType.BRACKET_CLOSE, TokenType.STATEMENT_END)
+        return self.token.type in (
+            TokenType.BRACKET_CLOSE,
+            TokenType.STATEMENT_END,
+            TokenType.JINJA_BLOCK_END,
+        )
 
     @property
     def is_operator(self) -> bool:
@@ -175,7 +182,17 @@ class Node:
 
     @property
     def is_multiline(self) -> bool:
-        if self.token.type == TokenType.JINJA and "\n" in self.value:
+        if (
+            self.token.type
+            in (
+                TokenType.DATA,
+                TokenType.JINJA,
+                TokenType.JINJA_BLOCK_START,
+                TokenType.JINJA_BLOCK_END,
+                TokenType.JINJA_BLOCK_KEYWORD,
+            )
+            and "\n" in self.value
+        ):
             return True
         else:
             return False
@@ -195,14 +212,19 @@ class Node:
         if previous_node:
             inherited_depth = previous_node.depth + previous_node.change_in_depth
             open_brackets = previous_node.open_brackets.copy()
+            open_jinja_blocks = previous_node.open_jinja_blocks.copy()
             formatting_disabled = previous_node.formatting_disabled
         else:
             inherited_depth = 0
             open_brackets = []
+            open_jinja_blocks = []
             formatting_disabled = False
 
         depth, change_in_depth, open_brackets = cls.calculate_depth(
-            token, inherited_depth, open_brackets
+            token,
+            inherited_depth,
+            open_brackets,
+            open_jinja_blocks,
         )
 
         prev_token = cls.previous_token(previous_node)
@@ -210,21 +232,22 @@ class Node:
         prefix = cls.whitespace(token, prev_token)
         value = cls.capitalize(token)
 
-        if token.type == TokenType.FMT_OFF:
+        if token.type in (TokenType.FMT_OFF, TokenType.DATA):
             formatting_disabled = True
-        elif prev_token and prev_token.type == TokenType.FMT_ON:
+        elif prev_token and prev_token.type in (TokenType.FMT_ON, TokenType.DATA):
             formatting_disabled = False
 
         return Node(
-            token,
-            previous_node,
-            inherited_depth,
-            prefix,
-            value,
-            depth,
-            change_in_depth,
-            open_brackets,
-            formatting_disabled,
+            token=token,
+            previous_node=previous_node,
+            inherited_depth=inherited_depth,
+            prefix=prefix,
+            value=value,
+            depth=depth,
+            change_in_depth=change_in_depth,
+            open_brackets=open_brackets,
+            open_jinja_blocks=open_jinja_blocks,
+            formatting_disabled=formatting_disabled,
         )
 
     @classmethod
@@ -243,7 +266,11 @@ class Node:
 
     @classmethod
     def calculate_depth(
-        cls, token: Token, inherited_depth: int, open_brackets: List[Token]
+        cls,
+        token: Token,
+        inherited_depth: int,
+        open_brackets: List[Token],
+        open_jinja_blocks: List[Token],
     ) -> Tuple[int, int, List[Token]]:
         """
         Calculates the depth statistics for a Node (depth, change_in_depth,

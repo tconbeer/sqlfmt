@@ -441,3 +441,51 @@ def test_get_rule(default_analyzer: Analyzer) -> None:
 
     with pytest.raises(ValueError):
         _ = default_analyzer.get_rule("main", "bar")
+
+
+def test_match_first_jinja_Tag(default_analyzer: Analyzer) -> None:
+    """
+    Make sure we lazily match only the first tag
+    """
+    source_string = (
+        "{{ event_cte.source_cte_name}}.{{ event_cte.primary_key }} "
+        "|| '-' || '{{ event_cte.event_name }}'"
+    )
+    q = default_analyzer.parse_query(source_string)
+    assert len(q.lines) == 1
+    assert str(q.nodes[0]).strip() == "{{ event_cte.source_cte_name}}"
+
+
+def test_jinja_block_parsing(default_analyzer: Analyzer) -> None:
+    source_string, _ = read_test_data(
+        "unit_tests/test_analyzer/test_jinja_block_parsing.sql"
+    )
+    q = default_analyzer.parse_query(source_string)
+    assert q
+    assert len(q.lines) == 22
+    types = [node.token.type for node in q.nodes if not node.is_newline]
+    expected_types = [
+        TokenType.JINJA_BLOCK_START,  # {% macro ...(contents, num_times) %}
+        TokenType.JINJA_BLOCK_START,  # {% if contents == "foo" %}
+        TokenType.JINJA_BLOCK_START,  # {%- for _ in range(num_times * 10) %}
+        TokenType.JINJA,  # {{ contents }}
+        TokenType.JINJA_BLOCK_END,  # {% endfor %}
+        TokenType.JINJA_BLOCK_KEYWORD,  # {% elif contents == "bar" %}
+        TokenType.JINJA_BLOCK_START,  # {% if num_times > 10 %}
+        TokenType.JINJA_BLOCK_START,  # {%- for _ in range(num_times * 5) %}
+        TokenType.QUOTED_NAME,  # "TIMES 5!!"
+        TokenType.JINJA,  # {{ contents }}
+        TokenType.JINJA_BLOCK_END,  # {% endfor %}
+        TokenType.JINJA_BLOCK_KEYWORD,  # {% else %}
+        TokenType.JINJA_BLOCK_START,  # {%- for _ in range(num_times * 2) %}
+        TokenType.JINJA,  # {{ contents }}
+        TokenType.JINJA_BLOCK_END,  # {% endfor %}
+        TokenType.JINJA_BLOCK_END,  # {% endif %}
+        TokenType.JINJA_BLOCK_KEYWORD,  # {% else %}
+        TokenType.JINJA_BLOCK_START,  # {%- for _ in range(num_times) %}
+        TokenType.JINJA,  # {{ contents }}
+        TokenType.JINJA_BLOCK_END,  # {% endfor %}
+        TokenType.JINJA_BLOCK_END,  # {% endif %}
+        TokenType.JINJA_BLOCK_END,  # {% endmacro %}
+    ]
+    assert types == expected_types

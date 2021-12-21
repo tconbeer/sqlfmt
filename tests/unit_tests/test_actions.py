@@ -354,3 +354,31 @@ def test_handle_jinja_if_block_nested(default_analyzer: Analyzer) -> None:
     )
     assert len(default_analyzer.node_buffer) == 1
     assert default_analyzer.node_buffer[-1].token.type == TokenType.JINJA_BLOCK_END
+
+
+def test_handle_jinja_for_block(default_analyzer: Analyzer) -> None:
+    source_string = """
+    {% for source in var('marketing_warehouse_ad_group_sources') %}
+        {% set relation_source = 'stg_' + source + '_ad_groups' %}
+
+        select
+            '{{source}}' as source,
+            *
+            from {{ ref(relation_source) }}
+
+            {% if not loop.last %}union all{% endif %}
+    {% endfor %}
+    """.strip()
+    start_rule = default_analyzer.get_rule("jinja", "jinja_for_block_start")
+    match = start_rule.program.match(source_string)
+    assert match is not None, "Did not match starting block"
+    with pytest.raises(StopJinjaLexing):
+        start_rule.action(default_analyzer, source_string, match)
+    assert len(default_analyzer.line_buffer) == 9
+    assert (
+        default_analyzer.line_buffer[0].nodes[0].token.type
+        == TokenType.JINJA_BLOCK_START
+    )
+    assert default_analyzer.line_buffer[1].nodes[0].token.type == TokenType.JINJA
+    assert len(default_analyzer.node_buffer) == 1
+    assert default_analyzer.node_buffer[-1].token.type == TokenType.JINJA_BLOCK_END

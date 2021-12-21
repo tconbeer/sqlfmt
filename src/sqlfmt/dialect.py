@@ -351,7 +351,7 @@ class Polyglot(Dialect):
                 Rule(
                     name="jinja_if_block_start",
                     priority=200,
-                    pattern=group(r"\{%-?\s*if\s+\w+.*?-?%\}"),
+                    pattern=group(r"\{%-?\s*if.*?-?%\}"),
                     action=partial(
                         actions.handle_jinja_block,
                         start_name="jinja_if_block_start",
@@ -383,7 +383,7 @@ class Polyglot(Dialect):
                 Rule(
                     name="jinja_for_block_start",
                     priority=210,
-                    pattern=group(r"\{%-?\s*for\s+\w+.*?-?%\}"),
+                    pattern=group(r"\{%-?\s*for\s+.*?-?%\}"),
                     action=partial(
                         actions.handle_jinja_block,
                         start_name="jinja_for_block_start",

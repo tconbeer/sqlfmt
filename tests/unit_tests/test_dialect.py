@@ -185,19 +185,3 @@ class TestPolyglot:
             for rule in rules[ruleset]:
                 match = rule.program.match("")
                 assert match is None, f"{ruleset}.{rule.name} rule matches empty string"
-
-    # TODO: CHANGE THIS TO AN ANALYZER TEST
-    @pytest.mark.xfail
-    def test_match_first_jinja_Tag(
-        self, rules_dict: Dict[str, Dict[str, Rule]]
-    ) -> None:
-        source_string = (
-            "{{ event_cte.source_cte_name}}.{{ event_cte.primary_key }} "
-            "|| '-' || '{{ event_cte.event_name }}'"
-        )
-        rule = rules_dict["main"]["jinja"]
-        match = rule.program.match(source_string)
-
-        assert match is not None
-        start, end = match.span(1)
-        assert source_string[start:end] == "{{ event_cte.source_cte_name}}"

@@ -187,7 +187,6 @@ def handle_jinja_block(
     by the code they contain.
     """
     # add the start tag to the buffer
-    # TODO: ADD A TOKENTYPE FOR BLOCK START/END?
     add_node_to_buffer(analyzer, source_string, match, TokenType.JINJA_BLOCK_START)
     start_rule = analyzer.get_rule(ruleset="jinja", rule_name=start_name)
     end_rule = analyzer.get_rule(ruleset="jinja", rule_name=end_name)
@@ -220,30 +219,38 @@ def handle_jinja_block(
                 f"{simplify_regex(end_rule.pattern)}"
             )
         # lex everything up to that token, assume sql
-        analyzer.lex(source_string, ruleset="main", eof_pos=next_tag_match.span(0)[0])
-        # now handle the next control tag
-        if start_rule.program.match(source_string, analyzer.pos):
-            # nest a level deeper
-            try:
-                handle_jinja_block(
+        next_tag_pos = next_tag_match.span(0)[0]
+        analyzer.lex(source_string, ruleset="main", eof_pos=next_tag_pos)
+        # it is possible for the next_tag_match found above to have already been lexed.
+        # but if it hasn't, we need to process it
+        if analyzer.pos == next_tag_pos:
+            if start_rule.program.match(source_string, analyzer.pos):
+                # nest a level deeper
+                try:
+                    handle_jinja_block(
+                        analyzer,
+                        source_string,
+                        next_tag_match,
+                        start_name,
+                        end_name,
+                        other_names,
+                    )
+                except StopJinjaLexing:
+                    continue
+            elif end_rule.program.match(source_string, analyzer.pos):
+                add_node_to_buffer(
+                    analyzer, source_string, next_tag_match, TokenType.JINJA_BLOCK_END
+                )
+                break
+            else:
+                add_node_to_buffer(
                     analyzer,
                     source_string,
                     next_tag_match,
-                    start_name,
-                    end_name,
-                    other_names,
+                    TokenType.JINJA_BLOCK_KEYWORD,
                 )
-            except StopJinjaLexing:
-                continue
-        elif end_rule.program.match(source_string, analyzer.pos):
-            add_node_to_buffer(
-                analyzer, source_string, next_tag_match, TokenType.JINJA_BLOCK_END
-            )
-            break
         else:
-            add_node_to_buffer(
-                analyzer, source_string, next_tag_match, TokenType.JINJA_BLOCK_KEYWORD
-            )
+            continue
 
     raise StopJinjaLexing
 
