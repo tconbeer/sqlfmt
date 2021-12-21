@@ -213,6 +213,7 @@ def test_handle_jinja(
         )
     assert len(source_string) == default_analyzer.pos
     assert len(default_analyzer.node_buffer) == 1
+    assert default_analyzer.node_buffer[0].token.type == TokenType.JINJA
     assert len(str(default_analyzer.node_buffer[0]).strip()) == len(source_string)
 
 
@@ -231,9 +232,9 @@ def test_handle_jinja_set_block(default_analyzer: Analyzer) -> None:
     assert default_analyzer.comment_buffer == []
     assert len(default_analyzer.node_buffer) == 3
     assert [node.token.type for node in default_analyzer.node_buffer] == [
-        TokenType.JINJA,
+        TokenType.JINJA_BLOCK_START,
         TokenType.DATA,
-        TokenType.JINJA,
+        TokenType.JINJA_BLOCK_END,
     ]
 
 
@@ -273,7 +274,16 @@ def test_handle_jinja_if_block(default_analyzer: Analyzer) -> None:
             ["jinja_elif_block_start", "jinja_else_block_start"],
         )
     assert len(default_analyzer.line_buffer) == 4
+    assert (
+        default_analyzer.line_buffer[0].nodes[0].token.type
+        == TokenType.JINJA_BLOCK_START
+    )
+    assert (
+        default_analyzer.line_buffer[2].nodes[0].token.type
+        == TokenType.JINJA_BLOCK_KEYWORD
+    )
     assert len(default_analyzer.node_buffer) == 1
+    assert default_analyzer.node_buffer[-1].token.type == TokenType.JINJA_BLOCK_END
 
 
 def test_handle_jinja_if_block_unterminated(default_analyzer: Analyzer) -> None:
@@ -323,4 +333,24 @@ def test_handle_jinja_if_block_nested(default_analyzer: Analyzer) -> None:
             ["jinja_elif_block_start", "jinja_else_block_start"],
         )
     assert len(default_analyzer.line_buffer) == 8
+    assert (
+        default_analyzer.line_buffer[0].nodes[0].token.type
+        == TokenType.JINJA_BLOCK_START
+    )
+    assert (
+        default_analyzer.line_buffer[1].nodes[0].token.type
+        == TokenType.JINJA_BLOCK_START
+    )
+    assert (
+        default_analyzer.line_buffer[3].nodes[0].token.type
+        == TokenType.JINJA_BLOCK_KEYWORD
+    )
+    assert (
+        default_analyzer.line_buffer[5].nodes[0].token.type == TokenType.JINJA_BLOCK_END
+    )
+    assert (
+        default_analyzer.line_buffer[6].nodes[0].token.type
+        == TokenType.JINJA_BLOCK_KEYWORD
+    )
     assert len(default_analyzer.node_buffer) == 1
+    assert default_analyzer.node_buffer[-1].token.type == TokenType.JINJA_BLOCK_END

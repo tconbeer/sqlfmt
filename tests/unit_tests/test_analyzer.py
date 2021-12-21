@@ -171,8 +171,6 @@ def test_multiline_parsing(default_analyzer: Analyzer) -> None:
 
     assert TokenType.COMMENT_START not in [token.type for token in q.tokens]
     assert TokenType.COMMENT_END not in [token.type for token in q.tokens]
-    assert TokenType.JINJA_START not in [token.type for token in q.tokens]
-    assert TokenType.JINJA_END not in [token.type for token in q.tokens]
 
     expected_comments = [
         Comment(
