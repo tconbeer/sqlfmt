@@ -255,12 +255,18 @@ class Node:
     def previous_token(cls, prev_node: Optional["Node"]) -> Optional[Token]:
         """
         Returns the token of prev_node, unless prev_node is a
-        newline, in which case it recurses
+        newline or jinja statement, in which case it recurses
         """
         if not prev_node:
             return None
         t = prev_node.token
-        if t.type == TokenType.NEWLINE:
+        if t.type in (
+            TokenType.NEWLINE,
+            TokenType.JINJA_STATEMENT,
+            TokenType.JINJA_BLOCK_START,
+            TokenType.JINJA_BLOCK_END,
+            TokenType.JINJA_BLOCK_KEYWORD,
+        ):
             return cls.previous_token(prev_node.previous_node)
         else:
             return t
@@ -369,6 +375,10 @@ class Node:
             TokenType.COMMA,
             TokenType.DOT,
             TokenType.NEWLINE,
+            TokenType.JINJA_STATEMENT,
+            TokenType.JINJA_BLOCK_START,
+            TokenType.JINJA_BLOCK_END,
+            TokenType.JINJA_BLOCK_KEYWORD,
         ):
             return NO_SPACE
         # names preceded by dots are namespaced identifiers. No space.

@@ -365,21 +365,25 @@ def test_closes_bracket_from_previous_line(
     assert result == expected
 
 
-def test_identifier_whitespace(default_mode: Mode) -> None:
+@pytest.mark.parametrize(
+    "source_string",
+    [
+        "my_schema.my_table\n",
+        "my_schema.*\n",
+        "{{ my_schema }}.my_table\n",
+        "my_schema.{{ my_table }}\n",
+        "my_database.my_schema.my_table\n",
+        'my_schema."my_table"\n',
+        '"my_schema".my_table\n',
+        '"my_schema"."my_table"\n',
+        '"my_schema".*\n',
+        "my_schema.{% if foo %}bar{% else %}baz{% endif %}\n",
+    ],
+)
+def test_identifier_whitespace(default_mode: Mode, source_string: str) -> None:
     """
     Ensure we do not inject spaces into qualified identifier names
     """
-    source_string = (
-        "my_schema.my_table,\n"
-        "my_schema.*,\n"
-        "{{ my_schema }}.my_table,\n"
-        "my_schema.{{ my_table }},\n"
-        "my_database.my_schema.my_table,\n"
-        'my_schema."my_table",\n'
-        '"my_schema".my_table,\n'
-        '"my_schema"."my_table",\n'
-        '"my_schema".*,\n'
-    )
     q = default_mode.dialect.initialize_analyzer(
         line_length=default_mode.line_length
     ).parse_query(source_string=source_string)

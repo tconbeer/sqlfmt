@@ -1,5 +1,5 @@
 import re
-from typing import List
+from typing import List, Optional
 
 from sqlfmt.analyzer import MAYBE_WHITESPACES, Analyzer, group
 from sqlfmt.exception import SqlfmtBracketError, StopJinjaLexing
@@ -24,13 +24,16 @@ def add_node_to_buffer(
     source_string: str,
     match: re.Match,
     token_type: TokenType,
+    previous_node: Optional[Node] = None,
 ) -> None:
     """
     Create a token of token_type from the match, then create a Node
     from that token and append it to the Analyzer's buffer
     """
+    if previous_node is None:
+        previous_node = analyzer.previous_node
     token = Token.from_match(source_string, match, token_type)
-    node = Node.from_token(token=token, previous_node=analyzer.previous_node)
+    node = Node.from_token(token=token, previous_node=previous_node)
     analyzer.node_buffer.append(node)
     analyzer.pos = token.epos
 
@@ -186,6 +189,8 @@ def handle_jinja_block(
     needs special handling, since the depth of the jinja tags is determined
     by the code they contain.
     """
+    # for some jinja blocks, we need to reset the state after each branch
+    previous_node = analyzer.previous_node
     # add the start tag to the buffer
     add_node_to_buffer(analyzer, source_string, match, TokenType.JINJA_BLOCK_START)
     start_rule = analyzer.get_rule(ruleset="jinja", rule_name=start_name)
@@ -248,6 +253,7 @@ def handle_jinja_block(
                     source_string,
                     next_tag_match,
                     TokenType.JINJA_BLOCK_KEYWORD,
+                    previous_node=previous_node,
                 )
         else:
             continue
