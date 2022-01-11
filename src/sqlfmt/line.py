@@ -186,7 +186,8 @@ class Node:
             self.token.type
             in (
                 TokenType.DATA,
-                TokenType.JINJA,
+                TokenType.JINJA_EXPRESSION,
+                TokenType.JINJA_STATEMENT,
                 TokenType.JINJA_BLOCK_START,
                 TokenType.JINJA_BLOCK_END,
                 TokenType.JINJA_BLOCK_KEYWORD,
@@ -373,7 +374,12 @@ class Node:
         # names preceded by dots are namespaced identifiers. No space.
         elif (
             token.type
-            in (TokenType.QUOTED_NAME, TokenType.NAME, TokenType.STAR, TokenType.JINJA)
+            in (
+                TokenType.QUOTED_NAME,
+                TokenType.NAME,
+                TokenType.STAR,
+                TokenType.JINJA_EXPRESSION,
+            )
             and previous_token
             and previous_token.type == TokenType.DOT
         ):

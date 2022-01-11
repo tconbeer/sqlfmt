@@ -305,7 +305,7 @@ def test_is_standalone_multiline_node(bare_line: Line, simple_line: Line) -> Non
     assert not simple_line.is_standalone_multiline_node
 
     multiline_node = Token(
-        type=TokenType.JINJA,
+        type=TokenType.JINJA_EXPRESSION,
         prefix="",
         token="{{\nmy JINJA\n}}",
         spos=0,

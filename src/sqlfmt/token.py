@@ -7,11 +7,11 @@ class TokenType(Enum):
     FMT_OFF = auto()
     FMT_ON = auto()
     DATA = auto()
-    JINJA = auto()
-    JINJA_COMMENT = auto()
-    JINJA_BLOCK_START = auto()
-    JINJA_BLOCK_END = auto()
-    JINJA_BLOCK_KEYWORD = auto()
+    JINJA_STATEMENT = auto()  # {% ... %}
+    JINJA_EXPRESSION = auto()  # {{ ... }}
+    JINJA_BLOCK_START = auto()  # {% if ... %}
+    JINJA_BLOCK_END = auto()  # {% endif %}
+    JINJA_BLOCK_KEYWORD = auto()  # {% else %}
     QUOTED_NAME = auto()
     COMMENT = auto()
     COMMENT_START = auto()

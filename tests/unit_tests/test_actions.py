@@ -204,16 +204,20 @@ def test_handle_jinja(
     start_name: str,
     end_name: str,
 ) -> None:
+    if "%" in source_string:
+        token_type = TokenType.JINJA_STATEMENT
+    else:
+        token_type = TokenType.JINJA_EXPRESSION
     start_rule = default_analyzer.get_rule("jinja", start_name)
     match = start_rule.program.match(source_string)
     assert match, "Start Rule does not match start of test string"
     with pytest.raises(StopJinjaLexing):
         actions.handle_jinja(
-            default_analyzer, source_string, match, start_name, end_name
+            default_analyzer, source_string, match, start_name, end_name, token_type
         )
     assert len(source_string) == default_analyzer.pos
     assert len(default_analyzer.node_buffer) == 1
-    assert default_analyzer.node_buffer[0].token.type == TokenType.JINJA
+    assert default_analyzer.node_buffer[0].token.type == token_type
     assert len(str(default_analyzer.node_buffer[0]).strip()) == len(source_string)
 
 
@@ -379,6 +383,8 @@ def test_handle_jinja_for_block(default_analyzer: Analyzer) -> None:
         default_analyzer.line_buffer[0].nodes[0].token.type
         == TokenType.JINJA_BLOCK_START
     )
-    assert default_analyzer.line_buffer[1].nodes[0].token.type == TokenType.JINJA
+    assert (
+        default_analyzer.line_buffer[1].nodes[0].token.type == TokenType.JINJA_STATEMENT
+    )
     assert len(default_analyzer.node_buffer) == 1
     assert default_analyzer.node_buffer[-1].token.type == TokenType.JINJA_BLOCK_END

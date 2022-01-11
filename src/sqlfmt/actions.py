@@ -261,6 +261,7 @@ def handle_jinja(
     match: re.Match,
     start_name: str,
     end_name: str,
+    token_type: TokenType,
 ) -> None:
     """
     Lex simple jinja statements and expressions (with possibly nested curlies)
@@ -273,7 +274,7 @@ def handle_jinja(
         ruleset="jinja",
         start_name=start_name,
         end_name=end_name,
-        token_type=TokenType.JINJA,
+        token_type=token_type,
     )
     raise StopJinjaLexing
 

@@ -439,6 +439,7 @@ class Polyglot(Dialect):
                         actions.handle_jinja,
                         start_name="jinja_statement_start",
                         end_name="jinja_statement_end",
+                        token_type=TokenType.JINJA_STATEMENT,
                     ),
                 ),
                 Rule(
@@ -449,6 +450,7 @@ class Polyglot(Dialect):
                         actions.handle_jinja,
                         start_name="jinja_expression_start",
                         end_name="jinja_expression_end",
+                        token_type=TokenType.JINJA_EXPRESSION,
                     ),
                 ),
                 Rule(

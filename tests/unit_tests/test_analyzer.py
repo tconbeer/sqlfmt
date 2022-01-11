@@ -228,7 +228,7 @@ def test_multiline_parsing(default_analyzer: Analyzer) -> None:
 
     expected_content = [
         Token(
-            type=TokenType.JINJA,
+            type=TokenType.JINJA_EXPRESSION,
             prefix="",
             token=(
                 "{{\n    config(\n        materialized='table',\n        sort='id',\n"
@@ -256,7 +256,7 @@ def test_multiline_parsing(default_analyzer: Analyzer) -> None:
             type=TokenType.UNTERM_KEYWORD, prefix=" ", token="from", spos=340, epos=345
         ),
         Token(
-            type=TokenType.JINJA,
+            type=TokenType.JINJA_EXPRESSION,
             prefix=" ",
             token="{{ ref('my_model') }}",
             spos=345,
@@ -321,7 +321,7 @@ def test_multiline_parsing(default_analyzer: Analyzer) -> None:
         ),
         Token(type=TokenType.COMMA, prefix="", token=",", spos=631, epos=632),
         Token(
-            type=TokenType.JINJA,
+            type=TokenType.JINJA_STATEMENT,
             prefix=" ",
             token=(
                 '{% set my_variable_in_bad_style = [\n        "a",\n'
@@ -468,22 +468,22 @@ def test_jinja_block_parsing(default_analyzer: Analyzer) -> None:
         TokenType.JINJA_BLOCK_START,  # {% macro ...(contents, num_times) %}
         TokenType.JINJA_BLOCK_START,  # {% if contents == "foo" %}
         TokenType.JINJA_BLOCK_START,  # {%- for _ in range(num_times * 10) %}
-        TokenType.JINJA,  # {{ contents }}
+        TokenType.JINJA_EXPRESSION,  # {{ contents }}
         TokenType.JINJA_BLOCK_END,  # {% endfor %}
         TokenType.JINJA_BLOCK_KEYWORD,  # {% elif contents == "bar" %}
         TokenType.JINJA_BLOCK_START,  # {% if num_times > 10 %}
         TokenType.JINJA_BLOCK_START,  # {%- for _ in range(num_times * 5) %}
         TokenType.QUOTED_NAME,  # "TIMES 5!!"
-        TokenType.JINJA,  # {{ contents }}
+        TokenType.JINJA_EXPRESSION,  # {{ contents }}
         TokenType.JINJA_BLOCK_END,  # {% endfor %}
         TokenType.JINJA_BLOCK_KEYWORD,  # {% else %}
         TokenType.JINJA_BLOCK_START,  # {%- for _ in range(num_times * 2) %}
-        TokenType.JINJA,  # {{ contents }}
+        TokenType.JINJA_EXPRESSION,  # {{ contents }}
         TokenType.JINJA_BLOCK_END,  # {% endfor %}
         TokenType.JINJA_BLOCK_END,  # {% endif %}
         TokenType.JINJA_BLOCK_KEYWORD,  # {% else %}
         TokenType.JINJA_BLOCK_START,  # {%- for _ in range(num_times) %}
-        TokenType.JINJA,  # {{ contents }}
+        TokenType.JINJA_EXPRESSION,  # {{ contents }}
         TokenType.JINJA_BLOCK_END,  # {% endfor %}
         TokenType.JINJA_BLOCK_END,  # {% endif %}
         TokenType.JINJA_BLOCK_END,  # {% endmacro %}
