@@ -130,31 +130,31 @@ def test_cte_parsing(default_analyzer: Analyzer) -> None:
     assert computed_line_depths == expected_line_depths
 
     expected_node_depths = [
-        (0, 1),  # with
-        (1, 0),  # \n
-        (1, 0),  # my_cte
-        (1, 0),  # as
-        (1, 1),  # (
-        (2, 1),  # select
-        (3, 0),  # 1
-        (3, 0),  # ,
-        (3, 0),  # b
-        (3, 0),  # ,
-        (3, 0),  # another_field
-        (2, 1),  # from
-        (3, 0),  # my_schema
-        (3, 0),  # .
-        (3, 0),  # my_table
-        (1, 0),  # )
-        (1, 0),  # \n
-        (0, 1),  # select
-        (1, 0),  # *
-        (0, 1),  # from
-        (1, 0),  # my_cte
-        (1, 0),  # \n
+        0,  # with
+        1,  # \n
+        1,  # my_cte
+        1,  # as
+        1,  # (
+        2,  # select
+        3,  # 1
+        3,  # ,
+        3,  # b
+        3,  # ,
+        3,  # another_field
+        2,  # from
+        3,  # my_schema
+        3,  # .
+        3,  # my_table
+        1,  # )
+        1,  # \n
+        0,  # select
+        1,  # *
+        0,  # from
+        1,  # my_cte
+        1,  # \n
     ]
 
-    computed_node_depths = [(node.depth, node.change_in_depth) for node in q.nodes]
+    computed_node_depths = [node.depth for node in q.nodes]
     assert computed_node_depths == expected_node_depths
 
 

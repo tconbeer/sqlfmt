@@ -36,21 +36,6 @@ class TokenType(Enum):
     NAME = auto()
 
 
-def split_after(token_type: TokenType) -> bool:
-    """
-    Return True if a line should be split after this token type,
-    False if it should be split before.
-    """
-    if token_type in (
-        TokenType.BRACKET_OPEN,
-        TokenType.UNTERM_KEYWORD,
-        TokenType.COMMA,
-        TokenType.STATEMENT_START,
-    ):
-        return True
-    return False
-
-
 class Token(NamedTuple):
     """
     Representation of a syntactic element. Tokens always reference their position

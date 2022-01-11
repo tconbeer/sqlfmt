@@ -23,8 +23,6 @@ def depth_split_line(default_mode: Mode) -> Line:
 
 
 def test_maybe_split(splitter: LineSplitter, depth_split_line: Line) -> None:
-    assert depth_split_line.change_in_depth == 1
-
     line_gen = splitter.maybe_split(depth_split_line)
     result = list(map(str, line_gen))
 

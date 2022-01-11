@@ -25,7 +25,6 @@ class LineSplitter:
             if node.is_newline:
                 # can't split just before a newline
                 break
-            change_over_node = node.depth - node.inherited_depth + node.change_in_depth
             # if there is a multiline node on this line and it isn't the
             # only thing on this line, then split before the multiline node
             if i > 0 and node.is_multiline:
@@ -42,14 +41,14 @@ class LineSplitter:
                 yield from self.split_at_index(line, i)
                 return
             # always split before any node that decreases depth
-            elif i > 0 and change_over_node < 0:
+            elif i > 0 and node.is_closing_bracket:
                 yield from self.split_at_index(line, i)
                 return
             # split after any node that increases depth unless we're at EOL
             elif has_depth_increasing_node:
                 yield from self.split_at_index(line, i)
                 return
-            elif change_over_node > 0 or node.is_unterm_keyword:
+            elif node.is_opening_bracket or node.is_unterm_keyword:
                 has_depth_increasing_node = True
             # split before any operator unless the previous node is a closing
             # bracket or statment
