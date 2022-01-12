@@ -59,7 +59,7 @@ def test_calculate_depth() -> None:
         epos=6,
     )
     select_n = Node.from_token(token=select_t, previous_node=None)
-    assert (select_n.depth, select_n.open_brackets) == (0, [])
+    assert (select_n.depth, select_n.open_brackets) == ((0, 0), [])
 
     open_paren_t = Token(
         type=TokenType.BRACKET_OPEN,
@@ -69,7 +69,7 @@ def test_calculate_depth() -> None:
         epos=9,
     )
     open_paren_n = Node.from_token(token=open_paren_t, previous_node=select_n)
-    assert (open_paren_n.depth, open_paren_n.open_brackets) == (1, [select_n])
+    assert (open_paren_n.depth, open_paren_n.open_brackets) == ((1, 0), [select_n])
 
     one_t = Token(
         type=TokenType.NUMBER,
@@ -79,7 +79,7 @@ def test_calculate_depth() -> None:
         epos=11,
     )
     one_n = Node.from_token(token=one_t, previous_node=open_paren_n)
-    assert (one_n.depth, one_n.open_brackets) == (2, [select_n, open_paren_n])
+    assert (one_n.depth, one_n.open_brackets) == ((2, 0), [select_n, open_paren_n])
 
     close_paren_t = Token(
         type=TokenType.BRACKET_CLOSE,
@@ -89,7 +89,7 @@ def test_calculate_depth() -> None:
         epos=12,
     )
     close_paren_n = Node.from_token(token=close_paren_t, previous_node=one_n)
-    assert (close_paren_n.depth, close_paren_n.open_brackets) == (1, [select_n])
+    assert (close_paren_n.depth, close_paren_n.open_brackets) == ((1, 0), [select_n])
 
 
 def test_bare_line(source_string: str, bare_line: Line) -> None:
@@ -110,7 +110,7 @@ def test_bare_line(source_string: str, bare_line: Line) -> None:
 def test_simple_line(
     source_string: str, tokens: List[Token], simple_line: Line
 ) -> None:
-    assert simple_line.depth == 0
+    assert simple_line.depth == (0, 0)
     assert len(simple_line.nodes) == len(tokens)
     assert simple_line.open_brackets == []
 
@@ -127,7 +127,7 @@ def test_simple_line(
         "Node(\n"
         "\ttoken='Token(type=TokenType.UNTERM_KEYWORD, token=with, spos=0)',\n"
         "\tprevious_node=None,\n"
-        "\tdepth=0,\n"
+        "\tdepth=(0, 0),\n"
         "\tprefix=' ',\n"
         "\tvalue='with',\n"
         "\topen_brackets=[],\n"
@@ -445,78 +445,78 @@ def test_jinja_depth(default_mode: Mode) -> None:
         line_length=default_mode.line_length
     ).parse_query(source_string=source_string)
     expected = [
-        0,  # {{ config(materialized="table") }},
-        0,  # \n,
-        0,  # \n,
-        0,  # {%- set n = 5 -%},
-        0,  # \n,
-        0,  # with,
-        1,  # \n,
-        1,  # {% for i in range(n) %},
-        2,  # \n,
-        2,  # dont_do_this_,
-        2,  # {{ i }},
-        2,  # as,
-        2,  # (,
-        3,  # \n,
-        3,  # {% if foo %},
-        4,  # \n,
-        4,  # select,
-        5,  # \n,
-        3,  # {% elif bar %},
-        4,  # \n,
-        4,  # select distinct,
-        5,  # \n,
-        3,  # {% elif baz %},
-        4,  # \n,
-        4,  # select top 25,
-        5,  # \n,
-        3,  # {% else %},
-        4,  # \n,
-        4,  # select,
-        5,  # \n,
-        4,  # {% endif %},
-        4,  # \n,
-        4,  # my_col,
-        4,  # \n,
-        3,  # from,
-        4,  # \n,
-        4,  # {% if i == qux %},
-        5,  # \n,
-        5,  # zip,
-        5,  # \n,
-        4,  # {% else %},
-        5,  # \n,
-        5,  # zap,
-        5,  # \n,
-        4,  # {% endif %},
-        4,  # \n,
-        2,  # ),
-        2,  # {% if not loop.last %},
-        3,  # ,,
-        2,  # {% endif%},
-        2,  # \n,
-        1,  # {% endfor %},
-        1,  # \n,
-        1,  # {% for i in range(n) %},
-        2,  # \n,
-        1,  # select,
-        2,  # \n,
-        2,  # *,
-        2,  # \n,
-        1,  # from,
-        2,  # \n,
-        2,  # dont_do_this_,
-        2,  # {{ i }},
-        2,  # \n,
-        2,  # {% if not loop.last -%},
-        3,  # \n,
-        2,  # union all,
-        3,  # \n,
-        2,  # {%- endif %},
-        2,  # \n,
-        1,  # {% endfor %},
-        1,  # \n,
+        (0, 0),  # {{ config(materialized="table") }}
+        (0, 0),  # \n
+        (0, 0),  # \n
+        (0, 0),  # {%- set n = 5 -%}
+        (0, 0),  # \n
+        (0, 0),  # with
+        (1, 0),  # \n
+        (1, 0),  # {% for i in range(n) %}
+        (1, 1),  # \n
+        (1, 1),  # dont_do_this_
+        (1, 1),  # {{ i }}
+        (1, 1),  # as
+        (1, 1),  # (
+        (2, 1),  # \n
+        (2, 1),  # {% if foo %}
+        (2, 2),  # \n
+        (2, 2),  # select
+        (3, 2),  # \n
+        (2, 1),  # {% elif bar %}
+        (2, 2),  # \n
+        (2, 2),  # select distinct
+        (3, 2),  # \n
+        (2, 1),  # {% elif baz %}
+        (2, 2),  # \n
+        (2, 2),  # select top 25
+        (3, 2),  # \n
+        (2, 1),  # {% else %}
+        (2, 2),  # \n
+        (2, 2),  # select
+        (3, 2),  # \n
+        (3, 1),  # {% endif %}
+        (3, 1),  # \n
+        (3, 1),  # my_col
+        (3, 1),  # \n
+        (2, 1),  # from
+        (3, 1),  # \n
+        (3, 1),  # {% if i == qux %}
+        (3, 2),  # \n
+        (3, 2),  # zip
+        (3, 2),  # \n
+        (3, 1),  # {% else %}
+        (3, 2),  # \n
+        (3, 2),  # zap
+        (3, 2),  # \n
+        (3, 1),  # {% endif %}
+        (3, 1),  # \n
+        (1, 1),  # )
+        (1, 1),  # {% if not loop.last %}
+        (1, 2),  # ,
+        (1, 1),  # {% endif%}
+        (1, 1),  # \n
+        (1, 0),  # {% endfor %}
+        (1, 0),  # \n
+        (1, 0),  # {% for i in range(n) %}
+        (1, 1),  # \n
+        (0, 1),  # select
+        (1, 1),  # \n
+        (1, 1),  # *
+        (1, 1),  # \n
+        (0, 1),  # from
+        (1, 1),  # \n
+        (1, 1),  # dont_do_this_
+        (1, 1),  # {{ i }}
+        (1, 1),  # \n
+        (1, 1),  # {% if not loop.last -%}
+        (1, 2),  # \n
+        (0, 2),  # union all
+        (1, 2),  # \n
+        (1, 1),  # {%- endif %}
+        (1, 1),  # \n
+        (1, 0),  # {% endfor %}
+        (1, 0),  # \n
     ]
     actual = [node.depth for node in q.nodes]
     assert actual == expected

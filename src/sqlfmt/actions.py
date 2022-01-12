@@ -193,10 +193,11 @@ def handle_jinja_block(
     previous_node = analyzer.previous_node
     # add the start tag to the buffer
     add_node_to_buffer(analyzer, source_string, match, TokenType.JINJA_BLOCK_START)
+
+    # configure the block parser
     start_rule = analyzer.get_rule(ruleset="jinja", rule_name=start_name)
     end_rule = analyzer.get_rule(ruleset="jinja", rule_name=end_name)
     other_rules = [analyzer.get_rule(ruleset="jinja", rule_name=r) for r in other_names]
-
     patterns = [start_rule.pattern, end_rule.pattern] + [r.pattern for r in other_rules]
     program = re.compile(
         MAYBE_WHITESPACES + group(*patterns), re.IGNORECASE | re.DOTALL
@@ -206,7 +207,7 @@ def handle_jinja_block(
         # search ahead for the next matching control tag
         next_tag_match = program.search(source_string, analyzer.pos)
         if not next_tag_match:
-
+            # raise a helpful exception
             def simplify_regex(pattern: str) -> str:
                 replacements = [
                     ("\\{", "{"),
@@ -223,14 +224,15 @@ def handle_jinja_block(
                 f" {match.span(0)[0]}. Expected end tag: "
                 f"{simplify_regex(end_rule.pattern)}"
             )
-        # lex everything up to that token, assume sql
+        # otherwise, if the tag matches, lex everything up to that token, assume sql
         next_tag_pos = next_tag_match.span(0)[0]
         analyzer.lex(source_string, ruleset="main", eof_pos=next_tag_pos)
         # it is possible for the next_tag_match found above to have already been lexed.
         # but if it hasn't, we need to process it
         if analyzer.pos == next_tag_pos:
+            # if this is another start tag, we have nested jinja blocks,
+            # so we recurse a level deeper
             if start_rule.program.match(source_string, analyzer.pos):
-                # nest a level deeper
                 try:
                     handle_jinja_block(
                         analyzer,
@@ -242,11 +244,16 @@ def handle_jinja_block(
                     )
                 except StopJinjaLexing:
                     continue
+            # if this the tag that ends the block, add it to the
+            # buffer
             elif end_rule.program.match(source_string, analyzer.pos):
                 add_node_to_buffer(
                     analyzer, source_string, next_tag_match, TokenType.JINJA_BLOCK_END
                 )
                 break
+            # otherwise, this is an elif or else statement; we add it to
+            # the buffer, but with the previous node set to the node before
+            # the if statement (to reset the depth)
             else:
                 add_node_to_buffer(
                     analyzer,

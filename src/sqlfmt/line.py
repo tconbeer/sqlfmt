@@ -126,8 +126,8 @@ class Node:
         return len(str(self))
 
     @property
-    def depth(self) -> int:
-        return len(self.open_brackets) + len(self.open_jinja_blocks)
+    def depth(self) -> Tuple[int, int]:
+        return (len(self.open_brackets), len(self.open_jinja_blocks))
 
     @property
     def is_unterm_keyword(self) -> bool:
@@ -150,6 +150,17 @@ class Node:
             TokenType.BRACKET_CLOSE,
             TokenType.STATEMENT_END,
         )
+
+    @property
+    def is_opening_jinja_block(self) -> bool:
+        return self.token.type in (
+            TokenType.JINJA_BLOCK_START,
+            TokenType.JINJA_BLOCK_KEYWORD,
+        )
+
+    @property
+    def is_closing_jinja_block(self) -> bool:
+        return self.token.type == TokenType.JINJA_BLOCK_END
 
     @property
     def is_operator(self) -> bool:
@@ -217,6 +228,7 @@ class Node:
         (this does most of the formatting of the Node). Node values are
         lowercased if they are simple names, keywords, or statements.
         """
+
         if previous_node is None:
             open_brackets = []
             open_jinja_blocks = []
@@ -381,6 +393,13 @@ class Node:
             TokenType.DOUBLE_COLON,
         ):
             return NO_SPACE
+        # we don't know what a jinja expression will evaluate to,
+        # so we have to respect the original text
+        elif token.type == TokenType.JINJA_EXPRESSION:
+            if token.prefix == "":
+                return NO_SPACE
+            else:
+                return SPACE
         else:
             return SPACE
 
@@ -428,16 +447,16 @@ class Line:
             return 0
 
     @property
-    def depth(self) -> int:
+    def depth(self) -> Tuple[int, int]:
         if self.nodes:
-            return len(self.open_brackets) + len(self.open_jinja_blocks)
+            return (len(self.open_brackets), len(self.open_jinja_blocks))
         else:
-            return 0
+            return (0, 0)
 
     @property
     def prefix(self) -> str:
         INDENT = " " * 4
-        prefix = INDENT * self.depth
+        prefix = INDENT * self.depth[0]
         return prefix
 
     def render_with_comments(self, max_length: int) -> str:
@@ -536,6 +555,7 @@ class Line:
                 nodes=nodes,
                 comments=comments,
                 open_brackets=nodes[0].open_brackets,
+                open_jinja_blocks=nodes[0].open_jinja_blocks,
                 formatting_disabled=nodes[0].formatting_disabled
                 or nodes[-1].formatting_disabled,
             )
@@ -545,6 +565,9 @@ class Line:
                 nodes=nodes,
                 comments=comments,
                 open_brackets=previous_node.open_brackets if previous_node else [],
+                open_jinja_blocks=previous_node.open_jinja_blocks
+                if previous_node
+                else [],
                 formatting_disabled=previous_node.formatting_disabled
                 if previous_node
                 else False,

@@ -19,12 +19,19 @@ class LineSplitter:
             yield line
             return
 
+        if str(line) == "        {% if not loop.last %},\n":
+            breakpoint()
+
         has_preceding_comma = False
         has_depth_increasing_node = False
         for i, node in enumerate(line.nodes):
             if node.is_newline:
                 # can't split just before a newline
                 break
+            # split after any node that increases depth unless we're at EOL
+            elif has_depth_increasing_node or has_preceding_comma:
+                yield from self.split_at_index(line, i)
+                return
             # if there is a multiline node on this line and it isn't the
             # only thing on this line, then split before the multiline node
             if i > 0 and node.is_multiline:
@@ -33,25 +40,22 @@ class LineSplitter:
             # we always split after any comma that doesn't end a line
             elif node.is_comma:
                 has_preceding_comma = True
-            elif has_preceding_comma:
-                yield from self.split_at_index(line, i)
-                return
-            # always split before any unterm kw unless it starts a line
-            elif i > 0 and node.is_unterm_keyword:
+            # always split before any unterm kw or jinja block unless it starts a line
+            elif i > 0 and (node.is_unterm_keyword or node.is_opening_jinja_block):
                 yield from self.split_at_index(line, i)
                 return
             # always split before any node that decreases depth
-            elif i > 0 and node.is_closing_bracket:
+            elif i > 0 and (node.is_closing_bracket or node.is_closing_jinja_block):
                 yield from self.split_at_index(line, i)
                 return
-            # split after any node that increases depth unless we're at EOL
-            elif has_depth_increasing_node:
-                yield from self.split_at_index(line, i)
-                return
-            elif node.is_opening_bracket or node.is_unterm_keyword:
+            elif (
+                node.is_opening_bracket
+                or node.is_opening_jinja_block
+                or node.is_unterm_keyword
+            ):
                 has_depth_increasing_node = True
             # split before any operator unless the previous node is a closing
-            # bracket or statment
+            # bracket or statement
             elif (
                 i > 0
                 and node.is_operator

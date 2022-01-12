@@ -23,7 +23,7 @@ def test_simple_query_parsing(all_output_modes: Mode) -> None:
     assert len(q.lines) == 6
 
     expected_line_depths = [0, 1, 1, 1, 0, 0]
-    actual_line_depths = [line.depth for line in q.lines]
+    actual_line_depths = [line.depth[0] for line in q.lines]
     assert actual_line_depths == expected_line_depths
 
     assert q.nodes
@@ -107,7 +107,7 @@ def test_case_statement_parsing(default_analyzer: Analyzer) -> None:
 
     expected_line_depths = [0, 1, 1, 1, 2, 2, 1, 1, 2, 2, 2, 3, 1, 1, 2, 1, 1, 1, 1, 0]
 
-    computed_line_depths = [line.depth for line in q.lines]
+    computed_line_depths = [line.depth[0] for line in q.lines]
     assert computed_line_depths == expected_line_depths
 
     # there are 6 case statements in the test data
@@ -126,7 +126,7 @@ def test_cte_parsing(default_analyzer: Analyzer) -> None:
 
     expected_line_depths = [0, 1, 0]
 
-    computed_line_depths = [line.depth for line in q.lines]
+    computed_line_depths = [line.depth[0] for line in q.lines]
     assert computed_line_depths == expected_line_depths
 
     expected_node_depths = [
@@ -154,7 +154,7 @@ def test_cte_parsing(default_analyzer: Analyzer) -> None:
         1,  # \n
     ]
 
-    computed_node_depths = [node.depth for node in q.nodes]
+    computed_node_depths = [node.depth[0] for node in q.nodes]
     assert computed_node_depths == expected_node_depths
 
 
