@@ -67,7 +67,7 @@ def add_comment_to_buffer(
     match: re.Match,
 ) -> None:
     """
-    Create a token of token_type from the match, then create a Comment
+    Create a COMMENT token from the match, then create a Comment
     from that token and append it to the Analyzer's buffer
     """
     token = Token.from_match(source_string, match, TokenType.COMMENT)
@@ -83,8 +83,9 @@ def add_jinja_comment_to_buffer(
     match: re.Match,
 ) -> None:
     """
-    Create a token of token_type from the match, then create a Comment
-    from that token and append it to the Analyzer's buffer
+    Create a COMMENT token from the match, then create a Comment
+    from that token and append it to the Analyzer's buffer; raise
+    StopJinjaLexing to revert to SQL lexing
     """
     add_comment_to_buffer(analyzer, source_string, match)
     raise StopJinjaLexing
@@ -142,12 +143,9 @@ def handle_jinja_set_block(
 ) -> None:
     """
     A set block, like {% set my_var %}data{% endset %} should be parsed
-    as three tokens... the data between the two tags need not be
+    as a single DATA token... the data between the two tags need not be
     sql or python, and should not be formatted.
     """
-    # add the start tag to the buffer
-    add_node_to_buffer(analyzer, source_string, match, TokenType.JINJA_BLOCK_START)
-
     # find the ending tag
     end_rule = analyzer.get_rule(ruleset="jinja", rule_name="jinja_set_block_end")
     end_match = end_rule.program.search(source_string, pos=analyzer.pos)
@@ -159,20 +157,19 @@ def handle_jinja_set_block(
             f" {spos}. Expected end tag: "
             "{% endset %}"
         )
-    # the data token is everything between the start and end tags
-    data_spos = match.span(1)[1]
-    data_epos = end_match.span(1)[0]
+    # the data token is everything between the start and end tags, inclusive
+    data_spos = match.span(1)[0]
+    data_epos = end_match.span(1)[1]
     data_token = Token(
         type=TokenType.DATA,
-        prefix="",
+        prefix=source_string[analyzer.pos : data_spos],
         token=source_string[data_spos:data_epos],
         spos=data_spos,
         epos=data_epos,
     )
     data_node = Node.from_token(token=data_token, previous_node=analyzer.previous_node)
     analyzer.node_buffer.append(data_node)
-    # finally, add the end tag
-    add_node_to_buffer(analyzer, source_string, end_match, TokenType.JINJA_BLOCK_END)
+    analyzer.pos = data_epos
     raise StopJinjaLexing
 
 
@@ -192,7 +189,12 @@ def handle_jinja_block(
     # for some jinja blocks, we need to reset the state after each branch
     previous_node = analyzer.previous_node
     # add the start tag to the buffer
-    add_node_to_buffer(analyzer, source_string, match, TokenType.JINJA_BLOCK_START)
+    add_node_to_buffer(
+        analyzer=analyzer,
+        source_string=source_string,
+        match=match,
+        token_type=TokenType.JINJA_BLOCK_START,
+    )
 
     # configure the block parser
     start_rule = analyzer.get_rule(ruleset="jinja", rule_name=start_name)
@@ -235,12 +237,12 @@ def handle_jinja_block(
             if start_rule.program.match(source_string, analyzer.pos):
                 try:
                     handle_jinja_block(
-                        analyzer,
-                        source_string,
-                        next_tag_match,
-                        start_name,
-                        end_name,
-                        other_names,
+                        analyzer=analyzer,
+                        source_string=source_string,
+                        match=next_tag_match,
+                        start_name=start_name,
+                        end_name=end_name,
+                        other_names=other_names,
                     )
                 except StopJinjaLexing:
                     continue
@@ -248,7 +250,10 @@ def handle_jinja_block(
             # buffer
             elif end_rule.program.match(source_string, analyzer.pos):
                 add_node_to_buffer(
-                    analyzer, source_string, next_tag_match, TokenType.JINJA_BLOCK_END
+                    analyzer=analyzer,
+                    source_string=source_string,
+                    match=next_tag_match,
+                    token_type=TokenType.JINJA_BLOCK_END,
                 )
                 break
             # otherwise, this is an elif or else statement; we add it to
@@ -256,10 +261,10 @@ def handle_jinja_block(
             # the if statement (to reset the depth)
             else:
                 add_node_to_buffer(
-                    analyzer,
-                    source_string,
-                    next_tag_match,
-                    TokenType.JINJA_BLOCK_KEYWORD,
+                    analyzer=analyzer,
+                    source_string=source_string,
+                    match=next_tag_match,
+                    token_type=TokenType.JINJA_BLOCK_KEYWORD,
                     previous_node=previous_node,
                 )
         else:
@@ -318,7 +323,6 @@ def handle_potentially_nested_tokens(
     program = re.compile(
         MAYBE_WHITESPACES + group(*patterns), re.IGNORECASE | re.DOTALL
     )
-    # TODO: refactor this search function
     epos = analyzer.search_for_terminating_token(
         start_rule=start_name,
         program=program,

@@ -107,9 +107,12 @@ class LineMerger:
                     new_lines.append(partially_merged_lines[0])
                     if (
                         partially_merged_lines[-1].closes_bracket_from_previous_line
-                        and partially_merged_lines[-1].depth
-                        == partially_merged_lines[0].depth
-                    ):
+                        or partially_merged_lines[
+                            -1
+                        ].closes_jinja_block_from_previous_line
+                    ) and partially_merged_lines[-1].depth == partially_merged_lines[
+                        0
+                    ].depth:
                         new_lines.extend(
                             self.maybe_merge_lines(partially_merged_lines[1:-1])
                         )
@@ -214,14 +217,14 @@ class LineMerger:
         for i, line in enumerate(lines[1:], start=1):
             # scan through the lines until we get back to the
             # depth of the first line
-            if line.depth <= target_depth:
+            if line.depth <= target_depth or line.depth[1] < target_depth[1]:
                 # if this line starts with a closing bracket,
                 # we probably want to include that closing bracket
                 # in the same segment as the first line.
                 if (
                     line.closes_bracket_from_previous_line
-                    and line.depth == target_depth
-                ):
+                    or line.closes_jinja_block_from_previous_line
+                ) and line.depth == target_depth:
                     idx = i + 1
                     try:
                         segments = [[self.create_merged_line(lines[:idx])]]

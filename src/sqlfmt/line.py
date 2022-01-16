@@ -163,6 +163,10 @@ class Node:
         return self.token.type == TokenType.JINJA_BLOCK_END
 
     @property
+    def is_jinja_block_keyword(self) -> bool:
+        return self.token.type == TokenType.JINJA_BLOCK_KEYWORD
+
+    @property
     def is_operator(self) -> bool:
         return (
             self.token.type
@@ -396,6 +400,11 @@ class Node:
         # we don't know what a jinja expression will evaluate to,
         # so we have to respect the original text
         elif token.type == TokenType.JINJA_EXPRESSION:
+            if token.prefix == "":
+                return NO_SPACE
+            else:
+                return SPACE
+        elif previous_token and previous_token.type == TokenType.JINJA_EXPRESSION:
             if token.prefix == "":
                 return NO_SPACE
             else:
@@ -648,6 +657,11 @@ class Line:
 
     @property
     def closes_bracket_from_previous_line(self) -> bool:
+        """
+        Returns true for a line with an explicit bracket like ")" or "]"
+        that matches a bracket on a preceding line. False for unterminated
+        keywords or any lines with matched brackets
+        """
         if self.previous_node and self.previous_node.open_brackets and self.nodes:
             explicit_brackets = [
                 b for b in self.previous_node.open_brackets if b.is_opening_bracket
@@ -657,6 +671,31 @@ class Line:
                 and explicit_brackets[-1] not in self.nodes[-1].open_brackets
             ):
                 return True
+        return False
+
+    @property
+    def closes_jinja_block_from_previous_line(self) -> bool:
+        """
+        Returns true for a line that contains {% endif %}, {% endfor %}, etc.
+        where the matching {% if %}, etc. is on a previous line. Returns False
+        for {% else %}/{% elif %} or an {% endif %} that follows an {% else %}/
+        {% endif %}
+        """
+        if (
+            self.previous_node
+            and self.previous_node.open_jinja_blocks
+            and not self.previous_node.open_jinja_blocks[-1].is_jinja_block_keyword
+            and self.nodes
+            and (
+                self.previous_node.open_jinja_blocks[-1]
+                not in self.nodes[-1].open_jinja_blocks
+            )
+            and (
+                not self.nodes[-1].open_jinja_blocks
+                or not self.nodes[-1].open_jinja_blocks[-1].is_jinja_block_keyword
+            )
+        ):
+            return True
         return False
 
     @property

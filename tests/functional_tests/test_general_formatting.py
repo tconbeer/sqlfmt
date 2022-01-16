@@ -18,7 +18,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/103_window_functions.sql",
         "unformatted/104_joins.sql",
         "unformatted/106_leading_commas.sql",
-        pytest.param("unformatted/107_jinja_blocks.sql", marks=pytest.mark.xfail),
+        "unformatted/107_jinja_blocks.sql",
         "unformatted/200_base_model.sql",
     ],
 )

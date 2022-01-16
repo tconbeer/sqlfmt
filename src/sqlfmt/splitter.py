@@ -19,9 +19,6 @@ class LineSplitter:
             yield line
             return
 
-        if str(line) == "        {% if not loop.last %},\n":
-            breakpoint()
-
         has_preceding_comma = False
         has_depth_increasing_node = False
         for i, node in enumerate(line.nodes):

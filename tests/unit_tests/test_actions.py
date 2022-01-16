@@ -234,12 +234,8 @@ def test_handle_jinja_set_block(default_analyzer: Analyzer) -> None:
         actions.handle_jinja_set_block(default_analyzer, source_string, match)
     assert default_analyzer.line_buffer == []
     assert default_analyzer.comment_buffer == []
-    assert len(default_analyzer.node_buffer) == 3
-    assert [node.token.type for node in default_analyzer.node_buffer] == [
-        TokenType.JINJA_BLOCK_START,
-        TokenType.DATA,
-        TokenType.JINJA_BLOCK_END,
-    ]
+    assert len(default_analyzer.node_buffer) == 1
+    assert default_analyzer.node_buffer[0].token.type == TokenType.DATA
 
 
 def test_handle_jinja_set_block_unterminated(default_analyzer: Analyzer) -> None:
