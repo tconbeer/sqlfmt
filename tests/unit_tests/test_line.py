@@ -520,3 +520,15 @@ def test_jinja_depth(default_mode: Mode) -> None:
     ]
     actual = [node.depth for node in q.nodes]
     assert actual == expected
+
+
+def test_from_token_raises_bracket_error_on_jinja_block_end() -> None:
+    t = Token(
+        type=TokenType.JINJA_BLOCK_END,
+        prefix="",
+        token="{% endif %}",
+        spos=0,
+        epos=11,
+    )
+    with pytest.raises(SqlfmtBracketError):
+        _ = Node.from_token(t, previous_node=None)

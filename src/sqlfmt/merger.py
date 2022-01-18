@@ -131,8 +131,8 @@ class LineMerger:
         Tries to merge runs of lines at the same depth as lines[0] that
         start with an operator.
         """
-        target_depth = lines[0].depth
         head = 0
+        target_depth = lines[head].depth
         last_line_is_singleton_operator = False
         new_lines: List[Line] = []
         for tail, line in enumerate(lines[1:], start=1):
@@ -177,6 +177,7 @@ class LineMerger:
                     # reset the head pointer and start the process over
                     # on the remainder of lines
                     head = tail
+                    target_depth = lines[head].depth
 
             # lines can't end with operators unless it's an operator on a line
             # by itself. If that is the case, we want to try to merge the next
