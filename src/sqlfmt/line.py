@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from typing import Iterator, List, Optional, Tuple
 
 from sqlfmt.exception import InlineCommentError, SqlfmtBracketError
-from sqlfmt.token import Token, TokenType, split_after
+from sqlfmt.token import Token, TokenType
 
 COMMENT_PROGRAM = re.compile(r"(--|#|/\*|\{#-?)([^\S\n]*)")
 
@@ -87,12 +87,10 @@ class Comment:
 class Node:
     token: Token
     previous_node: Optional["Node"]
-    inherited_depth: int
     prefix: str
     value: str
-    depth: int
-    change_in_depth: int
-    open_brackets: List[Token] = field(default_factory=list)
+    open_brackets: List["Node"] = field(default_factory=list)
+    open_jinja_blocks: List["Node"] = field(default_factory=list)
     formatting_disabled: bool = False
 
     def __str__(self) -> str:
@@ -103,20 +101,22 @@ class Node:
         Because of self.previous_node, the default dataclass repr creates
         unusable output
         """
-        prev = (
-            f"Node(token={self.previous_node.token})" if self.previous_node else "None"
-        )
-        b = [str(t) for t in self.open_brackets]
+
+        def simple_node(node: Optional[Node]) -> str:
+            return f"Node(token={node.token})" if node else "None"
+
+        prev = simple_node(self.previous_node)
+        b = [simple_node(n) for n in self.open_brackets]
+        j = [simple_node(n) for n in self.open_jinja_blocks]
         r = (
             f"Node(\n"
             f"\ttoken='{str(self.token)}',\n"
             f"\tprevious_node={prev},\n"
-            f"\tinherited_depth={self.inherited_depth},\n"
             f"\tdepth={self.depth},\n"
-            f"\tchange_in_depth={self.change_in_depth},\n"
             f"\tprefix='{self.prefix}',\n"
             f"\tvalue='{self.value}',\n"
-            f"\topen_brackets={b}\n"
+            f"\topen_brackets={b},\n"
+            f"\topen_jinja_blocks={j},\n"
             f"\tformatting_disabled={self.formatting_disabled}\n"
             f")"
         )
@@ -124,6 +124,10 @@ class Node:
 
     def __len__(self) -> int:
         return len(str(self))
+
+    @property
+    def depth(self) -> Tuple[int, int]:
+        return (len(self.open_brackets), len(self.open_jinja_blocks))
 
     @property
     def is_unterm_keyword(self) -> bool:
@@ -134,8 +138,33 @@ class Node:
         return self.token.type == TokenType.COMMA
 
     @property
+    def is_opening_bracket(self) -> bool:
+        return self.token.type in (
+            TokenType.BRACKET_OPEN,
+            TokenType.STATEMENT_START,
+        )
+
+    @property
     def is_closing_bracket(self) -> bool:
-        return self.token.type in (TokenType.BRACKET_CLOSE, TokenType.STATEMENT_END)
+        return self.token.type in (
+            TokenType.BRACKET_CLOSE,
+            TokenType.STATEMENT_END,
+        )
+
+    @property
+    def is_opening_jinja_block(self) -> bool:
+        return self.token.type in (
+            TokenType.JINJA_BLOCK_START,
+            TokenType.JINJA_BLOCK_KEYWORD,
+        )
+
+    @property
+    def is_closing_jinja_block(self) -> bool:
+        return self.token.type == TokenType.JINJA_BLOCK_END
+
+    @property
+    def is_jinja_block_keyword(self) -> bool:
+        return self.token.type == TokenType.JINJA_BLOCK_KEYWORD
 
     @property
     def is_operator(self) -> bool:
@@ -175,7 +204,18 @@ class Node:
 
     @property
     def is_multiline(self) -> bool:
-        if self.token.type == TokenType.JINJA and "\n" in self.value:
+        if (
+            self.token.type
+            in (
+                TokenType.DATA,
+                TokenType.JINJA_EXPRESSION,
+                TokenType.JINJA_STATEMENT,
+                TokenType.JINJA_BLOCK_START,
+                TokenType.JINJA_BLOCK_END,
+                TokenType.JINJA_BLOCK_KEYWORD,
+            )
+            and "\n" in self.value
+        ):
             return True
         else:
             return False
@@ -192,131 +232,113 @@ class Node:
         (this does most of the formatting of the Node). Node values are
         lowercased if they are simple names, keywords, or statements.
         """
-        if previous_node:
-            inherited_depth = previous_node.depth + previous_node.change_in_depth
-            open_brackets = previous_node.open_brackets.copy()
-            formatting_disabled = previous_node.formatting_disabled
-        else:
-            inherited_depth = 0
+
+        if previous_node is None:
             open_brackets = []
+            open_jinja_blocks = []
             formatting_disabled = False
-
-        depth, change_in_depth, open_brackets = cls.calculate_depth(
-            token, inherited_depth, open_brackets
-        )
-
-        prev_token = cls.previous_token(previous_node)
-
-        prefix = cls.whitespace(token, prev_token)
-        value = cls.capitalize(token)
-
-        if token.type == TokenType.FMT_OFF:
-            formatting_disabled = True
-        elif prev_token and prev_token.type == TokenType.FMT_ON:
-            formatting_disabled = False
-
-        return Node(
-            token,
-            previous_node,
-            inherited_depth,
-            prefix,
-            value,
-            depth,
-            change_in_depth,
-            open_brackets,
-            formatting_disabled,
-        )
-
-    @classmethod
-    def previous_token(cls, prev_node: Optional["Node"]) -> Optional[Token]:
-        """
-        Returns the token of prev_node, unless prev_node is a
-        newline, in which case it recurses
-        """
-        if not prev_node:
-            return None
-        t = prev_node.token
-        if t.type == TokenType.NEWLINE:
-            return cls.previous_token(prev_node.previous_node)
         else:
-            return t
+            open_brackets = previous_node.open_brackets.copy()
+            open_jinja_blocks = previous_node.open_jinja_blocks.copy()
+            formatting_disabled = previous_node.formatting_disabled
 
-    @classmethod
-    def calculate_depth(
-        cls, token: Token, inherited_depth: int, open_brackets: List[Token]
-    ) -> Tuple[int, int, List[Token]]:
-        """
-        Calculates the depth statistics for a Node (depth, change_in_depth,
-        open_brackets), based on the properties of its token. Depth determines
-        indentation and line splitting in the formatted query.
+            # add the previous node to the list of open brackets or jinja blocks
+            if previous_node.is_unterm_keyword or previous_node.is_opening_bracket:
+                open_brackets.append(previous_node)
+            elif previous_node.token.type in (
+                TokenType.JINJA_BLOCK_START,
+                TokenType.JINJA_BLOCK_KEYWORD,
+            ):
+                open_jinja_blocks.append(previous_node)
 
-        We're operating on a single token at a time; since the token can affect
-        its own node's indentation and/or the indentation of the next node, we
-        need to start with the "inherited" depth and then adjust the final
-        depth of the node based on the contents of the token at the node.
-        """
-        change_before = 0
-        change_after = 0
-
+        # if the token should reduce the depth of the node, pop
+        # the last item(s) off open_brackets or open_jinja_blocks
         if token.type == TokenType.UNTERM_KEYWORD:
-            maybe_last_bracket: Optional[Token] = (
-                open_brackets.pop() if open_brackets else None
-            )
-            if (
-                maybe_last_bracket
-                and maybe_last_bracket.type == TokenType.UNTERM_KEYWORD
-            ):  # this is a kw like 'from' that follows another top keyword,
-                # so we need to dedent
-                change_before = -1
-            elif (
-                maybe_last_bracket
-            ):  # it's an open paren that needs to go back on the stack
-                open_brackets.append(maybe_last_bracket)
-
-            open_brackets.append(token)
-            change_after = 1
-
-        elif token.type in (TokenType.BRACKET_OPEN, TokenType.STATEMENT_START):
-            open_brackets.append(token)
-            change_after = 1
-
+            if open_brackets and open_brackets[-1].is_unterm_keyword:
+                _ = open_brackets.pop()
         elif token.type in (TokenType.BRACKET_CLOSE, TokenType.STATEMENT_END):
             try:
-                last_bracket: Token = open_brackets.pop()
-                change_before = -1
-                # if the closing bracket follows a keyword like "from",
-                # we need to pop the next open bracket off the stack,
-                # which should be the matching pair to the current token
-                if last_bracket and last_bracket.type == TokenType.UNTERM_KEYWORD:
+                last_bracket = open_brackets.pop()
+                if last_bracket and last_bracket.is_unterm_keyword:
                     last_bracket = open_brackets.pop()
-                    change_before -= 1
             except IndexError:
                 raise SqlfmtBracketError(
                     f"Closing bracket '{token.token}' found at "
                     f"{token.spos} before bracket was opened."
                 )
-            matches = {
-                "{": "}",
-                "(": ")",
-                "[": "]",
-                "case": "end",
-            }
+            else:
+                cls.raise_on_mismatched_bracket(token, last_bracket)
+        elif token.type == TokenType.JINJA_BLOCK_END:
             try:
-                assert (
-                    last_bracket.type
-                    in (TokenType.BRACKET_OPEN, TokenType.STATEMENT_START)
-                    and matches[last_bracket.token.lower()] == token.token.lower()
-                )
-            except AssertionError:
+                _ = open_jinja_blocks.pop()
+            except IndexError:
                 raise SqlfmtBracketError(
-                    f"Closing bracket '{token.token}' found at {token.spos} does not "
-                    f"match last opened bracket '{last_bracket.token}' found at "
-                    f"{last_bracket.spos}."
+                    f"Closing bracket '{token.token}' found at "
+                    f"{token.spos} before bracket was opened."
                 )
 
-        depth = inherited_depth + change_before
+        prev_token = cls.previous_token(previous_node)
+        prefix = cls.whitespace(token, prev_token)
+        value = cls.capitalize(token)
 
-        return depth, change_after, open_brackets
+        if token.type in (TokenType.FMT_OFF, TokenType.DATA):
+            formatting_disabled = True
+        elif prev_token and prev_token.type in (TokenType.FMT_ON, TokenType.DATA):
+            formatting_disabled = False
+
+        return Node(
+            token=token,
+            previous_node=previous_node,
+            prefix=prefix,
+            value=value,
+            open_brackets=open_brackets,
+            open_jinja_blocks=open_jinja_blocks,
+            formatting_disabled=formatting_disabled,
+        )
+
+    @classmethod
+    def raise_on_mismatched_bracket(cls, token: Token, last_bracket: "Node") -> None:
+        """
+        Raise a SqlfmtBracketError if token is a closing bracket, but it
+        does not match the token in the last_bracket node
+        """
+        matches = {
+            "{": "}",
+            "(": ")",
+            "[": "]",
+            "case": "end",
+        }
+        if (
+            last_bracket.token.type
+            not in (TokenType.BRACKET_OPEN, TokenType.STATEMENT_START)
+            or last_bracket.value not in matches
+            or matches[last_bracket.value] != token.token.lower()
+        ):
+            raise SqlfmtBracketError(
+                f"Closing bracket '{token.token}' found at {token.spos} does not "
+                f"match last opened bracket '{last_bracket.value}' found at "
+                f"{last_bracket.token.spos}."
+            )
+
+    @classmethod
+    def previous_token(cls, prev_node: Optional["Node"]) -> Optional[Token]:
+        """
+        Returns the token of prev_node, unless prev_node is a
+        newline or jinja statement, in which case it recurses
+        """
+        if not prev_node:
+            return None
+        t = prev_node.token
+        if t.type in (
+            TokenType.NEWLINE,
+            TokenType.JINJA_STATEMENT,
+            TokenType.JINJA_BLOCK_START,
+            TokenType.JINJA_BLOCK_END,
+            TokenType.JINJA_BLOCK_KEYWORD,
+        ):
+            return cls.previous_token(prev_node.previous_node)
+        else:
+            return t
 
     @classmethod
     def whitespace(
@@ -341,12 +363,21 @@ class Node:
             TokenType.COMMA,
             TokenType.DOT,
             TokenType.NEWLINE,
+            TokenType.JINJA_STATEMENT,
+            TokenType.JINJA_BLOCK_START,
+            TokenType.JINJA_BLOCK_END,
+            TokenType.JINJA_BLOCK_KEYWORD,
         ):
             return NO_SPACE
         # names preceded by dots are namespaced identifiers. No space.
         elif (
             token.type
-            in (TokenType.QUOTED_NAME, TokenType.NAME, TokenType.STAR, TokenType.JINJA)
+            in (
+                TokenType.QUOTED_NAME,
+                TokenType.NAME,
+                TokenType.STAR,
+                TokenType.JINJA_EXPRESSION,
+            )
             and previous_token
             and previous_token.type == TokenType.DOT
         ):
@@ -366,6 +397,18 @@ class Node:
             TokenType.DOUBLE_COLON,
         ):
             return NO_SPACE
+        # we don't know what a jinja expression will evaluate to,
+        # so we have to respect the original text
+        elif token.type == TokenType.JINJA_EXPRESSION:
+            if token.prefix == "":
+                return NO_SPACE
+            else:
+                return SPACE
+        elif previous_token and previous_token.type == TokenType.JINJA_EXPRESSION:
+            if token.prefix == "":
+                return NO_SPACE
+            else:
+                return SPACE
         else:
             return SPACE
 
@@ -396,9 +439,8 @@ class Line:
     previous_node: Optional[Node]  # last node of prior line, if any
     nodes: List[Node] = field(default_factory=list)
     comments: List[Comment] = field(default_factory=list)
-    depth: int = 0
-    change_in_depth: int = 0
-    open_brackets: List[Token] = field(default_factory=list)
+    open_brackets: List["Node"] = field(default_factory=list)
+    open_jinja_blocks: List["Node"] = field(default_factory=list)
     formatting_disabled: bool = False
 
     def __str__(self) -> str:
@@ -412,12 +454,18 @@ class Line:
             return max([len(s) for s in str(self).splitlines()])
         except ValueError:
             return 0
-        # return len(str(self))
+
+    @property
+    def depth(self) -> Tuple[int, int]:
+        if self.nodes:
+            return (len(self.open_brackets), len(self.open_jinja_blocks))
+        else:
+            return (0, 0)
 
     @property
     def prefix(self) -> str:
         INDENT = " " * 4
-        prefix = INDENT * self.depth
+        prefix = INDENT * self.depth[0]
         return prefix
 
     def render_with_comments(self, max_length: int) -> str:
@@ -464,17 +512,9 @@ class Line:
 
         node = Node.from_token(token, previous_node)
 
-        # update the line's depth stats from the node
         if not self.nodes:
-            self.depth = node.depth
-            self.change_in_depth = node.change_in_depth
             self.open_brackets = node.open_brackets
-        else:
-            self.change_in_depth = node.depth - self.depth + node.change_in_depth
-
-        split_index = len(self.nodes)
-        if split_after(node.token.type):
-            split_index += 1
+            self.open_jinja_blocks = node.open_jinja_blocks
 
         self.formatting_disabled = self.formatting_disabled or node.formatting_disabled
 
@@ -523,11 +563,8 @@ class Line:
                 previous_node=previous_node,
                 nodes=nodes,
                 comments=comments,
-                depth=nodes[0].depth,
-                change_in_depth=(
-                    nodes[-1].depth - nodes[0].depth + nodes[-1].change_in_depth
-                ),
                 open_brackets=nodes[0].open_brackets,
+                open_jinja_blocks=nodes[0].open_jinja_blocks,
                 formatting_disabled=nodes[0].formatting_disabled
                 or nodes[-1].formatting_disabled,
             )
@@ -536,9 +573,10 @@ class Line:
                 previous_node=previous_node,
                 nodes=nodes,
                 comments=comments,
-                depth=previous_node.depth if previous_node else 0,
-                change_in_depth=0,
                 open_brackets=previous_node.open_brackets if previous_node else [],
+                open_jinja_blocks=previous_node.open_jinja_blocks
+                if previous_node
+                else [],
                 formatting_disabled=previous_node.formatting_disabled
                 if previous_node
                 else False,
@@ -619,17 +657,45 @@ class Line:
 
     @property
     def closes_bracket_from_previous_line(self) -> bool:
+        """
+        Returns true for a line with an explicit bracket like ")" or "]"
+        that matches a bracket on a preceding line. False for unterminated
+        keywords or any lines with matched brackets
+        """
         if self.previous_node and self.previous_node.open_brackets and self.nodes:
             explicit_brackets = [
-                b
-                for b in self.previous_node.open_brackets
-                if b.type in (TokenType.STATEMENT_START, TokenType.BRACKET_OPEN)
+                b for b in self.previous_node.open_brackets if b.is_opening_bracket
             ]
             if (
                 explicit_brackets
                 and explicit_brackets[-1] not in self.nodes[-1].open_brackets
             ):
                 return True
+        return False
+
+    @property
+    def closes_jinja_block_from_previous_line(self) -> bool:
+        """
+        Returns true for a line that contains {% endif %}, {% endfor %}, etc.
+        where the matching {% if %}, etc. is on a previous line. Returns False
+        for {% else %}/{% elif %} or an {% endif %} that follows an {% else %}/
+        {% endif %}
+        """
+        if (
+            self.previous_node
+            and self.previous_node.open_jinja_blocks
+            and not self.previous_node.open_jinja_blocks[-1].is_jinja_block_keyword
+            and self.nodes
+            and (
+                self.previous_node.open_jinja_blocks[-1]
+                not in self.nodes[-1].open_jinja_blocks
+            )
+            and (
+                not self.nodes[-1].open_jinja_blocks
+                or not self.nodes[-1].open_jinja_blocks[-1].is_jinja_block_keyword
+            )
+        ):
+            return True
         return False
 
     @property
@@ -640,10 +706,7 @@ class Line:
             return False
         else:
             b = self.nodes[-1].open_brackets[-1]
-            if (
-                b.type in (TokenType.STATEMENT_START, TokenType.BRACKET_OPEN)
-                and b not in self.open_brackets
-            ):
+            if b.is_opening_bracket and b not in self.open_brackets:
                 return True
             else:
                 return False

@@ -27,6 +27,24 @@ select
     + another_field
     + another_field
     + another_field,
+    c_field
+    + another_field
+    + another_field
+    + another_field
+    + another_field
+    + another_field
+    + another_field
+    + another_field
+    + another_field
+    + another_field
+    + another_field
+    + another_field
+    + another_field
+    + another_field
+    + another_field
+    + another_field
+    + another_field
+    and another_field,
     d_field
     ,
     e_field
@@ -58,6 +76,24 @@ select
     + another_field
     + another_field
     + another_field,
+    c_field
+    + another_field
+    + another_field
+    + another_field
+    + another_field
+    + another_field
+    + another_field
+    + another_field
+    + another_field
+    + another_field
+    + another_field
+    + another_field
+    + another_field
+    + another_field
+    + another_field
+    + another_field
+    + another_field
+    and another_field,
     d_field,
     e_field
 where

@@ -6,10 +6,12 @@ from typing import NamedTuple
 class TokenType(Enum):
     FMT_OFF = auto()
     FMT_ON = auto()
-    JINJA = auto()
-    JINJA_COMMENT = auto()
-    JINJA_START = auto()
-    JINJA_END = auto()
+    DATA = auto()
+    JINJA_STATEMENT = auto()  # {% ... %}
+    JINJA_EXPRESSION = auto()  # {{ ... }}
+    JINJA_BLOCK_START = auto()  # {% if ... %}
+    JINJA_BLOCK_END = auto()  # {% endif %}
+    JINJA_BLOCK_KEYWORD = auto()  # {% else %}
     QUOTED_NAME = auto()
     COMMENT = auto()
     COMMENT_START = auto()
@@ -32,21 +34,6 @@ class TokenType(Enum):
     NEWLINE = auto()
     UNTERM_KEYWORD = auto()  # Unterminated keyword
     NAME = auto()
-
-
-def split_after(token_type: TokenType) -> bool:
-    """
-    Return True if a line should be split after this token type,
-    False if it should be split before.
-    """
-    if token_type in (
-        TokenType.BRACKET_OPEN,
-        TokenType.UNTERM_KEYWORD,
-        TokenType.COMMA,
-        TokenType.STATEMENT_START,
-    ):
-        return True
-    return False
 
 
 class Token(NamedTuple):

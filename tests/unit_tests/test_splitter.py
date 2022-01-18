@@ -23,8 +23,6 @@ def depth_split_line(default_mode: Mode) -> Line:
 
 
 def test_maybe_split(splitter: LineSplitter, depth_split_line: Line) -> None:
-    assert depth_split_line.change_in_depth == 1
-
     line_gen = splitter.maybe_split(depth_split_line)
     result = list(map(str, line_gen))
 
@@ -190,4 +188,21 @@ def test_split_at_star(splitter: LineSplitter) -> None:
         "from\n",
         "    my_table\n",
     ]
+    assert actual_result == expected_result
+
+
+def test_jinja_block_split(splitter: LineSplitter) -> None:
+    source_string, expected_result = read_test_data(
+        "unit_tests/test_splitter/test_jinja_block_split.sql"
+    )
+    raw_query = splitter.mode.dialect.initialize_analyzer(
+        splitter.mode.line_length
+    ).parse_query(source_string)
+
+    split_lines: List[Line] = []
+    for raw_line in raw_query.lines:
+        split_lines.extend(splitter.maybe_split(raw_line))
+
+    actual_result = "".join([str(line).lstrip() for line in split_lines])
+
     assert actual_result == expected_result

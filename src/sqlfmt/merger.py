@@ -107,9 +107,12 @@ class LineMerger:
                     new_lines.append(partially_merged_lines[0])
                     if (
                         partially_merged_lines[-1].closes_bracket_from_previous_line
-                        and partially_merged_lines[-1].depth
-                        == partially_merged_lines[0].depth
-                    ):
+                        or partially_merged_lines[
+                            -1
+                        ].closes_jinja_block_from_previous_line
+                    ) and partially_merged_lines[-1].depth == partially_merged_lines[
+                        0
+                    ].depth:
                         new_lines.extend(
                             self.maybe_merge_lines(partially_merged_lines[1:-1])
                         )
@@ -128,8 +131,8 @@ class LineMerger:
         Tries to merge runs of lines at the same depth as lines[0] that
         start with an operator.
         """
-        target_depth = lines[0].depth
         head = 0
+        target_depth = lines[head].depth
         last_line_is_singleton_operator = False
         new_lines: List[Line] = []
         for tail, line in enumerate(lines[1:], start=1):
@@ -174,6 +177,7 @@ class LineMerger:
                     # reset the head pointer and start the process over
                     # on the remainder of lines
                     head = tail
+                    target_depth = lines[head].depth
 
             # lines can't end with operators unless it's an operator on a line
             # by itself. If that is the case, we want to try to merge the next
@@ -214,14 +218,14 @@ class LineMerger:
         for i, line in enumerate(lines[1:], start=1):
             # scan through the lines until we get back to the
             # depth of the first line
-            if line.depth <= target_depth:
+            if line.depth <= target_depth or line.depth[1] < target_depth[1]:
                 # if this line starts with a closing bracket,
                 # we probably want to include that closing bracket
                 # in the same segment as the first line.
                 if (
                     line.closes_bracket_from_previous_line
-                    and line.depth == target_depth
-                ):
+                    or line.closes_jinja_block_from_previous_line
+                ) and line.depth == target_depth:
                     idx = i + 1
                     try:
                         segments = [[self.create_merged_line(lines[:idx])]]

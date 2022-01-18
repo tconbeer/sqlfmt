@@ -295,3 +295,14 @@ def test_merge_operators_before_children(merger: LineMerger) -> None:
     merged_lines = merger.maybe_merge_lines(raw_query.lines)
     result_string = "".join([str(line) for line in merged_lines])
     assert result_string == expected_string
+
+
+def test_do_not_merge_very_long_chains(merger: LineMerger) -> None:
+    source_string = "a" + ("\n+ b" * 40) + "\n"
+    raw_query = merger.mode.dialect.initialize_analyzer(
+        merger.mode.line_length
+    ).parse_query(source_string)
+    merged_lines = merger.maybe_merge_lines(raw_query.lines)
+    result_string = "".join([str(line) for line in merged_lines])
+
+    assert result_string == source_string

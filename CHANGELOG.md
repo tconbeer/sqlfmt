@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Formatting changes
+
+-   adds special support for jinja, with new formatting rules for jinja statements, expressions, and blocks
+-   safely standardizes whitespace around jinja statements and expressions
+-   merges lines within and across jinja blocks while balancing start/end statements
+
 ### Fixes
 
 -   no longer fails with a parsing error if "end" is used as a name in the query
@@ -11,6 +17,8 @@ All notable changes to this project will be documented in this file.
 ### Under the Hood
 
 -   refactors lexing using typical callable architecture for more flexibility
+-   adds new token types for jinja statements and blocks
+-   refactors calculation of node and line depth to include jinja blocks
 
 ## [0.3.0] - 2021-12-16
 

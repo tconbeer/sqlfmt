@@ -23,7 +23,7 @@ def test_simple_query_parsing(all_output_modes: Mode) -> None:
     assert len(q.lines) == 6
 
     expected_line_depths = [0, 1, 1, 1, 0, 0]
-    actual_line_depths = [line.depth for line in q.lines]
+    actual_line_depths = [line.depth[0] for line in q.lines]
     assert actual_line_depths == expected_line_depths
 
     assert q.nodes
@@ -107,7 +107,7 @@ def test_case_statement_parsing(default_analyzer: Analyzer) -> None:
 
     expected_line_depths = [0, 1, 1, 1, 2, 2, 1, 1, 2, 2, 2, 3, 1, 1, 2, 1, 1, 1, 1, 0]
 
-    computed_line_depths = [line.depth for line in q.lines]
+    computed_line_depths = [line.depth[0] for line in q.lines]
     assert computed_line_depths == expected_line_depths
 
     # there are 6 case statements in the test data
@@ -126,35 +126,35 @@ def test_cte_parsing(default_analyzer: Analyzer) -> None:
 
     expected_line_depths = [0, 1, 0]
 
-    computed_line_depths = [line.depth for line in q.lines]
+    computed_line_depths = [line.depth[0] for line in q.lines]
     assert computed_line_depths == expected_line_depths
 
     expected_node_depths = [
-        (0, 1),  # with
-        (1, 0),  # \n
-        (1, 0),  # my_cte
-        (1, 0),  # as
-        (1, 1),  # (
-        (2, 1),  # select
-        (3, 0),  # 1
-        (3, 0),  # ,
-        (3, 0),  # b
-        (3, 0),  # ,
-        (3, 0),  # another_field
-        (2, 1),  # from
-        (3, 0),  # my_schema
-        (3, 0),  # .
-        (3, 0),  # my_table
-        (1, 0),  # )
-        (1, 0),  # \n
-        (0, 1),  # select
-        (1, 0),  # *
-        (0, 1),  # from
-        (1, 0),  # my_cte
-        (1, 0),  # \n
+        0,  # with
+        1,  # \n
+        1,  # my_cte
+        1,  # as
+        1,  # (
+        2,  # select
+        3,  # 1
+        3,  # ,
+        3,  # b
+        3,  # ,
+        3,  # another_field
+        2,  # from
+        3,  # my_schema
+        3,  # .
+        3,  # my_table
+        1,  # )
+        1,  # \n
+        0,  # select
+        1,  # *
+        0,  # from
+        1,  # my_cte
+        1,  # \n
     ]
 
-    computed_node_depths = [(node.depth, node.change_in_depth) for node in q.nodes]
+    computed_node_depths = [node.depth[0] for node in q.nodes]
     assert computed_node_depths == expected_node_depths
 
 
@@ -171,8 +171,6 @@ def test_multiline_parsing(default_analyzer: Analyzer) -> None:
 
     assert TokenType.COMMENT_START not in [token.type for token in q.tokens]
     assert TokenType.COMMENT_END not in [token.type for token in q.tokens]
-    assert TokenType.JINJA_START not in [token.type for token in q.tokens]
-    assert TokenType.JINJA_END not in [token.type for token in q.tokens]
 
     expected_comments = [
         Comment(
@@ -230,7 +228,7 @@ def test_multiline_parsing(default_analyzer: Analyzer) -> None:
 
     expected_content = [
         Token(
-            type=TokenType.JINJA,
+            type=TokenType.JINJA_EXPRESSION,
             prefix="",
             token=(
                 "{{\n    config(\n        materialized='table',\n        sort='id',\n"
@@ -258,7 +256,7 @@ def test_multiline_parsing(default_analyzer: Analyzer) -> None:
             type=TokenType.UNTERM_KEYWORD, prefix=" ", token="from", spos=340, epos=345
         ),
         Token(
-            type=TokenType.JINJA,
+            type=TokenType.JINJA_EXPRESSION,
             prefix=" ",
             token="{{ ref('my_model') }}",
             spos=345,
@@ -323,7 +321,7 @@ def test_multiline_parsing(default_analyzer: Analyzer) -> None:
         ),
         Token(type=TokenType.COMMA, prefix="", token=",", spos=631, epos=632),
         Token(
-            type=TokenType.JINJA,
+            type=TokenType.JINJA_STATEMENT,
             prefix=" ",
             token=(
                 '{% set my_variable_in_bad_style = [\n        "a",\n'
@@ -430,3 +428,64 @@ def test_no_raise_bracket_error_on_end_name(
 ) -> None:
     q = default_analyzer.parse_query(source_string=source_string)
     assert "end" in str(q)
+
+
+def test_get_rule(default_analyzer: Analyzer) -> None:
+    for ruleset in default_analyzer.rules.keys():
+        for rule in default_analyzer.rules[ruleset]:
+            matched_rule = default_analyzer.get_rule(ruleset, rule.name)
+            assert matched_rule == rule
+
+    with pytest.raises(KeyError):
+        _ = default_analyzer.get_rule("foo", "name")
+
+    with pytest.raises(ValueError):
+        _ = default_analyzer.get_rule("main", "bar")
+
+
+def test_match_first_jinja_Tag(default_analyzer: Analyzer) -> None:
+    """
+    Make sure we lazily match only the first tag
+    """
+    source_string = (
+        "{{ event_cte.source_cte_name}}.{{ event_cte.primary_key }} "
+        "|| '-' || '{{ event_cte.event_name }}'"
+    )
+    q = default_analyzer.parse_query(source_string)
+    assert len(q.lines) == 1
+    assert str(q.nodes[0]).strip() == "{{ event_cte.source_cte_name}}"
+
+
+def test_jinja_block_parsing(default_analyzer: Analyzer) -> None:
+    source_string, _ = read_test_data(
+        "unit_tests/test_analyzer/test_jinja_block_parsing.sql"
+    )
+    q = default_analyzer.parse_query(source_string)
+    assert q
+    assert len(q.lines) == 22
+    types = [node.token.type for node in q.nodes if not node.is_newline]
+    expected_types = [
+        TokenType.JINJA_BLOCK_START,  # {% macro ...(contents, num_times) %}
+        TokenType.JINJA_BLOCK_START,  # {% if contents == "foo" %}
+        TokenType.JINJA_BLOCK_START,  # {%- for _ in range(num_times * 10) %}
+        TokenType.JINJA_EXPRESSION,  # {{ contents }}
+        TokenType.JINJA_BLOCK_END,  # {% endfor %}
+        TokenType.JINJA_BLOCK_KEYWORD,  # {% elif contents == "bar" %}
+        TokenType.JINJA_BLOCK_START,  # {% if num_times > 10 %}
+        TokenType.JINJA_BLOCK_START,  # {%- for _ in range(num_times * 5) %}
+        TokenType.QUOTED_NAME,  # "TIMES 5!!"
+        TokenType.JINJA_EXPRESSION,  # {{ contents }}
+        TokenType.JINJA_BLOCK_END,  # {% endfor %}
+        TokenType.JINJA_BLOCK_KEYWORD,  # {% else %}
+        TokenType.JINJA_BLOCK_START,  # {%- for _ in range(num_times * 2) %}
+        TokenType.JINJA_EXPRESSION,  # {{ contents }}
+        TokenType.JINJA_BLOCK_END,  # {% endfor %}
+        TokenType.JINJA_BLOCK_END,  # {% endif %}
+        TokenType.JINJA_BLOCK_KEYWORD,  # {% else %}
+        TokenType.JINJA_BLOCK_START,  # {%- for _ in range(num_times) %}
+        TokenType.JINJA_EXPRESSION,  # {{ contents }}
+        TokenType.JINJA_BLOCK_END,  # {% endfor %}
+        TokenType.JINJA_BLOCK_END,  # {% endif %}
+        TokenType.JINJA_BLOCK_END,  # {% endmacro %}
+    ]
+    assert types == expected_types

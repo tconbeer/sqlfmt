@@ -51,36 +51,45 @@ def simple_line(tokens: List[Token], bare_line: Line) -> Line:
 
 
 def test_calculate_depth() -> None:
-    t = Token(
+    select_t = Token(
         type=TokenType.UNTERM_KEYWORD,
         prefix="",
         token="select",
         spos=0,
         epos=6,
     )
-    res = Node.calculate_depth(t, inherited_depth=0, open_brackets=[])
+    select_n = Node.from_token(token=select_t, previous_node=None)
+    assert (select_n.depth, select_n.open_brackets) == ((0, 0), [])
 
-    assert res == (0, 1, [t])
-
-    t = Token(
-        type=TokenType.BRACKET_CLOSE,
-        prefix="",
-        token=")",
-        spos=0,
-        epos=0,
-    )
-
-    b = Token(
+    open_paren_t = Token(
         type=TokenType.BRACKET_OPEN,
         prefix="    ",
         token="(",
-        spos=0,
-        epos=0,
+        spos=8,
+        epos=9,
     )
+    open_paren_n = Node.from_token(token=open_paren_t, previous_node=select_n)
+    assert (open_paren_n.depth, open_paren_n.open_brackets) == ((1, 0), [select_n])
 
-    res = Node.calculate_depth(t, inherited_depth=2, open_brackets=[b])
+    one_t = Token(
+        type=TokenType.NUMBER,
+        prefix=" ",
+        token="1",
+        spos=10,
+        epos=11,
+    )
+    one_n = Node.from_token(token=one_t, previous_node=open_paren_n)
+    assert (one_n.depth, one_n.open_brackets) == ((2, 0), [select_n, open_paren_n])
 
-    assert res == (1, 0, [])
+    close_paren_t = Token(
+        type=TokenType.BRACKET_CLOSE,
+        prefix="",
+        token=")",
+        spos=11,
+        epos=12,
+    )
+    close_paren_n = Node.from_token(token=close_paren_t, previous_node=one_n)
+    assert (close_paren_n.depth, close_paren_n.open_brackets) == ((1, 0), [select_n])
 
 
 def test_bare_line(source_string: str, bare_line: Line) -> None:
@@ -101,10 +110,9 @@ def test_bare_line(source_string: str, bare_line: Line) -> None:
 def test_simple_line(
     source_string: str, tokens: List[Token], simple_line: Line
 ) -> None:
-    assert simple_line.depth == 0
-    assert simple_line.change_in_depth == 1
+    assert simple_line.depth == (0, 0)
     assert len(simple_line.nodes) == len(tokens)
-    assert simple_line.open_brackets == [tokens[0]]
+    assert simple_line.open_brackets == []
 
     assert str(simple_line) == source_string
 
@@ -119,13 +127,11 @@ def test_simple_line(
         "Node(\n"
         "\ttoken='Token(type=TokenType.UNTERM_KEYWORD, token=with, spos=0)',\n"
         "\tprevious_node=None,\n"
-        "\tinherited_depth=0,\n"
-        "\tdepth=0,\n"
-        "\tchange_in_depth=1,\n"
+        "\tdepth=(0, 0),\n"
         "\tprefix=' ',\n"
         "\tvalue='with',\n"
-        "\topen_brackets=['Token(type=TokenType.UNTERM_KEYWORD, token=with, "
-        "spos=0)']\n"
+        "\topen_brackets=[],\n"
+        "\topen_jinja_blocks=[],\n"
         "\tformatting_disabled=False\n"
         ")"
     )
@@ -300,7 +306,7 @@ def test_is_standalone_multiline_node(bare_line: Line, simple_line: Line) -> Non
     assert not simple_line.is_standalone_multiline_node
 
     multiline_node = Token(
-        type=TokenType.JINJA,
+        type=TokenType.JINJA_EXPRESSION,
         prefix="",
         token="{{\nmy JINJA\n}}",
         spos=0,
@@ -331,7 +337,7 @@ def test_calculate_depth_exception() -> None:
     )
 
     with pytest.raises(SqlfmtBracketError):
-        Node.calculate_depth(close_paren, inherited_depth=0, open_brackets=[])
+        _ = Node.from_token(close_paren, previous_node=None)
 
 
 def test_closes_bracket_from_previous_line(
@@ -358,21 +364,25 @@ def test_closes_bracket_from_previous_line(
     assert result == expected
 
 
-def test_identifier_whitespace(default_mode: Mode) -> None:
+@pytest.mark.parametrize(
+    "source_string",
+    [
+        "my_schema.my_table\n",
+        "my_schema.*\n",
+        "{{ my_schema }}.my_table\n",
+        "my_schema.{{ my_table }}\n",
+        "my_database.my_schema.my_table\n",
+        'my_schema."my_table"\n',
+        '"my_schema".my_table\n',
+        '"my_schema"."my_table"\n',
+        '"my_schema".*\n',
+        "my_schema.{% if foo %}bar{% else %}baz{% endif %}\n",
+    ],
+)
+def test_identifier_whitespace(default_mode: Mode, source_string: str) -> None:
     """
     Ensure we do not inject spaces into qualified identifier names
     """
-    source_string = (
-        "my_schema.my_table,\n"
-        "my_schema.*,\n"
-        "{{ my_schema }}.my_table,\n"
-        "my_schema.{{ my_table }},\n"
-        "my_database.my_schema.my_table,\n"
-        'my_schema."my_table",\n'
-        '"my_schema".my_table,\n'
-        '"my_schema"."my_table",\n'
-        '"my_schema".*,\n'
-    )
     q = default_mode.dialect.initialize_analyzer(
         line_length=default_mode.line_length
     ).parse_query(source_string=source_string)
@@ -427,3 +437,98 @@ def test_is_multiplication_star_bare_line(bare_line: Line) -> None:
     bare_line.append_token(star)
     assert bare_line.nodes[0].token == star
     assert not bare_line.nodes[0].is_multiplication_star
+
+
+def test_jinja_depth(default_mode: Mode) -> None:
+    source_string, _ = read_test_data("unit_tests/test_line/test_jinja_depth.sql")
+    q = default_mode.dialect.initialize_analyzer(
+        line_length=default_mode.line_length
+    ).parse_query(source_string=source_string)
+    expected = [
+        (0, 0),  # {{ config(materialized="table") }}
+        (0, 0),  # \n
+        (0, 0),  # \n
+        (0, 0),  # {%- set n = 5 -%}
+        (0, 0),  # \n
+        (0, 0),  # with
+        (1, 0),  # \n
+        (1, 0),  # {% for i in range(n) %}
+        (1, 1),  # \n
+        (1, 1),  # dont_do_this_
+        (1, 1),  # {{ i }}
+        (1, 1),  # as
+        (1, 1),  # (
+        (2, 1),  # \n
+        (2, 1),  # {% if foo %}
+        (2, 2),  # \n
+        (2, 2),  # select
+        (3, 2),  # \n
+        (2, 1),  # {% elif bar %}
+        (2, 2),  # \n
+        (2, 2),  # select distinct
+        (3, 2),  # \n
+        (2, 1),  # {% elif baz %}
+        (2, 2),  # \n
+        (2, 2),  # select top 25
+        (3, 2),  # \n
+        (2, 1),  # {% else %}
+        (2, 2),  # \n
+        (2, 2),  # select
+        (3, 2),  # \n
+        (3, 1),  # {% endif %}
+        (3, 1),  # \n
+        (3, 1),  # my_col
+        (3, 1),  # \n
+        (2, 1),  # from
+        (3, 1),  # \n
+        (3, 1),  # {% if i == qux %}
+        (3, 2),  # \n
+        (3, 2),  # zip
+        (3, 2),  # \n
+        (3, 1),  # {% else %}
+        (3, 2),  # \n
+        (3, 2),  # zap
+        (3, 2),  # \n
+        (3, 1),  # {% endif %}
+        (3, 1),  # \n
+        (1, 1),  # )
+        (1, 1),  # {% if not loop.last %}
+        (1, 2),  # ,
+        (1, 1),  # {% endif%}
+        (1, 1),  # \n
+        (1, 0),  # {% endfor %}
+        (1, 0),  # \n
+        (1, 0),  # {% for i in range(n) %}
+        (1, 1),  # \n
+        (0, 1),  # select
+        (1, 1),  # \n
+        (1, 1),  # *
+        (1, 1),  # \n
+        (0, 1),  # from
+        (1, 1),  # \n
+        (1, 1),  # dont_do_this_
+        (1, 1),  # {{ i }}
+        (1, 1),  # \n
+        (1, 1),  # {% if not loop.last -%}
+        (1, 2),  # \n
+        (0, 2),  # union all
+        (1, 2),  # \n
+        (1, 1),  # {%- endif %}
+        (1, 1),  # \n
+        (1, 0),  # {% endfor %}
+        (1, 0),  # \n
+    ]
+    actual = [node.depth for node in q.nodes]
+    assert actual == expected
+
+
+def test_from_token_raises_bracket_error_on_jinja_block_end() -> None:
+    t = Token(
+        type=TokenType.JINJA_BLOCK_END,
+        prefix="",
+        token="{% endif %}",
+        spos=0,
+        epos=11,
+    )
+    with pytest.raises(SqlfmtBracketError):
+        _ = Node.from_token(t, previous_node=None)
