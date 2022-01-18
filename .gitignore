@@ -1,4 +1,5 @@
 .mypy_cache
+.profiling
 .pytest_cache
 .tox
 .venv
