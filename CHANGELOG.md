@@ -10,6 +10,10 @@ All notable changes to this project will be documented in this file.
 -   safely standardizes whitespace around jinja statements and expressions
 -   merges lines within and across jinja blocks while balancing start/end statements
 
+### Features
+
+-   developers can now easily profile sqlfmt performance (after installing the sqlfmt_primer extra) with `make profiling`
+
 ### Fixes
 
 -   no longer fails with a parsing error if "end" is used as a name in the query
@@ -19,6 +23,7 @@ All notable changes to this project will be documented in this file.
 -   refactors lexing using typical callable architecture for more flexibility
 -   adds new token types for jinja statements and blocks
 -   refactors calculation of node and line depth to include jinja blocks
+-   adds some caching to line properties for performance enhancements
 
 ## [0.3.0] - 2021-12-16
 
