@@ -278,7 +278,7 @@ class Node:
         elif token.type in (TokenType.BRACKET_CLOSE, TokenType.STATEMENT_END):
             try:
                 last_bracket = open_brackets.pop()
-                if last_bracket and last_bracket.is_unterm_keyword:
+                if last_bracket.is_unterm_keyword:
                     last_bracket = open_brackets.pop()
             except IndexError:
                 raise SqlfmtBracketError(

@@ -92,7 +92,7 @@ def test_calculate_depth() -> None:
     assert (close_paren_n.depth, close_paren_n.open_brackets) == ((1, 0), [select_n])
 
 
-def test_bare_line(source_string: str, bare_line: Line) -> None:
+def test_bare_line(bare_line: Line) -> None:
     assert str(bare_line) == ""
 
     assert not bare_line.starts_with_unterm_keyword
@@ -105,6 +105,8 @@ def test_bare_line(source_string: str, bare_line: Line) -> None:
     assert not bare_line.is_standalone_multiline_node
     assert not bare_line.is_too_long(88)
     assert not bare_line.opens_new_bracket
+    assert bare_line.open_brackets == []
+    assert bare_line.open_jinja_blocks == []
 
 
 def test_simple_line(
@@ -161,6 +163,12 @@ def test_bare_append_newline(bare_line: Line) -> None:
     new_last_node = bare_line.nodes[-1]
     assert new_last_node.token.type == TokenType.NEWLINE
     assert (new_last_node.token.spos, new_last_node.token.epos) == (0, 0)
+
+
+def test_bare_with_previous_open_lists(bare_line: Line, simple_line: Line) -> None:
+    bare_line.previous_node = simple_line.nodes[-1]
+    assert bare_line.open_jinja_blocks == simple_line.nodes[-1].open_jinja_blocks
+    assert bare_line.open_brackets == simple_line.nodes[-1].open_brackets
 
 
 def test_bare_with_previous_append_newline(bare_line: Line, simple_line: Line) -> None:
@@ -324,6 +332,32 @@ def test_is_standalone_multiline_node(bare_line: Line, simple_line: Line) -> Non
 
     assert bare_line.is_standalone_multiline_node
     assert not simple_line.is_standalone_multiline_node
+
+
+def test_is_standalone_jinja_statement(bare_line: Line, simple_line: Line) -> None:
+
+    assert not bare_line.is_standalone_jinja_statement
+    assert not simple_line.is_standalone_jinja_statement
+
+    jinja_statement = Token(
+        type=TokenType.JINJA_STATEMENT,
+        prefix="",
+        token="{% my JINJA %}",
+        spos=0,
+        epos=14,
+    )
+
+    bare_line.append_token(jinja_statement)
+    simple_line.append_token(jinja_statement)
+
+    assert bare_line.is_standalone_jinja_statement
+    assert not simple_line.is_standalone_jinja_statement
+
+    bare_line.append_newline()
+    simple_line.append_newline()
+
+    assert bare_line.is_standalone_jinja_statement
+    assert not simple_line.is_standalone_jinja_statement
 
 
 def test_calculate_depth_exception() -> None:

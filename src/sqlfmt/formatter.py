@@ -26,6 +26,11 @@ class QueryFormatter:
         return lines
 
     def _dedent_jinja_blocks(self, lines: List[Line]) -> List[Line]:
+        """
+        Jinja block tags, like {% if foo %} and {% endif %}, shouldn't
+        be printed at their depth, since their contents may be dedented
+        farther. This dedents the tags as necessary, in a single pass
+        """
         start_node: Optional[Node] = None
         for line in lines:
             if (

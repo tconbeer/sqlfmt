@@ -25,12 +25,13 @@ def add_node_to_buffer(
     match: re.Match,
     token_type: TokenType,
     previous_node: Optional[Node] = None,
+    override_analyzer_prev_node: bool = False,
 ) -> None:
     """
     Create a token of token_type from the match, then create a Node
     from that token and append it to the Analyzer's buffer
     """
-    if previous_node is None:
+    if previous_node is None and override_analyzer_prev_node is False:
         previous_node = analyzer.previous_node
     token = Token.from_match(source_string, match, token_type)
     node = Node.from_token(token=token, previous_node=previous_node)
@@ -266,6 +267,7 @@ def handle_jinja_block(
                     match=next_tag_match,
                     token_type=TokenType.JINJA_BLOCK_KEYWORD,
                     previous_node=previous_node,
+                    override_analyzer_prev_node=True,
                 )
         else:
             continue
