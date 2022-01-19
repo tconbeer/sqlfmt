@@ -449,8 +449,6 @@ class Line:
     previous_node: Optional[Node]  # last node of prior line, if any
     nodes: List[Node] = field(default_factory=list)
     comments: List[Comment] = field(default_factory=list)
-    open_brackets: List["Node"] = field(default_factory=list)
-    open_jinja_blocks: List["Node"] = field(default_factory=list)
     formatting_disabled: bool = False
 
     def __str__(self) -> str:
@@ -468,6 +466,24 @@ class Line:
             return max([len(s) for s in str(self).splitlines()])
         except ValueError:
             return 0
+
+    @property
+    def open_brackets(self) -> List[Node]:
+        if self.nodes:
+            return self.nodes[0].open_brackets
+        elif self.previous_node:
+            return self.previous_node.open_brackets
+        else:
+            return []
+
+    @property
+    def open_jinja_blocks(self) -> List[Node]:
+        if self.nodes:
+            return self.nodes[0].open_jinja_blocks
+        elif self.previous_node:
+            return self.previous_node.open_jinja_blocks
+        else:
+            return []
 
     @property
     def depth(self) -> Tuple[int, int]:
@@ -526,10 +542,6 @@ class Line:
 
         node = Node.from_token(token, previous_node)
 
-        if not self.nodes:
-            self.open_brackets = node.open_brackets
-            self.open_jinja_blocks = node.open_jinja_blocks
-
         self.formatting_disabled = self.formatting_disabled or node.formatting_disabled
 
         self.nodes.append(node)
@@ -577,8 +589,6 @@ class Line:
                 previous_node=previous_node,
                 nodes=nodes,
                 comments=comments,
-                open_brackets=nodes[0].open_brackets,
-                open_jinja_blocks=nodes[0].open_jinja_blocks,
                 formatting_disabled=nodes[0].formatting_disabled
                 or nodes[-1].formatting_disabled,
             )
@@ -587,10 +597,6 @@ class Line:
                 previous_node=previous_node,
                 nodes=nodes,
                 comments=comments,
-                open_brackets=previous_node.open_brackets if previous_node else [],
-                open_jinja_blocks=previous_node.open_jinja_blocks
-                if previous_node
-                else [],
                 formatting_disabled=previous_node.formatting_disabled
                 if previous_node
                 else False,
