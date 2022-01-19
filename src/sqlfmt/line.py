@@ -1,9 +1,15 @@
 import re
+import sys
 from dataclasses import dataclass, field
 from typing import Iterator, List, Optional, Tuple
 
 from sqlfmt.exception import InlineCommentError, SqlfmtBracketError
 from sqlfmt.token import Token, TokenType
+
+if sys.version_info >= (3, 8):
+    from functools import cached_property
+else:
+    from backports.cached_property import cached_property
 
 COMMENT_PROGRAM = re.compile(r"(--|#|/\*|\{#-?)([^\S\n]*)")
 
@@ -14,6 +20,10 @@ class Comment:
     is_standalone: bool
 
     def __str__(self) -> str:
+        return self._calc_str
+
+    @cached_property
+    def _calc_str(self) -> str:
         if self.is_multiline:
             return self.token.token + "\n"
         else:
@@ -166,7 +176,7 @@ class Node:
     def is_jinja_block_keyword(self) -> bool:
         return self.token.type == TokenType.JINJA_BLOCK_KEYWORD
 
-    @property
+    @cached_property
     def is_operator(self) -> bool:
         return (
             self.token.type
@@ -202,7 +212,7 @@ class Node:
     def is_newline(self) -> bool:
         return self.token.type == TokenType.NEWLINE
 
-    @property
+    @cached_property
     def is_multiline(self) -> bool:
         if (
             self.token.type
@@ -444,6 +454,10 @@ class Line:
     formatting_disabled: bool = False
 
     def __str__(self) -> str:
+        return self._calc_str
+
+    @cached_property
+    def _calc_str(self) -> str:
         if self.formatting_disabled:
             return "".join([f"{t.prefix}{t.token}" for t in self.tokens])
         else:
