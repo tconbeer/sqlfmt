@@ -45,13 +45,14 @@ class LineMerger:
         elif any([n.is_multiline for n in content_nodes[1:]]):
             raise CannotMergeException("Can't merge lines containing multiline nodes")
 
+        # append the final newline from the original set of lines
+        content_nodes.append(lines[-1].nodes[-1])
+
         merged_line = Line.from_nodes(
             previous_node=lines[0].previous_node,
             nodes=content_nodes,
             comments=comments,
         )
-
-        merged_line.append_newline()
 
         if merged_line.is_too_long(self.mode.line_length):
             raise CannotMergeException("Merged line is too long")
