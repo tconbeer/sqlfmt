@@ -1,10 +1,15 @@
 import re
+import sys
 from dataclasses import dataclass, field
-from functools import cached_property
 from typing import Iterator, List, Optional, Tuple
 
 from sqlfmt.exception import InlineCommentError, SqlfmtBracketError
 from sqlfmt.token import Token, TokenType
+
+if sys.version_info >= (3, 8):
+    from functools import cached_property
+else:
+    from backports.cached_property import cached_property
 
 COMMENT_PROGRAM = re.compile(r"(--|#|/\*|\{#-?)([^\S\n]*)")
 
