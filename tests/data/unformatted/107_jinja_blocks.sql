@@ -53,9 +53,9 @@ with
             {% endfor %}
         from
             base
-            {% for model in list_o_models %}
+        {% for model in list_o_models %}
         join {{ model }} on base.{{ model }}_id = {{ model }}.id
-            {% endfor %}
+        {% endfor %}
     )
 select *
 from joined

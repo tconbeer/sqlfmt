@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
-from sqlfmt.line import Line
+from sqlfmt.line import Line, Node
 from sqlfmt.merger import LineMerger
 from sqlfmt.mode import Mode
 from sqlfmt.query import Query
@@ -25,6 +25,23 @@ class QueryFormatter:
         lines = merger.maybe_merge_lines(lines)
         return lines
 
+    def _dedent_jinja_blocks(self, lines: List[Line]) -> List[Line]:
+        start_node: Optional[Node] = None
+        for line in lines:
+            if (
+                line.is_standalone_jinja_statement
+                and line.nodes[0].is_closing_jinja_block
+            ):
+                assert start_node
+                line.nodes[0].open_brackets = start_node.open_brackets
+
+            if line.nodes and line.nodes[-1].open_jinja_blocks:
+                start_node = line.nodes[-1].open_jinja_blocks[-1]
+                if len(line.open_brackets) < len(start_node.open_brackets):
+                    start_node.open_brackets = line.open_brackets
+
+        return lines
+
     def format(self, raw_query: Query) -> Query:
         """
         Applies 2 transformations to a Query:
@@ -36,6 +53,7 @@ class QueryFormatter:
         pipeline = [
             self._split_lines,
             self._merge_lines,
+            self._dedent_jinja_blocks,
         ]
 
         for transform in pipeline:

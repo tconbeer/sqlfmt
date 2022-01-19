@@ -176,6 +176,15 @@ class Node:
     def is_jinja_block_keyword(self) -> bool:
         return self.token.type == TokenType.JINJA_BLOCK_KEYWORD
 
+    @property
+    def is_jinja_statement(self) -> bool:
+        return self.token.type in (
+            TokenType.JINJA_STATEMENT,
+            TokenType.JINJA_BLOCK_START,
+            TokenType.JINJA_BLOCK_KEYWORD,
+            TokenType.JINJA_BLOCK_END,
+        )
+
     @cached_property
     def is_operator(self) -> bool:
         return (
@@ -659,6 +668,19 @@ class Line:
             len(self.nodes) == 2
             and self.contains_multiline_node
             and self.nodes[-1].is_newline
+        ):
+            return True
+        else:
+            return False
+
+    @property
+    def is_standalone_jinja_statement(self) -> bool:
+        if len(self.nodes) == 1 and self.nodes[0].is_jinja_statement:
+            return True
+        if (
+            len(self.nodes) == 2
+            and self.nodes[0].is_jinja_statement
+            and self.nodes[1].is_newline
         ):
             return True
         else:
