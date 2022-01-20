@@ -4,7 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.4.1] - 2022-01-20
+
 ### Formatting changes
+
 -   preserves leading and trailing blank lines when merging lines with content
 -   no longer prints whitespace on blank lines
 
@@ -92,7 +95,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.4.0...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.4.1...HEAD
+
+[0.4.1]: https://github.com/tconbeer/sqlfmt/compare/0.4.0...0.4.1
 
 [0.4.0]: https://github.com/tconbeer/sqlfmt/compare/0.3.0...0.4.0
 
