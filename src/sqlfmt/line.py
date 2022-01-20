@@ -634,6 +634,13 @@ class Line:
         return tokens
 
     @property
+    def is_blank_line(self) -> bool:
+        if len(self.nodes) == 1 and self.nodes[0].is_newline:
+            return True
+        else:
+            return False
+
+    @property
     def starts_with_unterm_keyword(self) -> bool:
         try:
             return self.nodes[0].is_unterm_keyword

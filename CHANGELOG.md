@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Formatting changes
+-   preserves trailing blank lines when merging lines with content
+
 ## [0.4.0] - 2022-01-20
 
 ### Formatting changes
