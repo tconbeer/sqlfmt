@@ -102,6 +102,7 @@ def test_bare_line(bare_line: Line) -> None:
     assert not bare_line.starts_with_comma
     assert not bare_line.starts_with_operator
     assert not bare_line.starts_with_low_priority_merge_operator
+    assert not bare_line.is_blank_line
     assert not bare_line.is_standalone_multiline_node
     assert not bare_line.is_too_long(88)
     assert not bare_line.opens_new_bracket
@@ -146,6 +147,7 @@ def test_simple_line(
     assert not simple_line.starts_with_operator
     assert not simple_line.starts_with_low_priority_merge_operator
     assert not simple_line.contains_multiline_node
+    assert not simple_line.is_blank_line
     assert not simple_line.is_standalone_multiline_node
     assert not simple_line.is_too_long(88)
 
@@ -160,6 +162,7 @@ def test_bare_append_newline(bare_line: Line) -> None:
 
     bare_line.append_newline()
     assert bare_line.nodes
+    assert bare_line.is_blank_line
     new_last_node = bare_line.nodes[-1]
     assert new_last_node.token.type == TokenType.NEWLINE
     assert (new_last_node.token.spos, new_last_node.token.epos) == (0, 0)

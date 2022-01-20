@@ -77,9 +77,11 @@ with
             ) as last_name
             
         from source
+            
         -- a very long comment about why we would exclude this user from this table
         -- that we will wrap
         where nvl(is_deleted, false) is false and id <> 123456
+            
     )
 select *
 from renamed

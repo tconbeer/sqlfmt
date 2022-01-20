@@ -36,13 +36,15 @@ def test_create_merged_line(merger: LineMerger) -> None:
         merger.mode.line_length
     ).parse_query(source_string)
 
-    expected = "select able, baker,\n"
-    actual = merger.create_merged_line(raw_query.lines[0:4])
-    assert str(actual) == expected
+    expected = "\nselect able, baker,\n"
+    merged = merger.create_merged_line(raw_query.lines[0:4])
+    actual = "".join([str(line) for line in merged])
+    assert actual == expected
 
-    expected = "select able, baker, charlie, delta,\n"
-    actual = merger.create_merged_line(raw_query.lines)
-    assert str(actual) == expected
+    expected = "\nselect able, baker, charlie, delta,\n"
+    merged = merger.create_merged_line(raw_query.lines)
+    actual = "".join([str(line) for line in merged])
+    assert actual == expected
 
     with pytest.raises(CannotMergeException):
         # can't merge whitespace
@@ -55,7 +57,7 @@ def test_basic_merge(merger: LineMerger) -> None:
             full_name,
             ''
         ) as c,
-    """
+    """.strip()
     raw_query = merger.mode.dialect.initialize_analyzer(
         merger.mode.line_length
     ).parse_query(source_string)
@@ -148,7 +150,7 @@ def test_cte_merge(merger: LineMerger) -> None:
             select * from my_table
         )
     select * from my_cte
-    """
+    """.strip()
     raw_query = merger.mode.dialect.initialize_analyzer(
         merger.mode.line_length
     ).parse_query(source_string)
@@ -257,8 +259,8 @@ def test_merge_single_line(merger: LineMerger) -> None:
     q = merger.mode.dialect.initialize_analyzer(merger.mode.line_length).parse_query(
         source_string
     )
-    merged_line = merger.create_merged_line(q.lines)
-    assert merged_line == q.lines[0]
+    merged_lines = merger.create_merged_line(q.lines)
+    assert merged_lines == q.lines
 
 
 def test_merge_lines_split_by_operators(merger: LineMerger) -> None:
@@ -306,3 +308,34 @@ def test_do_not_merge_very_long_chains(merger: LineMerger) -> None:
     result_string = "".join([str(line) for line in merged_lines])
 
     assert result_string == source_string
+
+
+def test_respect_extra_blank_lines(merger: LineMerger) -> None:
+    source_string = """
+    select
+        one_field,
+        another_field,
+        yet_another_field
+
+
+    from
+        my_table
+
+    join
+        your_table
+        on my_table.your_id
+        = your_table.my_id
+
+
+    where
+        something is true
+    """.lstrip()
+    raw_query = merger.mode.dialect.initialize_analyzer(
+        merger.mode.line_length
+    ).parse_query(source_string)
+    merged_lines = merger.maybe_merge_lines(raw_query.lines)
+    assert merged_lines[1].is_blank_line
+    assert merged_lines[2].is_blank_line
+    assert merged_lines[4].is_blank_line
+    assert merged_lines[6].is_blank_line
+    assert merged_lines[7].is_blank_line

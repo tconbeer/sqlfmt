@@ -14,7 +14,7 @@ class CannotMergeException(Exception):
 class LineMerger:
     mode: Mode
 
-    def create_merged_line(self, lines: List[Line]) -> Line:
+    def create_merged_line(self, lines: List[Line]) -> List[Line]:
         """
         Returns a new line by merging together all nodes in lines. Raises an
         exception if the returned line would be too long, would be empty,
@@ -24,16 +24,19 @@ class LineMerger:
         # if the child is just one below the parent, we're trying to
         # merge a single line.
         if len(lines) == 1:
-            return lines[0]
+            return lines
 
         content_nodes: List[Node] = []
         comments: List[Comment] = []
+        last_content_line = lines[0]
         for line in lines:
-            # skip over nodes containing NEWLINEs
+            # skip over newline nodes
             nodes = [
                 node for node in line.nodes if node.token.type != TokenType.NEWLINE
             ]
-            content_nodes.extend(nodes)
+            if nodes:
+                last_content_line = line
+                content_nodes.extend(nodes)
             comments.extend(line.comments)
 
         if not content_nodes:
@@ -46,7 +49,7 @@ class LineMerger:
             raise CannotMergeException("Can't merge lines containing multiline nodes")
 
         # append the final newline from the original set of lines
-        content_nodes.append(lines[-1].nodes[-1])
+        content_nodes.append(last_content_line.nodes[-1])
 
         merged_line = Line.from_nodes(
             previous_node=lines[0].previous_node,
@@ -57,7 +60,23 @@ class LineMerger:
         if merged_line.is_too_long(self.mode.line_length):
             raise CannotMergeException("Merged line is too long")
 
-        return merged_line
+        # add in any leading or trailing blank lines
+        leading_blank_lines: List[Line] = []
+        for line in lines:
+            if line.is_blank_line:
+                leading_blank_lines.append(line)
+            else:
+                break
+        trailing_blank_lines: List[Line] = []
+        for line in reversed(lines):
+            if line.is_blank_line:
+                trailing_blank_lines.append(line)
+            else:
+                break
+
+        return (
+            leading_blank_lines + [merged_line] + list(reversed(trailing_blank_lines))
+        )
 
     def maybe_merge_lines(self, lines: List[Line]) -> List[Line]:
         """
@@ -72,8 +91,8 @@ class LineMerger:
             return lines
         else:
             try:
-                merged_line = self.create_merged_line(lines)
-                new_lines = [merged_line]
+                merged_lines = self.create_merged_line(lines)
+                new_lines = merged_lines
             except CannotMergeException:
                 # lines can't be merged into a single line, so we take several
                 # steps to merge some lines together into a final collection,
@@ -156,7 +175,7 @@ class LineMerger:
                 # try to merge everything above line (from head:tail) into
                 # a single line
                 try:
-                    new_lines.append(self.create_merged_line(lines[head:tail]))
+                    new_lines.extend(self.create_merged_line(lines[head:tail]))
                 except CannotMergeException:
                     # the merged line is probably too long. Try the same section
                     # again, but don't try to merge across word operators. This
@@ -190,7 +209,7 @@ class LineMerger:
 
         # we need to try one more time to merge everything after head
         try:
-            new_lines.append(self.create_merged_line(lines[head:]))
+            new_lines.extend(self.create_merged_line(lines[head:]))
         except CannotMergeException:
             if merge_across_low_priority_operators:
                 new_lines.extend(
@@ -229,7 +248,7 @@ class LineMerger:
                 ) and line.depth == target_depth:
                     idx = i + 1
                     try:
-                        segments = [[self.create_merged_line(lines[:idx])]]
+                        segments = [self.create_merged_line(lines[:idx])]
                     except CannotMergeException:
                         # it's possible a line has a closing and open
                         # paren, like ") + (\n". In that case, if
