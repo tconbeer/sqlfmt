@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 -   adds special support for jinja, with new formatting rules for jinja statements, expressions, and blocks
 -   safely standardizes whitespace around jinja statements and expressions
 -   merges lines within and across jinja blocks while balancing start/end statements
+-   jinja block tags can no longr be indented farther than any of their contents
 
 ### Features
 

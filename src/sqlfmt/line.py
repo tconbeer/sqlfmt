@@ -176,6 +176,15 @@ class Node:
     def is_jinja_block_keyword(self) -> bool:
         return self.token.type == TokenType.JINJA_BLOCK_KEYWORD
 
+    @property
+    def is_jinja_statement(self) -> bool:
+        return self.token.type in (
+            TokenType.JINJA_STATEMENT,
+            TokenType.JINJA_BLOCK_START,
+            TokenType.JINJA_BLOCK_KEYWORD,
+            TokenType.JINJA_BLOCK_END,
+        )
+
     @cached_property
     def is_operator(self) -> bool:
         return (
@@ -269,7 +278,7 @@ class Node:
         elif token.type in (TokenType.BRACKET_CLOSE, TokenType.STATEMENT_END):
             try:
                 last_bracket = open_brackets.pop()
-                if last_bracket and last_bracket.is_unterm_keyword:
+                if last_bracket.is_unterm_keyword:
                     last_bracket = open_brackets.pop()
             except IndexError:
                 raise SqlfmtBracketError(
@@ -399,6 +408,7 @@ class Node:
             and previous_token.type == TokenType.NAME
         ):
             return NO_SPACE
+        # need a space before any other open bracket
         elif token.type == TokenType.BRACKET_OPEN:
             return SPACE
         # no spaces after an open bracket or a cast operator (::)
@@ -407,6 +417,18 @@ class Node:
             TokenType.DOUBLE_COLON,
         ):
             return NO_SPACE
+        # always a space before a keyword
+        elif token.type in (
+            TokenType.UNTERM_KEYWORD,
+            TokenType.STATEMENT_START,
+            TokenType.STATEMENT_END,
+            TokenType.WORD_OPERATOR,
+            TokenType.BOOLEAN_OPERATOR,
+            TokenType.AS,
+            TokenType.ON,
+            TokenType.SEMICOLON,
+        ):
+            return SPACE
         # we don't know what a jinja expression will evaluate to,
         # so we have to respect the original text
         elif token.type == TokenType.JINJA_EXPRESSION:
@@ -449,8 +471,6 @@ class Line:
     previous_node: Optional[Node]  # last node of prior line, if any
     nodes: List[Node] = field(default_factory=list)
     comments: List[Comment] = field(default_factory=list)
-    open_brackets: List["Node"] = field(default_factory=list)
-    open_jinja_blocks: List["Node"] = field(default_factory=list)
     formatting_disabled: bool = False
 
     def __str__(self) -> str:
@@ -468,6 +488,24 @@ class Line:
             return max([len(s) for s in str(self).splitlines()])
         except ValueError:
             return 0
+
+    @property
+    def open_brackets(self) -> List[Node]:
+        if self.nodes:
+            return self.nodes[0].open_brackets
+        elif self.previous_node:
+            return self.previous_node.open_brackets
+        else:
+            return []
+
+    @property
+    def open_jinja_blocks(self) -> List[Node]:
+        if self.nodes:
+            return self.nodes[0].open_jinja_blocks
+        elif self.previous_node:
+            return self.previous_node.open_jinja_blocks
+        else:
+            return []
 
     @property
     def depth(self) -> Tuple[int, int]:
@@ -526,10 +564,6 @@ class Line:
 
         node = Node.from_token(token, previous_node)
 
-        if not self.nodes:
-            self.open_brackets = node.open_brackets
-            self.open_jinja_blocks = node.open_jinja_blocks
-
         self.formatting_disabled = self.formatting_disabled or node.formatting_disabled
 
         self.nodes.append(node)
@@ -577,8 +611,6 @@ class Line:
                 previous_node=previous_node,
                 nodes=nodes,
                 comments=comments,
-                open_brackets=nodes[0].open_brackets,
-                open_jinja_blocks=nodes[0].open_jinja_blocks,
                 formatting_disabled=nodes[0].formatting_disabled
                 or nodes[-1].formatting_disabled,
             )
@@ -587,10 +619,6 @@ class Line:
                 previous_node=previous_node,
                 nodes=nodes,
                 comments=comments,
-                open_brackets=previous_node.open_brackets if previous_node else [],
-                open_jinja_blocks=previous_node.open_jinja_blocks
-                if previous_node
-                else [],
                 formatting_disabled=previous_node.formatting_disabled
                 if previous_node
                 else False,
@@ -653,6 +681,19 @@ class Line:
             len(self.nodes) == 2
             and self.contains_multiline_node
             and self.nodes[-1].is_newline
+        ):
+            return True
+        else:
+            return False
+
+    @property
+    def is_standalone_jinja_statement(self) -> bool:
+        if len(self.nodes) == 1 and self.nodes[0].is_jinja_statement:
+            return True
+        if (
+            len(self.nodes) == 2
+            and self.nodes[0].is_jinja_statement
+            and self.nodes[1].is_newline
         ):
             return True
         else:

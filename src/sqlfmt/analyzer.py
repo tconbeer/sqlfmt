@@ -101,6 +101,16 @@ class Analyzer:
             )
             line.append_newline()
             self.line_buffer.append(line)
+
+        # if the final line(s) are jinja block end tags, they may be
+        # indented too far -- they should be formatted as if they
+        # have no open_brackets
+        for line in reversed(self.line_buffer):
+            if line.closes_jinja_block_from_previous_line:
+                for node in line.nodes:
+                    node.open_brackets = []
+            else:
+                break
         query.lines = self.line_buffer
 
     def parse_query(self, source_string: str) -> Query:
