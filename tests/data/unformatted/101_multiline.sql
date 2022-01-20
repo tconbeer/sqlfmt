@@ -67,7 +67,7 @@ with
         "of",
         "strings"
     ] %}
-    
+
 {#
  # And this is a nice multiline jinja comment
  # that we will also handle.

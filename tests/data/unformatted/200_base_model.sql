@@ -40,18 +40,18 @@ select * from renamed
 with
     source as (select * from {{ source('my_application', 'users') }}),
     renamed as (
-        
+
         select
             -- ids
             id,
             nullif(xid, '') as xid,
-            
+
             -- date
             created_on,
             updated_on,
-            
+
             nullif(email, '') as email,
-            
+
             -- names
             nullif(full_name, '') as full_name,
             nullif(
@@ -75,13 +75,13 @@ with
                 ),
                 ''
             ) as last_name
-            
+
         from source
-            
+
         -- a very long comment about why we would exclude this user from this table
         -- that we will wrap
         where nvl(is_deleted, false) is false and id <> 123456
-            
+
     )
 select *
 from renamed

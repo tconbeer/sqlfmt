@@ -43,7 +43,7 @@ with
         from my_table
         where something == 5
     )
-    
+
 select  -- not distinct
     -- with a long comment that needs to wrap above this line
     one_really_long_field_name,
