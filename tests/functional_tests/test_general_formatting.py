@@ -19,6 +19,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/104_joins.sql",
         "unformatted/106_leading_commas.sql",
         "unformatted/107_jinja_blocks.sql",
+        "unformatted/108_test_block.sql",
         "unformatted/200_base_model.sql",
     ],
 )

@@ -424,6 +424,15 @@ def test_identifier_whitespace(default_mode: Mode, source_string: str) -> None:
     assert source_string == parsed_string
 
 
+def test_jinja_whitespace_after_newline(default_mode: Mode) -> None:
+    source_string = "select *\nfrom {{model}}\nwhere {{ column_name }} < 0\n"
+    q = default_mode.dialect.initialize_analyzer(
+        line_length=default_mode.line_length
+    ).parse_query(source_string=source_string)
+    where_node = [node for node in q.nodes if node.value == "where"][0]
+    assert where_node.prefix == " "  # one space
+
+
 def test_capitalization(default_mode: Mode) -> None:
     source_string = (
         "SELECT A, B, \"C\", {{ D }}, e, 'f', 'G'\n" 'fROM "H"."j" Join I ON k And L\n'
@@ -547,10 +556,10 @@ def test_jinja_depth(default_mode: Mode) -> None:
         (1, 2),  # \n
         (0, 2),  # union all
         (1, 2),  # \n
-        (1, 1),  # {%- endif %}
-        (1, 1),  # \n
-        (1, 0),  # {% endfor %}
-        (1, 0),  # \n
+        (0, 1),  # {%- endif %}
+        (0, 1),  # \n
+        (0, 0),  # {% endfor %}
+        (0, 0),  # \n
     ]
     actual = [node.depth for node in q.nodes]
     assert actual == expected

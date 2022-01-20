@@ -408,6 +408,7 @@ class Node:
             and previous_token.type == TokenType.NAME
         ):
             return NO_SPACE
+        # need a space before any other open bracket
         elif token.type == TokenType.BRACKET_OPEN:
             return SPACE
         # no spaces after an open bracket or a cast operator (::)
@@ -416,6 +417,18 @@ class Node:
             TokenType.DOUBLE_COLON,
         ):
             return NO_SPACE
+        # always a space before a keyword
+        elif token.type in (
+            TokenType.UNTERM_KEYWORD,
+            TokenType.STATEMENT_START,
+            TokenType.STATEMENT_END,
+            TokenType.WORD_OPERATOR,
+            TokenType.BOOLEAN_OPERATOR,
+            TokenType.AS,
+            TokenType.ON,
+            TokenType.SEMICOLON,
+        ):
+            return SPACE
         # we don't know what a jinja expression will evaluate to,
         # so we have to respect the original text
         elif token.type == TokenType.JINJA_EXPRESSION:
