@@ -36,13 +36,15 @@ def test_create_merged_line(merger: LineMerger) -> None:
         merger.mode.line_length
     ).parse_query(source_string)
 
-    expected = "select able, baker,\n"
-    actual = merger.create_merged_line(raw_query.lines[0:4])[0]
-    assert str(actual) == expected
+    expected = "\nselect able, baker,\n"
+    merged = merger.create_merged_line(raw_query.lines[0:4])
+    actual = "".join([str(line) for line in merged])
+    assert actual == expected
 
-    expected = "select able, baker, charlie, delta,\n"
-    actual = merger.create_merged_line(raw_query.lines)[0]
-    assert str(actual) == expected
+    expected = "\nselect able, baker, charlie, delta,\n"
+    merged = merger.create_merged_line(raw_query.lines)
+    actual = "".join([str(line) for line in merged])
+    assert actual == expected
 
     with pytest.raises(CannotMergeException):
         # can't merge whitespace
@@ -55,7 +57,7 @@ def test_basic_merge(merger: LineMerger) -> None:
             full_name,
             ''
         ) as c,
-    """
+    """.strip()
     raw_query = merger.mode.dialect.initialize_analyzer(
         merger.mode.line_length
     ).parse_query(source_string)
@@ -148,7 +150,7 @@ def test_cte_merge(merger: LineMerger) -> None:
             select * from my_table
         )
     select * from my_cte
-    """
+    """.strip()
     raw_query = merger.mode.dialect.initialize_analyzer(
         merger.mode.line_length
     ).parse_query(source_string)

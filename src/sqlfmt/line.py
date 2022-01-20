@@ -633,9 +633,13 @@ class Line:
             tokens.append(node.token)
         return tokens
 
-    @property
+    @cached_property
     def is_blank_line(self) -> bool:
-        if len(self.nodes) == 1 and self.nodes[0].is_newline:
+        if (
+            len(self.nodes) == 1
+            and self.nodes[0].is_newline
+            and len(self.comments) == 0
+        ):
             return True
         else:
             return False

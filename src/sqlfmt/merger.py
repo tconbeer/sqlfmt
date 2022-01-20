@@ -60,7 +60,13 @@ class LineMerger:
         if merged_line.is_too_long(self.mode.line_length):
             raise CannotMergeException("Merged line is too long")
 
-        # append the final newlines from the original set of lines
+        # add in any leading or trailing blank lines
+        leading_blank_lines: List[Line] = []
+        for line in lines:
+            if line.is_blank_line:
+                leading_blank_lines.append(line)
+            else:
+                break
         trailing_blank_lines: List[Line] = []
         for line in reversed(lines):
             if line.is_blank_line:
@@ -68,7 +74,9 @@ class LineMerger:
             else:
                 break
 
-        return [merged_line] + list(reversed(trailing_blank_lines))
+        return (
+            leading_blank_lines + [merged_line] + list(reversed(trailing_blank_lines))
+        )
 
     def maybe_merge_lines(self, lines: List[Line]) -> List[Line]:
         """
