@@ -478,7 +478,9 @@ class Line:
 
     @cached_property
     def _calc_str(self) -> str:
-        if self.formatting_disabled:
+        if self.is_blank_line:
+            return "\n"
+        elif self.formatting_disabled:
             return "".join([f"{t.prefix}{t.token}" for t in self.tokens])
         else:
             return self.prefix + "".join([str(node) for node in self.nodes]).lstrip(" ")

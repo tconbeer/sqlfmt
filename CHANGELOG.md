@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Formatting changes
 -   preserves leading and trailing blank lines when merging lines with content
+-   no longer prints whitespace on blank lines
 
 ## [0.4.0] - 2022-01-20
 
