@@ -115,6 +115,7 @@ class TestPolyglot:
             ("jinja", "jinja_expression_end", "-}}"),
             ("jinja", "jinja_set_block_start", "{% set foo %}"),
             ("jinja", "jinja_set_block_start", "{% set my_long_variable %}"),
+            ("jinja", "jinja_set_block_start", "{% set ns.my_namespace_var %}"),
             ("jinja", "jinja_set_block_end", "{% endset %}"),
             ("jinja", "jinja_set_block_end", "{%- endset %}"),
             ("jinja", "jinja_if_block_start", "{% if bar %}"),
