@@ -221,7 +221,14 @@ def test_handle_jinja(
     assert len(str(default_analyzer.node_buffer[0]).strip()) == len(source_string)
 
 
-def test_handle_jinja_set_block(default_analyzer: Analyzer) -> None:
+@pytest.mark.parametrize(
+    "source_string",
+    [
+        "{% set my_var %}\n!\n{% endset %}",
+        "{% set ns.my_var %}\n!\n{% endset %}",
+    ],
+)
+def test_handle_jinja_set_block(default_analyzer: Analyzer, source_string: str) -> None:
     source_string = """
     {% set my_var %}
     !

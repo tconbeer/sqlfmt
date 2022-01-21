@@ -339,7 +339,7 @@ class Polyglot(Dialect):
                 Rule(
                     name="jinja_set_block_start",
                     priority=100,
-                    pattern=group(r"\{%-?\s*set\s+\w+\s*-?%\}"),
+                    pattern=group(r"\{%-?\s*set\s+[^,=%}]+-?%\}"),
                     action=actions.handle_jinja_set_block,
                 ),
                 Rule(
