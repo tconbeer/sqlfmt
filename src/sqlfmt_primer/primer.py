@@ -63,6 +63,24 @@ def get_projects() -> List[SQLProject]:
             expected_errored=0,
             sub_directory=Path("src/aqi_dbt/models"),
         ),
+        SQLProject(
+            name="jaffle_shop",
+            git_url="https://github.com/tconbeer/jaffle_shop.git",
+            git_ref="de28a71d8f415c82c19c06a7aab6f68825074adb",  # sqlfmt 0.4.1
+            expected_changed=0,
+            expected_unchanged=5,
+            expected_errored=0,
+            sub_directory=Path(""),
+        ),
+        SQLProject(
+            name="dbt_utils",
+            git_url="https://github.com/dbt-labs/dbt-utils.git",
+            git_ref="51ed999a44fcc7f9f502be11e5f190f5bc84ba4b",  # Jan 17, 2022
+            expected_changed=110,
+            expected_unchanged=3,
+            expected_errored=2,
+            sub_directory=Path(""),
+        ),
     ]
     return projects
 
