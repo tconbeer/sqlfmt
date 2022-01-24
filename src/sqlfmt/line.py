@@ -1,7 +1,7 @@
 import re
 import sys
 from dataclasses import dataclass, field
-from typing import Iterator, List, Optional, Tuple
+from typing import ClassVar, Iterator, List, Optional, Tuple
 
 from sqlfmt.exception import InlineCommentException, SqlfmtBracketError
 from sqlfmt.token import Token, TokenType
@@ -10,8 +10,6 @@ if sys.version_info >= (3, 8):
     from functools import cached_property
 else:
     from backports.cached_property import cached_property
-
-COMMENT_PROGRAM = re.compile(r"(--|#|/\*|\{#-?)([^\S\n]*)")
 
 
 @dataclass
@@ -23,6 +21,7 @@ class Comment:
 
     token: Token
     is_standalone: bool
+    comment_marker: ClassVar[re.Pattern] = re.compile(r"(--|#|/\*|\{#-?)([^\S\n]*)")
 
     def __str__(self) -> str:
         return self._calc_str
@@ -53,7 +52,7 @@ class Comment:
         The second element is the position of the comment's text, which is the
         first non-whitespace character after the marker
         """
-        match = COMMENT_PROGRAM.match(self.token.token)
+        match = self.comment_marker.match(self.token.token)
         assert match, f"{self.token.token} does not match comment marker"
         _, epos = match.span(1)
         _, len = match.span(2)
