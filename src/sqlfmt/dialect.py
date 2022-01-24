@@ -253,8 +253,6 @@ class Polyglot(Dialect):
                     pattern=group(
                         r"and",
                         r"or",
-                        r"on",
-                        r"as",
                     )
                     + group(r"\W", r"$"),
                     action=partial(
@@ -339,7 +337,7 @@ class Polyglot(Dialect):
                 Rule(
                     name="jinja_set_block_start",
                     priority=100,
-                    pattern=group(r"\{%-?\s*set\s+[^,=%}]+-?%\}"),
+                    pattern=group(r"\{%-?\s*set\s+[^=]+?-?%\}"),
                     action=actions.handle_jinja_set_block,
                 ),
                 Rule(
