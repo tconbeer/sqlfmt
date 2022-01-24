@@ -342,10 +342,7 @@ class Node:
             # add the previous node to the list of open brackets or jinja blocks
             if previous_node.is_unterm_keyword or previous_node.is_opening_bracket:
                 open_brackets.append(previous_node)
-            elif previous_node.token.type in (
-                TokenType.JINJA_BLOCK_START,
-                TokenType.JINJA_BLOCK_KEYWORD,
-            ):
+            elif previous_node.is_opening_jinja_block:
                 open_jinja_blocks.append(previous_node)
 
         # if the token should reduce the depth of the node, pop
