@@ -3,7 +3,7 @@ import sys
 from dataclasses import dataclass, field
 from typing import Iterator, List, Optional, Tuple
 
-from sqlfmt.exception import InlineCommentError, SqlfmtBracketError
+from sqlfmt.exception import InlineCommentException, SqlfmtBracketError
 from sqlfmt.token import Token, TokenType
 
 if sys.version_info >= (3, 8):
@@ -52,12 +52,12 @@ class Comment:
 
     def render_inline(self, max_length: int, content_length: int) -> str:
         if self.is_standalone:
-            raise InlineCommentError("Can't inline standalone comment")
+            raise InlineCommentException("Can't inline standalone comment")
         else:
             inline_prefix = " " * 2
             rendered = inline_prefix + str(self)
             if content_length + len(rendered) > max_length:
-                raise InlineCommentError("Comment too long to be inlined")
+                raise InlineCommentException("Comment too long to be inlined")
             else:
                 return inline_prefix + str(self)
 
@@ -537,7 +537,7 @@ class Line:
                         max_length=max_length, content_length=len(content.rstrip())
                     )
                     return content.rstrip() + comment
-                except InlineCommentError:
+                except InlineCommentException:
                     comment = self.comments[0].render_standalone(
                         max_length=max_length, prefix=self.prefix
                     )

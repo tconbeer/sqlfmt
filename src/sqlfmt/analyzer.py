@@ -2,7 +2,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Optional
 
-from sqlfmt.exception import SqlfmtError, SqlfmtMultilineError
+from sqlfmt.exception import SqlfmtBracketError, SqlfmtParsingError
 from sqlfmt.line import Comment, Line, Node
 from sqlfmt.query import Query
 
@@ -12,10 +12,6 @@ def group(*choices: str) -> str:
 
 
 MAYBE_WHITESPACES: str = r"[^\S\n]*"  # any whitespace except newline
-
-
-class SqlfmtParsingError(SqlfmtError):
-    pass
 
 
 @dataclass
@@ -180,7 +176,7 @@ class Analyzer:
 
         match = program.search(tail)
         if not match:
-            raise SqlfmtMultilineError(
+            raise SqlfmtBracketError(
                 f"Unterminated multiline token '{start_rule}' "
                 f"started near position {pos}."
             )
