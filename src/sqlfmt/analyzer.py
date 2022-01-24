@@ -8,7 +8,10 @@ from sqlfmt.query import Query
 
 
 def group(*choices: str) -> str:
-    return "(" + "|".join(choices) + ")"
+    """
+    Convenience function for creating grouped alternatives in regex
+    """
+    return f"({'|'.join(choices)})"
 
 
 MAYBE_WHITESPACES: str = r"[^\S\n]*"  # any whitespace except newline
@@ -78,6 +81,11 @@ class Analyzer:
             return None
 
     def clear_buffers(self) -> None:
+        """
+        Reset the analyer's node, comment, and line buffers, and its parsing position.
+        (It is possible for the same analyzer to be used to lex twice, so we need to
+        reset buffers before lexing begins)
+        """
         self.node_buffer = []
         self.comment_buffer = []
         self.line_buffer = []

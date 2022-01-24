@@ -4,6 +4,11 @@ from typing import NamedTuple
 
 
 class TokenType(Enum):
+    """
+    Tokens are basic elements of SQL syntax; we only care about a small number of
+    token types, which correspond to query structure and therefore formatting
+    """
+
     FMT_OFF = auto()
     FMT_ON = auto()
     DATA = auto()
@@ -68,6 +73,9 @@ class Token(NamedTuple):
         match: re.Match,
         token_type: TokenType,
     ) -> "Token":
+        """
+        Constructs a Token based on a regex match in a source string, and a type.
+        """
         pos, _ = match.span(0)
         spos, epos = match.span(1)
         prefix = source_string[pos:spos]

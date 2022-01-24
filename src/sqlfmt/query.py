@@ -7,6 +7,11 @@ from sqlfmt.token import Token
 
 @dataclass
 class Query:
+    """
+    A Query is a collection of Lines, the corresponding raw source string, and
+    the desired line length. Queries are mutated by the Formatter
+    """
+
     source_string: str
     line_length: int
     lines: List[Line] = field(default_factory=list)

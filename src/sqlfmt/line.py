@@ -16,6 +16,11 @@ COMMENT_PROGRAM = re.compile(r"(--|#|/\*|\{#-?)([^\S\n]*)")
 
 @dataclass
 class Comment:
+    """
+    A Comment wraps a token (of type COMMENT), and provides a number of properties and
+    methods that are used in formatting and printing the query
+    """
+
     token: Token
     is_standalone: bool
 
@@ -24,6 +29,11 @@ class Comment:
 
     @cached_property
     def _calc_str(self) -> str:
+        """
+        Returns the contents of the comment token plus a trailing newline,
+        without preceding whitespace, with a single space between the marker
+        and the comment text.
+        """
         if self.is_multiline:
             return self.token.token + "\n"
         else:
@@ -34,6 +44,15 @@ class Comment:
         return len(str(self))
 
     def _get_marker(self) -> Tuple[str, int]:
+        """
+        For a comment, returns a tuple.
+
+        The first element is the comment's marker, which is the symbol or symbols
+        that indicates that the rest of the token is a comment; e.g., "--" or "#"
+
+        The second element is the position of the comment's text, which is the
+        first non-whitespace character after the marker
+        """
         match = COMMENT_PROGRAM.match(self.token.token)
         assert match, f"{self.token.token} does not match comment marker"
         _, epos = match.span(1)
@@ -41,6 +60,10 @@ class Comment:
         return self.token.token[:epos], len
 
     def _comment_parts(self) -> Tuple[str, str]:
+        """
+        For a comment, returns a tuple of the comment's marker and its contents
+        (without leading whitespace)
+        """
         assert not self.is_multiline
         marker, skipchars = self._get_marker()
         comment_text = self.token.token[skipchars:]
@@ -48,9 +71,16 @@ class Comment:
 
     @property
     def is_multiline(self) -> bool:
+        """
+        Returns True if this Comment contains newlines
+        """
         return "\n" in self.token.token
 
     def render_inline(self, max_length: int, content_length: int) -> str:
+        """
+        For a Comment, returns the string for properly formatting this Comment
+        inline, after content_length characters of non-comment Nodes
+        """
         if self.is_standalone:
             raise InlineCommentException("Can't inline standalone comment")
         else:
@@ -62,6 +92,10 @@ class Comment:
                 return inline_prefix + str(self)
 
     def render_standalone(self, max_length: int, prefix: str) -> str:
+        """
+        For a Comment, returns the string for properly formatting this Comment
+        as a standalone comment (on its own line)
+        """
         if self.is_multiline:
             # todo: split lines, indent each line the same
             return prefix + str(self)
@@ -81,6 +115,12 @@ class Comment:
 
     @classmethod
     def _split_before(cls, text: str, max_length: int) -> Iterator[str]:
+        """
+        When rendering very long comments, we try to split them at the desired line
+        length and wrap them onto multiple lines. This method takes the contents of
+        a comment (without the marker) and a maximum length, and splits the original
+        text at whitespace, yielding each split as a stringd
+        """
         if len(text) < max_length:
             yield text.rstrip()
         else:
@@ -95,6 +135,26 @@ class Comment:
 
 @dataclass
 class Node:
+    """
+    A Node wraps a lexed Token, but adds many calculated properties and methods that
+    simplify formatting, including:
+
+    previous_node: a reference to the Node that immediately precedes this Node in the
+    query
+
+    prefix: the calculated whitespace (0 or 1 spaces) that should precede this Node
+    when formatted
+
+    value: the properly-capitalized token contents for the formatted query
+
+    open_brackets and open_jinja_blocks: a list of Nodes that precede this Node that
+    refer to open brackets (keywords and parens) or jinja blocks (e.g., {% if foo %})
+    that increase the syntax depth (and therefore printed indentation) of this Node
+
+    formatting_disabled: a boolean indicating that sqlfmt should print the raw token
+    instead of the formatted values for this Node
+    """
+
     token: Token
     previous_node: Optional["Node"]
     prefix: str
@@ -104,6 +164,9 @@ class Node:
     formatting_disabled: bool = False
 
     def __str__(self) -> str:
+        """
+        Returns the formatted text of this Node
+        """
         return self.prefix + self.value
 
     def __repr__(self) -> str:
@@ -133,14 +196,25 @@ class Node:
         return r
 
     def __len__(self) -> int:
+        """
+        The length of this printed Node, including prefix whitespace, after formatting
+        """
         return len(str(self))
 
     @property
     def depth(self) -> Tuple[int, int]:
+        """
+        A Node's depth is a key characteristic that determines its indentation in the
+        formatted query. We use a tuple to track SQL and jinja depth separately, since
+        SQL depth can change within jinja blocks
+        """
         return (len(self.open_brackets), len(self.open_jinja_blocks))
 
     @property
     def is_unterm_keyword(self) -> bool:
+        """
+        True for Nodes representing unterminated SQL keywords, like select, from, where
+        """
         return self.token.type == TokenType.UNTERM_KEYWORD
 
     @property
@@ -202,6 +276,11 @@ class Node:
 
     @property
     def is_multiplication_star(self) -> bool:
+        """
+        A lexed TokenType.STAR token can be the "all fields" shorthand or
+        the multiplication operator. Returns true iff this Node is a multiplication
+        operator
+        """
         if self.token.type != TokenType.STAR:
             return False
         prev_token = self.previous_token(self.previous_node)
@@ -468,6 +547,11 @@ class Node:
 
 @dataclass
 class Line:
+    """
+    A Line is a collection of Nodes and Comments that should be printed together, on a
+    single line.
+    """
+
     previous_node: Optional[Node]  # last node of prior line, if any
     nodes: List[Node] = field(default_factory=list)
     comments: List[Comment] = field(default_factory=list)
@@ -478,6 +562,19 @@ class Line:
 
     @cached_property
     def _calc_str(self) -> str:
+        """
+        A Line is printed in one of three ways:
+        1. Blank lines are just bare newlines, with no other whitespace
+        2. Lines where formatting is disabled must use the original lexed token,
+           and print exactly what we lexed
+        3. Concatenate all Nodes and prepend the correct amount of whitespace
+           for indentation
+
+        Does not include any Comments; for those, use the render_with_comments
+        method
+
+        Cached for performance.
+        """
         if self.is_blank_line:
             return "\n"
         elif self.formatting_disabled:
@@ -493,6 +590,9 @@ class Line:
 
     @property
     def open_brackets(self) -> List[Node]:
+        """
+        The brackets open at the start of this Line
+        """
         if self.nodes:
             return self.nodes[0].open_brackets
         elif self.previous_node:
@@ -502,6 +602,9 @@ class Line:
 
     @property
     def open_jinja_blocks(self) -> List[Node]:
+        """
+        The jinja blocks open at the start of this Line
+        """
         if self.nodes:
             return self.nodes[0].open_jinja_blocks
         elif self.previous_node:
@@ -511,6 +614,9 @@ class Line:
 
     @property
     def depth(self) -> Tuple[int, int]:
+        """
+        The depth of the start of this line
+        """
         if self.nodes:
             return (len(self.open_brackets), len(self.open_jinja_blocks))
         else:
@@ -518,11 +624,19 @@ class Line:
 
     @property
     def prefix(self) -> str:
+        """
+        Returns the whitespace to be printed at the start of this Line for
+        proper indentation.
+        """
         INDENT = " " * 4
         prefix = INDENT * self.depth[0]
         return prefix
 
     def render_with_comments(self, max_length: int) -> str:
+        """
+        Returns a string that represents the properly-formatted Line,
+        including associated comments
+        """
         content = str(self)
         if len(self.comments) == 0:
             return content
@@ -768,6 +882,10 @@ class Line:
 
     @property
     def opens_new_bracket(self) -> bool:
+        """
+        Returns True iff the Nodes in this Line open a new explicit bracket and do
+        not also close that bracket
+        """
         if not self.nodes:
             return False
         elif not self.nodes[-1].open_brackets:

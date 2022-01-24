@@ -13,6 +13,10 @@ class QueryFormatter:
     mode: Mode
 
     def _split_lines(self, lines: List[Line]) -> List[Line]:
+        """
+        Splits lines to make line depth consistent and syntax
+        apparent
+        """
         splitter = LineSplitter(mode=self.mode)
         new_lines = []
         for line in lines:
@@ -21,6 +25,11 @@ class QueryFormatter:
         return new_lines
 
     def _merge_lines(self, lines: List[Line]) -> List[Line]:
+        """
+        Merge lines to minimize vertical space used by the
+        query, while maintaining the syntax hierarchy achieved
+        by the splitter
+        """
         merger = LineMerger(mode=self.mode)
         lines = merger.maybe_merge_lines(lines)
         return lines
@@ -52,6 +61,7 @@ class QueryFormatter:
         Applies 2 transformations to a Query:
         1. Splits lines
         2. Merges lines
+        3. Dedents jinja block tags to match their least-indented contents
         """
         lines = raw_query.lines
 
