@@ -13,7 +13,7 @@ from sqlfmt.api import (
     format_string,
     run,
 )
-from sqlfmt.exception import SqlfmtBracketError, SqlfmtError, SqlfmtMultilineError
+from sqlfmt.exception import SqlfmtBracketError, SqlfmtError
 from sqlfmt.mode import Mode
 
 
@@ -53,7 +53,7 @@ def test_format_empty_string(all_output_modes: Mode) -> None:
     [
         ("?\n", SqlfmtParsingError),
         ("select )\n", SqlfmtBracketError),
-        ("{{\n", SqlfmtMultilineError),
+        ("{{\n", SqlfmtBracketError),
     ],
 )
 def test_format_bad_string(

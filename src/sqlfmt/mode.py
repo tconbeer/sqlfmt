@@ -7,6 +7,10 @@ from sqlfmt.dialect import Dialect, Polyglot
 
 @dataclass
 class Mode:
+    """
+    A Mode is a container for all sqlfmt config, including formatting config and
+    report config
+    """
 
     SQL_EXTENSIONS: List[str] = field(default_factory=lambda: [".sql", ".sql.jinja"])
     dialect: Dialect = field(default_factory=lambda: Polyglot())

@@ -9,9 +9,13 @@ from sqlfmt.mode import Mode
 from sqlfmt.report import STDIN_PATH, Report, SqlFormatResult
 
 
-def format_string(source: str, mode: Mode) -> str:
+def format_string(source_string: str, mode: Mode) -> str:
+    """
+    Takes a raw query string and a mode as input, returns the formatted query
+    as a string, or raises a SqlfmtError if the string cannot be formatted
+    """
     analyzer = mode.dialect.initialize_analyzer(line_length=mode.line_length)
-    raw_query = analyzer.parse_query(source_string=source)
+    raw_query = analyzer.parse_query(source_string=source_string)
     formatter = QueryFormatter(mode)
     formatted_query = formatter.format(raw_query)
     return str(formatted_query)
@@ -42,6 +46,11 @@ def run(files: List[str], mode: Mode) -> Report:
 
 
 def _generate_matched_paths(paths: Iterable[Path], mode: Mode) -> Iterator[Path]:
+    """
+    Takes a list of paths (files or directories) and a mode as an input, and
+    yields paths to individual files that match the input paths (or are contained in
+    its directories)
+    """
     for p in paths:
         if p == STDIN_PATH:
             yield p

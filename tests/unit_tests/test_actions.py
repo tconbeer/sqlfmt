@@ -229,11 +229,6 @@ def test_handle_jinja(
     ],
 )
 def test_handle_jinja_set_block(default_analyzer: Analyzer, source_string: str) -> None:
-    source_string = """
-    {% set my_var %}
-    !
-    {% endset %}
-    """.strip()
     start_rule = default_analyzer.get_rule("jinja", "jinja_set_block_start")
     match = start_rule.program.match(source_string)
     assert match is not None

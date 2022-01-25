@@ -1,13 +1,10 @@
 from dataclasses import dataclass
 from typing import List
 
+from sqlfmt.exception import CannotMergeException
 from sqlfmt.line import Comment, Line, Node
 from sqlfmt.mode import Mode
 from sqlfmt.token import TokenType
-
-
-class CannotMergeException(Exception):
-    pass
 
 
 @dataclass

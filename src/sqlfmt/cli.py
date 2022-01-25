@@ -114,6 +114,10 @@ def sqlfmt(
 
 
 def show_welcome_message() -> None:
+    """
+    Prints a nice welcome message for new users who might accidentally
+    enter `$ sqlfmt` without any arguments
+    """
     from sqlfmt.report import display_output, style_output
 
     art = r"""

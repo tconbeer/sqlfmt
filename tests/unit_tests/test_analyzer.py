@@ -1,7 +1,7 @@
 import pytest
 
 from sqlfmt.analyzer import Analyzer, SqlfmtParsingError
-from sqlfmt.exception import SqlfmtBracketError, SqlfmtMultilineError
+from sqlfmt.exception import SqlfmtBracketError
 from sqlfmt.line import Comment
 from sqlfmt.mode import Mode
 from sqlfmt.token import Token, TokenType
@@ -401,7 +401,7 @@ def test_open_paren_parsing(
 def test_unterminated_multiline_token(default_analyzer: Analyzer) -> None:
     source_string = "{% \n config = {}\n"
 
-    with pytest.raises(SqlfmtMultilineError) as excinfo:
+    with pytest.raises(SqlfmtBracketError) as excinfo:
         _ = default_analyzer.parse_query(source_string=source_string)
 
     assert "Unterminated multiline" in str(excinfo.value)

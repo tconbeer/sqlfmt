@@ -14,22 +14,36 @@ STDIN_PATH = Path("-")
 def style_output(
     msg: str, fg: Optional[str] = None, bg: Optional[str] = None, bold: bool = False
 ) -> str:
-    # see https://click.palletsprojects.com/en/8.0.x/api/?highlight=style#click.style
+    """
+    A thin wrapper around click.style.
+
+    See https://click.palletsprojects.com/en/8.0.x/api/?highlight=style#click.style
+    """
     s: str = click.style(msg, fg=fg, bg=bg, bold=bold)
     return s
 
 
 def unstyle_output(msg: str) -> str:
+    """
+    A thin wrapper around click.unstyle.
+    """
     s: str = click.unstyle(msg)
     return s
 
 
 def display_output(msg: str, err: bool = True) -> None:
+    """
+    A thin wrapper around click.echo; defaults to printing to stderr.
+    """
     click.echo(msg, err=err)
 
 
 @dataclass
 class SqlFormatResult:
+    """
+    A SqlfmtResult is a summary of the changes made by sqlfmt to a single file.
+    """
+
     source_path: Path
     source_string: str
     formatted_string: str
@@ -37,6 +51,9 @@ class SqlFormatResult:
     from_cache: bool = False
 
     def maybe_print_to_stdout(self) -> None:
+        """
+        If sqlfmt received a query via stdin, print the formatted string to stdout
+        """
         if self.source_path == STDIN_PATH:
             display_output(self.formatted_string, err=False)
 
@@ -60,6 +77,9 @@ class Report:
     mode: Mode
 
     def __str__(self) -> str:
+        """
+        Returns the full contents of the Report
+        """
         report = []
         formatted = (
             "failed formatting check"
@@ -100,11 +120,18 @@ class Report:
 
     @staticmethod
     def _pluralize_file(n: int) -> str:
+        """
+        Returns either "1 file" or "n files", depending on n
+        """
         suffix = "s" if n != 1 else ""
         return f"{n} file{suffix}"
 
     @classmethod
     def _generate_diff(cls, result: SqlFormatResult) -> str:
+        """
+        Returns a non-colorized diff of the source and formatted
+        strings in the SqlfmtResult
+        """
         cleaned_lines = []
         # Work around https://bugs.python.org/issue2142
         for line in difflib.unified_diff(
@@ -125,6 +152,9 @@ class Report:
 
     @staticmethod
     def _style_diff_line(line: str) -> str:
+        """
+        Colorizes the diff created by _generate_diff
+        """
         if line.startswith("@@"):
             styled = style_output(line, fg="cyan")
         elif line.startswith("+"):
@@ -136,6 +166,11 @@ class Report:
         return styled
 
     def display_report(self) -> None:
+        """
+        If sqlfmt received a query via stdin, print the formatted string to stdout.
+
+        Then print the report that summarizes all results
+        """
         if not self.mode.check and not self.mode.diff:
             for res in self.results:
                 res.maybe_print_to_stdout()

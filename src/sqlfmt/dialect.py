@@ -21,11 +21,18 @@ class Dialect(ABC):
 
     @abstractmethod
     def get_rules(self) -> Dict[str, List[Rule]]:
+        """
+        Returns the Dialect's Rules, as a dict keyed by the name of the ruleset,
+        e.g., main
+        """
         return {
             k: sorted(v, key=lambda rule: rule.priority) for k, v in self.RULES.items()
         }
 
     def initialize_analyzer(self, line_length: int) -> Analyzer:
+        """
+        Creates and returns an analyzer that uses the Dialect's rules for lexing
+        """
         analyzer = Analyzer(
             line_length=line_length,
             rules=self.get_rules(),
@@ -253,8 +260,6 @@ class Polyglot(Dialect):
                     pattern=group(
                         r"and",
                         r"or",
-                        r"on",
-                        r"as",
                     )
                     + group(r"\W", r"$"),
                     action=partial(
@@ -339,7 +344,7 @@ class Polyglot(Dialect):
                 Rule(
                     name="jinja_set_block_start",
                     priority=100,
-                    pattern=group(r"\{%-?\s*set\s+[^,=%}]+-?%\}"),
+                    pattern=group(r"\{%-?\s*set\s+[^=]+?-?%\}"),
                     action=actions.handle_jinja_set_block,
                 ),
                 Rule(

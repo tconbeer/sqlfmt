@@ -83,6 +83,10 @@ def _get_cache_info(path: Path) -> Tuple[float, int]:
 def _gen_cache_keys_for_updates(
     results: Iterable[SqlFormatResult], mode: Mode
 ) -> Iterable[Path]:
+    """
+    Takes an interable of SqlfmtResults and yields paths to files that should
+    be updated in the cache, based on the result of the sqlfmt run
+    """
     gen = (
         res.source_path.resolve()
         for res in results
@@ -94,6 +98,10 @@ def _gen_cache_keys_for_updates(
 
 
 def _should_update_cache(result: SqlFormatResult, mode: Mode) -> bool:
+    """
+    Takes a single SqlfmtResult and returns True if that result indicates that
+    the associated file should be updated in the cache
+    """
     if result.has_error or result.from_cache:
         return False
     elif not result.has_changed:
