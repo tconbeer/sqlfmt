@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Features
+
+-   adds an option, `--single-process`, to force single-processing, even when formatting many files
+
+### Under the Hood
+
+-   when formatting multiple files, uses multiprocessing for ~3x faster throughput
+
 ## [0.4.1] - 2022-01-20
 
 ### Formatting changes

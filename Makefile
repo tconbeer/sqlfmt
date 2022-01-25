@@ -31,8 +31,8 @@ profiling_rittman: .profiling/rittman.rstats
 	snakeviz ./.profiling/rittman.rstats
 
 .profiling/all.rstats: $(wildcard src/**/*)
-	python -m cProfile -o ./.profiling/all.rstats -m sqlfmt_primer
+	python -m cProfile -o ./.profiling/all.rstats -m sqlfmt_primer --single-process
 .profiling/gitlab.rstats: $(wildcard src/**/*)
-	python -m cProfile -o ./.profiling/gitlab.rstats -m sqlfmt_primer gitlab
+	python -m cProfile -o ./.profiling/gitlab.rstats -m sqlfmt_primer gitlab --single-process
 .profiling/rittman.rstats: $(wildcard src/**/*)
-	python -m cProfile -o ./.profiling/rittman.rstats -m sqlfmt_primer rittman
+	python -m cProfile -o ./.profiling/rittman.rstats -m sqlfmt_primer rittman --single-process
