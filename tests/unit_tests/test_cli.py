@@ -77,3 +77,11 @@ def test_error_check(sqlfmt_runner: CliRunner, error_dir: Path) -> None:
     args = f"{error_dir.as_posix()} --check"
     results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
     assert results.exit_code == 2
+
+
+def test_preformatted_single_process(
+    sqlfmt_runner: CliRunner, preformatted_dir: Path
+) -> None:
+    args = f"{preformatted_dir.as_posix()} --single-process"
+    results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
+    assert results.exit_code == 0

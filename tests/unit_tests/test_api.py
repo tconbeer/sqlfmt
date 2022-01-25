@@ -229,3 +229,13 @@ def test_run_on_nothing(all_output_modes: Mode) -> None:
     assert report.number_changed == 0
     assert report.number_unchanged == 0
     assert report.number_errored == 0
+
+
+def test_run_single_process_does_not_use_multiprocessing(
+    unformatted_dir: Path, single_process_mode: Mode, monkeypatch: pytest.MonkeyPatch
+) -> None:
+
+    # confirm that we do not call _multiprocess_map; if we do,
+    # this will raise
+    monkeypatch.delattr("sqlfmt.api._multiprocess_map")
+    _ = run(files=[str(unformatted_dir)], mode=single_process_mode)

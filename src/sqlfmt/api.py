@@ -79,7 +79,7 @@ def _format_many(
     Returns a list of SqlFormatResults. Does not write formatted Queries back to disk
     """
     format_func = partial(_format_one, cache=cache, mode=mode)
-    if len(paths) > 1:
+    if len(paths) > 1 and not mode.single_process:
         results: List[SqlFormatResult] = asyncio.get_event_loop().run_until_complete(
             _multiprocess_map(format_func, paths)
         )
