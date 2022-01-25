@@ -1,12 +1,19 @@
+import concurrent.futures
 import sys
+from functools import partial
 from pathlib import Path
-from typing import Iterable, Iterator, List, Set
+from typing import Callable, Collection, Iterable, Iterator, List, Set, TypeVar
+
+from black import asyncio
 
 from sqlfmt.cache import Cache, check_cache, load_cache, write_cache
 from sqlfmt.exception import SqlfmtError
 from sqlfmt.formatter import QueryFormatter
 from sqlfmt.mode import Mode
 from sqlfmt.report import STDIN_PATH, Report, SqlFormatResult
+
+T = TypeVar("T")
+R = TypeVar("R")
 
 
 def format_string(source_string: str, mode: Mode) -> str:
@@ -31,11 +38,11 @@ def run(files: List[str], mode: Mode) -> Report:
     Returns a Report that can be queried or printed.
     """
 
+    cache = load_cache()
     matched_paths: Set[Path] = set()
     matched_paths.update(_generate_matched_paths([Path(s) for s in files], mode))
+    results = _format_many(matched_paths, cache, mode)
 
-    cache = load_cache()
-    results = list(_generate_results(matched_paths, cache, mode))
     report = Report(results, mode)
 
     if not (mode.check or mode.diff):
@@ -60,33 +67,70 @@ def _generate_matched_paths(paths: Iterable[Path], mode: Mode) -> Iterator[Path]
             yield from (_generate_matched_paths(p.iterdir(), mode))
 
 
-def _generate_results(
-    paths: Iterable[Path], cache: Cache, mode: Mode
-) -> Iterator[SqlFormatResult]:
+def _format_many(
+    paths: Collection[Path], cache: Cache, mode: Mode
+) -> List[SqlFormatResult]:
     """
-    Runs sqlfmt on all files in an iterable of given paths, using the specified mode.
-    Yields SqlFormatResults.
+    Runs sqlfmt on all files in a collection of paths, using the specified mode.
+
+    If there are multiple paths and the mode allows it, uses asyncio's implementation
+    of multiprocessing. Otherwise, reverts to single-processing behavior
+
+    Returns a list of SqlFormatResults. Does not write formatted Queries back to disk
     """
-    for p in paths:
-        cached = check_cache(cache=cache, p=p)
-        if cached:
-            yield SqlFormatResult(
-                source_path=p, source_string="", formatted_string="", from_cache=True
+    format_func = partial(_format_one, cache=cache, mode=mode)
+    if len(paths) > 1:
+        results: List[SqlFormatResult] = asyncio.get_event_loop().run_until_complete(
+            _multiprocess_map(format_func, paths)
+        )
+    else:
+        results = list(map(format_func, paths))
+
+    return results
+
+
+async def _multiprocess_map(func: Callable[[T], R], seq: Iterable[T]) -> List[R]:
+    """
+    Using multiple processes, creates a Future for each application of func to
+    an item in seq, then gathers all Futures and returns the result.
+
+    Provides a similar interface to the map() built-in, but executes in multiple
+    processes.
+    """
+    loop = asyncio.get_event_loop()
+    with concurrent.futures.ProcessPoolExecutor() as pool:
+        tasks = []
+        for item in seq:
+            tasks.append(loop.run_in_executor(pool, func, item))
+        results: List[R] = await asyncio.gather(*tasks)
+    return results
+
+
+def _format_one(path: Path, cache: Cache, mode: Mode) -> SqlFormatResult:
+    """
+    Runs format_string on the contents of a single file (found at path),
+    unless the cache contains a matching version of that file. Handles
+    potential user errors in formatted code, and returns a SqlfmtResult
+    """
+    cached = check_cache(cache=cache, p=path)
+    if cached:
+        return SqlFormatResult(
+            source_path=path, source_string="", formatted_string="", from_cache=True
+        )
+    else:
+        source = _read_path_or_stdin(path)
+        try:
+            formatted = format_string(source, mode)
+            return SqlFormatResult(
+                source_path=path, source_string=source, formatted_string=formatted
             )
-        else:
-            source = _read_path_or_stdin(p)
-            try:
-                formatted = format_string(source, mode)
-                yield SqlFormatResult(
-                    source_path=p, source_string=source, formatted_string=formatted
-                )
-            except SqlfmtError as e:
-                yield SqlFormatResult(
-                    source_path=p,
-                    source_string=source,
-                    formatted_string="",
-                    exception=e,
-                )
+        except SqlfmtError as e:
+            return SqlFormatResult(
+                source_path=path,
+                source_string=source,
+                formatted_string="",
+                exception=e,
+            )
 
 
 def _update_source_files(results: Iterable[SqlFormatResult]) -> None:
