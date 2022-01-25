@@ -20,8 +20,17 @@ from sqlfmt.mode import Mode
     "--diff",
     is_flag=True,
     help=(
-        "Print a diff of any formatting changes to stdout. Fails like --check"
+        "Print a diff of any formatting changes to stdout. Fails like --check "
         "on any changes. Do not write formatted queries to files"
+    ),
+)
+@click.option(
+    "--single-process",
+    is_flag=True,
+    help=(
+        "Run sqlfmt in a single process, even when formatting multiple "
+        "files. If not set, defaults to multiprocessing using as many "
+        "cores as possible."
     ),
 )
 @click.option(
@@ -47,7 +56,7 @@ from sqlfmt.mode import Mode
     "--no-color",
     is_flag=True,
     help=(
-        "Removes color codes from all output, including diffs."
+        "Removes color codes from all output, including diffs. "
         "Alternatively, set the NO_COLOR environment variable"
     ),
 )
@@ -55,8 +64,8 @@ from sqlfmt.mode import Mode
     "--force-color",
     is_flag=True,
     help=(
-        "sqlfmt output is colorized by default. However, if you have"
-        "the NO_COLOR env var set, and still want sqlfmt to colorize"
+        "sqlfmt output is colorized by default. However, if you have "
+        "the NO_COLOR env var set, and still want sqlfmt to colorize "
         "output, you can use --force-color to override the env var"
     ),
 )
@@ -71,6 +80,7 @@ def sqlfmt(
     files: List[str],
     check: bool,
     diff: bool,
+    single_process: bool,
     no_color: bool,
     force_color: bool,
     line_length: int,
@@ -91,6 +101,7 @@ def sqlfmt(
             line_length=line_length,
             check=check,
             diff=diff,
+            single_process=single_process,
             verbose=verbose,
             quiet=quiet,
             _no_color=no_color,

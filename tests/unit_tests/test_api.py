@@ -7,8 +7,8 @@ import pytest
 
 from sqlfmt.analyzer import SqlfmtParsingError
 from sqlfmt.api import (
+    _format_many,
     _generate_matched_paths,
-    _generate_results,
     _update_source_files,
     format_string,
     run,
@@ -63,10 +63,10 @@ def test_format_bad_string(
         _ = format_string(source, all_output_modes)
 
 
-def test_generate_results_preformatted(
+def test_format_many_preformatted(
     preformatted_files: List[Path], all_output_modes: Mode
 ) -> None:
-    results = list(_generate_results(preformatted_files, {}, all_output_modes))
+    results = list(_format_many(preformatted_files, {}, all_output_modes))
 
     assert len(results) == len(
         preformatted_files
@@ -77,10 +77,10 @@ def test_generate_results_preformatted(
     ), "Result stored a source path that doesn't match the raw path passed to api"
 
 
-def test_generate_results_unformatted(
+def test_format_many_unformatted(
     unformatted_files: List[Path], all_output_modes: Mode
 ) -> None:
-    results = list(_generate_results(unformatted_files, {}, all_output_modes))
+    results = list(_format_many(unformatted_files, {}, all_output_modes))
 
     assert len(results) == len(
         unformatted_files
@@ -94,7 +94,7 @@ def test_generate_results_unformatted(
 def test_update_source_files_preformatted(
     preformatted_files: List[Path], default_mode: Mode
 ) -> None:
-    results = list(_generate_results(preformatted_files, {}, default_mode))
+    results = list(_format_many(preformatted_files, {}, default_mode))
 
     expected_last_update_timestamps = [
         os.stat(res.source_path).st_mtime for res in results if res.source_path
@@ -123,7 +123,7 @@ def test_update_source_files_preformatted(
 def test_update_source_files_unformatted(
     unformatted_files: List[Path], default_mode: Mode
 ) -> None:
-    results = list(_generate_results(unformatted_files, {}, default_mode))
+    results = list(_format_many(unformatted_files, {}, default_mode))
 
     original_update_timestamps = [
         os.stat(res.source_path).st_mtime for res in results if res.source_path
@@ -222,3 +222,20 @@ def test_run_stdin(all_output_modes: Mode, monkeypatch: pytest.MonkeyPatch) -> N
     assert report.number_changed == 1
     assert report.number_unchanged == 0
     assert report.number_errored == 0
+
+
+def test_run_on_nothing(all_output_modes: Mode) -> None:
+    report = run(files=[], mode=all_output_modes)
+    assert report.number_changed == 0
+    assert report.number_unchanged == 0
+    assert report.number_errored == 0
+
+
+def test_run_single_process_does_not_use_multiprocessing(
+    unformatted_dir: Path, single_process_mode: Mode, monkeypatch: pytest.MonkeyPatch
+) -> None:
+
+    # confirm that we do not call _multiprocess_map; if we do,
+    # this will raise
+    monkeypatch.delattr("sqlfmt.api._multiprocess_map")
+    _ = run(files=[str(unformatted_dir)], mode=single_process_mode)

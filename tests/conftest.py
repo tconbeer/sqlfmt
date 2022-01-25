@@ -65,9 +65,27 @@ def no_color_diff_mode(unset_no_color_env: None) -> Mode:
     return Mode(diff=True, _no_color=True)
 
 
-@pytest.fixture(params=[(False, False), (False, True), (True, False), (True, True)])
+@pytest.fixture
+def single_process_mode(unset_no_color_env: None) -> Mode:
+    return Mode(single_process=True)
+
+
+@pytest.fixture(
+    params=[
+        # (check, diff, single_process)
+        (False, False, False),
+        (False, True, False),
+        (True, False, False),
+        (True, True, False),
+        (False, False, True),
+        (True, False, True),
+        (False, True, True),
+    ]
+)
 def all_output_modes(request: Any, unset_no_color_env: None) -> Mode:
-    return Mode(check=request.param[0], diff=request.param[1])
+    return Mode(
+        check=request.param[0], diff=request.param[1], single_process=request.param[2]
+    )
 
 
 @pytest.fixture

@@ -99,9 +99,18 @@ def get_projects() -> List[SQLProject]:
     is_flag=True,
     help=("Always does a fresh clone from project's repo."),
 )
+@click.option(
+    "--single-process",
+    is_flag=True,
+    help=("Run sqlfmt in a single process. Useful for profiling"),
+)
 @click.pass_context
 def sqlfmt_primer(
-    ctx: click.Context, quiet: bool, reset_cache: bool, project_names: List[str]
+    ctx: click.Context,
+    quiet: bool,
+    reset_cache: bool,
+    single_process: bool,
+    project_names: List[str],
 ) -> None:
     """
     Run sqlfmt against one or many projects.
@@ -129,7 +138,7 @@ def sqlfmt_primer(
             project for project in all_projects if project.name in project_names
         ]
 
-    mode = Mode(quiet=True, check=True)
+    mode = Mode(quiet=True, check=True, single_process=single_process)
     exit_code = 0
     clear_sqlfmt_cache()
 

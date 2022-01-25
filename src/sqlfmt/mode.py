@@ -17,6 +17,7 @@ class Mode:
     line_length: int = 88
     check: bool = False
     diff: bool = False
+    single_process: bool = False
     verbose: bool = False
     quiet: bool = False
     _no_color: bool = False
