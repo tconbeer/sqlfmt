@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.4.2] - 2022-01-26
+
 ### Features
 
 -   adds an option, `--single-process`, to force single-processing, even when formatting many files
@@ -103,7 +105,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.4.1...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.4.2...HEAD
+
+[0.4.2]: https://github.com/tconbeer/sqlfmt/compare/0.4.1...0.4.2
 
 [0.4.1]: https://github.com/tconbeer/sqlfmt/compare/0.4.0...0.4.1
 
