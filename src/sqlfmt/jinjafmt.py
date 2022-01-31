@@ -1,9 +1,7 @@
+import re
 from dataclasses import dataclass
 from typing import Tuple
 
-from black import re
-
-from sqlfmt.exception import SqlfmtParsingError
 from sqlfmt.line import Line, Node
 from sqlfmt.mode import Mode
 
@@ -87,6 +85,7 @@ class JinjaFormatter:
             )
             if verb and code:
                 verb = f"{verb} "
+
             if code:
                 max_code_length = (
                     max_length
@@ -95,13 +94,12 @@ class JinjaFormatter:
                     - len(closing_marker)
                     - 2
                 )
-                try:
-                    code = self._format_python_string(code, max_length=max_code_length)
-                except SqlfmtParsingError as e:
-                    raise SqlfmtParsingError(
-                        "Could not parse jinja tag contents at position "
-                        f"{node.token.spos}: {e}"
-                    ) from e
+                code = self._format_python_string(code, max_length=max_code_length)
+
+            # if the formatted code is on multiple lines, and does not use a verb,
+            # we want the code indented four spaces past the opening and
+            # closing markers. The opening marker will already be indented to the
+            # proper depth
             if "\n" in code and not verb:
                 indent = " " * (4 * node.depth[0])
                 node_lines = [f"{opening_marker}"]

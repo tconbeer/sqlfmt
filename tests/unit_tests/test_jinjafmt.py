@@ -1,3 +1,4 @@
+import sys
 from typing import Tuple
 
 import pytest
@@ -21,6 +22,11 @@ def no_jinjafmt_mode() -> Mode:
 @pytest.fixture
 def disabled_jinja_formatter(no_jinjafmt_mode: Mode) -> JinjaFormatter:
     return JinjaFormatter(no_jinjafmt_mode)
+
+
+@pytest.fixture
+def uninstall_black(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setitem(sys.modules, "black", None)  # type: ignore
 
 
 @pytest.mark.parametrize(
@@ -81,6 +87,18 @@ def test_split_jinja_tag_contents(
             "{% do my_list.append( something ) %}",
             "{% do my_list.append(something) %}",
         ),
+        # jinja allows line breaks where python doesn't; test try/except
+        (
+            TokenType.JINJA_STATEMENT,
+            "{% set my_tuple = 1,\n    2,\n    3%}",
+            "{% set my_tuple = 1, 2, 3 %}",
+        ),
+        # jinja allows "from" as an arg name, python doesn't
+        (
+            TokenType.JINJA_EXPRESSION,
+            "{{dbt_utils.star(from=something)}}",
+            "{{ dbt_utils.star(from=something) }}",
+        ),
     ],
 )
 def test_format_jinja_node(
@@ -90,6 +108,36 @@ def test_format_jinja_node(
     n = Node.from_token(t, previous_node=None)
     jinja_formatter.format_jinja_node(n, 88)
     assert n.value == formatted
+
+
+def test_no_format_jinja_node(disabled_jinja_formatter: JinjaFormatter) -> None:
+    source_string = "{% set a=1 %}"
+    t = Token(
+        type=TokenType.JINJA_STATEMENT,
+        prefix="",
+        token=source_string,
+        spos=0,
+        epos=len(source_string),
+    )
+    n = Node.from_token(t, previous_node=None)
+    disabled_jinja_formatter.format_jinja_node(n, 88)
+    assert n.value == source_string
+
+
+def test_format_jinja_node_no_black(
+    uninstall_black: None, jinja_formatter: JinjaFormatter
+) -> None:
+    source_string = "{% set a=1 %}"
+    t = Token(
+        type=TokenType.JINJA_STATEMENT,
+        prefix="",
+        token=source_string,
+        spos=0,
+        epos=len(source_string),
+    )
+    n = Node.from_token(t, previous_node=None)
+    jinja_formatter.format_jinja_node(n, 88)
+    assert n.value == source_string
 
 
 def test_format_line(jinja_formatter: JinjaFormatter) -> None:
