@@ -1,10 +1,9 @@
+import asyncio
 import concurrent.futures
 import sys
 from functools import partial
 from pathlib import Path
 from typing import Callable, Collection, Iterable, Iterator, List, Set, TypeVar
-
-from black import asyncio
 
 from sqlfmt.cache import Cache, check_cache, load_cache, write_cache
 from sqlfmt.exception import SqlfmtError

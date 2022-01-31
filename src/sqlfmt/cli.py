@@ -153,7 +153,7 @@ def show_welcome_message() -> None:
             |_|"""
     display_output(msg=art)
     message = """
-    sqlfmt is a tool that formats your sql files.
+    sqlfmt formats your dbt SQL files so you don't have to.
     For more information, visit http://sqlfmt.com
 
     To get started, try:
@@ -165,12 +165,12 @@ def show_welcome_message() -> None:
             "format all files nested in the current dir (note the '.')",
         ),
         (
-            "sqlfmt path/my/file.sql",
+            "sqlfmt path/to/file.sql",
             "format file.sql only",
         ),
         (
             "sqlfmt . --check",
-            "check formatting of all files, exits with code 1 on changes",
+            "check formatting of all files, exit with code 1 on changes",
         ),
         (
             "sqlfmt . --diff",
