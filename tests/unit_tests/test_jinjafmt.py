@@ -3,7 +3,7 @@ from typing import Tuple
 
 import pytest
 
-from sqlfmt.jinjafmt import JinjaFormatter
+from sqlfmt.jinjafmt import JinjaFormatter, JinjaTag
 from sqlfmt.line import Line, Node
 from sqlfmt.mode import Mode
 from sqlfmt.token import Token, TokenType
@@ -44,21 +44,19 @@ def uninstall_black(monkeypatch: pytest.MonkeyPatch) -> None:
         ),
         ("{% statement %}", ("{%", "", "statement", "%}")),
         ("{%- statement -%}", ("{%-", "", "statement", "-%}")),
-        ("{% set a=1 %}", ("{%", "set", "a=1", "%}")),
-        ("{%set a=1%}", ("{%", "set", "a=1", "%}")),
-        ("{%-set a=1%}", ("{%-", "set", "a=1", "%}")),
-        ("{% SET a=1%}", ("{%", "SET", "a=1", "%}")),
-        ("{% set my_var%}", ("{%", "set", "my_var", "%}")),
+        ("{% set a=1 %}", ("{%", "set ", "a=1", "%}")),
+        ("{%set a=1%}", ("{%", "set ", "a=1", "%}")),
+        ("{%-set a=1%}", ("{%-", "set ", "a=1", "%}")),
+        ("{% SET a=1%}", ("{%", "set ", "a=1", "%}")),
+        ("{% set my_var%}", ("{%", "set ", "my_var", "%}")),
         (
             "{% do my_list.append(something) %}",
-            ("{%", "do", "my_list.append(something)", "%}"),
+            ("{%", "do ", "my_list.append(something)", "%}"),
         ),
     ],
 )
-def test_split_jinja_tag_contents(
-    jinja_formatter: JinjaFormatter, tag: str, result: Tuple[str, str, str, str]
-) -> None:
-    assert jinja_formatter._split_jinja_tag_contents(tag) == result
+def test_jinja_tag_from_string(tag: str, result: Tuple[str, str, str, str]) -> None:
+    assert JinjaTag.from_string(tag, 0) == JinjaTag(*result, 0)
 
 
 @pytest.mark.parametrize(
@@ -106,7 +104,7 @@ def test_format_jinja_node(
 ) -> None:
     t = Token(type=type, prefix="", token=tag, spos=0, epos=len(tag))
     n = Node.from_token(t, previous_node=None)
-    jinja_formatter.format_jinja_node(n, 88)
+    jinja_formatter._format_jinja_node(n, 88)
     assert n.value == formatted
 
 
@@ -120,7 +118,7 @@ def test_no_format_jinja_node(disabled_jinja_formatter: JinjaFormatter) -> None:
         epos=len(source_string),
     )
     n = Node.from_token(t, previous_node=None)
-    disabled_jinja_formatter.format_jinja_node(n, 88)
+    disabled_jinja_formatter._format_jinja_node(n, 88)
     assert n.value == source_string
 
 
@@ -136,7 +134,7 @@ def test_format_jinja_node_no_black(
         epos=len(source_string),
     )
     n = Node.from_token(t, previous_node=None)
-    jinja_formatter.format_jinja_node(n, 88)
+    jinja_formatter._format_jinja_node(n, 88)
     assert n.value == source_string
 
 
@@ -155,3 +153,15 @@ def test_format_line(jinja_formatter: JinjaFormatter) -> None:
     assert n.value == "{{expression}}"
     _ = list(map(jinja_formatter.format_line, [line]))
     assert n.value == "{{ expression }}"
+
+
+@pytest.mark.parametrize(
+    "tag,expected",
+    [
+        (JinjaTag("{{", "", "any code!", "}}", 0), 88 - 2 - 2 - 2),
+        (JinjaTag("{%-", "set", "_", "%}", 0), 88 - 3 - 3 - 2 - 2),
+    ],
+)
+def test_max_code_length(tag: JinjaTag, expected: int) -> None:
+    result = tag.max_code_length(88)
+    assert result == expected
