@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
 
 -   formats the contents of jinja tags (the code between the curlies) using *black*, the Python formatter. If *black* is not installed, re-install sqlfmt with the jinjafmt extra (`pipx install sqlfmt[jinjafmt]`). If *black* is installed, but you do not want to use this feature, you can disable it with the command-line option `--no-jinjafmt`
 
+## [0.4.3] - 2022-01-31
+
 ### Fixes
 
 -   removes an unnecessary dependency on black that broke installation
@@ -113,7 +115,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.4.2...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.4.3...HEAD
+
+[0.4.3]: https://github.com/tconbeer/sqlfmt/compare/0.4.2...0.4.3
 
 [0.4.2]: https://github.com/tconbeer/sqlfmt/compare/0.4.1...0.4.2
 
