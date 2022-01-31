@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixes
+
+-   removes an unnecessary dependency on black that broke installation
+
 ## [0.4.2] - 2022-01-26
 
 ### Features
