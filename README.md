@@ -37,8 +37,14 @@ You will need Python 3.7-3.10 installed. You should use pipx or install into a v
 pipx install shandy-sqlfmt
 ```
 
+To install with the jinjafmt extra (which will also install the Python code formatter, *black*):
+
+```
+pipx install shandy-sqlfmt[jinjafmt]
+```
+
 ### Other Installation Options
-You should use a virutal environment to isolate sqlfmt's dependencies from others on your system. We recommend poetry (`poetry add -D shandy-sqlfmt`), or pipenv (`pipenv install -d shandy-sqlfmt`), but a simple `pip install shandy-sqlfmt` will also work.
+You should use a virutal environment to isolate sqlfmt's dependencies from others on your system. We recommend poetry (`poetry add -D shandy-sqlfmt[jinjafmt]` or `poetry add -D shandy-sqlfmt`), or pipenv (`pipenv install -d shandy-sqlfmt[jinjafmt]`, etc.), but a simple `pip install shandy-sqlfmt` will also work.
 
 ## Getting Started
 
@@ -77,6 +83,16 @@ $ sqlfmt --diff .
 ### Disabling sqlfmt
 
 If you would like sqlfmt to ignore a file, or part of a file, you can add `-- fmt: off` and `-- fmt: on` comments to your code (or `# fmt: off` on MySQL or BigQuery). sqlfmt will not change any code between those comments; a single `-- fmt: off` at the top of a file will keep the entire file intact.
+
+### The jinjafmt extra
+
+sqlfmt loves properly-formatted jinja, too.
+
+sqlfmt will safely attempt to import the Python code formatter, *black*. If it is successful (either because sqlfmt was installed with the **jinjafmt** extra or because black was installed separately in the same environment), it will use *black* to format the contents of jinja tags. If you do not want sqlfmt to use *black* to format your jinja, then specify the `--no-jinjafmt` flag when running sqlfmt.
+
+Installing sqlfmt with the jinjafmt extra will also install *black*. You can do this with `pipx install sqlfmt[jinjafmt]` If you want to pin a specific *black* version, you should specify that separately, as a direct dependency of your project (in your Pipfile, pyproject.toml, etc.).
+
+If sqlfmt was installed without the jinjafmt extra, and *black* is not otherwise installed, then sqlfmt will not attempt to format the contents of jinja tags, except for enforcing a single space inside each curly.
 
 ### Using sqlfmt with pre-commit
 You can configure [pre-commit](https://pre-commit.com/) to run sqlfmt on your repository before you commit changes.
@@ -219,8 +235,8 @@ Want more examples? See the `tests/data` directory, or go to http://sqlfmt.com t
 
 1. Install [Poetry](https://python-poetry.org/docs/#installation) if you don't have it already. You may also need or want pyenv, make, and gcc. A complete setup from a fresh install of Ubuntu can be found [here](https://github.com/tconbeer/linux_setup)
 1. Clone this repo into a directory (let's call it `sqlfmt`), then `cd sqlfmt`
-1. Use `poetry install` to install the project (editable) and its dependencies into a new virtual env. To run `sqlfmt_primer`, you will need to install it (and its dependencies) by specifying it as an extra: `poetry install -E sqlfmt_primer`
+1. Use `poetry install -E jinjafmt` to install the project (editable) and its dependencies into a new virtual env. To run `sqlfmt_primer`, you will need to install it (and its dependencies) by specifying it as an extra: `poetry install -E jinjafmt -E sqlfmt_primer`
 1. Use `poetry shell` to spawn a subshell
 1. Type `make` to run all tests and linters, or run `pytest`, `black`, `flake8`, `isort`, and `mypy` individually.
 
-Note: If encountering a JSONDecodeError during `poetry install`, you will want to clear the poetry cache with `poetry cache clear pypi --all`.
+Note: If encountering a JSONDecodeError during `poetry install`, you will want to clear the poetry cache with `poetry cache clear pypi --all`, or upgrade to poetry >= 1.12 with `poetry self upgrade`

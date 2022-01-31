@@ -6,8 +6,12 @@ class SqlfmtError(ValueError):
     """
 
     def __str__(self) -> str:
+        intro = "sqlfmt encountered an error: "
         message = super().__str__()
-        return f"sqlfmt encountered an error: {message}"
+        # if exceptions are chained, we don't want to repeat the intro
+        if intro in message:
+            message = message.replace(intro, "")
+        return f"{intro}{message}"
 
 
 class SqlfmtParsingError(SqlfmtError):

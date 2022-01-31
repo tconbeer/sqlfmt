@@ -41,10 +41,10 @@ select * from renamed /* what!?! */ where true
 )))))__SQLFMT_OUTPUT__(((((
 {{
     config(
-        materialized='table',
-        sort='id',
-        dist='all',
-        post_hook='grant select on {{ this }} to role bi_role'
+        materialized="table",
+        sort="id",
+        dist="all",
+        post_hook="grant select on {{ this }} to role bi_role",
     )
 }}
 
@@ -55,18 +55,12 @@ select * from renamed /* what!?! */ where true
  * but we're not going to parse those
 */
 with
-    source as (select * from {{ ref('my_model') }}),
+    source as (select * from {{ ref("my_model") }}),
     /* This is a multiline comment in very bad style,
     * which starts and ends on lines with other tokens.
     */
     renamed as (select id, another_field, and_another, and_still_another from source),
-    {% set my_variable_in_bad_style = [
-        "a",
-        "short",
-        "list",
-        "of",
-        "strings"
-    ] %}
+    {% set my_variable_in_bad_style = ["a", "short", "list", "of", "strings"] %}
 
 {#
  # And this is a nice multiline jinja comment

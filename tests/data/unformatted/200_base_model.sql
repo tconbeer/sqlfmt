@@ -38,7 +38,7 @@ with source as (select * from {{ source('my_application', 'users') }}),
 select * from renamed
 )))))__SQLFMT_OUTPUT__(((((
 with
-    source as (select * from {{ source('my_application', 'users') }}),
+    source as (select * from {{ source("my_application", "users") }}),
     renamed as (
 
         select
