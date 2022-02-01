@@ -209,11 +209,20 @@ class Polyglot(Dialect):
                     ),
                 ),
                 Rule(
+                    name="colon",
+                    priority=905,
+                    pattern=group(r":"),
+                    action=partial(
+                        actions.add_node_to_buffer, token_type=TokenType.COLON
+                    ),
+                ),
+                Rule(
                     name="operator",
                     priority=910,
                     pattern=group(
                         r"<>",
                         r"!=",
+                        r"=>",
                         r"\|\|",
                         r"[+\-*/%&@|^=<>:]=?",
                         r"~",

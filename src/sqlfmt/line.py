@@ -463,6 +463,7 @@ class Node:
         # tokens that are never preceded by a space
         if token.type in (
             TokenType.BRACKET_CLOSE,
+            TokenType.COLON,
             TokenType.DOUBLE_COLON,
             TokenType.COMMA,
             TokenType.DOT,
@@ -473,7 +474,7 @@ class Node:
             TokenType.JINJA_BLOCK_KEYWORD,
         ):
             return NO_SPACE
-        # names preceded by dots are namespaced identifiers. No space.
+        # names preceded by dots or colons are namespaced identifiers. No space.
         elif (
             token.type
             in (
@@ -483,14 +484,22 @@ class Node:
                 TokenType.JINJA_EXPRESSION,
             )
             and previous_token
-            and previous_token.type == TokenType.DOT
+            and previous_token.type in (TokenType.DOT, TokenType.COLON)
         ):
             return NO_SPACE
-        # open brackets that follow names are function calls. No Space.
+        # numbers preceded by colons are simple slices. No Space
+        elif (
+            token.type == TokenType.NUMBER
+            and previous_token
+            and previous_token.type == TokenType.COLON
+        ):
+            return NO_SPACE
+        # open brackets that follow names are function calls or array indexes.
+        # No Space.
         elif (
             token.type == TokenType.BRACKET_OPEN
             and previous_token
-            and previous_token.type == TokenType.NAME
+            and previous_token.type in (TokenType.NAME, TokenType.QUOTED_NAME)
         ):
             return NO_SPACE
         # need a space before any other open bracket
