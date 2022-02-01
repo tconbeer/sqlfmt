@@ -7,12 +7,13 @@ All notable changes to this project will be documented in this file.
 ### Formatting changes
 
 -   formats the contents of jinja tags (the code between the curlies) using *black*, the Python formatter. If *black* is not already installed, you can use this feature by re-installing sqlfmt with the jinjafmt extra (`pipx install sqlfmt[jinjafmt]`). If *black* is installed, but you do not want to use this feature, you can disable it with the command-line option `--no-jinjafmt`
+-   no longer inserts spaces around colons ([#103](https://github.com/tconbeer/sqlfmt/issues/103) - thank you [@noel](https://github.com/noel)!)
 
 ## [0.4.3] - 2022-01-31
 
 ### Fixes
 
--   removes an unnecessary dependency on black that broke installation
+-   removes an unnecess(ary dependency on black that broke installation ([#98](https://github.com/tconbeer/sqlfmt/issues/98) - thank you [ljhopkins2](https://github.com/ljhopkins2)!)
 
 ## [0.4.2] - 2022-01-26
 
