@@ -18,6 +18,7 @@ class Mode:
     check: bool = False
     diff: bool = False
     single_process: bool = False
+    no_jinjafmt: bool = False
     verbose: bool = False
     quiet: bool = False
     _no_color: bool = False

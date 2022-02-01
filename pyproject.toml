@@ -27,6 +27,7 @@ packages = [
 
 [tool.poetry.extras]
 sqlfmt_primer = ["gitpython", "snakeviz"]
+jinjafmt = ["black"]
 
 [tool.poetry.dependencies]
 python = "^3.7"
@@ -35,9 +36,9 @@ platformdirs = "^2.4.0"
 importlib_metadata = { version = "*", python = "<3.8" }
 "backports.cached-property" = { version = "*", python = "<3.8" }
 gitpython = { version = "^3.1.24", optional = true }
+black = { version = "*", optional = true }
 
 [tool.poetry.dev-dependencies]
-black = "^21.9b0"
 flake8 = "^4.0.1"
 isort = "^5.9.3"
 mypy = "^0.910"

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import List, Optional
 
+from sqlfmt.jinjafmt import JinjaFormatter
 from sqlfmt.line import Line, Node
 from sqlfmt.merger import LineMerger
 from sqlfmt.mode import Mode
@@ -23,6 +24,16 @@ class QueryFormatter:
             splits = list(splitter.maybe_split(line))
             new_lines.extend(splits)
         return new_lines
+
+    def _format_jinja(self, lines: List[Line]) -> List[Line]:
+        """
+        Formats the contents of jinja tags (the code between)
+        the curlies by mutating existing jinja nodes
+        """
+        formatter = JinjaFormatter(mode=self.mode)
+        for line in lines:
+            formatter.format_line(line)
+        return lines
 
     def _merge_lines(self, lines: List[Line]) -> List[Line]:
         """
@@ -58,15 +69,17 @@ class QueryFormatter:
 
     def format(self, raw_query: Query) -> Query:
         """
-        Applies 2 transformations to a Query:
+        Applies 4 transformations to a Query:
         1. Splits lines
-        2. Merges lines
-        3. Dedents jinja block tags to match their least-indented contents
+        2. Formats jinja tags
+        3. Merges lines
+        4. Dedents jinja block tags to match their least-indented contents
         """
         lines = raw_query.lines
 
         pipeline = [
             self._split_lines,
+            self._format_jinja,
             self._merge_lines,
             self._dedent_jinja_blocks,
         ]

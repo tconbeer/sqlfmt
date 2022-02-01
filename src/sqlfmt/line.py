@@ -242,6 +242,16 @@ class Node:
         )
 
     @property
+    def is_jinja(self) -> bool:
+        return self.token.type in (
+            TokenType.JINJA_EXPRESSION,
+            TokenType.JINJA_STATEMENT,
+            TokenType.JINJA_BLOCK_START,
+            TokenType.JINJA_BLOCK_KEYWORD,
+            TokenType.JINJA_BLOCK_END,
+        )
+
+    @property
     def is_closing_jinja_block(self) -> bool:
         return self.token.type == TokenType.JINJA_BLOCK_END
 
@@ -791,6 +801,10 @@ class Line:
     @property
     def contains_operator(self) -> bool:
         return any([n.is_operator for n in self.nodes])
+
+    @cached_property
+    def contains_jinja(self) -> bool:
+        return any([n.is_jinja for n in self.nodes])
 
     @property
     def contains_multiline_node(self) -> bool:

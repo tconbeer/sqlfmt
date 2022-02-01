@@ -21,6 +21,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/107_jinja_blocks.sql",
         "unformatted/108_test_block.sql",
         "unformatted/200_base_model.sql",
+        "unformatted/300_jinjafmt.sql",
     ],
 )
 def test_formatting(p: str) -> None:

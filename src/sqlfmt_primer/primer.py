@@ -31,8 +31,8 @@ def get_projects() -> List[SQLProject]:
             name="gitlab",
             git_url="https://gitlab.com/gitlab-data/analytics.git",
             git_ref="7161e509b62f53344f19de80d40db2bdba190806",  # Nov 12, 2021
-            expected_changed=1807,
-            expected_unchanged=57,
+            expected_changed=1857,
+            expected_unchanged=7,
             expected_errored=0,
             sub_directory=Path("transform/snowflake-dbt/models"),
         ),
@@ -57,16 +57,16 @@ def get_projects() -> List[SQLProject]:
         SQLProject(
             name="aqi",
             git_url="https://github.com/tconbeer/aqi_livibility_analysis.git",
-            git_ref="6ef50aa998794837d436abd3676fe46a19de44e4",  # Oct 1, 2021
-            expected_changed=7,
-            expected_unchanged=0,
+            git_ref="8004f3383897d9066e3167fdfddcdd4c8418b7ea",  # sqlfmt 0.5.0
+            expected_changed=0,
+            expected_unchanged=7,
             expected_errored=0,
             sub_directory=Path("src/aqi_dbt/models"),
         ),
         SQLProject(
             name="jaffle_shop",
             git_url="https://github.com/tconbeer/jaffle_shop.git",
-            git_ref="de28a71d8f415c82c19c06a7aab6f68825074adb",  # sqlfmt 0.4.1
+            git_ref="4a860150136dc74c4cdb966540de35f4e24f6a09",  # sqlfmt 0.5.0
             expected_changed=0,
             expected_unchanged=5,
             expected_errored=0,
@@ -76,8 +76,8 @@ def get_projects() -> List[SQLProject]:
             name="dbt_utils",
             git_url="https://github.com/dbt-labs/dbt-utils.git",
             git_ref="51ed999a44fcc7f9f502be11e5f190f5bc84ba4b",  # Jan 17, 2022
-            expected_changed=111,
-            expected_unchanged=3,
+            expected_changed=114,
+            expected_unchanged=0,
             expected_errored=1,
             sub_directory=Path(""),
         ),
@@ -214,7 +214,7 @@ def get_project_source_tree(
     """
 
     cache_dir = Path(user_cache_dir(appname="sqlfmt_primer"))
-    proj_cache_dir = cache_dir / project.name
+    proj_cache_dir = cache_dir / project.name / project.git_ref
 
     if reset_cache or not proj_cache_dir.exists():
         click.echo(f"Cloning {project.name}", err=True)

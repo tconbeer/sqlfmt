@@ -85,7 +85,7 @@ jobs:
         with:
           version: latest
       - name: Install python dependencies
-        run: poetry install -E sqlfmt_primer --no-interaction
+        run: poetry install -E sqlfmt_primer -E jinjafmt --no-interaction
       - name: Run primer
         run: poetry run sqlfmt_primer
       

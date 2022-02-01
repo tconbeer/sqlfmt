@@ -30,7 +30,16 @@ from sqlfmt.mode import Mode
     help=(
         "Run sqlfmt in a single process, even when formatting multiple "
         "files. If not set, defaults to multiprocessing using as many "
-        "cores as possible."
+        "cores as possible"
+    ),
+)
+@click.option(
+    "--no-jinjafmt",
+    is_flag=True,
+    help=(
+        "Do not format jinja tags (the code between the curlies). Only necessary "
+        "to specify this flag if sqlfmt was installed with the jinjafmt extra, "
+        "or if black was already available in this environment"
     ),
 )
 @click.option(
@@ -81,6 +90,7 @@ def sqlfmt(
     check: bool,
     diff: bool,
     single_process: bool,
+    no_jinjafmt: bool,
     no_color: bool,
     force_color: bool,
     line_length: int,
@@ -102,6 +112,7 @@ def sqlfmt(
             check=check,
             diff=diff,
             single_process=single_process,
+            no_jinjafmt=no_jinjafmt,
             verbose=verbose,
             quiet=quiet,
             _no_color=no_color,
@@ -142,7 +153,7 @@ def show_welcome_message() -> None:
             |_|"""
     display_output(msg=art)
     message = """
-    sqlfmt is a tool that formats your sql files.
+    sqlfmt formats your dbt SQL files so you don't have to.
     For more information, visit http://sqlfmt.com
 
     To get started, try:
@@ -154,12 +165,12 @@ def show_welcome_message() -> None:
             "format all files nested in the current dir (note the '.')",
         ),
         (
-            "sqlfmt path/my/file.sql",
+            "sqlfmt path/to/file.sql",
             "format file.sql only",
         ),
         (
             "sqlfmt . --check",
-            "check formatting of all files, exits with code 1 on changes",
+            "check formatting of all files, exit with code 1 on changes",
         ),
         (
             "sqlfmt . --diff",

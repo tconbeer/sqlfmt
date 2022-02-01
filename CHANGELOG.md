@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Formatting changes
+
+-   formats the contents of jinja tags (the code between the curlies) using *black*, the Python formatter. If *black* is not already installed, you can use this feature by re-installing sqlfmt with the jinjafmt extra (`pipx install sqlfmt[jinjafmt]`). If *black* is installed, but you do not want to use this feature, you can disable it with the command-line option `--no-jinjafmt`
+
 ## [0.4.3] - 2022-01-31
 
 ### Fixes
