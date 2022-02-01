@@ -31,9 +31,8 @@ class QueryFormatter:
         the curlies by mutating existing jinja nodes
         """
         formatter = JinjaFormatter(mode=self.mode)
-        # format_line mutates each line, but without the list() call,
-        # the lazy nature of map means that lines won't get formatted
-        _ = list(map(formatter.format_line, lines))
+        for line in lines:
+            formatter.format_line(line)
         return lines
 
     def _merge_lines(self, lines: List[Line]) -> List[Line]:

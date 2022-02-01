@@ -802,7 +802,7 @@ class Line:
     def contains_operator(self) -> bool:
         return any([n.is_operator for n in self.nodes])
 
-    @property
+    @cached_property
     def contains_jinja(self) -> bool:
         return any([n.is_jinja for n in self.nodes])
 

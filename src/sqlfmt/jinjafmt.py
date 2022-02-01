@@ -9,6 +9,11 @@ from sqlfmt.mode import Mode
 
 
 class BlackWrapper:
+    """
+    A thin wrapper around black. Tries to import black when
+    instantiated. Provides a safe interface, format_string
+    """
+
     def __init__(self) -> None:
         try:
             self.black: Optional[ModuleType] = import_module("black")
@@ -49,6 +54,15 @@ class BlackWrapper:
 
 @dataclass
 class JinjaTag:
+    """
+    A simple representation of a jinja tag.
+
+    "verb" is one of {set, do, for, if, elif, else, test, macro}
+
+    For example, "{%- set my_var=4 %}" is split into it parts:
+    (opening_marker, verb, code, closing_marker) = ("{%-", "set", "my_var=4", "%}")
+    """
+
     opening_marker: str
     verb: str
     code: str
@@ -83,13 +97,8 @@ class JinjaTag:
     @classmethod
     def from_string(cls, source_string: str, depth: int) -> "JinjaTag":
         """
-        Takes a jinja statement or expression and returns a tuple of its parts:
-        (starting_marker, verb, code, ending_marker).
-
-        "verb" is one of set, do, (TBD: if, elif, and for)
-
-        For example, "{%- set my_var=4 %}" is split into
-        ("{%-", "set", "my_var=4", "%}")
+        Takes a jinja statement or expression as a string and returns
+        a JinjaTag object (basically a tuple of its parts).
         """
         opening_marker_len = 3 if source_string[2] == "-" else 2
         opening_marker = source_string[:opening_marker_len]
@@ -131,6 +140,11 @@ class JinjaTag:
 
 @dataclass
 class JinjaFormatter:
+    """
+    Provides a simple interface, format_line, to format all jinja tags
+    on a Line, using black if it is installed
+    """
+
     mode: Mode
     code_formatter: BlackWrapper = field(default_factory=lambda: BlackWrapper())
 
