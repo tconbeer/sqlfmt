@@ -10,16 +10,17 @@ def test_dedent_jinja_block_ends(default_mode: Mode) -> None:
         "{% else %}\n"
         "select distinct\n"
         "    {% endif %}\n"
+        "    my_col\n"
     )
     raw_query = formatter.mode.dialect.initialize_analyzer(
         formatter.mode.line_length
     ).parse_query(source_string)
     depth_before = [line.depth for line in raw_query.lines]
-    assert depth_before[-1] == (1, 0)
+    assert depth_before[-2] == (1, 0)
     new_lines = formatter._dedent_jinja_blocks(raw_query.lines)
     depth_after = [line.depth for line in new_lines]
     assert depth_after <= depth_before
-    assert depth_after[-1] == (0, 0)
+    assert depth_after[-2] == (0, 0)
 
 
 def test_dedent_jinja_blocks(default_mode: Mode) -> None:
