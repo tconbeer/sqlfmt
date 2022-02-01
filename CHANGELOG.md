@@ -13,7 +13,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixes
 
--   removes an unnecessary dependency on black that broke installation ([#98](https://github.com/tconbeer/sqlfmt/issues/98) - thank you [ljhopkins2](https://github.com/ljhopkins2)!)
+-   removes an unnecessary dependency on black that broke installation ([#98](https://github.com/tconbeer/sqlfmt/issues/98) - thank you [@ljhopkins2](https://github.com/ljhopkins2)!)
 
 ## [0.4.2] - 2022-01-26
 
