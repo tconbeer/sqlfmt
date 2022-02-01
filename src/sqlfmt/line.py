@@ -106,33 +106,33 @@ class Line:
         including associated comments
         """
         content = str(self)
-        if len(self.comments) == 0:
-            return content
-        elif len(self.comments) == 1:
+        rendered = content
+        if len(self.comments) == 1:
             # standalone or multiline comment
             if self.nodes[0].is_newline:
-                return self.prefix + str(self.comments[0])
+                rendered = f"{self.prefix}{self.comments[0]}"
             # inline comment
             else:
                 try:
                     comment = self.comments[0].render_inline(
                         max_length=max_length, content_length=len(content.rstrip())
                     )
-                    return content.rstrip() + comment
+                    rendered = f"{content.rstrip()}{comment}"
                 except InlineCommentException:
                     comment = self.comments[0].render_standalone(
                         max_length=max_length, prefix=self.prefix
                     )
-                    return comment + content
+                    rendered = f"{comment}{content}"
         # wrap comments above; note that str(comment) is newline-terminated
-        else:
-            comment_str = "".join(
+        elif len(self.comments) > 1:
+            comment = "".join(
                 [
                     c.render_standalone(max_length=max_length, prefix=self.prefix)
                     for c in self.comments
                 ]
             )
-            return comment_str + content
+            rendered = f"{comment}{content}"
+        return rendered
 
     def append_token(self, token: Token) -> None:
         """
