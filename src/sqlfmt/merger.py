@@ -126,7 +126,7 @@ class LineMerger:
                         partially_merged_lines[-1].closes_bracket_from_previous_line
                         or partially_merged_lines[
                             -1
-                        ].closes_jinja_block_from_previous_line
+                        ].closes_simple_jinja_block_from_previous_line
                     ) and partially_merged_lines[-1].depth == partially_merged_lines[
                         0
                     ].depth:
@@ -241,7 +241,7 @@ class LineMerger:
                 # in the same segment as the first line.
                 if (
                     line.closes_bracket_from_previous_line
-                    or line.closes_jinja_block_from_previous_line
+                    or line.closes_simple_jinja_block_from_previous_line
                 ) and line.depth == target_depth:
                     idx = i + 1
                     try:

@@ -328,7 +328,44 @@ class Line:
         return False
 
     @property
+    def previous_line_has_open_jinja_blocks_not_keywords(self) -> bool:
+        """
+        Returns true if the previous line is inside a jinja block, but not
+        after a jinja block keyword, like {% else %}/{% elif %}
+        """
+        if (
+            self.previous_node
+            and self.previous_node.open_jinja_blocks
+            and not self.previous_node.open_jinja_blocks[-1].is_jinja_block_keyword
+        ):
+            return True
+        else:
+            return False
+
+    @property
     def closes_jinja_block_from_previous_line(self) -> bool:
+        """
+        Returns true for a line that contains {% endif %}, {% endfor %}, etc.
+        where the matching {% if %}, etc. is on a previous line.
+        """
+        if (
+            self.nodes
+            and self.previous_node
+            and self.previous_node.open_jinja_blocks
+            and (
+                self.previous_node.open_jinja_blocks[-1]
+                not in self.nodes[-1].open_jinja_blocks
+            )
+            and (
+                self.nodes[-1].open_jinja_blocks == []
+                or not self.nodes[-1].open_jinja_blocks[-1].is_jinja_block_keyword
+            )
+        ):
+            return True
+        return False
+
+    @property
+    def closes_simple_jinja_block_from_previous_line(self) -> bool:
         """
         Returns true for a line that contains {% endif %}, {% endfor %}, etc.
         where the matching {% if %}, etc. is on a previous line. Returns False
@@ -336,18 +373,8 @@ class Line:
         {% endif %}
         """
         if (
-            self.previous_node
-            and self.previous_node.open_jinja_blocks
-            and not self.previous_node.open_jinja_blocks[-1].is_jinja_block_keyword
-            and self.nodes
-            and (
-                self.previous_node.open_jinja_blocks[-1]
-                not in self.nodes[-1].open_jinja_blocks
-            )
-            and (
-                not self.nodes[-1].open_jinja_blocks
-                or not self.nodes[-1].open_jinja_blocks[-1].is_jinja_block_keyword
-            )
+            self.previous_line_has_open_jinja_blocks_not_keywords
+            and self.closes_jinja_block_from_previous_line
         ):
             return True
         return False
