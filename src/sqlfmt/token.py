@@ -29,6 +29,7 @@ class TokenType(Enum):
     BRACKET_OPEN = auto()
     BRACKET_CLOSE = auto()
     DOUBLE_COLON = auto()
+    COLON = auto()
     OPERATOR = auto()
     WORD_OPERATOR = auto()
     AS = auto()
