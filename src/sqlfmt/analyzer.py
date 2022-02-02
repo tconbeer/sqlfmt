@@ -2,8 +2,10 @@ import re
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Optional
 
+from sqlfmt.comment import Comment
 from sqlfmt.exception import SqlfmtBracketError, SqlfmtParsingError
-from sqlfmt.line import Comment, Line, Node
+from sqlfmt.line import Line
+from sqlfmt.node import Node
 from sqlfmt.query import Query
 
 

@@ -2,9 +2,10 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 from sqlfmt.jinjafmt import JinjaFormatter
-from sqlfmt.line import Line, Node
+from sqlfmt.line import Line
 from sqlfmt.merger import LineMerger
 from sqlfmt.mode import Mode
+from sqlfmt.node import Node
 from sqlfmt.query import Query
 from sqlfmt.splitter import LineSplitter
 

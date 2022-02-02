@@ -220,12 +220,33 @@ class Polyglot(Dialect):
                     name="operator",
                     priority=910,
                     pattern=group(
+                        r"\|\|?\/",  # square or cube root ||/
+                        r"~=",  # geo compare
+                        r"!?~\*?",  # posix like/not like
+                        r"\?(=|!|<=|<!)",  # regex lookahead/behind
+                        r"\?(-\||\|\||-|\|)",  # regex lookahead/behind
+                        r"@-@",  # length operator
+                        r"@@@?",  # center point operator; also text match
+                        r"##",  # closest point
+                        r"<->",  # distance operator
+                        r"@>",  # contains
+                        r"<@",  # contained by
                         r"<>",
-                        r"!=",
+                        r"\|?>>=?",
+                        r"<<(=|\|)?",
                         r"=>",
+                        r"(-|#)>>?",  # json extraction
+                        r"&&",
+                        r"&<\|?",  # not extends
+                        r"\|?&>",  # not extends
+                        r"<\^",  # below
+                        r">\^",  # above
+                        r"\?#",  # intersect
                         r"\|\|",
-                        r"[+\-*/%&@|^=<>:]=?",
-                        r"~",
+                        r"-\|-",
+                        r"[*+?]?\?",  # regex greedy/non-greedy, also ?
+                        r"!!",  # negate text match
+                        r"[+\-*/%&|^=<>:#!]=?",  # singles
                     ),
                     action=partial(
                         actions.add_node_to_buffer, token_type=TokenType.OPERATOR
@@ -235,16 +256,24 @@ class Polyglot(Dialect):
                     name="word_operator",
                     priority=920,
                     pattern=group(
+                        r"all",
+                        r"any",
                         r"between",
+                        r"cube",
+                        r"exists",
+                        r"grouping sets",
                         r"ilike",
                         r"in",
                         r"is",
                         r"isnull",
-                        r"like",
-                        r"not",
+                        r"like(\s+any)?",
                         r"notnull",
+                        r"not",
                         r"over",
-                        r"similar",
+                        r"rollup",
+                        r"rlike",
+                        r"some",
+                        r"similar\s+to",
                     )
                     + group(r"\W", r"$"),
                     action=partial(
@@ -311,7 +340,7 @@ class Polyglot(Dialect):
                         r"having",
                         r"qualify",
                         r"window",
-                        r"(union|intersect|except)(\s+all|distinct)?",
+                        r"(union|intersect|except|minus)(\s+all|distinct)?",
                         r"order\s+by",
                         r"limit",
                         r"offset",

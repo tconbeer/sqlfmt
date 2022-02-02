@@ -4,8 +4,9 @@ from typing import Tuple
 import pytest
 
 from sqlfmt.jinjafmt import JinjaFormatter, JinjaTag
-from sqlfmt.line import Line, Node
+from sqlfmt.line import Line
 from sqlfmt.mode import Mode
+from sqlfmt.node import Node
 from sqlfmt.token import Token, TokenType
 
 

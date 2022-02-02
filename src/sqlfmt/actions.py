@@ -2,8 +2,10 @@ import re
 from typing import List, Optional
 
 from sqlfmt.analyzer import MAYBE_WHITESPACES, Analyzer, group
+from sqlfmt.comment import Comment
 from sqlfmt.exception import SqlfmtBracketError, StopJinjaLexing
-from sqlfmt.line import Comment, Line, Node
+from sqlfmt.line import Line
+from sqlfmt.node import Node
 from sqlfmt.token import Token, TokenType
 
 
