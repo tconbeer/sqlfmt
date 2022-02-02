@@ -4,9 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.0] - 2022-02-02
+
 ### Formatting changes
 
--   formats the contents of jinja tags (the code between the curlies) using *black*, the Python formatter. If *black* is not already installed, you can use this feature by re-installing sqlfmt with the jinjafmt extra (`pipx install sqlfmt[jinjafmt]`). If *black* is installed, but you do not want to use this feature, you can disable it with the command-line option `--no-jinjafmt`
+-   formats the contents of jinja tags (the code between the curlies) using _black_, the Python formatter. If _black_ is not already installed, you can use this feature by re-installing sqlfmt with the jinjafmt extra (`pipx install sqlfmt[jinjafmt]`). If _black_ is installed, but you do not want to use this feature, you can disable it with the command-line option `--no-jinjafmt`
 -   no longer inserts spaces around colons ([#103](https://github.com/tconbeer/sqlfmt/issues/103) - thank you [@noel](https://github.com/noel)!)
 
 ### Fixes
@@ -121,7 +123,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.4.3...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.5.0...HEAD
+
+[0.5.0]: https://github.com/tconbeer/sqlfmt/compare/0.4.3...0.5.0
 
 [0.4.3]: https://github.com/tconbeer/sqlfmt/compare/0.4.2...0.4.3
 
