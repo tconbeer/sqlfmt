@@ -5,7 +5,6 @@ from typing import List, Type
 
 import pytest
 
-from sqlfmt.analyzer import SqlfmtParsingError
 from sqlfmt.api import (
     _format_many,
     _generate_matched_paths,
@@ -51,7 +50,6 @@ def test_format_empty_string(all_output_modes: Mode) -> None:
 @pytest.mark.parametrize(
     "source,exception",
     [
-        ("?\n", SqlfmtParsingError),
         ("select )\n", SqlfmtBracketError),
         ("{{\n", SqlfmtBracketError),
     ],
