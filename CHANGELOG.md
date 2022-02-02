@@ -9,6 +9,10 @@ All notable changes to this project will be documented in this file.
 -   formats the contents of jinja tags (the code between the curlies) using *black*, the Python formatter. If *black* is not already installed, you can use this feature by re-installing sqlfmt with the jinjafmt extra (`pipx install sqlfmt[jinjafmt]`). If *black* is installed, but you do not want to use this feature, you can disable it with the command-line option `--no-jinjafmt`
 -   no longer inserts spaces around colons ([#103](https://github.com/tconbeer/sqlfmt/issues/103) - thank you [@noel](https://github.com/noel)!)
 
+### Fixes
+
+-   adds "cross join" to list of supported join types. No longer merges the "cross" keyword with the previous statement ([#110](https://github.com/tconbeer/sqlfmt/issues/110) - thank you [@rdeese](https://github.com/rdeese)!)
+
 ## [0.4.3] - 2022-01-31
 
 ### Fixes

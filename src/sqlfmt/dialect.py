@@ -304,7 +304,7 @@ class Polyglot(Dialect):
                         r"from",
                         (
                             r"(natural\s+)?"
-                            r"((inner|((left|right|full)(\s+outer)?))\s+)?join"
+                            r"((inner|cross|((left|right|full)(\s+outer)?))\s+)?join"
                         ),
                         r"where",
                         r"group\s+by",
