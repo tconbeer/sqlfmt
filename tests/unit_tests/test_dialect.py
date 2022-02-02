@@ -99,6 +99,7 @@ class TestPolyglot:
             ("main", "unterm_keyword", "select all"),
             ("main", "unterm_keyword", "natural\t    full outer join"),
             ("main", "unterm_keyword", "left join"),
+            ("main", "unterm_keyword", "cross join"),
             ("main", "unterm_keyword", "join"),
             ("main", "name", "my_table_45"),
             ("main", "newline", "\n"),

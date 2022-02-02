@@ -12,6 +12,7 @@ right join (
     from my_table where some_filter is true
 ) as five using(five.id)
 natural full outer join six
+cross join {{ ref('bar_bar_bar') }} as bar
 )))))__SQLFMT_OUTPUT__(((((
 select one.one, two.two, three.three, four.four, five.five, six.six
 from one
@@ -28,3 +29,4 @@ right join
         select id, five, six, seven, eight from my_table where some_filter is true
     ) as five using(five.id)
 natural full outer join six
+cross join {{ ref("bar_bar_bar") }} as bar
