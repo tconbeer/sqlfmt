@@ -1,8 +1,8 @@
 import pytest
 
 from sqlfmt.analyzer import Analyzer, SqlfmtParsingError
+from sqlfmt.comment import Comment
 from sqlfmt.exception import SqlfmtBracketError
-from sqlfmt.line import Comment
 from sqlfmt.mode import Mode
 from sqlfmt.token import Token, TokenType
 from tests.util import read_test_data
@@ -88,7 +88,7 @@ def test_simple_query_parsing(all_output_modes: Mode) -> None:
 
 
 def test_parsing_error(default_analyzer: Analyzer) -> None:
-    source_string = "select !"
+    source_string = "select $"
     with pytest.raises(SqlfmtParsingError):
         _ = default_analyzer.parse_query(source_string=source_string)
 

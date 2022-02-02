@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
 from typing import List
 
-from sqlfmt.line import Line, Node
+from sqlfmt.line import Line
+from sqlfmt.node import Node
 from sqlfmt.token import Token
 
 

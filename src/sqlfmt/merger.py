@@ -1,9 +1,11 @@
 from dataclasses import dataclass
 from typing import List
 
+from sqlfmt.comment import Comment
 from sqlfmt.exception import CannotMergeException
-from sqlfmt.line import Comment, Line, Node
+from sqlfmt.line import Line
 from sqlfmt.mode import Mode
+from sqlfmt.node import Node
 from sqlfmt.token import TokenType
 
 

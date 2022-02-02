@@ -4,8 +4,9 @@ from importlib import import_module
 from types import ModuleType
 from typing import Optional
 
-from sqlfmt.line import Line, Node
+from sqlfmt.line import Line
 from sqlfmt.mode import Mode
+from sqlfmt.node import Node
 
 
 class BlackWrapper:
