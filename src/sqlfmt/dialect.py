@@ -337,7 +337,7 @@ class Polyglot(Dialect):
                         r"having",
                         r"qualify",
                         r"window",
-                        r"(union|intersect|except)(\s+all|distinct)?",
+                        r"(union|intersect|except|minus)(\s+all|distinct)?",
                         r"order\s+by",
                         r"limit",
                         r"offset",
