@@ -246,7 +246,7 @@ class Polyglot(Dialect):
                         r"-\|-",
                         r"[*+?]?\?",  # regex greedy/non-greedy, also ?
                         r"!!",  # negate text match
-                        r"[+\-*/%&@|^=<>:#!]=?",  # singles
+                        r"[+\-*/%&|^=<>:#!]=?",  # singles
                     ),
                     action=partial(
                         actions.add_node_to_buffer, token_type=TokenType.OPERATOR
@@ -259,7 +259,9 @@ class Polyglot(Dialect):
                         r"all",
                         r"any",
                         r"between",
+                        r"cube",
                         r"exists",
+                        r"grouping sets",
                         r"ilike",
                         r"in",
                         r"is",
@@ -268,6 +270,7 @@ class Polyglot(Dialect):
                         r"notnull",
                         r"not",
                         r"over",
+                        r"rollup",
                         r"rlike",
                         r"some",
                         r"similar\s+to",
