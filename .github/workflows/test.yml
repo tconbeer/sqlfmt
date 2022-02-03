@@ -70,6 +70,44 @@ jobs:
       - name: Run tox
         run: tox4
 
+  coverage:
+    name: Test Coverage - ${{ matrix.py }}
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - Ubuntu
+        py:
+          - "3.10"
+          - "3.7"
+    steps:
+      - name: Check out Repo
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+      - name: Set up Python ${{ matrix.py }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.py }}
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+      - name: Install python dependencies
+        run: |
+          pip install --user --upgrade pip
+          pip install tox-gh
+      - name: Run tox
+        run: tox4 -e coverage
+      - name: Report coverage to CodeClimate
+        uses: paambaati/codeclimate-action@v3.0.0
+        env:
+          CC_TEST_REPORTER_ID: ${{ secrets.CODE_CLIMATE_TEST_REPORTER_ID }}
+        with:
+          coverageLocations: |
+            ${{github.workspace}}/tests/.coverage/cov.xml:coverage.py
+
   primer:
     name: sqlfmt primer
     runs-on: ubuntu-latest
