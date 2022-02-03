@@ -228,8 +228,11 @@ from my_table
 Want more examples? See the `tests/data` directory, or go to http://sqlfmt.com to see how sqlfmt will format your queries.
 
 ## Contributing
+
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
+[![Maintainability](https://api.codeclimate.com/v1/badges/8928f6662a67b8eaf092/maintainability)](https://codeclimate.com/github/tconbeer/sqlfmt/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/8928f6662a67b8eaf092/test_coverage)](https://codeclimate.com/github/tconbeer/sqlfmt/test_coverage)
 
 ### Setting up Your Dev Environment and Running Tests
 
