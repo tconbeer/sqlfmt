@@ -31,9 +31,9 @@ class BlackWrapper:
         if not self.black:
             return formatted_string
 
-        black_mode = self.black.Mode(line_length=max_length)  # type: ignore
+        black_mode = self.black.Mode(line_length=max_length)
         try:
-            formatted_string = self.black.format_str(  # type: ignore
+            formatted_string = self.black.format_str(
                 source_string, mode=black_mode
             ).rstrip()
         except ValueError:
@@ -42,7 +42,7 @@ class BlackWrapper:
             # so let's try again without newlines in the code
             try:
                 flat_code = source_string.replace("\n", " ")
-                formatted_string = self.black.format_str(  # type: ignore
+                formatted_string = self.black.format_str(
                     flat_code, mode=black_mode
                 ).rstrip()
             except ValueError:
