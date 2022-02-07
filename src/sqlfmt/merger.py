@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List
+from typing import Iterable, List, Optional, Tuple
 
 from sqlfmt.comment import Comment
 from sqlfmt.exception import CannotMergeException
@@ -25,34 +25,11 @@ class LineMerger:
         if len(lines) == 1:
             return lines
 
-        content_nodes: List[Node] = []
-        comments: List[Comment] = []
-        last_content_line = lines[0]
-        for line in lines:
-            # skip over newline nodes
-            nodes = [
-                node for node in line.nodes if node.token.type != TokenType.NEWLINE
-            ]
-            if nodes:
-                last_content_line = line
-                content_nodes.extend(nodes)
-            comments.extend(line.comments)
-
-        if not content_nodes:
-            raise CannotMergeException("Can't merge only whitespace/newlines")
-        elif any([n.formatting_disabled for n in content_nodes]):
-            raise CannotMergeException(
-                "Can't merge lines containing disabled formatting"
-            )
-        elif any([n.is_multiline for n in content_nodes[1:]]):
-            raise CannotMergeException("Can't merge lines containing multiline nodes")
-
-        # append the final newline from the original set of lines
-        content_nodes.append(last_content_line.nodes[-1])
+        nodes, comments = self._extract_components(lines)
 
         merged_line = Line.from_nodes(
             previous_node=lines[0].previous_node,
-            nodes=content_nodes,
+            nodes=nodes,
             comments=comments,
         )
 
@@ -60,24 +37,81 @@ class LineMerger:
             raise CannotMergeException("Merged line is too long")
 
         # add in any leading or trailing blank lines
+        leading_blank_lines = self._extract_leading_blank_lines(lines)
+        trailing_blank_lines = list(
+            reversed(self._extract_leading_blank_lines(reversed(lines)))
+        )
+
+        return leading_blank_lines + [merged_line] + trailing_blank_lines
+
+    @classmethod
+    def _extract_components(cls, lines: List[Line]) -> Tuple[List[Node], List[Comment]]:
+        """
+        Given a list of lines, return 2 components:
+        1. list of all nodes in those lines, with only a single trailing newline
+        2. list of all comments in all of those lines
+        """
+        nodes: List[Node] = []
+        comments: List[Comment] = []
+        final_newline: Optional[Node] = None
+        for line in lines:
+            # skip over newline nodes
+            content_nodes = [
+                cls._raise_unmergeable(node)
+                for node in line.nodes
+                if node.token.type != TokenType.NEWLINE
+            ]
+            if content_nodes:
+                final_newline = line.nodes[-1]
+                nodes.extend(content_nodes)
+            comments.extend(line.comments)
+
+        if not nodes or not final_newline:
+            raise CannotMergeException("Can't merge only whitespace/newlines")
+
+        nodes.append(final_newline)
+
+        return nodes, comments
+
+    @staticmethod
+    def _raise_unmergeable(node: Node) -> Node:
+        """
+        Raises a CannotMergeException if the node cannot be merged. Otherwise
+        returns the node
+        """
+        if node.formatting_disabled:
+            raise CannotMergeException(
+                "Can't merge lines containing disabled formatting"
+            )
+        elif node.is_multiline:
+            raise CannotMergeException("Can't merge lines containing multiline nodes")
+        else:
+            return node
+
+    @staticmethod
+    def _extract_leading_blank_lines(lines: Iterable[Line]) -> List[Line]:
         leading_blank_lines: List[Line] = []
         for line in lines:
             if line.is_blank_line:
                 leading_blank_lines.append(line)
             else:
                 break
-        trailing_blank_lines: List[Line] = []
-        for line in reversed(lines):
-            if line.is_blank_line:
-                trailing_blank_lines.append(line)
-            else:
-                break
-
-        return (
-            leading_blank_lines + [merged_line] + list(reversed(trailing_blank_lines))
-        )
+        return leading_blank_lines
 
     def maybe_merge_lines(self, lines: List[Line]) -> List[Line]:
+        """
+        Tries to merge any short lines split by
+        operators, and then merges any hierarchical statements
+        """
+        if len(lines) <= 1:
+            return lines
+        else:
+            new_lines = self._maybe_merge_lines_within_hierarchy(
+                self._maybe_merge_lines_split_by_operators(lines)
+            )
+            return new_lines
+
+    def _maybe_merge_lines_within_hierarchy(self, lines: List[Line]) -> List[Line]:
         """
         Attempts to merge all passed lines into a single line.
 
@@ -86,68 +120,63 @@ class LineMerger:
 
         Returns a new list of lines
         """
-        if len(lines) <= 1:
-            return lines
-        else:
-            try:
-                merged_lines = self.create_merged_line(lines)
-                new_lines = merged_lines
-            except CannotMergeException:
-                # lines can't be merged into a single line, so we take several
-                # steps to merge some lines together into a final collection,
-                # new_lines
-                new_lines = []
-                # first: if there are consecutive lines that are the same depth
-                # that start with operators, we want to merge those
-                partially_merged_lines = self._maybe_merge_lines_split_by_operators(
-                    lines
-                )
-                # if there are multiple segments of equal depth, and
-                # we know we can't merge across segments, we should try
-                # to merge within each segment
-                segments = self._split_into_segments(partially_merged_lines)
-                if len(segments) > 1:
-                    for segment in segments:
-                        new_lines.extend(self.maybe_merge_lines(segment))
-                    # if merging of any segment was successful, it is
-                    # possible that more merging can be done on a second
-                    # pass
-                    if len(new_lines) < len(partially_merged_lines):
-                        new_lines = self.maybe_merge_lines(new_lines)
-                # if there was only a single segment at the depth of the
-                # top line, we need to move down one line and try again.
-                # Because of the structure of a well-split set of lines,
-                # in this case moving down one line is guaranteed to move
-                # us in one depth.
-                # if the final line of the segment matches the top line,
-                # we need to strip that off so we only segment the
-                # indented lines
+
+        try:
+            new_lines = self.create_merged_line(lines)
+        except CannotMergeException:
+            # lines can't be merged into a single line, so we take several
+            # steps to merge some lines together into a final collection,
+            # new_lines
+            new_lines = []
+            # if there are multiple segments of equal depth, and
+            # we know we can't merge across segments, we should try
+            # to merge within each segment
+            segments = self._split_into_segments(lines)
+            if len(segments) > 1:
+                for segment in segments:
+                    new_lines.extend(self.maybe_merge_lines(segment))
+                # if merging of any segment was successful, it is
+                # possible that more merging can be done on a second
+                # pass
+                if len(new_lines) < len(lines):
+                    new_lines = self.maybe_merge_lines(new_lines)
+            # if there was only a single segment at the depth of the
+            # top line, we need to move down one line and try again.
+            # Because of the structure of a well-split set of lines,
+            # in this case moving down one line is guaranteed to move
+            # us in one depth.
+            # if the final line of the segment matches the top line,
+            # we need to strip that off so we only segment the
+            # indented lines
+            else:
+                new_lines.append(lines[0])
+                if self._tail_closes_head(lines):
+                    new_lines.extend(self.maybe_merge_lines(lines[1:-1]))
+                    new_lines.append(lines[-1])
                 else:
-                    new_lines.append(partially_merged_lines[0])
-                    if (
-                        partially_merged_lines[-1].closes_bracket_from_previous_line
-                        or partially_merged_lines[
-                            -1
-                        ].closes_simple_jinja_block_from_previous_line
-                    ) and partially_merged_lines[-1].depth == partially_merged_lines[
-                        0
-                    ].depth:
-                        new_lines.extend(
-                            self.maybe_merge_lines(partially_merged_lines[1:-1])
-                        )
-                        new_lines.append(partially_merged_lines[-1])
-                    else:
-                        new_lines.extend(
-                            self.maybe_merge_lines(partially_merged_lines[1:])
-                        )
-            finally:
-                return new_lines
+                    new_lines.extend(self.maybe_merge_lines(lines[1:]))
+        finally:
+            return new_lines
+
+    @staticmethod
+    def _tail_closes_head(lines: List[Line]) -> bool:
+        """
+        Returns True only if the last line in lines closes a bracket or
+        simple jinja block that is opened by the first line in lines
+        """
+        if (
+            lines[-1].closes_bracket_from_previous_line
+            or lines[-1].closes_simple_jinja_block_from_previous_line
+        ) and lines[-1].depth == lines[0].depth:
+            return True
+        else:
+            return False
 
     def _maybe_merge_lines_split_by_operators(
         self, lines: List[Line], merge_across_low_priority_operators: bool = True
     ) -> List[Line]:
         """
-        Tries to merge runs of lines at the same depth as lines[0] that
+        Tries to merge runs of lines at the same depth that
         start with an operator.
         """
         head = 0
@@ -155,22 +184,12 @@ class LineMerger:
         last_line_is_singleton_operator = False
         new_lines: List[Line] = []
         for tail, line in enumerate(lines[1:], start=1):
-            if (
-                line.depth == target_depth
-                and (
-                    line.starts_with_operator
-                    or line.starts_with_comma
-                    or last_line_is_singleton_operator
-                )
-                and (
-                    merge_across_low_priority_operators
-                    or not line.starts_with_low_priority_merge_operator
-                )
+            if not self._line_continues_operator_sequence(
+                line=line,
+                target_depth=target_depth,
+                prev_singleton=last_line_is_singleton_operator,
+                low_priority_okay=merge_across_low_priority_operators,
             ):
-                # keep going until we hit a line that does not start with
-                # an operator
-                pass
-            else:
                 # try to merge everything above line (from head:tail) into
                 # a single line
                 try:
@@ -201,10 +220,7 @@ class LineMerger:
             # lines can't end with operators unless it's an operator on a line
             # by itself. If that is the case, we want to try to merge the next
             # line into the group
-            if len(line.nodes) == 2 and line.starts_with_operator:
-                last_line_is_singleton_operator = True
-            else:
-                last_line_is_singleton_operator = False
+            last_line_is_singleton_operator = line.is_standalone_operator
 
         # we need to try one more time to merge everything after head
         try:
@@ -220,6 +236,23 @@ class LineMerger:
                 new_lines.extend(lines[head:])
         finally:
             return new_lines
+
+    @staticmethod
+    def _line_continues_operator_sequence(
+        line: Line,
+        target_depth: Tuple[int, int],
+        prev_singleton: bool,
+        low_priority_okay: bool,
+    ) -> bool:
+        """
+        Returns true if line and/or the current state indicates that this line is part
+        of a sequence of operators
+        """
+        return (
+            line.depth == target_depth
+            and (prev_singleton or line.starts_with_operator or line.starts_with_comma)
+            and (low_priority_okay or not line.starts_with_low_priority_merge_operator)
+        )
 
     def _split_into_segments(self, lines: List[Line]) -> List[List[Line]]:
         """
@@ -269,4 +302,6 @@ class LineMerger:
                     segments = [lines[:idx]]
                 return segments + self._split_into_segments(lines[idx:])
         else:
-            return [lines[:]]
+            # we've exhausted lines without finding any segments, so return a
+            # single segment comprising the original list
+            return [lines]
