@@ -438,3 +438,20 @@ def test_is_multiplication_star_bare_line(bare_line: Line) -> None:
     bare_line.append_token(star)
     assert bare_line.nodes[0].token == star
     assert not bare_line.nodes[0].is_multiplication_star
+
+
+def test_is_standalone_operator(bare_line: Line, simple_line: Line) -> None:
+    assert not bare_line.is_standalone_operator
+    assert not simple_line.is_standalone_operator
+
+    plus = Token(
+        type=TokenType.OPERATOR,
+        prefix="",
+        token="+",
+        spos=0,
+        epos=1,
+    )
+    bare_line.append_token(plus)
+    assert bare_line.is_standalone_operator
+    bare_line.append_newline
+    assert bare_line.is_standalone_operator
