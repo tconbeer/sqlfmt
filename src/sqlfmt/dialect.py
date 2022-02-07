@@ -92,7 +92,7 @@ class Polyglot(Dialect):
                         # tripled double quotes
                         r'(rb?|b|br)?""".*?"""',
                         # possibly escaped double quotes
-                        r'(rb?|b|br|u&)?"([^"\\]*(\\.[^"\\]*|""[^"\\]*)*)"',
+                        r'(rb?|b|br|u&|@)?"([^"\\]*(\\.[^"\\]*|""[^"\\]*)*)"',
                         # possibly escaped single quotes
                         r"(rb?|b|br|u&|x)?'([^'\\]*(\\.[^'\\]*|''[^'\\]*)*)'",
                         r"\$\w*\$[^$]*?\$\w*\$",  # pg dollar-delimited strings
@@ -355,6 +355,14 @@ class Polyglot(Dialect):
                     + group(r"\W", r"$"),
                     action=partial(
                         actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD
+                    ),
+                ),
+                Rule(
+                    name="other_identifiers",
+                    priority=4000,
+                    pattern=group(r"@\w+", r"\$\d+"),
+                    action=partial(
+                        actions.add_node_to_buffer, token_type=TokenType.NAME
                     ),
                 ),
                 Rule(
