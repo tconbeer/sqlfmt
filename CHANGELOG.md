@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixes
+
+-   adds support for numbered field references (e.g., `$1`) and snowflake stages (`@my_stage`) as identifiers
+
 ## [0.5.0] - 2022-02-02
 
 ### Formatting changes
@@ -14,7 +18,7 @@ All notable changes to this project will be documented in this file.
 ### Fixes
 
 -   adds "cross join" to list of supported join types. No longer merges the "cross" keyword with the previous statement ([#110](https://github.com/tconbeer/sqlfmt/issues/110) - thank you [@rdeese](https://github.com/rdeese)!)
--   add support for every valid operator in postgresql, even the weird ones, like `@>`, `||/`, `?-|` ([#105](https://github.com/tconbeer/sqlfmt/issues/105))
+-   adds support for every valid operator in postgresql, even the weird ones, like `@>`, `||/`, `?-|` ([#105](https://github.com/tconbeer/sqlfmt/issues/105))
 
 ## [0.4.3] - 2022-01-31
 
