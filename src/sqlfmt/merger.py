@@ -54,15 +54,17 @@ class LineMerger:
         nodes: List[Node] = []
         comments: List[Comment] = []
         final_newline: Optional[Node] = None
+        allow_multiline = True
         for line in lines:
             # skip over newline nodes
             content_nodes = [
-                cls._raise_unmergeable(node)
+                cls._raise_unmergeable(node, allow_multiline)
                 for node in line.nodes
                 if node.token.type != TokenType.NEWLINE
             ]
             if content_nodes:
                 final_newline = line.nodes[-1]
+                allow_multiline = False
                 nodes.extend(content_nodes)
             comments.extend(line.comments)
 
@@ -74,7 +76,7 @@ class LineMerger:
         return nodes, comments
 
     @staticmethod
-    def _raise_unmergeable(node: Node) -> Node:
+    def _raise_unmergeable(node: Node, allow_multiline: bool) -> Node:
         """
         Raises a CannotMergeException if the node cannot be merged. Otherwise
         returns the node
@@ -83,7 +85,7 @@ class LineMerger:
             raise CannotMergeException(
                 "Can't merge lines containing disabled formatting"
             )
-        elif node.is_multiline:
+        elif node.is_multiline and not allow_multiline:
             raise CannotMergeException("Can't merge lines containing multiline nodes")
         else:
             return node
@@ -106,12 +108,9 @@ class LineMerger:
         if len(lines) <= 1:
             return lines
         else:
-            new_lines = self._maybe_merge_lines_within_hierarchy(
-                self._maybe_merge_lines_split_by_operators(lines)
-            )
-            return new_lines
+            return self._maybe_merge_segment(self._maybe_merge_operators(lines))
 
-    def _maybe_merge_lines_within_hierarchy(self, lines: List[Line]) -> List[Line]:
+    def _maybe_merge_segment(self, lines: List[Line]) -> List[Line]:
         """
         Attempts to merge all passed lines into a single line.
 
@@ -134,7 +133,7 @@ class LineMerger:
             segments = self._split_into_segments(lines)
             if len(segments) > 1:
                 for segment in segments:
-                    new_lines.extend(self.maybe_merge_lines(segment))
+                    new_lines.extend(self._maybe_merge_segment(segment))
                 # if merging of any segment was successful, it is
                 # possible that more merging can be done on a second
                 # pass
@@ -151,10 +150,10 @@ class LineMerger:
             else:
                 new_lines.append(lines[0])
                 if self._tail_closes_head(lines):
-                    new_lines.extend(self.maybe_merge_lines(lines[1:-1]))
+                    new_lines.extend(self._maybe_merge_segment(lines[1:-1]))
                     new_lines.append(lines[-1])
                 else:
-                    new_lines.extend(self.maybe_merge_lines(lines[1:]))
+                    new_lines.extend(self._maybe_merge_segment(lines[1:]))
         finally:
             return new_lines
 
@@ -172,7 +171,7 @@ class LineMerger:
         else:
             return False
 
-    def _maybe_merge_lines_split_by_operators(
+    def _maybe_merge_operators(
         self, lines: List[Line], merge_across_low_priority_operators: bool = True
     ) -> List[Line]:
         """
@@ -201,7 +200,7 @@ class LineMerger:
                     # and logic operators
                     if merge_across_low_priority_operators:
                         new_lines.extend(
-                            self._maybe_merge_lines_split_by_operators(
+                            self._maybe_merge_operators(
                                 lines[head:tail],
                                 merge_across_low_priority_operators=False,
                             )
@@ -228,7 +227,7 @@ class LineMerger:
         except CannotMergeException:
             if merge_across_low_priority_operators:
                 new_lines.extend(
-                    self._maybe_merge_lines_split_by_operators(
+                    self._maybe_merge_operators(
                         lines[head:], merge_across_low_priority_operators=False
                     )
                 )
