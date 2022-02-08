@@ -206,3 +206,28 @@ def test_jinja_block_split(splitter: LineSplitter) -> None:
     actual_result = "".join([str(line).lstrip() for line in split_lines])
 
     assert actual_result == expected_result
+
+
+def test_split_at_and(splitter: LineSplitter) -> None:
+    source_string = "select 1 where a between b and c and d between e and f and a < b\n"
+    raw_query = splitter.mode.dialect.initialize_analyzer(
+        splitter.mode.line_length
+    ).parse_query(source_string)
+
+    split_lines: List[Line] = []
+    for raw_line in raw_query.lines:
+        split_lines.extend(splitter.maybe_split(raw_line))
+
+    actual_result = [str(line) for line in split_lines]
+    expected_result = [
+        "select\n",
+        "    1\n",
+        "where\n",
+        "    a\n",
+        "    between b and c\n",
+        "    and d\n",
+        "    between e and f\n",
+        "    and a\n",
+        "    < b\n",
+    ]
+    assert actual_result == expected_result
