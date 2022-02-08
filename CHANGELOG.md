@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Fixes
 
 -   adds support for numbered field references (e.g., `$1`) and snowflake stages (`@my_stage`) as identifiers
+-   do not split lines before the `between` operator's `and` keyword
 
 ## [0.5.0] - 2022-02-02
 
