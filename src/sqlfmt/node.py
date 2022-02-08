@@ -163,6 +163,10 @@ class Node:
         )
 
     @property
+    def is_boolean_operator(self) -> bool:
+        return self.token.type == TokenType.BOOLEAN_OPERATOR
+
+    @property
     def is_multiplication_star(self) -> bool:
         """
         A lexed TokenType.STAR token can be the "all fields" shorthand or
@@ -179,6 +183,39 @@ class Node:
                 prev_token.type
                 in (TokenType.UNTERM_KEYWORD, TokenType.COMMA, TokenType.DOT)
             )
+
+    @property
+    def is_the_between_operator(self) -> bool:
+        """
+        True if this node is a WORD_OPERATOR with the value "between"
+        """
+        return self.token.type == TokenType.WORD_OPERATOR and self.value == "between"
+
+    @cached_property
+    def has_preceding_between_operator(self) -> bool:
+        """
+        True if this node has a preceding "between" operator at the same depth
+        """
+        prev = self.previous_node.previous_node if self.previous_node else None
+        while prev and prev.depth >= self.depth:
+            if prev.depth == self.depth and prev.is_the_between_operator:
+                return True
+            elif prev.depth == self.depth and prev.is_boolean_operator:
+                break
+            else:
+                prev = prev.previous_node
+        return False
+
+    @property
+    def is_the_and_after_the_between_operator(self) -> bool:
+        """
+        True if this node is a BOOLEAN_OPERATOR with the value "and" immediately
+        following a "between" operator
+        """
+        if not self.is_boolean_operator or self.value != "and":
+            return False
+        else:
+            return self.has_preceding_between_operator
 
     @property
     def is_low_priority_merge_operator(self) -> bool:

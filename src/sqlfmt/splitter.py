@@ -50,15 +50,22 @@ class LineSplitter:
         ):
             return True
         # split before any operator unless the previous node is a closing
-        # bracket or statement
-        elif (
-            node.is_operator
-            and node.previous_node
-            and not node.previous_node.is_closing_bracket
-        ):
-            return True
+        # bracket or statement, or it is the "and" following a "between"
         else:
-            return False
+            return self.maybe_split_before_operator(node)
+
+    def maybe_split_before_operator(self, node: Node) -> bool:
+        """
+        Return true if this node is an operator and it has the
+        right context for splitting before it. We do not split before
+        operators that follow closing brackets
+        """
+        return (
+            node.is_operator
+            and node.previous_node is not None
+            and not node.previous_node.is_closing_bracket
+            and not node.is_the_and_after_the_between_operator
+        )
 
     def maybe_split_after(self, node: Node) -> bool:
         """

@@ -22,6 +22,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/108_test_block.sql",
         "unformatted/109_lateral_flatten.sql",
         "unformatted/110_other_identifiers.sql",
+        "unformatted/111_chained_boolean_between.sql",
         "unformatted/200_base_model.sql",
         "unformatted/300_jinjafmt.sql",
     ],
