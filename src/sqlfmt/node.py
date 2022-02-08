@@ -163,6 +163,10 @@ class Node:
         )
 
     @property
+    def is_boolean_operator(self) -> bool:
+        return self.token.type == TokenType.BOOLEAN_OPERATOR
+
+    @property
     def is_multiplication_star(self) -> bool:
         """
         A lexed TokenType.STAR token can be the "all fields" shorthand or
@@ -196,10 +200,7 @@ class Node:
         while prev and prev.depth >= self.depth:
             if prev.depth == self.depth and prev.is_the_between_operator:
                 return True
-            elif (
-                prev.depth == self.depth
-                and prev.token.type == TokenType.BOOLEAN_OPERATOR
-            ):
+            elif prev.depth == self.depth and prev.is_boolean_operator:
                 break
             else:
                 prev = prev.previous_node
@@ -211,7 +212,7 @@ class Node:
         True if this node is a BOOLEAN_OPERATOR with the value "and" immediately
         following a "between" operator
         """
-        if self.token.type != TokenType.BOOLEAN_OPERATOR or self.value != "and":
+        if not self.is_boolean_operator or self.value != "and":
             return False
         else:
             return self.has_preceding_between_operator
