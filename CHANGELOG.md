@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.1] - 2022-02-08
+
 ### Fixes
 
 -   adds support for numbered field references (e.g., `$1`) and snowflake stages (`@my_stage`) as identifiers
@@ -128,7 +130,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.5.0...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.5.1...HEAD
+
+[0.5.1]: https://github.com/tconbeer/sqlfmt/compare/0.5.0...0.5.1
 
 [0.5.0]: https://github.com/tconbeer/sqlfmt/compare/0.4.3...0.5.0
 
