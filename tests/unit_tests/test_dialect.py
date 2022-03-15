@@ -199,11 +199,13 @@ class TestPolyglot:
                 "jinja_test_block_start",
                 "{% test my_test(model, column_name) %}",
             ),
+            ("jinja", "jinja_snapshot_block_start", "{% snapshot snp_my_snapshot %}"),
             ("jinja", "jinja_if_block_end", "{% endif %}"),
             ("jinja", "jinja_if_block_end", "{%- endif -%}"),
             ("jinja", "jinja_for_block_end", "{% endfor %}"),
             ("jinja", "jinja_macro_block_end", "{% endmacro %}"),
             ("jinja", "jinja_test_block_end", "{% endtest %}"),
+            ("jinja", "jinja_snapshot_block_end", "{% endsnapshot %}"),
         ],
     )
     def test_regex_exact_match(
