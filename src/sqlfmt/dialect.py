@@ -483,6 +483,23 @@ class Polyglot(Dialect):
                     action=actions.raise_sqlfmt_bracket_error,
                 ),
                 Rule(
+                    name="jinja_snapshot_block_start",
+                    priority=240,
+                    pattern=group(r"\{%-?\s*snapshot\s+\w+.*?-?%\}"),
+                    action=partial(
+                        actions.handle_jinja_block,
+                        start_name="jinja_snapshot_block_start",
+                        end_name="jinja_snapshot_block_end",
+                        other_names=[],
+                    ),
+                ),
+                Rule(
+                    name="jinja_snapshot_block_end",
+                    priority=241,
+                    pattern=group(r"\{%-?\s*endsnapshot\s*-?%\}"),
+                    action=actions.raise_sqlfmt_bracket_error,
+                ),
+                Rule(
                     name="jinja_statement_start",
                     priority=500,
                     pattern=group(r"\{%-?"),
