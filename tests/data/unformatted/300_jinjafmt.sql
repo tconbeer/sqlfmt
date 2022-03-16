@@ -16,6 +16,14 @@
 {% do long_list.append(
     "another_long_name"
 )%}
+
+with source as (select * from {{ ref('stg_my_rather_long_model_name')}}),
+id_added as (
+select
+    {{ dbt_utils.surrogate_key(['users.id', "'users'"]) }} as id,
+    another_longish_field_name
+from source)
+select * from id_added
 )))))__SQLFMT_OUTPUT__(((((
 {{
     config(
@@ -40,3 +48,14 @@
 ] %}
 
 {% do long_list.append("another_long_name") %}
+
+with
+    source as (select * from {{ ref("stg_my_rather_long_model_name") }}),
+    id_added as (
+        select
+            {{ dbt_utils.surrogate_key(["users.id", "'users'"]) }} as id,
+            another_longish_field_name
+        from source
+    )
+select *
+from id_added
