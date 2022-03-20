@@ -109,8 +109,17 @@ def test_format_jinja_node(
     assert n.value == formatted
 
 
-def test_no_format_jinja_node(disabled_jinja_formatter: JinjaFormatter) -> None:
-    source_string = "{% set a=1 %}"
+@pytest.mark.parametrize(
+    "source_string",
+    [
+        "{% set a=1 %}",
+        "{% set a    = 1 %}",
+        '{{\n    dbt_utils.date_spine(\n        datepart="day",\n    )\n}}',
+    ],
+)
+def test_no_format_jinja_node(
+    disabled_jinja_formatter: JinjaFormatter, source_string: str
+) -> None:
     t = Token(
         type=TokenType.JINJA_STATEMENT,
         prefix="",
@@ -123,10 +132,17 @@ def test_no_format_jinja_node(disabled_jinja_formatter: JinjaFormatter) -> None:
     assert n.value == source_string
 
 
+@pytest.mark.parametrize(
+    "source_string",
+    [
+        "{% set a=1 %}",
+        "{% set a    = 1 %}",
+        '{{\n    dbt_utils.date_spine(\n        datepart="day",\n    )\n}}',
+    ],
+)
 def test_format_jinja_node_no_black(
-    uninstall_black: None, jinja_formatter: JinjaFormatter
+    uninstall_black: None, jinja_formatter: JinjaFormatter, source_string: str
 ) -> None:
-    source_string = "{% set a=1 %}"
     t = Token(
         type=TokenType.JINJA_STATEMENT,
         prefix="",
@@ -154,6 +170,17 @@ def test_format_line(jinja_formatter: JinjaFormatter) -> None:
     assert n.value == "{{expression}}"
     _ = list(map(jinja_formatter.format_line, [line]))
     assert n.value == "{{ expression }}"
+
+
+def test_black_wrapper_format_string_no_black(
+    uninstall_black: None, default_mode: Mode
+) -> None:
+    source_string = "1 +    1"
+    jinja_formatter = JinjaFormatter(default_mode)
+    result = jinja_formatter.code_formatter.format_string(
+        source_string=source_string, max_length=88
+    )
+    assert result == source_string
 
 
 @pytest.mark.parametrize(

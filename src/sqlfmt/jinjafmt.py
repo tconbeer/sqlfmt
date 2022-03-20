@@ -149,6 +149,11 @@ class JinjaFormatter:
     mode: Mode
     code_formatter: BlackWrapper = field(default_factory=lambda: BlackWrapper())
 
+    def __post_init__(self) -> None:
+        self.use_black = (
+            self.code_formatter.black is not None and not self.mode.no_jinjafmt
+        )
+
     def format_line(self, line: Line) -> None:
         """
         Format each jinja tag in a line, in turn
@@ -168,16 +173,16 @@ class JinjaFormatter:
         if node.is_jinja:
             tag = JinjaTag.from_string(node.value, node.depth[0])
 
-            if tag.code:
+            if tag.code and self.use_black:
                 tag.code = self._format_python_string(
                     tag.code,
                     max_length=tag.max_code_length(max_length),
                 )
 
-            node.value = str(tag)
+            if (not self.use_black) and tag.is_indented_multiline_tag:
+                return
+            else:
+                node.value = str(tag)
 
     def _format_python_string(self, source_string: str, max_length: int) -> str:
-        if self.mode.no_jinjafmt:
-            return source_string
-        else:
-            return self.code_formatter.format_string(source_string, max_length)
+        return self.code_formatter.format_string(source_string, max_length)
