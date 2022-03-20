@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 -   adds support for snapshot blocks, so the contents of those blocks are now properly formatted ([#137](https://github.com/tconbeer/sqlfmt/issues/137))
 -   fixes issue causing unstable formatting of multiline jinja tags when black is not installed ([#138](https://github.com/tconbeer/sqlfmt/issues/138))
+-   fixes formatting of semicolons and semicolon-delimited queries ([#132](https://github.com/tconbeer/sqlfmt/issues/132))
 
 ## [0.5.1] - 2022-02-08
 

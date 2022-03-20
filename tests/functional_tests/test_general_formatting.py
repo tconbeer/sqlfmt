@@ -24,6 +24,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/109_lateral_flatten.sql",
         "unformatted/110_other_identifiers.sql",
         "unformatted/111_chained_boolean_between.sql",
+        "unformatted/112_semicolons.sql",
         "unformatted/200_base_model.sql",
         "unformatted/201_basic_snapshot.sql",
         "unformatted/300_jinjafmt.sql",

@@ -455,3 +455,16 @@ def test_is_standalone_operator(bare_line: Line, simple_line: Line) -> None:
     assert bare_line.is_standalone_operator
     bare_line.append_newline
     assert bare_line.is_standalone_operator
+
+
+def test_semicolon_resets_depth(simple_line: Line) -> None:
+    semicolon = Token(
+        type=TokenType.SEMICOLON,
+        prefix="",
+        token=";",
+        spos=36,
+        epos=37,
+    )
+    assert simple_line.nodes[-1].depth[0] > 0
+    simple_line.append_token(semicolon)
+    assert simple_line.nodes[-1].depth[0] == 0

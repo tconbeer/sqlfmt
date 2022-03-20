@@ -100,6 +100,10 @@ class Node:
         return self.token.type == TokenType.COMMA
 
     @property
+    def is_semicolon(self) -> bool:
+        return self.token.type == TokenType.SEMICOLON
+
+    @property
     def is_opening_bracket(self) -> bool:
         return self.token.type in (
             TokenType.BRACKET_OPEN,
@@ -296,6 +300,10 @@ class Node:
                     f"Closing bracket '{token.token}' found at "
                     f"{token.spos} before bracket was opened."
                 )
+        # if we hit a semicolon, reset open_brackets, since we're
+        # about to start a new query
+        elif token.type == TokenType.SEMICOLON:
+            open_brackets = []
 
         prev_token = cls.previous_token(previous_node)
         prefix = cls.whitespace(token, prev_token)

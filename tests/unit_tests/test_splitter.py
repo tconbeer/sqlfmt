@@ -231,3 +231,31 @@ def test_split_at_and(splitter: LineSplitter) -> None:
         "    < b\n",
     ]
     assert actual_result == expected_result
+
+
+def test_split_before_semicolon(splitter: LineSplitter) -> None:
+    source_string = "select 1; select 2; select 3; select 4;\n"
+    raw_query = splitter.mode.dialect.initialize_analyzer(
+        splitter.mode.line_length
+    ).parse_query(source_string)
+
+    split_lines: List[Line] = []
+    for raw_line in raw_query.lines:
+        split_lines.extend(splitter.maybe_split(raw_line))
+
+    actual_result = [str(line) for line in split_lines]
+    expected_result = [
+        "select\n",
+        "    1\n",
+        ";\n",
+        "select\n",
+        "    2\n",
+        ";\n",
+        "select\n",
+        "    3\n",
+        ";\n",
+        "select\n",
+        "    4\n",
+        ";\n",
+    ]
+    assert actual_result == expected_result
