@@ -57,6 +57,7 @@ def error_target(tmp_path: Path) -> Path:
         "-q",
         "--quiet",
         "--check -q",
+        "--no-jinjafmt",
     ],
 )
 def test_end_to_end_preformatted(
@@ -71,7 +72,7 @@ def test_end_to_end_preformatted(
     result = sqlfmt_runner.invoke(sqlfmt_main, args=args)
 
     assert result
-    assert "5 files" in result.stderr
+    assert "6 files" in result.stderr
 
     if "check" in options or "diff" in options:
         assert "passed formatting check" in result.stderr

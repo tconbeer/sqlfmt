@@ -12,6 +12,7 @@ from tests.util import check_formatting, read_test_data
         "preformatted/002_select_from_where.sql",
         "preformatted/003_literals.sql",
         "preformatted/004_with_select.sql",
+        "preformatted/301_multiline_jinjafmt.sql",
         "unformatted/100_select_case.sql",
         "unformatted/101_multiline.sql",
         "unformatted/102_lots_of_comments.sql",
