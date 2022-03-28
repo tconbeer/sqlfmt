@@ -44,7 +44,7 @@ pipx install shandy-sqlfmt[jinjafmt]
 ```
 
 ### Other Installation Options
-You should use a virutal environment to isolate sqlfmt's dependencies from others on your system. We recommend poetry (`poetry add -D shandy-sqlfmt[jinjafmt]` or `poetry add -D shandy-sqlfmt`), or pipenv (`pipenv install -d shandy-sqlfmt[jinjafmt]`, etc.), but a simple `pip install shandy-sqlfmt` will also work.
+You should use a virtual environment to isolate sqlfmt's dependencies from others on your system. We recommend poetry (`poetry add -D shandy-sqlfmt[jinjafmt]` or `poetry add -D shandy-sqlfmt`), or pipenv (`pipenv install -d shandy-sqlfmt[jinjafmt]`, etc.), but a simple `pip install shandy-sqlfmt` will also work.
 
 ## Getting Started
 
