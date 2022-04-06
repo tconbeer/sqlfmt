@@ -1,5 +1,14 @@
+import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Union
+
+from sqlfmt.exception import SqlfmtConfigError
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
+
 
 Config = Dict[str, Union[bool, int]]
 
@@ -10,16 +19,8 @@ def load_config_file(files: List[str]) -> Config:
     Click CLI). This finds a pyproject.toml file in the common parent directory
     of files (or in the common parent's parents).
     """
-    # find pyproject by taking intersection of parents of files
-    # read it using a toml library?
-    # validate it?
-    config_file_path = _find_config_file(files)
-
-    if config_file_path:
-        config: Config = {}  # _load_config_from_path(config_file_path)
-    else:
-        config = {}
-
+    config_path = _find_config_file(files)
+    config = _load_config_from_path(config_path)
     return config
 
 
@@ -47,3 +48,25 @@ def _find_config_file(files: List[str]) -> Optional[Path]:
             return f
     else:
         return None
+
+
+def _load_config_from_path(config_path: Optional[Path]) -> Config:
+
+    if not config_path or not config_path.is_file():
+        return {}
+    else:
+        try:
+            with open(config_path, "rb") as f:
+                pyproject_dict = tomllib.load(f)
+        except OSError as e:
+            # should only reach here with a race condition
+            raise SqlfmtConfigError(
+                f"Error opening pyproject.toml config file at {config_path}. {e}"
+            )
+        except tomllib.TOMLDecodeError as e:
+            raise SqlfmtConfigError(
+                f"Error decoding pyproject.toml config file at {config_path}. "
+                f"Check for invalid TOML. {e}"
+            )
+        config: Config = pyproject_dict.get("tool", {}).get("sqlfmt", {})
+        return config
