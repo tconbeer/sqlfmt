@@ -20,14 +20,18 @@ def load_config_file(files: List[str]) -> Config:
     Click CLI). This finds a pyproject.toml file in the common parent directory
     of files (or in the common parent's parents).
     """
-    config_path = _find_config_file(files)
+    common_parents = _get_common_parents(files)
+    config_path = _find_config_file(common_parents)
     config = _load_config_from_path(config_path)
     return config
 
 
-def _find_config_file(files: List[str]) -> Optional[Path]:
+def _get_common_parents(files: List[str]) -> List[Path]:
+    """
+    For a list of files, returns a Set of paths for all
+    of the common parents of files
+    """
     assert files, "Must provide a list of paths"
-
     common_parents: Set[Path] = set()
     for p in [Path(f) for f in files]:
         parents = set(p.parents)
@@ -41,9 +45,17 @@ def _find_config_file(files: List[str]) -> Optional[Path]:
     # the root directory is the lowest (i.e. most specific)
     # common parent among all of the files passed to sqlfmt
     root_dir = max(common_parents, key=lambda p: p.parts)
-
     search_paths = [root_dir, *root_dir.parents]
+    return search_paths
 
+
+def _find_config_file(search_paths: List[Path]) -> Optional[Path]:
+    """
+    Given an ordered list of directories, returns the path to a
+    pyproject.toml file in the lowest (most specific) directory
+
+    Returns None if no file exists
+    """
     for f in [dir / "pyproject.toml" for dir in search_paths]:
         if f.exists():
             return f
@@ -52,15 +64,18 @@ def _find_config_file(files: List[str]) -> Optional[Path]:
 
 
 def _load_config_from_path(config_path: Optional[Path]) -> Config:
+    """
+    Loads a toml file located at config path. Returns the contents
+    under the [tool.sqlfmt] section as a dict.
+    """
 
-    if not config_path or not config_path.is_file():
+    if not config_path:
         return {}
     else:
         try:
             with open(config_path, "rb") as f:
                 pyproject_dict = tomllib.load(f)
         except OSError as e:
-            # should only reach here with a race condition
             raise SqlfmtConfigError(
                 f"Error opening pyproject.toml config file at {config_path}. {e}"
             )

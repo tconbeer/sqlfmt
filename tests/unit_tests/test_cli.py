@@ -92,7 +92,7 @@ def test_preformatted_config_file(
     sqlfmt_runner: CliRunner, preformatted_dir: Path
 ) -> None:
     # config file sets line length to 100 and enables check mode
-    copy_config_file_to_dst('valid_sqlfmt_config.toml', preformatted_dir)
+    copy_config_file_to_dst("valid_sqlfmt_config.toml", preformatted_dir)
     args = f"{preformatted_dir.as_posix()}"
     results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
     # 3 files should fail formatting with longer line length in config

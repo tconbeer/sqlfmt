@@ -3,11 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
--   any command line option can now be set in a `pyproject.toml` file, under a `[tool.sqlfmt]` section ([#90](https://github.com/tconbeer/sqlfmt/issues/90))
+
+### Features
+-   any command line option can now be set in a `pyproject.toml` file. See `README` for more information ([#90](https://github.com/tconbeer/sqlfmt/issues/90))
 
 ## [0.6.0] - 2022-03-21
 
-### Fixes
+### Formatting Fixes
 
 -   adds support for snapshot blocks, so the contents of those blocks are now properly formatted ([#137](https://github.com/tconbeer/sqlfmt/issues/137))
 -   fixes issue causing unstable formatting of multiline jinja tags when black is not installed ([#138](https://github.com/tconbeer/sqlfmt/issues/138))

@@ -3,7 +3,7 @@ from typing import Any, List
 
 import pytest
 
-from sqlfmt.config import _find_config_file, _load_config_from_path
+from sqlfmt.config import _find_config_file, _get_common_parents, _load_config_from_path
 from sqlfmt.exception import SqlfmtConfigError
 from tests.util import copy_config_file_to_dst
 
@@ -30,7 +30,9 @@ def test_find_config_file(tmp_path: Path, files_relpath: List[str]) -> None:
     copy_config_file_to_dst("valid_sqlfmt_config.toml", tmp_path)
 
     files = [str(tmp_path / p) for p in files_relpath]
-    config_path = _find_config_file(files)
+    search_paths = _get_common_parents(files)
+    assert tmp_path in search_paths
+    config_path = _find_config_file(search_paths)
     assert config_path
     assert config_path == tmp_path / "pyproject.toml"
 
@@ -39,7 +41,9 @@ def test_find_config_file_no_file(tmp_path: Path, files_relpath: List[str]) -> N
     # don't copy the config file
 
     files = [str(tmp_path / p) for p in files_relpath]
-    config_path = _find_config_file(files)
+    search_paths = _get_common_parents(files)
+    assert tmp_path in search_paths
+    config_path = _find_config_file(search_paths)
     assert config_path is None
 
 
@@ -51,7 +55,9 @@ def test_find_config_file_not_in_tree(tmp_path: Path, files_relpath: List[str]) 
     copy_config_file_to_dst("valid_sqlfmt_config.toml", config_dir)
 
     files = [str(tmp_path / p) for p in files_relpath]
-    config_path = _find_config_file(files)
+    search_paths = _get_common_parents(files)
+    assert tmp_path in search_paths
+    config_path = _find_config_file(search_paths)
     assert config_path is None
 
 
@@ -74,8 +80,10 @@ def test_load_config_from_path_invalid(tmp_path: Path) -> None:
 
 def test_load_config_from_missing_file(tmp_path: Path) -> None:
     copy_config_file_to_dst("invalid_toml_config.toml", tmp_path)
-    config = _load_config_from_path(tmp_path / "not_pyproject.toml")
-    assert config == {}
+    with pytest.raises(SqlfmtConfigError) as excinfo:
+        _ = _load_config_from_path(tmp_path / "not_pyproject.toml")
+
+    assert "Error opening pyproject.toml" in str(excinfo.value)
 
 
 def test_load_config_from_None(tmp_path: Path) -> None:
