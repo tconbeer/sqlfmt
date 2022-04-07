@@ -6,6 +6,7 @@ from typing import List
 from click.testing import CliRunner
 
 from sqlfmt.cli import sqlfmt as sqlfmt_main
+from tests.util import copy_config_file_to_dst
 
 
 def run_cli_command(commands: List[str]) -> subprocess.CompletedProcess:
@@ -83,5 +84,21 @@ def test_preformatted_single_process(
     sqlfmt_runner: CliRunner, preformatted_dir: Path
 ) -> None:
     args = f"{preformatted_dir.as_posix()} --single-process"
+    results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
+    assert results.exit_code == 0
+
+
+def test_preformatted_config_file(
+    sqlfmt_runner: CliRunner, preformatted_dir: Path
+) -> None:
+    # config file sets line length to 100 and enables check mode
+    copy_config_file_to_dst('valid_sqlfmt_config.toml', preformatted_dir)
+    args = f"{preformatted_dir.as_posix()}"
+    results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
+    # 3 files should fail formatting with longer line length in config
+    assert results.exit_code == 1
+    assert results.stderr.startswith("3 files failed formatting check")
+    # supply CLI args to override config file so checks pass
+    args = f"{preformatted_dir.as_posix()} --line-length 88"
     results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
     assert results.exit_code == 0

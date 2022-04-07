@@ -28,6 +28,6 @@ def test_color_mode(
     else:
         monkeypatch.delenv("NO_COLOR", raising=False)
 
-    mode = Mode(_no_color=no_color, _force_color=force_color)
+    mode = Mode(no_color=no_color, force_color=force_color)
 
     assert mode.color is result

@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Union
 
+from sqlfmt.dialect import Dialect
 from sqlfmt.exception import SqlfmtConfigError
 
 if sys.version_info >= (3, 11):
@@ -10,7 +11,7 @@ else:
     import tomli as tomllib
 
 
-Config = Dict[str, Union[bool, int]]
+Config = Dict[str, Union[bool, int, List[str], Dialect]]
 
 
 def load_config_file(files: List[str]) -> Config:

@@ -1,4 +1,3 @@
-import shutil
 from pathlib import Path
 from typing import Any, List
 
@@ -6,17 +5,7 @@ import pytest
 
 from sqlfmt.config import _find_config_file, _load_config_from_path
 from sqlfmt.exception import SqlfmtConfigError
-from tests.util import BASE_DIR
-
-
-def copy_config_file_to_dst(file_name: str, dst_path: Path) -> Path:
-    CONFIG_DIR = BASE_DIR / "config"
-    file_path = CONFIG_DIR / file_name
-    assert file_path.is_file()
-
-    new_file_path = dst_path / "pyproject.toml"
-    shutil.copyfile(file_path, new_file_path)
-    return new_file_path
+from tests.util import copy_config_file_to_dst
 
 
 @pytest.fixture(

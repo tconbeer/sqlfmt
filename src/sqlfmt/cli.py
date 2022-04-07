@@ -1,8 +1,9 @@
-from typing import List
+from typing import List, Union
 
 import click
 
 from sqlfmt import api
+from sqlfmt.config import load_config_file
 from sqlfmt.mode import Mode
 
 
@@ -84,19 +85,7 @@ from sqlfmt.mode import Mode
     type=click.Path(exists=True, allow_dash=True),
 )
 @click.pass_context
-def sqlfmt(
-    ctx: click.Context,
-    files: List[str],
-    check: bool,
-    diff: bool,
-    single_process: bool,
-    no_jinjafmt: bool,
-    no_color: bool,
-    force_color: bool,
-    line_length: int,
-    verbose: bool,
-    quiet: bool,
-) -> None:
+def sqlfmt(ctx: click.Context, files: List[str], **kwargs: Union[bool, int]) -> None:
     """
     sqlfmt is a tool that formats your sql files.
 
@@ -107,17 +96,14 @@ def sqlfmt(
     2 indicates a handled exception caused by errors in one or more user code files
     """
     if files:
-        mode = Mode(
-            line_length=line_length,
-            check=check,
-            diff=diff,
-            single_process=single_process,
-            no_jinjafmt=no_jinjafmt,
-            verbose=verbose,
-            quiet=quiet,
-            _no_color=no_color,
-            _force_color=force_color,
-        )
+        config = load_config_file(files)
+        non_default_options = {
+            k: v
+            for k, v in kwargs.items()
+            if ctx.get_parameter_source(k).name != "DEFAULT"  # type: ignore
+        }
+        config.update(non_default_options)
+        mode = Mode(**config)  # type: ignore
 
         report = api.run(files=files, mode=mode)
         report.display_report()
