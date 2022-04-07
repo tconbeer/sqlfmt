@@ -3,6 +3,7 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+-   any command line option can now be set in a `pyproject.toml` file, under a `[tool.sqlfmt]` section ([#90](https://github.com/tconbeer/sqlfmt/issues/90))
 
 ## [0.6.0] - 2022-03-21
 

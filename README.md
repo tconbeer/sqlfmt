@@ -94,6 +94,24 @@ Installing sqlfmt with the jinjafmt extra will also install *black*. You can do 
 
 If sqlfmt was installed without the jinjafmt extra, and *black* is not otherwise installed, then sqlfmt will not attempt to format the contents of jinja tags, except for enforcing a single space inside each curly.
 
+### Configuring sqlfmt using pyproject.toml
+
+Any command-line option for sqlfmt can also be set in a `pyproject.toml` file, under a `[tool.sqlfmt]` section header. Options passed at the command line will override the settings in the config file.
+
+sqlfmt will search for the `pyproject.toml` file using the `files` passed to it as arguments. It starts in the lowest (most specific) common parent directory to all the `files` and recurses up to the root directory. It will load settings from the first `pyproject.toml` file it finds in this search.
+
+Example of a `pyproject.toml` file to override the default behaviors (run `sqlfmt --help` for more options):
+
+```
+[tool.sqlfmt]
+line_length = 100
+check = true
+single_process = true
+no_jinjafmt = true
+quiet = true
+force_color = true
+```
+
 ### Using sqlfmt with pre-commit
 You can configure [pre-commit](https://pre-commit.com/) to run sqlfmt on your repository before you commit changes.
 
