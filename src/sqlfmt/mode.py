@@ -21,8 +21,8 @@ class Mode:
     no_jinjafmt: bool = False
     verbose: bool = False
     quiet: bool = False
-    _no_color: bool = False
-    _force_color: bool = False
+    no_color: bool = False
+    force_color: bool = False
 
     @property
     def color(self) -> bool:
@@ -38,9 +38,9 @@ class Mode:
 
         See no-color.org for details.
         """
-        if self._force_color:
+        if self.force_color:
             return True
-        elif self._no_color:
+        elif self.no_color:
             return False
         elif os.environ.get("NO_COLOR", False):
             return False

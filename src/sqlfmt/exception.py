@@ -11,6 +11,14 @@ class SqlfmtError(ValueError):
         return f"{intro}{message}"
 
 
+class SqlfmtConfigError(SqlfmtError):
+    """
+    Raised during opening or parsing a pyproject.toml file
+    """
+
+    pass
+
+
 class SqlfmtParsingError(SqlfmtError):
     """
     Raised during lexing if sqlfmt encounters a token that does

@@ -111,3 +111,13 @@ def copy_test_data_to_tmp(relpaths: List[str], tmp_path: Path) -> Path:
             tmp_file.write(file_contents)
 
     return tmp_path
+
+
+def copy_config_file_to_dst(file_name: str, dst_path: Path) -> Path:
+    CONFIG_DIR = BASE_DIR / "config"
+    file_path = CONFIG_DIR / file_name
+    assert file_path.is_file()
+
+    new_file_path = dst_path / "pyproject.toml"
+    shutil.copyfile(file_path, new_file_path)
+    return new_file_path

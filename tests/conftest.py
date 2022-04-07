@@ -62,7 +62,7 @@ def diff_mode(unset_no_color_env: None) -> Mode:
 
 @pytest.fixture
 def no_color_diff_mode(unset_no_color_env: None) -> Mode:
-    return Mode(diff=True, _no_color=True)
+    return Mode(diff=True, no_color=True)
 
 
 @pytest.fixture

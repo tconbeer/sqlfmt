@@ -1,0 +1,16 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "my-dbt-project"
+
+[tool.poetry.dependencies]
+dbt-snowflake = "^1.0.0"
+
+[tool.poetry.dev-dependencies]
+sqlfmt = "^0.6.0"
+
+tool.sqlfmt
+line_length = 100
+check = true
