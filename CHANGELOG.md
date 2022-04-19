@@ -4,7 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.6.1] - 2022-04-19
+
 ### Features
+
 -   any command line option can now be set in a `pyproject.toml` file. See `README` for more information ([#90](https://github.com/tconbeer/sqlfmt/issues/90))
 
 ## [0.6.0] - 2022-03-21
@@ -141,7 +144,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.6.0...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.6.1...HEAD
+
+[0.6.1]: https://github.com/tconbeer/sqlfmt/compare/0.6.0...0.6.1
 
 [0.6.0]: https://github.com/tconbeer/sqlfmt/compare/0.5.1...0.6.0
 
