@@ -68,7 +68,7 @@ jobs:
           pip install --user --upgrade pip
           pip install tox-gh
       - name: Run tox
-        run: tox4
+        run: tox
 
   primer:
     name: sqlfmt primer
