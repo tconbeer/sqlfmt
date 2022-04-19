@@ -33,7 +33,7 @@ jobs:
           pip install --user --upgrade pip
           pip install tox-gh
       - name: Run tox
-        run: tox4 -e coverage
+        run: tox -e coverage
       - name: Report coverage to CodeClimate
         uses: paambaati/codeclimate-action@v3.0.0
         env:
