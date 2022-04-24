@@ -17,6 +17,7 @@ class Mode:
     line_length: int = 88
     check: bool = False
     diff: bool = False
+    exclude: List[str] = field(default_factory=list)
     single_process: bool = False
     no_jinjafmt: bool = False
     verbose: bool = False

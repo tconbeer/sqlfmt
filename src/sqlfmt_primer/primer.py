@@ -149,7 +149,7 @@ def sqlfmt_primer(
 
             click.echo(f"Running sqlfmt on {project.name}", err=True)
             start_time = timeit.default_timer()
-            report = run(files=[str(target_dir)], mode=mode)
+            report = run(files=[target_dir], mode=mode)
             end_time = timeit.default_timer()
             number_formatted = (
                 report.number_changed + report.number_unchanged + report.number_errored

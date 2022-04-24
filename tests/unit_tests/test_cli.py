@@ -102,3 +102,14 @@ def test_preformatted_config_file(
     args = f"{preformatted_dir.as_posix()} --line-length 88"
     results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
     assert results.exit_code == 0
+
+
+def test_preformatted_exclude_all(
+    sqlfmt_runner: CliRunner, preformatted_dir: Path
+) -> None:
+    args = (
+        f"{preformatted_dir.as_posix()} --exclude {preformatted_dir.as_posix()}/*.sql"
+    )
+    results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
+    assert results.exit_code == 0
+    assert results.stderr.startswith("0 files left unchanged")

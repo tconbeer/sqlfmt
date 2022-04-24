@@ -106,10 +106,15 @@ Example of a `pyproject.toml` file to override the default behaviors (run `sqlfm
 [tool.sqlfmt]
 line_length = 100
 check = true
-single_process = true
-no_jinjafmt = true
-quiet = true
-force_color = true
+```
+
+### Using sqlfmt with dbt
+
+sqlfmt was built for dbt, so only minimal configuration is required. We recommend excluding your `target` and `dbt_packages` directories from formatting. You can do this with the command-line `--exclude` option, or by setting `exclude` in your `pyproject.toml` file
+
+```
+[tool.sqlfmt]
+exclude=["target/**/*", "dbt_packages/**/*"]
 ```
 
 ### Using sqlfmt with pre-commit
@@ -120,7 +125,7 @@ Add the following config to your `.pre-commit-config.yaml` file:
 ```
 repos:
   - repo: https://github.com/tconbeer/sqlfmt
-    rev: v0.5.1
+    rev: v0.6.0
     hooks:
       - id: sqlfmt
         language_version: python

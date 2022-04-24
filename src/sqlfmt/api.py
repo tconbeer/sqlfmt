@@ -2,8 +2,9 @@ import asyncio
 import concurrent.futures
 import sys
 from functools import partial
+from glob import glob
 from pathlib import Path
-from typing import Callable, Collection, Iterable, Iterator, List, Set, TypeVar
+from typing import Callable, Collection, Iterable, List, Set, TypeVar
 
 from sqlfmt.cache import Cache, check_cache, load_cache, write_cache
 from sqlfmt.exception import SqlfmtError
@@ -27,7 +28,7 @@ def format_string(source_string: str, mode: Mode) -> str:
     return str(formatted_query)
 
 
-def run(files: List[str], mode: Mode) -> Report:
+def run(files: List[Path], mode: Mode) -> Report:
     """
     Runs sqlfmt on all files in list of given paths (files), using the specified mode.
 
@@ -38,8 +39,7 @@ def run(files: List[str], mode: Mode) -> Report:
     """
 
     cache = load_cache()
-    matched_paths: Set[Path] = set()
-    matched_paths.update(_generate_matched_paths([Path(s) for s in files], mode))
+    matched_paths = _get_matching_paths(files, mode)
     results = _format_many(matched_paths, cache, mode)
 
     report = Report(results, mode)
@@ -51,19 +51,41 @@ def run(files: List[str], mode: Mode) -> Report:
     return report
 
 
-def _generate_matched_paths(paths: Iterable[Path], mode: Mode) -> Iterator[Path]:
+def _get_matching_paths(paths: Iterable[Path], mode: Mode) -> Set[Path]:
+    """
+    Takes a list of paths (files or directories) and a mode as an input, and
+    yields paths to individual files that match the input paths (or are contained in
+    its directories) and are not excluded by the mode's exclude glob
+    """
+    include_set = _get_included_paths(paths, mode)
+
+    if mode.exclude:
+        globs = []
+        for pn in mode.exclude:
+            globs.extend(glob(pn, recursive=True))
+        exclude_set = {Path(s) for s in globs}
+    else:
+        exclude_set = set()
+
+    return include_set - exclude_set
+
+
+def _get_included_paths(paths: Iterable[Path], mode: Mode) -> Set[Path]:
     """
     Takes a list of paths (files or directories) and a mode as an input, and
     yields paths to individual files that match the input paths (or are contained in
     its directories)
     """
+    include_set = set()
     for p in paths:
         if p == STDIN_PATH:
-            yield p
+            include_set.add(p)
         elif p.is_file() and "".join(p.suffixes) in (mode.SQL_EXTENSIONS):
-            yield p
+            include_set.add(p)
         elif p.is_dir():
-            yield from (_generate_matched_paths(p.iterdir(), mode))
+            include_set |= _get_included_paths(p.iterdir(), mode)
+
+    return include_set
 
 
 def _format_many(

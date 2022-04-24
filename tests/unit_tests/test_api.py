@@ -7,7 +7,7 @@ import pytest
 
 from sqlfmt.api import (
     _format_many,
-    _generate_matched_paths,
+    _get_matching_paths,
     _update_source_files,
     format_string,
     run,
@@ -28,7 +28,7 @@ def unformatted_files(unformatted_dir: Path) -> List[Path]:
 
 def test_file_discovery(all_output_modes: Mode) -> None:
     p = Path("tests/data/unit_tests/test_api/test_file_discovery")
-    res = list(_generate_matched_paths(p.iterdir(), all_output_modes))
+    res = list(_get_matching_paths(p.iterdir(), all_output_modes))
 
     expected = (
         p / "top_level_file.sql",
@@ -39,6 +39,30 @@ def test_file_discovery(all_output_modes: Mode) -> None:
 
     for p in expected:
         assert p in res
+
+
+@pytest.mark.parametrize(
+    "exclude",
+    [
+        ["**/*_file*"],
+        ["**/*.sql"],
+        ["**/top*", "**/a_directory/*", "**/a_directory/**/another_file.sql"],
+    ],
+)
+def test_file_discovery_with_excludes(exclude: List[str]) -> None:
+    mode = Mode(exclude=exclude)
+    p = Path("tests/data/unit_tests/test_api/test_file_discovery")
+    res = _get_matching_paths(p.iterdir(), mode)
+
+    expected = {
+        # p / "top_level_file.sql",
+        # p / "a_directory/one_file.sql",
+        # p / "a_directory/nested_directory/another_file.sql",
+        p
+        / "a_directory/nested_directory/j2_extension.sql.jinja",
+    }
+
+    assert res & expected == expected
 
 
 def test_format_empty_string(all_output_modes: Mode) -> None:
@@ -159,13 +183,13 @@ def test_run_unformatted_update(
     # confirm that we call the _update_source function
     monkeypatch.delattr("sqlfmt.api._update_source_files")
     with pytest.raises(NameError):
-        _ = run(files=[str(unformatted_dir)], mode=default_mode)
+        _ = run(files=[unformatted_dir], mode=default_mode)
 
 
 def test_run_preformatted(
     preformatted_files: List[Path], all_output_modes: Mode
 ) -> None:
-    files = [str(f) for f in preformatted_files]
+    files = preformatted_files
     report = run(files=files, mode=all_output_modes)
     assert report.number_changed == 0
     assert report.number_unchanged == len(preformatted_files)
@@ -180,7 +204,7 @@ def test_run_preformatted(
 
 
 def test_run_unformatted(unformatted_files: List[Path], all_output_modes: Mode) -> None:
-    files = [str(f) for f in unformatted_files]
+    files = unformatted_files
     report = run(files=files, mode=all_output_modes)
     assert report.number_changed == len(unformatted_files)
     assert report.number_unchanged == 0
@@ -200,7 +224,7 @@ def test_run_unformatted(unformatted_files: List[Path], all_output_modes: Mode) 
 
 
 def test_run_error(error_dir: Path, all_output_modes: Mode) -> None:
-    files = [str(error_dir)]
+    files = [error_dir]
     report = run(files=files, mode=all_output_modes)
     assert report.number_changed == 0
     assert report.number_unchanged == 0
@@ -216,7 +240,7 @@ def test_run_error(error_dir: Path, all_output_modes: Mode) -> None:
 
 def test_run_stdin(all_output_modes: Mode, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("sys.stdin", io.StringIO("select\n    1"))
-    report = run(files=["-"], mode=all_output_modes)
+    report = run(files=[Path("-")], mode=all_output_modes)
     assert report.number_changed == 1
     assert report.number_unchanged == 0
     assert report.number_errored == 0
@@ -236,4 +260,4 @@ def test_run_single_process_does_not_use_multiprocessing(
     # confirm that we do not call _multiprocess_map; if we do,
     # this will raise
     monkeypatch.delattr("sqlfmt.api._multiprocess_map")
-    _ = run(files=[str(unformatted_dir)], mode=single_process_mode)
+    _ = run(files=[unformatted_dir], mode=single_process_mode)
