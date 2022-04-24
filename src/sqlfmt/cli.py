@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import List, Union
 
 import click
@@ -23,6 +24,16 @@ from sqlfmt.mode import Mode
     help=(
         "Print a diff of any formatting changes to stdout. Fails like --check "
         "on any changes. Do not write formatted queries to files"
+    ),
+)
+@click.option(
+    "--exclude",
+    multiple=True,
+    help=(
+        "A string that is passed to glob.glob as a pathname; any matching files "
+        "returned by glob will be excluded from FILES and not formatted. Note "
+        "that glob is relative to the current working directory when sqlfmt is "
+        "called. To exclude multiple globs, repeat the --exclude option."
     ),
 )
 @click.option(
@@ -82,10 +93,10 @@ from sqlfmt.mode import Mode
 @click.argument(
     "files",
     nargs=-1,
-    type=click.Path(exists=True, allow_dash=True),
+    type=click.Path(exists=True, allow_dash=True, path_type=Path),
 )
 @click.pass_context
-def sqlfmt(ctx: click.Context, files: List[str], **kwargs: Union[bool, int]) -> None:
+def sqlfmt(ctx: click.Context, files: List[Path], **kwargs: Union[bool, int]) -> None:
     """
     sqlfmt is a tool that formats your sql files.
 
@@ -104,7 +115,6 @@ def sqlfmt(ctx: click.Context, files: List[str], **kwargs: Union[bool, int]) -> 
         }
         config.update(non_default_options)
         mode = Mode(**config)  # type: ignore
-
         report = api.run(files=files, mode=mode)
         report.display_report()
 

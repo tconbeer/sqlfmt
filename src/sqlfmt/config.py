@@ -14,7 +14,7 @@ else:
 Config = Dict[str, Union[bool, int, List[str], Dialect]]
 
 
-def load_config_file(files: List[str]) -> Config:
+def load_config_file(files: List[Path]) -> Config:
     """
     files is a list of resolved, absolute paths (like the ones passed from the
     Click CLI). This finds a pyproject.toml file in the common parent directory
@@ -26,14 +26,14 @@ def load_config_file(files: List[str]) -> Config:
     return config
 
 
-def _get_common_parents(files: List[str]) -> List[Path]:
+def _get_common_parents(files: List[Path]) -> List[Path]:
     """
     For a list of files, returns a Set of paths for all
     of the common parents of files
     """
     assert files, "Must provide a list of paths"
     common_parents: Set[Path] = set()
-    for p in [Path(f) for f in files]:
+    for p in files:
         parents = set(p.parents)
         if p.is_dir():
             parents.add(p)
