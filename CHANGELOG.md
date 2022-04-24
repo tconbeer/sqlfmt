@@ -4,10 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.7.0] - 2022-04-24
+
 ### Breaking Changes
+
 -   api.run now accepts `files` as a `List[pathlib.Path]` instead of a `List[str]`
 
 ### Features
+
 -   any command line option can now be set in a `pyproject.toml` file. See `README` for more information ([#90](https://github.com/tconbeer/sqlfmt/issues/90))
 -   sqlfmt now accepts an `--exclude` option to specify a glob of files to exclude from formatting
 
@@ -145,7 +149,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.6.0...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.7.0...HEAD
+
+[0.7.0]: https://github.com/tconbeer/sqlfmt/compare/0.6.0...0.7.0
 
 [0.6.0]: https://github.com/tconbeer/sqlfmt/compare/0.5.1...0.6.0
 
