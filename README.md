@@ -125,7 +125,7 @@ Add the following config to your `.pre-commit-config.yaml` file:
 ```
 repos:
   - repo: https://github.com/tconbeer/sqlfmt
-    rev: v0.6.0
+    rev: v0.7.0
     hooks:
       - id: sqlfmt
         language_version: python

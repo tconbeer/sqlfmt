@@ -13,7 +13,7 @@ All notable changes to this project will be documented in this file.
 ### Features
 
 -   any command line option can now be set in a `pyproject.toml` file. See `README` for more information ([#90](https://github.com/tconbeer/sqlfmt/issues/90))
--   sqlfmt now accepts an `--exclude` option to specify a glob of files to exclude from formatting
+-   sqlfmt now accepts an `--exclude` option to specify a glob of files to exclude from formatting ([#131](https://github.com/tconbeer/sqlfmt/issues/131))
 
 ## [0.6.0] - 2022-03-21
 
