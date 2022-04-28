@@ -42,7 +42,7 @@ tomli = { version = "^2.0.1", python = "<3.11" }
 [tool.poetry.dev-dependencies]
 flake8 = "^4.0.1"
 isort = "^5.9.3"
-mypy = "^0.942"
+mypy = "^0.950"
 pre-commit = "^2.18.1"
 pytest = "^7.1.2"
 pytest-cov = "^3.0.0"
