@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.8.0] - 2022-05-04
+
 ### Formatting Changes
 
 -   sqlfmt is now more conservative about preserving whitespace around jinja expressions when we remove newlines ([#162](https://github.com/tconbeer/sqlfmt/issues/162), [#165](https://github.com/tconbeer/sqlfmt/issues/165))
@@ -155,7 +157,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.7.0...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.8.0...HEAD
+
+[0.8.0]: https://github.com/tconbeer/sqlfmt/compare/0.7.0...0.8.0
 
 [0.7.0]: https://github.com/tconbeer/sqlfmt/compare/0.6.0...0.7.0
 
