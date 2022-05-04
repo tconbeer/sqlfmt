@@ -28,8 +28,8 @@ class QueryFormatter:
 
     def _format_jinja(self, lines: List[Line]) -> List[Line]:
         """
-        Formats the contents of jinja tags (the code between)
-        the curlies by mutating existing jinja nodes
+        Formats the contents of jinja tags (the code between
+        the curlies) by mutating existing jinja nodes
         """
         formatter = JinjaFormatter(mode=self.mode)
         for line in lines:
@@ -73,16 +73,16 @@ class QueryFormatter:
         Applies 4 transformations to a Query:
         1. Splits lines
         2. Formats jinja tags
-        3. Merges lines
-        4. Dedents jinja block tags to match their least-indented contents
+        3. Dedents jinja block tags to match their least-indented contents
+        4. Merges lines
         """
         lines = raw_query.lines
 
         pipeline = [
             self._split_lines,
             self._format_jinja,
-            self._merge_lines,
             self._dedent_jinja_blocks,
+            self._merge_lines,
         ]
 
         for transform in pipeline:

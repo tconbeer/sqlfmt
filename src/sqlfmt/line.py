@@ -190,7 +190,6 @@ class Line:
         splitting and merging
         """
         if nodes:
-            nodes[0].previous_node = previous_node
             line = Line(
                 previous_node=previous_node,
                 nodes=nodes,

@@ -41,8 +41,8 @@ with
     base as (
         select *
         from
-            {% if "Hello" in block_o_text %}{{ ref("hello") }}
-            {% else %}{{ ref("goodbye") }}
+            {% if "Hello" in block_o_text %} {{ ref("hello") }}
+            {% else %} {{ ref("goodbye") }}
             {% endif %}
     ),
     joined as (
@@ -51,8 +51,7 @@ with
             {{ model }}.column_a as {{ model }}_field
             {%- if not loop.last -%},{%- endif %}
             {% endfor %}
-        from
-            base
+        from base
         {% for model in list_o_models %}
         join {{ model }} on base.{{ model }}_id = {{ model }}.id
         {% endfor %}
