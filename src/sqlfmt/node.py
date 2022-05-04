@@ -179,7 +179,7 @@ class Node:
         """
         if self.token.type != TokenType.STAR:
             return False
-        prev_token = self.previous_token(self.previous_node)
+        prev_token, _ = self.previous_token(self.previous_node)
         if not prev_token:
             return False
         else:
@@ -305,8 +305,8 @@ class Node:
         elif token.type == TokenType.SEMICOLON:
             open_brackets = []
 
-        prev_token = cls.previous_token(previous_node)
-        prefix = cls.whitespace(token, prev_token)
+        prev_token, extra_whitespace = cls.previous_token(previous_node)
+        prefix = cls.whitespace(token, prev_token, extra_whitespace)
         value = cls.capitalize(token)
 
         if token.type in (TokenType.FMT_OFF, TokenType.DATA):
@@ -349,13 +349,15 @@ class Node:
             )
 
     @classmethod
-    def previous_token(cls, prev_node: Optional["Node"]) -> Optional[Token]:
+    def previous_token(
+        cls, prev_node: Optional["Node"]
+    ) -> Tuple[Optional[Token], bool]:
         """
         Returns the token of prev_node, unless prev_node is a
         newline or jinja statement, in which case it recurses
         """
         if not prev_node:
-            return None
+            return None, False
         t = prev_node.token
         if t.type in (
             TokenType.NEWLINE,
@@ -364,15 +366,17 @@ class Node:
             TokenType.JINJA_BLOCK_END,
             TokenType.JINJA_BLOCK_KEYWORD,
         ):
-            return cls.previous_token(prev_node.previous_node)
+            prev, _ = cls.previous_token(prev_node.previous_node)
+            return prev, True
         else:
-            return t
+            return t, False
 
     @classmethod
     def whitespace(
         cls,
         token: Token,
         previous_token: Optional[Token],
+        extra_whitespace: bool,
     ) -> str:
         """
         Returns the proper whitespace before the token literal, to be set as the
@@ -392,10 +396,6 @@ class Node:
             TokenType.COMMA,
             TokenType.DOT,
             TokenType.NEWLINE,
-            TokenType.JINJA_STATEMENT,
-            TokenType.JINJA_BLOCK_START,
-            TokenType.JINJA_BLOCK_END,
-            TokenType.JINJA_BLOCK_KEYWORD,
         ):
             return NO_SPACE
         # names preceded by dots or colons are namespaced identifiers. No space.
@@ -449,16 +449,22 @@ class Node:
             return SPACE
         # we don't know what a jinja expression will evaluate to,
         # so we have to respect the original text
-        elif token.type == TokenType.JINJA_EXPRESSION:
-            if token.prefix == "":
-                return NO_SPACE
-            else:
+        elif token.type in (
+            TokenType.JINJA_STATEMENT,
+            TokenType.JINJA_BLOCK_START,
+            TokenType.JINJA_BLOCK_END,
+            TokenType.JINJA_BLOCK_KEYWORD,
+            TokenType.JINJA_EXPRESSION,
+        ):
+            if token.prefix != "" or extra_whitespace:
                 return SPACE
+            else:
+                return NO_SPACE
         elif previous_token and previous_token.type == TokenType.JINJA_EXPRESSION:
-            if token.prefix == "":
-                return NO_SPACE
-            else:
+            if token.prefix != "" or extra_whitespace:
                 return SPACE
+            else:
+                return NO_SPACE
         else:
             return SPACE
 

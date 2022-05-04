@@ -257,6 +257,10 @@ Want more examples? See the `tests/data` directory, or go to http://sqlfmt.com t
 [![Maintainability](https://api.codeclimate.com/v1/badges/8928f6662a67b8eaf092/maintainability)](https://codeclimate.com/github/tconbeer/sqlfmt/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/8928f6662a67b8eaf092/test_coverage)](https://codeclimate.com/github/tconbeer/sqlfmt/test_coverage)
 
+### Providing Feedback
+
+We'd love to hear from you! [Open an Issue](https://github.com/tconbeer/sqlfmt/issues/new/choose) to request new features, report bad formatting, or say hello.
+
 ### Setting up Your Dev Environment and Running Tests
 
 1. Install [Poetry](https://python-poetry.org/docs/#installation) if you don't have it already. You may also need or want pyenv, make, and gcc. A complete setup from a fresh install of Ubuntu can be found [here](https://github.com/tconbeer/linux_setup)
