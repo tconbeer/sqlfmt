@@ -29,28 +29,28 @@ def get_projects() -> List[SQLProject]:
     projects = [
         SQLProject(
             name="gitlab",
-            git_url="https://gitlab.com/gitlab-data/analytics.git",
-            git_ref="7161e509b62f53344f19de80d40db2bdba190806",  # Nov 12, 2021
-            expected_changed=1857,
-            expected_unchanged=7,
+            git_url="https://github.com/tconbeer/gitlab-analytics-sqlfmt.git",
+            git_ref="f4168905006e604eaac284a9e08885f15e514fce",  # sqlfmt 0.8.0
+            expected_changed=19,
+            expected_unchanged=2187,
             expected_errored=0,
             sub_directory=Path("transform/snowflake-dbt/models"),
         ),
         SQLProject(
             name="rittman",
-            git_url="https://github.com/rittmananalytics/ra_data_warehouse.git",
-            git_ref="ecde71faa9a4400d864ad2e484a4ac478298e53a",  # v1.2.1
-            expected_changed=212,
-            expected_unchanged=0,
+            git_url="https://github.com/tconbeer/rittman_ra_data_warehouse.git",
+            git_ref="00c7e4b8d93f8ca0460ad3d9b3f9ea48c213627b",  # sqlfmt 0.8.0
+            expected_changed=3,
+            expected_unchanged=277,
             expected_errored=4,  # true mismatching brackets
             sub_directory=Path("models"),
         ),
         SQLProject(
             name="http_archive",
-            git_url="https://github.com/HTTPArchive/almanac.httparchive.org.git",
-            git_ref="db9fd2e1405a549c96ae5091b571989f13a8a539",  # Nov 14, 2021
-            expected_changed=1631,
-            expected_unchanged=0,
+            git_url="https://github.com/tconbeer/http_archive_almanac.git",
+            git_ref="5e1b84de98cba81fa6e21f34e4defca352b980b0",  # sqlfmt 0.8.0
+            expected_changed=0,
+            expected_unchanged=1702,
             expected_errored=0,
             sub_directory=Path("sql"),
         ),
@@ -74,11 +74,11 @@ def get_projects() -> List[SQLProject]:
         ),
         SQLProject(
             name="dbt_utils",
-            git_url="https://github.com/dbt-labs/dbt-utils.git",
-            git_ref="51ed999a44fcc7f9f502be11e5f190f5bc84ba4b",  # Jan 17, 2022
-            expected_changed=113,
-            expected_unchanged=1,
-            expected_errored=1,
+            git_url="https://github.com/tconbeer/dbt-utils.git",
+            git_ref="7c4d7f2a8dca533207b4e8a63a919f73eb0bb136",  # sqlfmt 0.8.0
+            expected_changed=7,
+            expected_unchanged=124,
+            expected_errored=0,
             sub_directory=Path(""),
         ),
     ]
