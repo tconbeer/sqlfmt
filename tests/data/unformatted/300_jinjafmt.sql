@@ -16,6 +16,16 @@
 {% do long_list.append(
     "another_long_name"
 )%}
+
+-- ensure jinja with python errors are not indented further when formatting
+{{
+    dbt_utils.star(
+        from=ref(model_name),
+        except=long_list,
+        relation_alias=model_name,
+        suffix="something_else"
+    )
+}}
 )))))__SQLFMT_OUTPUT__(((((
 {{
     config(
@@ -40,3 +50,13 @@
 ] %}
 
 {% do long_list.append("another_long_name") %}
+
+-- ensure jinja with python errors are not indented further when formatting
+{{
+    dbt_utils.star(
+        from=ref(model_name),
+        except=long_list,
+        relation_alias=model_name,
+        suffix="something_else"
+    )
+}}
