@@ -2,7 +2,7 @@ import re
 from dataclasses import dataclass, field
 from importlib import import_module
 from types import ModuleType
-from typing import Optional
+from typing import Optional, Tuple
 
 from sqlfmt.line import Line
 from sqlfmt.mode import Mode
@@ -21,15 +21,19 @@ class BlackWrapper:
         except ImportError:
             self.black = None
 
-    def format_string(self, source_string: str, max_length: int) -> str:
+    def format_string(self, source_string: str, max_length: int) -> Tuple[str, bool]:
         """
         Attempt to use black to format source_string to a line_length of max_length.
-        Return source_string if black isn't installed or it can't parse source_string
+        Return source_string if black isn't installed or it can't parse source_string.
+
+        Return a tuple of the formatted string and a boolean that indicates whether
+        black successfully ran on the string
         """
         formatted_string = source_string
+        is_blackened = False
 
         if not self.black:
-            return formatted_string
+            return formatted_string, is_blackened
 
         black_mode = self.black.Mode(line_length=max_length)
         try:
@@ -49,8 +53,12 @@ class BlackWrapper:
                 # there is other jinja syntax that isn't valid python,
                 # so if this still fails, just stop trying
                 pass
+            else:
+                is_blackened = True
+        else:
+            is_blackened = True
         finally:
-            return formatted_string
+            return formatted_string, is_blackened
 
 
 @dataclass
@@ -64,15 +72,19 @@ class JinjaTag:
     (opening_marker, verb, code, closing_marker) = ("{%-", "set", "my_var=4", "%}")
     """
 
+    source_string: str
     opening_marker: str
     verb: str
     code: str
     closing_marker: str
     depth: int
+    is_blackened: bool = False
 
     def __str__(self) -> str:
-        if self.is_indented_multiline_tag:
+        if self.is_indented_multiline_tag and self.is_blackened:
             return self._multiline_str()
+        elif self.is_indented_multiline_tag:
+            return self.source_string
         else:
             s = f"{self.opening_marker} {self.verb}{self.code} {self.closing_marker}"
             return s
@@ -123,7 +135,9 @@ class JinjaTag:
         if verb and code:
             verb = f"{verb} "
 
-        return JinjaTag(opening_marker, verb, code, closing_marker, depth)
+        return JinjaTag(
+            source_string, opening_marker, verb, code, closing_marker, depth
+        )
 
     def max_code_length(self, max_length: int) -> int:
         """
@@ -174,15 +188,9 @@ class JinjaFormatter:
             tag = JinjaTag.from_string(node.value, node.depth[0])
 
             if tag.code and self.use_black:
-                tag.code = self._format_python_string(
+                tag.code, tag.is_blackened = self.code_formatter.format_string(
                     tag.code,
                     max_length=tag.max_code_length(max_length),
                 )
 
-            if (not self.use_black) and tag.is_indented_multiline_tag:
-                return
-            else:
-                node.value = str(tag)
-
-    def _format_python_string(self, source_string: str, max_length: int) -> str:
-        return self.code_formatter.format_string(source_string, max_length)
+            node.value = str(tag)

@@ -57,7 +57,7 @@ def uninstall_black(monkeypatch: pytest.MonkeyPatch) -> None:
     ],
 )
 def test_jinja_tag_from_string(tag: str, result: Tuple[str, str, str, str]) -> None:
-    assert JinjaTag.from_string(tag, 0) == JinjaTag(*result, 0)
+    assert JinjaTag.from_string(tag, 0) == JinjaTag(tag, *result, 0)
 
 
 @pytest.mark.parametrize(
@@ -180,14 +180,14 @@ def test_black_wrapper_format_string_no_black(
     result = jinja_formatter.code_formatter.format_string(
         source_string=source_string, max_length=88
     )
-    assert result == source_string
+    assert result == (source_string, False)
 
 
 @pytest.mark.parametrize(
     "tag,expected",
     [
-        (JinjaTag("{{", "", "any code!", "}}", 0), 88 - 2 - 2 - 2),
-        (JinjaTag("{%-", "set", "_", "%}", 0), 88 - 3 - 3 - 2 - 2),
+        (JinjaTag("{{ any code! }}", "{{", "", "any code!", "}}", 0), 88 - 2 - 2 - 2),
+        (JinjaTag("{%- set _ %}", "{%-", "set", "_", "%}", 0), 88 - 3 - 3 - 2 - 2),
     ],
 )
 def test_max_code_length(tag: JinjaTag, expected: int) -> None:

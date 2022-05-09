@@ -31,8 +31,8 @@ def get_projects() -> List[SQLProject]:
             name="gitlab",
             git_url="https://github.com/tconbeer/gitlab-analytics-sqlfmt.git",
             git_ref="f4168905006e604eaac284a9e08885f15e514fce",  # sqlfmt 0.8.0
-            expected_changed=19,
-            expected_unchanged=2187,
+            expected_changed=12,
+            expected_unchanged=2194,
             expected_errored=0,
             sub_directory=Path("transform/snowflake-dbt/models"),
         ),
@@ -40,8 +40,8 @@ def get_projects() -> List[SQLProject]:
             name="rittman",
             git_url="https://github.com/tconbeer/rittman_ra_data_warehouse.git",
             git_ref="00c7e4b8d93f8ca0460ad3d9b3f9ea48c213627b",  # sqlfmt 0.8.0
-            expected_changed=3,
-            expected_unchanged=277,
+            expected_changed=1,
+            expected_unchanged=279,
             expected_errored=4,  # true mismatching brackets
             sub_directory=Path("models"),
         ),
@@ -76,8 +76,8 @@ def get_projects() -> List[SQLProject]:
             name="dbt_utils",
             git_url="https://github.com/tconbeer/dbt-utils.git",
             git_ref="7c4d7f2a8dca533207b4e8a63a919f73eb0bb136",  # sqlfmt 0.8.0
-            expected_changed=7,
-            expected_unchanged=124,
+            expected_changed=3,
+            expected_unchanged=128,
             expected_errored=0,
             sub_directory=Path(""),
         ),
