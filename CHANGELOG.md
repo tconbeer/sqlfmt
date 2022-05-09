@@ -4,13 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixes
+
+-   fixes issue causing unstable formatting of multiline jinja tags when black is unable to parse the tag ([#176](https://github.com/tconbeer/sqlfmt/issues/176))
+-   fixes issue for developers where pre-commit hooks would not install
+
+### Features
+
+-   sqlfmt_primer now runs against forked (formatted) repos to make changes easier to detect
+
 ## [0.8.0] - 2022-05-04
 
 ### Formatting Changes
 
--   sqlfmt is now more conservative about preserving whitespace around jinja expressions when we remove newlines ([#162](https://github.com/tconbeer/sqlfmt/issues/162), [#165](https://github.com/tconbeer/sqlfmt/issues/165))
--   Jinja blocks are now dedented before line merging, instead of after. This results in small changes to formatted output in some cases where jinja blocks are used
--   Fixes an issue where jinja else and elif statements could cause unstable formatting. May impact whitespace for the tokens following `{% else %}` and `{% elif %}` statements
+-   sqlfmt is now more conservative about preserving whitespace around jinja expressions when we remove newlines ([#162](https://github.com/tconbeer/sqlfmt/issues/162), [#165](https://github.com/tconbeer/sqlfmt/issues/165) - thank you [@rcaddell](https://github.com/rcaddell) and [@rjay98](https://github.com/rjay98)!)
+-   jinja blocks are now dedented before line merging, instead of after. This results in small changes to formatted output in some cases where jinja blocks are used
+-   fixes an issue where jinja else and elif statements could cause unstable formatting. May impact whitespace for the tokens following `{% else %}` and `{% elif %}` statements
 
 ## [0.7.0] - 2022-04-24
 
