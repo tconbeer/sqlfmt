@@ -53,7 +53,7 @@
     remove=none,
     field_name="field_name",
     value_name="value",
-    table=none,
+    table=none
 ) -%}
 
 {%- set exclude = exclude if exclude is not none else [] %}

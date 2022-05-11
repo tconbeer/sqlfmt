@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixes
 
+-   fixes issue where jinjafmt would insert a trailing comma into multiline macro definitions, causing dbt compiling errors ([#156](https://github.com/tconbeer/sqlfmt/issues/156))
 -   fixes issue causing unstable formatting of multiline jinja tags when black is unable to parse the tag ([#176](https://github.com/tconbeer/sqlfmt/issues/176))
 -   fixes issue for developers where pre-commit hooks would not install
 
