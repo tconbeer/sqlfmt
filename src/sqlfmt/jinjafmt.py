@@ -2,7 +2,7 @@ import re
 from dataclasses import dataclass, field
 from importlib import import_module
 from types import ModuleType
-from typing import Optional, Tuple
+from typing import NamedTuple, Optional, Tuple
 
 from sqlfmt.line import Line
 from sqlfmt.mode import Mode
@@ -14,6 +14,9 @@ class BlackWrapper:
     A thin wrapper around black. Tries to import black when
     instantiated. Provides a safe interface, format_string
     """
+
+    class StringProperties(NamedTuple):
+        has_newlines: bool
 
     def __init__(self) -> None:
         try:
@@ -35,30 +38,67 @@ class BlackWrapper:
         if not self.black:
             return formatted_string, is_blackened
 
+        preprocessed_string, string_properties = self._preprocess_string(source_string)
         black_mode = self.black.Mode(line_length=max_length)
+
         try:
             formatted_string = self.black.format_str(
-                source_string, mode=black_mode
+                preprocessed_string, mode=black_mode
             ).rstrip()
         except ValueError:
             # the string isn't valid python.
             # Jinja allows linebreaks where python doesn't
             # so let's try again without newlines in the code
-            try:
-                flat_code = source_string.replace("\n", " ")
-                formatted_string = self.black.format_str(
-                    flat_code, mode=black_mode
-                ).rstrip()
-            except ValueError:
-                # there is other jinja syntax that isn't valid python,
-                # so if this still fails, just stop trying
-                pass
-            else:
-                is_blackened = True
+            if string_properties.has_newlines:
+                try:
+                    flat_code = preprocessed_string.replace("\n", " ")
+                    formatted_string = self.black.format_str(
+                        flat_code, mode=black_mode
+                    ).rstrip()
+                except ValueError:
+                    # there is other jinja syntax that isn't valid python,
+                    # so if this still fails, just stop trying
+                    pass
+                else:
+                    is_blackened = True
         else:
             is_blackened = True
         finally:
-            return formatted_string, is_blackened
+            postprocessed_string = self._postprocess_string(
+                formatted_string, string_properties, is_blackened
+            )
+            return postprocessed_string, is_blackened
+
+    @classmethod
+    def _preprocess_string(cls, source_string: str) -> Tuple[str, StringProperties]:
+        """
+        Takes a jinja source_string and performs some small transformations on it to
+        make it valid python that black can format:
+        1. Detects newlines
+
+        Runs a tuple of the processed string and a NamedTuple of the stats from
+        pre-processing
+        """
+        # compute properties
+        if "\n" in source_string:
+            has_newline = True
+        else:
+            has_newline = False
+
+        props = cls.StringProperties(has_newline)
+        return source_string, props
+
+    @classmethod
+    def _postprocess_string(
+        cls,
+        formatted_string: str,
+        string_properties: StringProperties,
+        is_blackened: bool,
+    ) -> str:
+        """
+        Translates a formatted python string back to jinja. Undoes some pre-processing
+        """
+        return formatted_string
 
 
 @dataclass
@@ -85,13 +125,20 @@ class JinjaTag:
             return self._multiline_str()
         elif self.is_indented_multiline_tag:
             return self.source_string
+        elif self.is_macro_or_test_def and self.is_blackened:
+            return self._remove_trailing_comma(self._basic_str())
         else:
-            s = f"{self.opening_marker} {self.verb}{self.code} {self.closing_marker}"
-            return s
+            return self._basic_str()
 
     @property
     def is_indented_multiline_tag(self) -> bool:
         return self.code != "" and self.verb == "" and "\n" in self.code
+
+    @property
+    def is_macro_or_test_def(self) -> bool:
+        return "%" in self.opening_marker and (
+            self.verb == "macro " or self.verb == "test "
+        )
 
     def _multiline_str(self) -> str:
         """
@@ -106,6 +153,24 @@ class JinjaTag:
             lines.append(f"{indent}    {code_line}")
         lines.append(f"{indent}{self.closing_marker}")
         return "\n".join(lines)
+
+    def _basic_str(self) -> str:
+        return f"{self.opening_marker} {self.verb}{self.code} {self.closing_marker}"
+
+    @staticmethod
+    def _remove_trailing_comma(source_string: str) -> str:
+        """
+        dbt Jinja doesn't allow trailing commas in macro definitions. Returns a string
+        without a trailing comma inside parentheses
+        """
+        trailing_comma_prog = re.compile(r",\s*\)")
+        trailing_comma_match = trailing_comma_prog.search(source_string)
+        if trailing_comma_match:
+            idx = trailing_comma_match.span()[0]
+            processed_string = f"{source_string[:idx]}{source_string[idx+1:]}"
+            return processed_string
+        else:
+            return source_string
 
     @classmethod
     def from_string(cls, source_string: str, depth: int) -> "JinjaTag":

@@ -3,7 +3,7 @@ from typing import Tuple
 
 import pytest
 
-from sqlfmt.jinjafmt import JinjaFormatter, JinjaTag
+from sqlfmt.jinjafmt import BlackWrapper, JinjaFormatter, JinjaTag
 from sqlfmt.line import Line
 from sqlfmt.mode import Mode
 from sqlfmt.node import Node
@@ -42,6 +42,10 @@ def uninstall_black(monkeypatch: pytest.MonkeyPatch) -> None:
         (
             "{{ my_macro(arg, kwarg=foo) }}",
             ("{{", "", "my_macro(arg, kwarg=foo)", "}}"),
+        ),
+        (
+            "{% macro my_macro(arg, kwarg=foo) %}",
+            ("{%", "macro ", "my_macro(arg, kwarg=foo)", "%}"),
         ),
         ("{% statement %}", ("{%", "", "statement", "%}")),
         ("{%- statement -%}", ("{%-", "", "statement", "-%}")),
@@ -193,3 +197,43 @@ def test_black_wrapper_format_string_no_black(
 def test_max_code_length(tag: JinjaTag, expected: int) -> None:
     result = tag.max_code_length(88)
     assert result == expected
+
+
+@pytest.mark.parametrize(
+    "source_string,expected_properties",
+    [
+        ("my_macro(one, two, three='my_kwarg')", (False,)),
+        ("my_macro(\n    one, two, three='my_kwarg'\n)", (True,)),
+        ("my_macro(\n    one,\n    two,\n    three='my_kwarg',\n)", (True,)),
+        ("my_list = [\n1, 2, 3,\n]", (True,)),
+    ],
+)
+def test_preprocess_string_properties(
+    source_string: str, expected_properties: Tuple[bool, bool]
+) -> None:
+    res_string, res_properties = BlackWrapper._preprocess_string(source_string)
+    assert res_string == source_string
+    assert res_properties == expected_properties
+
+
+@pytest.mark.parametrize(
+    "source_string,expected_count,is_def",
+    [
+        ("{% macro my_macro(foo, bar, baz=qux) %}", 2, True),
+        ("{% test my_test(foo, bar, baz=qux) %}", 2, True),
+        ("{% macro my_macro(foo, bar, baz=qux,) %}", 2, True),
+        ("{% test my_test(foo, bar, baz=qux,) %}", 2, True),
+        ("{% macro my_macro(\n    foo,\n    bar, \n    baz=qux,\n) %}", 2, True),
+        ("{% test my_test(\n    foo,\n    bar, \n    baz=qux,\n) %}", 2, True),
+        # do not remove from macro calls, only defs
+        ("{{ my_macro(\n    foo,\n    bar, \n    baz=qux,\n) }}", 3, False),
+    ],
+)
+def test_jinja_tag_remove_trailing_comma(
+    source_string: str, expected_count: int, is_def: bool
+) -> None:
+    tag = JinjaTag.from_string(source_string=source_string, depth=0)
+    assert tag.is_macro_or_test_def == is_def
+    tag.is_blackened = True
+    result = str(tag)
+    assert result.count(",") == expected_count
