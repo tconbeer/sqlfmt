@@ -1,8 +1,10 @@
+import keyword
 import re
 from dataclasses import dataclass, field
 from importlib import import_module
+from itertools import product
 from types import ModuleType
-from typing import NamedTuple, Optional, Tuple
+from typing import Dict, NamedTuple, Optional, Tuple
 
 from sqlfmt.line import Line
 from sqlfmt.mode import Mode
@@ -15,8 +17,11 @@ class BlackWrapper:
     instantiated. Provides a safe interface, format_string
     """
 
+    PY_RESERVED_WORDS = list(keyword.kwlist)
+
     class StringProperties(NamedTuple):
         has_newlines: bool
+        keyword_replacements: Dict[str, int]
 
     def __init__(self) -> None:
         try:
@@ -32,11 +37,10 @@ class BlackWrapper:
         Return a tuple of the formatted string and a boolean that indicates whether
         black successfully ran on the string
         """
-        formatted_string = source_string
         is_blackened = False
 
         if not self.black:
-            return formatted_string, is_blackened
+            return source_string, is_blackened
 
         preprocessed_string, string_properties = self._preprocess_string(source_string)
         black_mode = self.black.Mode(line_length=max_length)
@@ -64,10 +68,13 @@ class BlackWrapper:
         else:
             is_blackened = True
         finally:
-            postprocessed_string = self._postprocess_string(
-                formatted_string, string_properties, is_blackened
-            )
-            return postprocessed_string, is_blackened
+            if is_blackened:
+                postprocessed_string = self._postprocess_string(
+                    formatted_string, string_properties
+                )
+                return postprocessed_string, is_blackened
+            else:
+                return source_string, is_blackened
 
     @classmethod
     def _preprocess_string(cls, source_string: str) -> Tuple[str, StringProperties]:
@@ -79,25 +86,77 @@ class BlackWrapper:
         Runs a tuple of the processed string and a NamedTuple of the stats from
         pre-processing
         """
-        # compute properties
-        if "\n" in source_string:
-            has_newline = True
-        else:
-            has_newline = False
+        has_newline = True if "\n" in source_string else False
 
-        props = cls.StringProperties(has_newline)
-        return source_string, props
+        processed_string, keyword_replacements = cls._replace_reserved_words(
+            source_string=source_string
+        )
+
+        props = cls.StringProperties(has_newline, keyword_replacements)
+        return processed_string, props
+
+    @classmethod
+    def _replace_reserved_words(cls, source_string: str) -> Tuple[str, Dict[str, int]]:
+        """
+        Replaces python reserved words in source_string when they are used as variables
+        or function names. Returns a string with the replacements made and a dict of
+        the number and types of replacements made
+        """
+        suffixes = [r"\s*=", r"\("]
+        replacements = {
+            # kw patt: replacement patt, replacement
+            # e.g. r"return\(": (r"return_\(", "return_(")
+            f"{w}{s}": (f"{w}_{s}", f"{w}_{s[-1]}")
+            for (w, s) in product(cls.PY_RESERVED_WORDS, suffixes)
+        }
+
+        # check to make sure there aren't already variables with the replacement
+        # names in the source string
+        preexisting_sentinels = any(
+            [
+                re.search(repl_patt, source_string)
+                for (repl_patt, _) in replacements.values()
+            ]
+        )
+        if preexisting_sentinels:
+            # abort
+            return source_string, {}
+
+        # try to replace any instances of reserved words with a safe alternative
+        processed_string = source_string
+        keyword_replacements = {}
+        for patt, (repl_patt, repl) in replacements.items():
+            processed_string, n = re.subn(patt, repl, processed_string)
+            if n > 0:
+                keyword_replacements[repl_patt] = n
+
+        return processed_string, keyword_replacements
 
     @classmethod
     def _postprocess_string(
         cls,
         formatted_string: str,
         string_properties: StringProperties,
-        is_blackened: bool,
     ) -> str:
         """
         Translates a formatted python string back to jinja. Undoes some pre-processing
         """
+
+        def remove_underscore(m: re.Match) -> str:
+            s: str = m.group(0)
+            # All matches should only have a single underscore
+            assert s.count("_") == 1, "Internal Error! Please open an issue"
+            return s.replace("_", "")
+
+        for repl_patt, n in string_properties.keyword_replacements.items():
+            formatted_string, k = re.subn(
+                repl_patt, remove_underscore, formatted_string
+            )
+            assert n == k, (
+                "Internal Error! Did not reverse the same number of keywords that "
+                "were replaced. Please open an issue"
+            )
+
         return formatted_string
 
 
