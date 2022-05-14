@@ -270,3 +270,13 @@ We'd love to hear from you! [Open an Issue](https://github.com/tconbeer/sqlfmt/i
 1. Type `make` to run all tests and linters, or run `pytest`, `black`, `flake8`, `isort`, and `mypy` individually.
 
 Note: If encountering a JSONDecodeError during `poetry install`, you will want to clear the poetry cache with `poetry cache clear pypi --all`, or upgrade to poetry >= 1.12 with `poetry self upgrade`
+
+### Updating primer repos to reflect formatting changes
+
+1. Make sure all changes are committed to sqlfmt
+1. Check out the `unformatted` tag in the repo with `git checkout -b chore/apply-abc123 unformatted` where `abc123` is the hash of the most recent sqlfmt commit (from 1)
+1. Run sqlfmt against the working tree, then `git add .` and `git commit -m "chore: apply sqlfmt abc123"`
+1. We will have conflicts with main that we want to ignore, so merge main into this branch, ignoring anything on main: `git merge -s ours main`
+1. Push and open a PR; squash and merge. Grab the commit SHA
+1. Paste the commit SHA as a ref into `primer.py`
+1. Run `sqlfmt_primer -k` to clear the cache, then update the stats in `primer.py` to match the results
