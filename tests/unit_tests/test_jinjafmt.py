@@ -1,5 +1,5 @@
 import sys
-from typing import Tuple
+from typing import Dict, Tuple
 
 import pytest
 
@@ -200,20 +200,27 @@ def test_max_code_length(tag: JinjaTag, expected: int) -> None:
 
 
 @pytest.mark.parametrize(
-    "source_string,expected_properties",
+    "source_string,expected_res",
     [
-        ("my_macro(one, two, three='my_kwarg')", (False,)),
-        ("my_macro(\n    one, two, three='my_kwarg'\n)", (True,)),
-        ("my_macro(\n    one,\n    two,\n    three='my_kwarg',\n)", (True,)),
-        ("my_list = [\n1, 2, 3,\n]", (True,)),
+        ("my_macro(one, two, three='my_kwarg')", ("", (False, {}))),
+        ("my_macro(\n    one, two, three='my_kwarg'\n)", ("", (True, {}))),
+        ("my_macro(\n    one,\n    two,\n    three='my_kwarg',\n)", ("", (True, {}))),
+        ("my_list = [\n1, 2, 3,\n]", ("", (True, {}))),
+        (
+            "return(import(except=1))",
+            (
+                "return_(import_(except_=1))",
+                (False, {r"return_\(": 1, r"import_\(": 1, r"except_\s*=": 1}),
+            ),
+        ),
     ],
 )
 def test_preprocess_string_properties(
-    source_string: str, expected_properties: Tuple[bool, bool]
+    source_string: str, expected_res: Tuple[str, BlackWrapper.StringProperties]
 ) -> None:
     res_string, res_properties = BlackWrapper._preprocess_string(source_string)
-    assert res_string == source_string
-    assert res_properties == expected_properties
+    assert res_string == expected_res[0] if expected_res[0] else source_string
+    assert res_properties == expected_res[1]
 
 
 @pytest.mark.parametrize(
@@ -237,3 +244,103 @@ def test_jinja_tag_remove_trailing_comma(
     tag.is_blackened = True
     result = str(tag)
     assert result.count(",") == expected_count
+
+
+@pytest.mark.parametrize(
+    "source_string,expected_string,expected_kw_replacements",
+    [
+        (
+            "return(adapter.dispatch('my_macro', 'my_package')(arg1, arg2))",
+            "return_(adapter.dispatch('my_macro', 'my_package')(arg1, arg2))",
+            {r"return_\(": 1},
+        ),
+        (
+            "dbt_utils.star(from=ref('asdf'), except=fields_to_exclude)",
+            "dbt_utils.star(from_=ref('asdf'), except_=fields_to_exclude)",
+            {r"from_\s*=": 1, r"except_\s*=": 1},
+        ),
+        (
+            "True = foo",
+            "True_= foo",
+            {r"True_\s*=": 1},
+        ),
+        (
+            "abc = True",
+            "abc = True",
+            {},
+        ),
+        (
+            "if foo == 'bar'",
+            "if foo == 'bar'",
+            {},
+        ),
+        (
+            "from_ = 'already there'",
+            "from_ = 'already there'",
+            {},
+        ),
+    ],
+)
+def test_replace_reserved_words(
+    source_string: str, expected_string: str, expected_kw_replacements: Dict[str, int]
+) -> None:
+    processed_string, actual_kw_replacements = BlackWrapper._replace_reserved_words(
+        source_string=source_string
+    )
+    assert processed_string == expected_string
+    assert actual_kw_replacements == expected_kw_replacements
+
+
+@pytest.mark.parametrize(
+    "formatted_string,keyword_replacements,expected_string",
+    [
+        (
+            "from_ = 'already there'",
+            {},
+            "from_ = 'already there'",
+        ),
+        (
+            "from_ = 'replaced a keyword'",
+            {r"from_\s*=": 1},
+            "from = 'replaced a keyword'",
+        ),
+        (
+            "dbt_utils.star(from_=ref('asdf'), except_=fields_to_exclude)",
+            {r"from_\s*=": 1, r"except_\s*=": 1},
+            "dbt_utils.star(from=ref('asdf'), except=fields_to_exclude)",
+        ),
+    ],
+)
+def test_postprocess_string(
+    formatted_string: str, keyword_replacements: Dict[str, int], expected_string: str
+) -> None:
+    processed_string = BlackWrapper._postprocess_string(
+        formatted_string,
+        string_properties=BlackWrapper.StringProperties(
+            has_newlines=False, keyword_replacements=keyword_replacements
+        ),
+    )
+    assert processed_string == expected_string
+
+
+@pytest.mark.parametrize(
+    "source_string",
+    BlackWrapper.PY_RESERVED_WORDS
+    + [
+        "dbt_utils.star(from=ref('asdf'), except=fields_to_exclude)",
+        "return(adapter.dispatch('my_macro', 'my_package')(arg1, arg2))",
+        "True = foo",
+        "abc = True",
+        "from_ = 'already there'",
+        "something if something_else",
+    ],
+)
+def test_preprocess_and_postprocess_are_inverse_ops(source_string: str) -> None:
+    """
+    Preprocess and Postprocess should be perfectly inverse operations, except
+    for some whitespace (we don't need to be too precious about whitespace because
+    in the app Black will run between pre and post processing)
+    """
+    assert BlackWrapper._postprocess_string(
+        *BlackWrapper._preprocess_string(source_string)
+    ).replace(" ", "") == source_string.replace(" ", "")
