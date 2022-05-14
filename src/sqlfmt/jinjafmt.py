@@ -1,3 +1,4 @@
+import keyword
 import re
 from dataclasses import dataclass, field
 from importlib import import_module
@@ -16,43 +17,7 @@ class BlackWrapper:
     instantiated. Provides a safe interface, format_string
     """
 
-    PY_RESERVED_WORDS = [
-        "False",
-        "None",
-        "True",
-        "and",
-        "as",
-        "assert",
-        "async",
-        "await",
-        "break",
-        "class",
-        "continue",
-        "def",
-        "del",
-        "elif",
-        "else",
-        "except",
-        "finally",
-        "for",
-        "from",
-        "global",
-        "if",
-        "import",
-        "in",
-        "is",
-        "lambda",
-        "nonlocal",
-        "not",
-        "or",
-        "pass",
-        "raise",
-        "return",
-        "try",
-        "while",
-        "with",
-        "yield",
-    ]
+    PY_RESERVED_WORDS = list(keyword.kwlist)
 
     class StringProperties(NamedTuple):
         has_newlines: bool
