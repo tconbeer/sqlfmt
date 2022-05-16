@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Features
 
 -   jinjafmt is now able to format jinja that contains functions and variables that are reserved python words (e.g., return, except, from) ([#177](https://github.com/tconbeer/sqlfmt/issues/177), [#155](https://github.com/tconbeer/sqlfmt/issues/155))
+-   adds a new command-line option to reset the sqlfmt cache ([#184](https://github.com/tconbeer/sqlfmt/issues/184))
 
 ### Fixes
 
