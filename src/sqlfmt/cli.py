@@ -46,6 +46,15 @@ from sqlfmt.mode import Mode
     ),
 )
 @click.option(
+    "-k",
+    "--reset-cache",
+    is_flag=True,
+    help=(
+        "Clear the sqlfmt cache before running, effectively forcing sqlfmt "
+        "to operate on every file. Will slow down runs"
+    ),
+)
+@click.option(
     "--no-jinjafmt",
     is_flag=True,
     help=(

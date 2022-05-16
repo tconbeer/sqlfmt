@@ -4,11 +4,18 @@ from typing import Dict, Generator, List, Tuple
 
 import pytest
 
-from sqlfmt.cache import Cache, check_cache, get_cache_file, load_cache, write_cache
+from sqlfmt.cache import (
+    Cache,
+    check_cache,
+    clear_cache,
+    get_cache_file,
+    load_cache,
+    write_cache,
+)
 from sqlfmt.exception import SqlfmtError
 from sqlfmt.mode import Mode
 from sqlfmt.report import SqlFormatResult
-from tests.util import BASE_DIR, clear_cache
+from tests.util import BASE_DIR
 
 
 @pytest.fixture(autouse=True)
@@ -119,3 +126,16 @@ def test_check_cache(
     ]
     actual_cache_hits = [check_cache(new_cache, p) for p in sample_paths.values()]
     assert actual_cache_hits == expected_cache_hits
+
+
+def test_clear_cache(
+    small_cache: Cache,
+    results_for_caching: List[SqlFormatResult],
+    default_mode: Mode,
+) -> None:
+    cache_path = get_cache_file()
+    write_cache(cache=small_cache, results=results_for_caching, mode=default_mode)
+    assert cache_path.exists()
+
+    clear_cache()
+    assert not cache_path.exists()

@@ -6,7 +6,7 @@ from glob import glob
 from pathlib import Path
 from typing import Callable, Collection, Iterable, List, Set, TypeVar
 
-from sqlfmt.cache import Cache, check_cache, load_cache, write_cache
+from sqlfmt.cache import Cache, check_cache, clear_cache, load_cache, write_cache
 from sqlfmt.exception import SqlfmtError
 from sqlfmt.formatter import QueryFormatter
 from sqlfmt.mode import Mode
@@ -38,7 +38,12 @@ def run(files: List[Path], mode: Mode) -> Report:
     Returns a Report that can be queried or printed.
     """
 
-    cache = load_cache()
+    if mode.reset_cache:
+        clear_cache()
+        cache = {}
+    else:
+        cache = load_cache()
+
     matched_paths = _get_matching_paths(files, mode)
     results = _format_many(matched_paths, cache, mode)
 

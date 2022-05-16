@@ -69,6 +69,17 @@ def write_cache(cache: Cache, results: List[SqlFormatResult], mode: Mode) -> Non
         pickle.dump(new_cache, f)
 
 
+def clear_cache() -> None:
+    """
+    Deletes the cache file on disk, if it exists
+    """
+    p = get_cache_file()
+    try:
+        p.unlink()
+    except FileNotFoundError:
+        pass
+
+
 def _get_cache_info(path: Path) -> Tuple[float, int]:
     """
     Returns a tuple of (modified_time, file_size) for the path; this tuple is

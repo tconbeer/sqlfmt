@@ -19,7 +19,8 @@ def pytest_sessionstart(session: pytest.Session) -> None:
     Called after the Session object has been created and
     before performing collection and entering the run test loop.
     """
-    from tests.util import clear_cache, delete_results_dir
+    from sqlfmt.cache import clear_cache
+    from tests.util import delete_results_dir
 
     delete_results_dir()
     clear_cache()
@@ -63,6 +64,11 @@ def diff_mode(unset_no_color_env: None) -> Mode:
 @pytest.fixture
 def no_color_diff_mode(unset_no_color_env: None) -> Mode:
     return Mode(diff=True, no_color=True)
+
+
+@pytest.fixture
+def reset_cache_mode(unset_no_color_env: None) -> Mode:
+    return Mode(reset_cache=True)
 
 
 @pytest.fixture
