@@ -20,6 +20,7 @@ class Mode:
     exclude: List[str] = field(default_factory=list)
     single_process: bool = False
     no_jinjafmt: bool = False
+    reset_cache: bool = False
     verbose: bool = False
     quiet: bool = False
     no_color: bool = False

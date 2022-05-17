@@ -187,7 +187,7 @@ def test_run_unformatted_update(
 
 
 def test_run_preformatted(
-    preformatted_files: List[Path], all_output_modes: Mode
+    preformatted_files: List[Path], all_output_modes: Mode, reset_cache_mode: Mode
 ) -> None:
     files = preformatted_files
     report = run(files=files, mode=all_output_modes)
@@ -201,6 +201,12 @@ def test_run_preformatted(
     assert cached_run.number_unchanged == report.number_unchanged
     assert cached_run.number_errored == report.number_errored
     assert all([res.from_cache for res in cached_run.results])
+
+    uncached_run = run(files=files, mode=reset_cache_mode)
+    assert uncached_run.number_changed == report.number_changed
+    assert uncached_run.number_unchanged == report.number_unchanged
+    assert uncached_run.number_errored == report.number_errored
+    assert not any([res.from_cache for res in uncached_run.results])
 
 
 def test_run_unformatted(unformatted_files: List[Path], all_output_modes: Mode) -> None:

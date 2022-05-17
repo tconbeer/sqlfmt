@@ -58,6 +58,8 @@ def error_target(tmp_path: Path) -> Path:
         "--quiet",
         "--check -q",
         "--no-jinjafmt",
+        "-k",
+        "--reset-cache",
     ],
 )
 def test_end_to_end_preformatted(
