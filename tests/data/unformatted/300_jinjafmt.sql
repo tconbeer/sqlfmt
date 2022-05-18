@@ -22,12 +22,18 @@
         suffix="something_else"
 ) }}
 
--- ensure jinja with python errors are not indented further when formatting
 {{
     "something"
     ~ "something else"
     ~ "something else entirely"
 }}
+
+-- ensure jinja with python errors are not indented further when formatting
+{% 
+    extends layout_template 
+    if layout_template is defined 
+    else 'default.html' 
+%}
 
 )))))__SQLFMT_OUTPUT__(((((
 {{
@@ -63,9 +69,11 @@
     )
 }}
 
+{{ "something" ~ "something else" ~ "something else entirely" }}
+
 -- ensure jinja with python errors are not indented further when formatting
-{{
-    "something"
-    ~ "something else"
-    ~ "something else entirely"
-}}
+{% 
+    extends layout_template 
+    if layout_template is defined 
+    else 'default.html' 
+%}

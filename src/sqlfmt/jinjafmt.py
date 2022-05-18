@@ -22,6 +22,7 @@ class BlackWrapper:
     class StringProperties(NamedTuple):
         has_newlines: bool
         keyword_replacements: Dict[str, int]
+        tilde_replacements: Dict[str, int]
 
     def __init__(self) -> None:
         try:
@@ -91,8 +92,15 @@ class BlackWrapper:
         processed_string, keyword_replacements = cls._replace_reserved_words(
             source_string=source_string
         )
+        processed_string, tilde_replacements = cls._replace_tildes(
+            source_string=processed_string
+        )
 
-        props = cls.StringProperties(has_newline, keyword_replacements)
+        props = cls.StringProperties(
+            has_newlines=has_newline,
+            keyword_replacements=keyword_replacements,
+            tilde_replacements=tilde_replacements,
+        )
         return processed_string, props
 
     @classmethod
@@ -133,6 +141,28 @@ class BlackWrapper:
         return processed_string, keyword_replacements
 
     @classmethod
+    def _replace_tildes(cls, source_string: str) -> Tuple[str, Dict[str, int]]:
+        """
+        Jinja uses ~ as the string concatenation operator, but black cannot parse the
+        tilde. This method finds another operator to safely replace the tilde with,
+        and returns a string with the tilde replaced and a dict with the symbol it
+        was replaced with and the number of replacements made.
+        """
+        if "~" in source_string:
+            operators = ["+", "-", "*", "/"]
+            for operator in operators:
+                if operator in source_string:
+                    continue
+                else:
+                    n = source_string.count("~")
+                    processed_string = source_string.replace("~", operator)
+                    return processed_string, {operator: n}
+            else:
+                return source_string, {}
+        else:
+            return source_string, {}
+
+    @classmethod
     def _postprocess_string(
         cls,
         formatted_string: str,
@@ -156,6 +186,13 @@ class BlackWrapper:
                 "Internal Error! Did not reverse the same number of keywords that "
                 "were replaced. Please open an issue"
             )
+
+        for operator, n in string_properties.tilde_replacements.items():
+            assert n == formatted_string.count(operator), (
+                "Internal Error! Did not reverse the same number of tildes that "
+                "were replaced. Please open an issue"
+            )
+            formatted_string = formatted_string.replace(operator, "~")
 
         return formatted_string
 

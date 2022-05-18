@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Features
 
--   jinjafmt is now able to format jinja that contains functions and variables that are reserved python words (e.g., return, except, from) ([#177](https://github.com/tconbeer/sqlfmt/issues/177), [#155](https://github.com/tconbeer/sqlfmt/issues/155))
+-   jinjafmt is now able to format jinja that contains functions and variables that are reserved python words (e.g., return, except, from) ([#177](https://github.com/tconbeer/sqlfmt/issues/177), [#155](https://github.com/tconbeer/sqlfmt/issues/155)), and `~`, the jinja string concatenation operator ([#182](https://github.com/tconbeer/sqlfmt/issues/182))
 -   adds a new command-line option to reset the sqlfmt cache ([#184](https://github.com/tconbeer/sqlfmt/issues/184))
 
 ### Fixes
@@ -15,7 +15,7 @@ All notable changes to this project will be documented in this file.
 -   fixes issue causing unstable formatting of multiline jinja tags when black is unable to parse the tag ([#176](https://github.com/tconbeer/sqlfmt/issues/176))
 -   fixes issue for developers where pre-commit hooks would not install
 
-### Features
+### Primer
 
 -   sqlfmt_primer now runs against forked (formatted) repos to make changes easier to detect
 

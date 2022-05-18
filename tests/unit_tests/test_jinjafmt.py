@@ -176,6 +176,25 @@ def test_format_line(jinja_formatter: JinjaFormatter) -> None:
     assert n.value == "{{ expression }}"
 
 
+@pytest.mark.parametrize(
+    "source_string,expected_string",
+    [
+        ("1 +      1", "1 + 1"),
+        ("'a' ~      'b'", '"a" ~ "b"'),
+        ("dbt_utils.star(\nfrom=one\n)", "dbt_utils.star(from=one)"),
+        ("return(\nfoo\n)", "return(foo)"),
+    ],
+)
+def test_black_wrapper_format_string(
+    source_string: str, expected_string: str, default_mode: Mode
+) -> None:
+    jinja_formatter = JinjaFormatter(default_mode)
+    result = jinja_formatter.code_formatter.format_string(
+        source_string=source_string, max_length=88
+    )
+    assert result == (expected_string, True)
+
+
 def test_black_wrapper_format_string_no_black(
     uninstall_black: None, default_mode: Mode
 ) -> None:
@@ -202,17 +221,21 @@ def test_max_code_length(tag: JinjaTag, expected: int) -> None:
 @pytest.mark.parametrize(
     "source_string,expected_res",
     [
-        ("my_macro(one, two, three='my_kwarg')", ("", (False, {}))),
-        ("my_macro(\n    one, two, three='my_kwarg'\n)", ("", (True, {}))),
-        ("my_macro(\n    one,\n    two,\n    three='my_kwarg',\n)", ("", (True, {}))),
-        ("my_list = [\n1, 2, 3,\n]", ("", (True, {}))),
+        ("my_macro(one, two, three='my_kwarg')", ("", (False, {}, {}))),
+        ("my_macro(\n    one, two, three='my_kwarg'\n)", ("", (True, {}, {}))),
+        (
+            "my_macro(\n    one,\n    two,\n    three='my_kwarg',\n)",
+            ("", (True, {}, {})),
+        ),
+        ("my_list = [\n1, 2, 3,\n]", ("", (True, {}, {}))),
         (
             "return(import(except=1))",
             (
                 "return_(import_(except_=1))",
-                (False, {r"return_\(": 1, r"import_\(": 1, r"except_\s*=": 1}),
+                (False, {r"return_\(": 1, r"import_\(": 1, r"except_\s*=": 1}, {}),
             ),
         ),
+        ("'a' ~     'b'", ("'a' +     'b'", (False, {}, {"+": 1}))),
     ],
 )
 def test_preprocess_string_properties(
@@ -292,32 +315,67 @@ def test_replace_reserved_words(
 
 
 @pytest.mark.parametrize(
-    "formatted_string,keyword_replacements,expected_string",
+    "source_string,expected_string,expected_tilde_replacements",
+    [
+        ('"a" ~ "b"', '"a" + "b"', {"+": 1}),
+        ('"a" ~ "b" + 1', '"a" - "b" + 1', {"-": 1}),
+        ('"a" ~ "b" - 1', '"a" + "b" - 1', {"+": 1}),
+        ("foo", "foo", {}),
+        ("foo + bar", "foo + bar", {}),
+        ("~+-*/", "~+-*/", {}),
+        ("foo ~ bar + baz - qux * foo / bar", "foo ~ bar + baz - qux * foo / bar", {}),
+    ],
+)
+def test_replace_tildes(
+    source_string: str,
+    expected_string: str,
+    expected_tilde_replacements: Dict[str, int],
+) -> None:
+    processed_string, actual_tilde_replacements = BlackWrapper._replace_tildes(
+        source_string=source_string
+    )
+    assert processed_string == expected_string
+    assert actual_tilde_replacements == expected_tilde_replacements
+
+
+@pytest.mark.parametrize(
+    "formatted_string,keyword_replacements,tilde_replacements,expected_string",
     [
         (
             "from_ = 'already there'",
+            {},
             {},
             "from_ = 'already there'",
         ),
         (
             "from_ = 'replaced a keyword'",
             {r"from_\s*=": 1},
+            {},
             "from = 'replaced a keyword'",
         ),
         (
             "dbt_utils.star(from_=ref('asdf'), except_=fields_to_exclude)",
             {r"from_\s*=": 1, r"except_\s*=": 1},
+            {},
             "dbt_utils.star(from=ref('asdf'), except=fields_to_exclude)",
         ),
+        ("foo + bar", {}, {"+": 1}, "foo ~ bar"),
+        ("foo + bar / baz", {}, {"/": 1}, "foo + bar ~ baz"),
+        ("foo + bar", {}, {}, "foo + bar"),
     ],
 )
 def test_postprocess_string(
-    formatted_string: str, keyword_replacements: Dict[str, int], expected_string: str
+    formatted_string: str,
+    keyword_replacements: Dict[str, int],
+    tilde_replacements: Dict[str, int],
+    expected_string: str,
 ) -> None:
     processed_string = BlackWrapper._postprocess_string(
         formatted_string,
         string_properties=BlackWrapper.StringProperties(
-            has_newlines=False, keyword_replacements=keyword_replacements
+            has_newlines=False,
+            keyword_replacements=keyword_replacements,
+            tilde_replacements=tilde_replacements,
         ),
     )
     assert processed_string == expected_string
@@ -333,6 +391,7 @@ def test_postprocess_string(
         "abc = True",
         "from_ = 'already there'",
         "something if something_else",
+        "foo ~ bar",
     ],
 )
 def test_preprocess_and_postprocess_are_inverse_ops(source_string: str) -> None:
