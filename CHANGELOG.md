@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.9.0] - 2022-06-02
+
 ### Features
 
 -   jinjafmt is now able to format jinja that contains functions and variables that are reserved python words (e.g., return, except, from) ([#177](https://github.com/tconbeer/sqlfmt/issues/177), [#155](https://github.com/tconbeer/sqlfmt/issues/155)), and `~`, the jinja string concatenation operator ([#182](https://github.com/tconbeer/sqlfmt/issues/182))
@@ -172,7 +174,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.8.0...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.9.0...HEAD
+
+[0.9.0]: https://github.com/tconbeer/sqlfmt/compare/0.8.0...0.9.0
 
 [0.8.0]: https://github.com/tconbeer/sqlfmt/compare/0.7.0...0.8.0
 
