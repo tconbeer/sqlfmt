@@ -31,7 +31,6 @@ jobs:
           version: "1.1.6"
       - name: Install python dependencies
         run: |
-          pip install --user --upgrade pip
           pip install tox
       - name: Run tox
         run: tox -e py39
@@ -65,7 +64,6 @@ jobs:
           version: latest
       - name: Install python dependencies
         run: |
-          pip install --user --upgrade pip
           pip install tox-gh
       - name: Run tox
         run: tox
