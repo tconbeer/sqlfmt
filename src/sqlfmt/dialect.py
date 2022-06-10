@@ -260,6 +260,7 @@ class Polyglot(Dialect):
                         r"any",
                         r"between",
                         r"cube",
+                        r"exclude",
                         r"exists",
                         r"grouping sets",
                         r"ilike",
@@ -270,6 +271,7 @@ class Polyglot(Dialect):
                         r"notnull",
                         r"not",
                         r"over",
+                        r"replace",
                         r"rollup",
                         r"rlike",
                         r"some",
@@ -363,9 +365,7 @@ class Polyglot(Dialect):
                         r"(union|intersect|except|minus)(\s+all|distinct)?",
                     )
                     + group(r"\W", r"$"),
-                    action=partial(
-                        actions.add_node_to_buffer, token_type=TokenType.SET_OPERATOR
-                    ),
+                    action=actions.handle_set_operator,
                 ),
                 Rule(
                     name="other_identifiers",

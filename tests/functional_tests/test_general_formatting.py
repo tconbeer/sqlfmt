@@ -27,6 +27,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/112_semicolons.sql",
         "unformatted/113_utils_group_by.sql",
         "unformatted/114_unions.sql",
+        "unformatted/115_select_star_except.sql",
         "unformatted/200_base_model.sql",
         "unformatted/201_basic_snapshot.sql",
         "unformatted/202_unpivot_macro.sql",
