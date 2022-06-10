@@ -39,6 +39,7 @@ class TokenType(Enum):
     DOT = auto()
     NEWLINE = auto()
     UNTERM_KEYWORD = auto()  # Unterminated keyword
+    SET_OPERATOR = auto()
     NAME = auto()
 
 

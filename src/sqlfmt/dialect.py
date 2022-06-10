@@ -340,7 +340,6 @@ class Polyglot(Dialect):
                         r"having",
                         r"qualify",
                         r"window",
-                        r"(union|intersect|except|minus)(\s+all|distinct)?",
                         r"order\s+by",
                         r"limit",
                         r"offset",
@@ -355,6 +354,17 @@ class Polyglot(Dialect):
                     + group(r"\W", r"$"),
                     action=partial(
                         actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD
+                    ),
+                ),
+                Rule(
+                    name="set_operator",
+                    priority=1010,
+                    pattern=group(
+                        r"(union|intersect|except|minus)(\s+all|distinct)?",
+                    )
+                    + group(r"\W", r"$"),
+                    action=partial(
+                        actions.add_node_to_buffer, token_type=TokenType.SET_OPERATOR
                     ),
                 ),
                 Rule(

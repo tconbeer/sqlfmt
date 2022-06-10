@@ -277,7 +277,7 @@ class Node:
 
         # if the token should reduce the depth of the node, pop
         # the last item(s) off open_brackets or open_jinja_blocks
-        if token.type == TokenType.UNTERM_KEYWORD:
+        if token.type in (TokenType.UNTERM_KEYWORD, TokenType.SET_OPERATOR):
             if open_brackets and open_brackets[-1].is_unterm_keyword:
                 _ = open_brackets.pop()
         elif token.type in (TokenType.BRACKET_CLOSE, TokenType.STATEMENT_END):

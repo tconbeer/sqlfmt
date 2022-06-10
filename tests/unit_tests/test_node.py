@@ -62,7 +62,7 @@ def test_calculate_depth_exception() -> None:
 
 
 def test_jinja_depth(default_mode: Mode) -> None:
-    source_string, _ = read_test_data("unit_tests/test_line/test_jinja_depth.sql")
+    source_string, _ = read_test_data("unit_tests/test_node/test_jinja_depth.sql")
     q = default_mode.dialect.initialize_analyzer(
         line_length=default_mode.line_length
     ).parse_query(source_string=source_string)
@@ -134,7 +134,7 @@ def test_jinja_depth(default_mode: Mode) -> None:
         (1, 1),  # {% if not loop.last -%}
         (1, 2),  # \n
         (0, 2),  # union all
-        (1, 2),  # \n
+        (0, 2),  # \n
         (0, 1),  # {%- endif %}
         (0, 1),  # \n
         (0, 0),  # {% endfor %}
@@ -173,7 +173,7 @@ def test_is_the_between_operator(token: str, result: bool) -> None:
 
 def test_is_the_and_after_the_between_operator(default_mode: Mode) -> None:
     source_string, _ = read_test_data(
-        "unit_tests/test_line/test_is_the_and_after_the_between_operator.sql"
+        "unit_tests/test_node/test_is_the_and_after_the_between_operator.sql"
     )
     q = default_mode.dialect.initialize_analyzer(
         line_length=default_mode.line_length
@@ -190,3 +190,36 @@ def test_is_the_and_after_the_between_operator(default_mode: Mode) -> None:
     assert all([not n.is_the_and_after_the_between_operator for n in boolean_ands])
     assert all([n.is_the_and_after_the_between_operator for n in between_ands])
     assert all([not n.is_the_and_after_the_between_operator for n in other_nodes])
+
+
+def test_union_depth(default_mode: Mode) -> None:
+    source_string, _ = read_test_data("unit_tests/test_node/test_union_depth.sql")
+    q = default_mode.dialect.initialize_analyzer(
+        line_length=default_mode.line_length
+    ).parse_query(source_string=source_string)
+
+    expected = [
+        (0, 0),  # select,
+        (1, 0),  # 1,
+        (1, 0),  # \n,
+        (1, 0),  # \n,
+        (0, 0),  # union,
+        (0, 0),  # \n,
+        (0, 0),  # \n,
+        (0, 0),  # select,
+        (1, 0),  # 2,
+        (1, 0),  # \n,
+        (1, 0),  # \n,
+        (0, 0),  # union all,
+        (0, 0),  # \n,
+        (0, 0),  # \n,
+        (0, 0),  # (,
+        (1, 0),  # \n,
+        (1, 0),  # select,
+        (2, 0),  # 3,
+        (2, 0),  # \n,
+        (0, 0),  # ),
+        (0, 0),  # \n'
+    ]
+    actual_depth = [n.depth for n in q.nodes]
+    assert actual_depth == expected
