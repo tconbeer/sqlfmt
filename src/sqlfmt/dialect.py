@@ -260,7 +260,6 @@ class Polyglot(Dialect):
                         r"any",
                         r"between",
                         r"cube",
-                        r"exclude",
                         r"exists",
                         r"grouping sets",
                         r"ilike",
@@ -271,13 +270,24 @@ class Polyglot(Dialect):
                         r"notnull",
                         r"not",
                         r"over",
-                        r"replace",
                         r"rollup",
                         r"rlike",
                         r"some",
                         r"similar\s+to",
                     )
                     + group(r"\W", r"$"),
+                    action=partial(
+                        actions.add_node_to_buffer, token_type=TokenType.WORD_OPERATOR
+                    ),
+                ),
+                Rule(
+                    name="star_replace_exclude",
+                    priority=921,
+                    pattern=group(
+                        r"exclude",
+                        r"replace",
+                    )
+                    + group(r"\s+\("),
                     action=partial(
                         actions.add_node_to_buffer, token_type=TokenType.WORD_OPERATOR
                     ),
