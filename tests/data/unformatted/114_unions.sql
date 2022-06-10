@@ -4,7 +4,7 @@
     where var1 is not null and var2 is not null
     limit 100
 )
-union
+UNION
     (
         select *
         from "data_warehouse"."order_status"

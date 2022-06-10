@@ -472,8 +472,7 @@ class Node:
     def capitalize(cls, token: Token) -> str:
         """
         Proper style is to lowercase all keywords, statements, and names.
-        If DB identifiers can't be lowercased, they should be quoted. This
-        will likely need to be changed for Snowflake support.
+        If DB identifiers can't be lowercased, they should be quoted.
         """
         if token.type in (
             TokenType.UNTERM_KEYWORD,
@@ -484,6 +483,7 @@ class Node:
             TokenType.AS,
             TokenType.ON,
             TokenType.BOOLEAN_OPERATOR,
+            TokenType.SET_OPERATOR,
         ):
             return token.token.lower()
         else:
