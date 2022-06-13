@@ -85,7 +85,7 @@ class LineMerger:
             raise CannotMergeException(
                 "Can't merge lines containing disabled formatting"
             )
-        elif node.is_semicolon:
+        elif node.divides_queries:
             raise CannotMergeException(
                 "Can't merge multiple queries onto a single line"
             )

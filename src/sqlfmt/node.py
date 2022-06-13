@@ -104,6 +104,14 @@ class Node:
         return self.token.type == TokenType.SEMICOLON
 
     @property
+    def is_set_operator(self) -> bool:
+        return self.token.type == TokenType.SET_OPERATOR
+
+    @property
+    def divides_queries(self) -> bool:
+        return self.is_semicolon or self.is_set_operator
+
+    @property
     def is_opening_bracket(self) -> bool:
         return self.token.type in (
             TokenType.BRACKET_OPEN,
