@@ -259,3 +259,34 @@ def test_split_before_semicolon(splitter: LineSplitter) -> None:
         ";\n",
     ]
     assert actual_result == expected_result
+
+
+def test_split_around_set_operator(splitter: LineSplitter) -> None:
+    source_string = (
+        "select 1 union all select 2 union all (select 3) union all select 4\n"
+    )
+    raw_query = splitter.mode.dialect.initialize_analyzer(
+        splitter.mode.line_length
+    ).parse_query(source_string)
+
+    split_lines: List[Line] = []
+    for raw_line in raw_query.lines:
+        split_lines.extend(splitter.maybe_split(raw_line))
+
+    actual_result = [str(line) for line in split_lines]
+    expected_result = [
+        "select\n",
+        "    1\n",
+        "union all\n",
+        "select\n",
+        "    2\n",
+        "union all\n",
+        "(\n",
+        "    select\n",
+        "        3\n",
+        ")\n",
+        "union all\n",
+        "select\n",
+        "    4\n",
+    ]
+    assert actual_result == expected_result

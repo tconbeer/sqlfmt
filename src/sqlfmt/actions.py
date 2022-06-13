@@ -129,6 +129,34 @@ def handle_newline(
     analyzer.pos = nl_token.epos
 
 
+def handle_set_operator(
+    analyzer: Analyzer, source_string: str, match: re.Match
+) -> None:
+    """
+    Mostly, when we encounter a set operator (like union) we just want to add
+    a token with a SET_OPERATOR type. However, EXCEPT is an overloaded
+    keyword in some dialects (BigQuery) that support `select * except (fields)`.
+    In this case, except should be a WORD_OPERATOR
+    """
+    previous_node = analyzer.previous_node
+    token = Token.from_match(source_string, match, TokenType.SET_OPERATOR)
+    if (
+        token.token.lower() == "except"
+        and previous_node
+        and previous_node.token.type == TokenType.STAR
+    ):
+        token = Token(
+            type=TokenType.WORD_OPERATOR,
+            prefix=token.prefix,
+            token=token.token,
+            spos=token.spos,
+            epos=token.epos,
+        )
+    node = Node.from_token(token=token, previous_node=previous_node)
+    analyzer.node_buffer.append(node)
+    analyzer.pos = token.epos
+
+
 def lex_jinja(analyzer: Analyzer, source_string: str, _: re.Match) -> None:
     """
     Makes a nested call to analyzer.lex, with the jinja ruleset activated.

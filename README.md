@@ -274,6 +274,7 @@ Note: If encountering a JSONDecodeError during `poetry install`, you will want t
 ### Updating primer repos to reflect formatting changes
 
 1. Make sure all changes are committed to sqlfmt
+1. Check out `main` in the repo and make sure you `pull` changes locally
 1. Check out the `unformatted` tag in the repo with `git checkout -b chore/apply-abc123 unformatted` where `abc123` is the hash of the most recent sqlfmt commit (from 1)
 1. Run sqlfmt against the working tree, then `git add .` and `git commit -m "chore: apply sqlfmt abc123"`
 1. We will have conflicts with main that we want to ignore, so merge main into this branch, ignoring anything on main: `git merge -s ours main`

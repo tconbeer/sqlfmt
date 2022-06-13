@@ -104,6 +104,14 @@ class Node:
         return self.token.type == TokenType.SEMICOLON
 
     @property
+    def is_set_operator(self) -> bool:
+        return self.token.type == TokenType.SET_OPERATOR
+
+    @property
+    def divides_queries(self) -> bool:
+        return self.is_semicolon or self.is_set_operator
+
+    @property
     def is_opening_bracket(self) -> bool:
         return self.token.type in (
             TokenType.BRACKET_OPEN,
@@ -277,7 +285,7 @@ class Node:
 
         # if the token should reduce the depth of the node, pop
         # the last item(s) off open_brackets or open_jinja_blocks
-        if token.type == TokenType.UNTERM_KEYWORD:
+        if token.type in (TokenType.UNTERM_KEYWORD, TokenType.SET_OPERATOR):
             if open_brackets and open_brackets[-1].is_unterm_keyword:
                 _ = open_brackets.pop()
         elif token.type in (TokenType.BRACKET_CLOSE, TokenType.STATEMENT_END):
@@ -472,8 +480,7 @@ class Node:
     def capitalize(cls, token: Token) -> str:
         """
         Proper style is to lowercase all keywords, statements, and names.
-        If DB identifiers can't be lowercased, they should be quoted. This
-        will likely need to be changed for Snowflake support.
+        If DB identifiers can't be lowercased, they should be quoted.
         """
         if token.type in (
             TokenType.UNTERM_KEYWORD,
@@ -484,6 +491,7 @@ class Node:
             TokenType.AS,
             TokenType.ON,
             TokenType.BOOLEAN_OPERATOR,
+            TokenType.SET_OPERATOR,
         ):
             return token.token.lower()
         else:

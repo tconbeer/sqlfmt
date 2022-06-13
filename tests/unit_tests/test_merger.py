@@ -341,8 +341,9 @@ def test_respect_extra_blank_lines(merger: LineMerger) -> None:
     assert merged_lines[7].is_blank_line
 
 
-def test_do_not_merge_across_semicolons(merger: LineMerger) -> None:
-    source_string = "select 1\n;\nselect2\n"
+@pytest.mark.parametrize("sep", [";", "union", "union all", "intersect", "except"])
+def test_do_not_merge_across_query_dividers(merger: LineMerger, sep: str) -> None:
+    source_string = f"select 1\n{sep}\nselect2\n"
     raw_query = merger.mode.dialect.initialize_analyzer(
         merger.mode.line_length
     ).parse_query(source_string)

@@ -281,6 +281,18 @@ class Polyglot(Dialect):
                     ),
                 ),
                 Rule(
+                    name="star_replace_exclude",
+                    priority=921,
+                    pattern=group(
+                        r"exclude",
+                        r"replace",
+                    )
+                    + group(r"\s+\("),
+                    action=partial(
+                        actions.add_node_to_buffer, token_type=TokenType.WORD_OPERATOR
+                    ),
+                ),
+                Rule(
                     name="as",
                     priority=930,
                     pattern=group(r"as") + group(r"\W", r"$"),
@@ -340,7 +352,6 @@ class Polyglot(Dialect):
                         r"having",
                         r"qualify",
                         r"window",
-                        r"(union|intersect|except|minus)(\s+all|distinct)?",
                         r"order\s+by",
                         r"limit",
                         r"offset",
@@ -356,6 +367,15 @@ class Polyglot(Dialect):
                     action=partial(
                         actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD
                     ),
+                ),
+                Rule(
+                    name="set_operator",
+                    priority=1010,
+                    pattern=group(
+                        r"(union|intersect|except|minus)(\s+all|distinct)?",
+                    )
+                    + group(r"\W", r"$"),
+                    action=actions.handle_set_operator,
                 ),
                 Rule(
                     name="other_identifiers",

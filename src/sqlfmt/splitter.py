@@ -47,7 +47,8 @@ class LineSplitter:
             # always split before any node that decreases depth
             or node.is_closing_bracket
             or node.is_closing_jinja_block
-            or node.is_semicolon
+            # always split before a node that divides queries
+            or node.divides_queries
         ):
             return True
         # split before any operator unless the previous node is a closing
@@ -79,6 +80,8 @@ class LineSplitter:
             or node.is_opening_bracket
             or node.is_opening_jinja_block
             or node.is_unterm_keyword
+            # always split after a token that divides queries
+            or node.divides_queries
         ):
             return True
         else:

@@ -5,7 +5,8 @@ import pytest
 from sqlfmt import actions
 from sqlfmt.analyzer import Analyzer
 from sqlfmt.exception import SqlfmtBracketError, StopJinjaLexing
-from sqlfmt.token import TokenType
+from sqlfmt.node import Node
+from sqlfmt.token import Token, TokenType
 
 
 def test_raise_sqlfmt_bracket_error(default_analyzer: Analyzer) -> None:
@@ -183,6 +184,38 @@ def test_handle_newline_leading_comments(default_analyzer: Analyzer) -> None:
     line = default_analyzer.line_buffer[0]
     assert len(line.comments) == 1
     assert len(line.nodes) == 2  # includes nl node
+
+
+@pytest.mark.parametrize(
+    "source_string,has_preceding_star,expected_type",
+    [
+        (" except", True, TokenType.WORD_OPERATOR),
+        (" except", False, TokenType.SET_OPERATOR),
+        (" except all", True, TokenType.SET_OPERATOR),  # this is a syntax error
+        (" union all", False, TokenType.SET_OPERATOR),
+    ],
+)
+def test_handle_set_operator(
+    default_analyzer: Analyzer,
+    source_string: str,
+    has_preceding_star: bool,
+    expected_type: TokenType,
+) -> None:
+    rule = default_analyzer.get_rule("main", "set_operator")
+    match = rule.program.match(source_string, pos=default_analyzer.pos)
+    assert match
+
+    if has_preceding_star:
+        t = Token(type=TokenType.STAR, prefix="", token="*", spos=0, epos=1)
+        n = Node.from_token(t, previous_node=None)
+        default_analyzer.node_buffer.append(n)
+
+    actions.handle_set_operator(default_analyzer, source_string, match)
+
+    assert len(default_analyzer.node_buffer) == 2 if has_preceding_star else 1
+
+    node = default_analyzer.node_buffer[-1]
+    assert node.token.type == expected_type
 
 
 @pytest.mark.parametrize(
