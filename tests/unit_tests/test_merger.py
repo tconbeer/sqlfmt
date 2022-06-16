@@ -254,6 +254,27 @@ def test_split_into_segments(merger: LineMerger) -> None:
     assert len(indented_segments) == 13
 
 
+def test_split_into_segments_query_dividers(merger: LineMerger) -> None:
+    source_string, _ = read_test_data(
+        "unit_tests/test_merger/test_split_into_segments_query_dividers.sql"
+    )
+    q = merger.mode.dialect.initialize_analyzer(merger.mode.line_length).parse_query(
+        source_string
+    )
+
+    top_level_segments = merger._split_into_segments(q.lines)
+    assert len(top_level_segments) == 7
+    assert [str(segment[0]) for segment in top_level_segments] == [
+        "select\n",
+        "union all\n",
+        "select\n",
+        "except\n",
+        "select\n",
+        ";\n",
+        "select\n",
+    ]
+
+
 def test_merge_single_line(merger: LineMerger) -> None:
     source_string = "select 1\n"
     q = merger.mode.dialect.initialize_analyzer(merger.mode.line_length).parse_query(
