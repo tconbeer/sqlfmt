@@ -166,9 +166,11 @@ class Node:
             in (
                 TokenType.OPERATOR,
                 TokenType.WORD_OPERATOR,
+                TokenType.TIGHT_WORD_OPERATOR,
                 TokenType.AS,
                 TokenType.ON,
                 TokenType.BOOLEAN_OPERATOR,
+                TokenType.DOUBLE_COLON,
                 TokenType.SEMICOLON,
             )
             or self.is_multiplication_star
@@ -228,10 +230,6 @@ class Node:
             return False
         else:
             return self.has_preceding_between_operator
-
-    @property
-    def is_low_priority_merge_operator(self) -> bool:
-        return self.token.type in (TokenType.BOOLEAN_OPERATOR, TokenType.ON)
 
     @property
     def is_newline(self) -> bool:
@@ -449,6 +447,7 @@ class Node:
             TokenType.STATEMENT_START,
             TokenType.STATEMENT_END,
             TokenType.WORD_OPERATOR,
+            TokenType.TIGHT_WORD_OPERATOR,
             TokenType.BOOLEAN_OPERATOR,
             TokenType.AS,
             TokenType.ON,

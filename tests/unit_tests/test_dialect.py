@@ -147,6 +147,7 @@ class TestPolyglot:
             ("main", "word_operator", "grouping sets"),
             ("main", "word_operator", "cube"),
             ("main", "word_operator", "rollup"),
+            ("main", "over", "over"),
             ("main", "as", "as"),
             ("main", "on", "on"),
             ("main", "boolean_operator", "AND"),

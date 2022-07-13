@@ -26,7 +26,7 @@ def tokens() -> List[Token]:
     tokens = [
         Token(type=TokenType.UNTERM_KEYWORD, prefix="", token="with", spos=0, epos=4),
         Token(type=TokenType.NAME, prefix=" ", token="abc", spos=4, epos=8),
-        Token(type=TokenType.WORD_OPERATOR, prefix=" ", token="as", spos=8, epos=11),
+        Token(type=TokenType.AS, prefix=" ", token="as", spos=8, epos=11),
         Token(type=TokenType.BRACKET_OPEN, prefix=" ", token="(", spos=11, epos=13),
         Token(
             type=TokenType.UNTERM_KEYWORD, prefix="", token="select", spos=13, epos=19
@@ -59,7 +59,6 @@ def test_bare_line(bare_line: Line) -> None:
     assert not bare_line.contains_operator
     assert not bare_line.starts_with_comma
     assert not bare_line.starts_with_operator
-    assert not bare_line.starts_with_low_priority_merge_operator
     assert not bare_line.is_blank_line
     assert not bare_line.is_standalone_multiline_node
     assert not bare_line.is_too_long(88)
@@ -103,11 +102,11 @@ def test_simple_line(
     assert simple_line.contains_operator
     assert not simple_line.starts_with_comma
     assert not simple_line.starts_with_operator
-    assert not simple_line.starts_with_low_priority_merge_operator
     assert not simple_line.contains_multiline_node
     assert not simple_line.is_blank_line
     assert not simple_line.is_standalone_multiline_node
     assert not simple_line.is_too_long(88)
+    assert not simple_line.opens_new_bracket
 
     assert simple_line.nodes[5].token.type == TokenType.STAR
     assert not simple_line.nodes[5].is_multiplication_star
@@ -343,6 +342,10 @@ def test_closes_bracket_from_previous_line(
     result = [line.closes_bracket_from_previous_line for line in q.lines]
     expected = [False, False, False, False, False, False, True, False, True]
     assert result == expected
+
+    opens_result = [line.opens_new_bracket for line in q.lines]
+    opens_expected = [True, False, True, False, False, False, False, False, False]
+    assert opens_result == opens_expected
 
 
 @pytest.mark.parametrize(

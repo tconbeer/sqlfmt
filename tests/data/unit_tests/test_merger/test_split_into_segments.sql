@@ -1,15 +1,21 @@
 select
     my_first_field,
-    my_second_field as an_alias,
+    my_second_field
+    as an_alias,
+
+    
     case
         when
-            another_field = some_other_value
+            another_field 
+            = some_other_value
         then
             some_really_long_value
-    end as my_case_statement,
+    end
+    as my_case_statement,
     case
         when
-            caser = 'my_literal'
+            caser 
+            = 'my_literal'
         then
             some_really_really_long_value_to_wrap_this_next_line
         else
@@ -17,13 +23,18 @@ select
     end,
     case
         when
-            (my_field)
+            (
+                my_field
+            )
         then
             end_field
-    end::numeric(
+    end
+    ::numeric(
         10,
         2
-    ) as casted_case,
+    ) 
+    as casted_case
+    ,
     (
         case
             when
@@ -31,14 +42,17 @@ select
             then
                 false
         end
-    ) + (
+    ) 
+    +
+    (
         case
             when
                 2
             then
                 true
         end
-    )::varchar(
+    )
+    ::varchar(
         10
     ),
     another_field,
@@ -47,6 +61,7 @@ select
             true
         then
             10
-    end + 4
+    end 
+    + 4
 from
     some_table

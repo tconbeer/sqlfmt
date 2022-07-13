@@ -37,6 +37,14 @@ class SqlfmtBracketError(SqlfmtError):
     pass
 
 
+class SqlfmtSegmentError(SqlfmtError):
+    """
+    Raised during merging if a segment is unexpectedly empty
+    """
+
+    pass
+
+
 class SqlfmtControlFlowException(Exception):
     """
     Generic exception for exceptions used to manage control

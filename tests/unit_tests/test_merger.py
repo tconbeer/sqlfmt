@@ -1,5 +1,8 @@
+from typing import List
+
 import pytest
 
+from sqlfmt.line import Line
 from sqlfmt.merger import CannotMergeException, LineMerger
 from sqlfmt.mode import Mode
 from tests.util import read_test_data
@@ -200,15 +203,21 @@ def test_merge_count_window_function(merger: LineMerger) -> None:
         "count(\n"
         "    case\n"
         "        when\n"
-        "            a is null\n"
+        "            a\n"
+        "            is null\n"
         "        then\n"
         "            1\n"
         "    end\n"
-        ") over (\n"
+        ")\n"
+        "over (\n"
         "    partition by\n"
         "        user_id,\n"
-        "        date_trunc('year', performed_at)\n"
-        ") as d,\n"
+        "        date_trunc(\n"
+        "            'year',\n"
+        "            performed_at\n"
+        "        )\n"
+        ")\n"
+        "as d,\n"
     )
     raw_query = merger.mode.dialect.initialize_analyzer(
         merger.mode.line_length
@@ -251,7 +260,70 @@ def test_split_into_segments(merger: LineMerger) -> None:
     )
 
     indented_segments = merger._split_into_segments(select_lines[1:])
-    assert len(indented_segments) == 13
+    expected_segments = [
+        "    my_first_field,\n",
+        "    my_second_field\n",
+        "    as an_alias,\n",
+        "    case\n",
+        "    as my_case_statement,\n",
+        "    case\n",
+        "    case\n",
+        "    ::numeric(\n",
+        "    as casted_case\n",
+        "    (\n",
+        "    +\n",
+        "    ::varchar(\n",
+        "    another_field,\n",
+        "    case\n",
+        "    + 4\n",
+    ]
+    assert [str(segment[0]) for segment in indented_segments] == expected_segments
+
+
+def test_split_into_segments_empty(merger: LineMerger) -> None:
+    no_lines: List[Line] = []
+    result = merger._split_into_segments(no_lines)
+    assert result == []
+
+
+def test_segment_continues_operator_sequence(merger: LineMerger) -> None:
+    source_string, _ = read_test_data(
+        "unit_tests/test_merger/test_segment_continues_operator_sequence.sql"
+    )
+    q = merger.mode.dialect.initialize_analyzer(merger.mode.line_length).parse_query(
+        source_string
+    )
+
+    segments = merger._split_into_segments(q.lines)
+    assert len(segments) == 8
+
+    p2_result = [
+        merger._segment_continues_operator_sequence(s, min_priority=2) for s in segments
+    ]
+    p2_expected = [False, True, True, False, True, False, True, True]
+    assert p2_result == p2_expected
+
+    p1_result = [
+        merger._segment_continues_operator_sequence(s, min_priority=1) for s in segments
+    ]
+    p1_expected = [False, True, False, False, True, False, False, True]
+    assert p1_result == p1_expected
+
+    p0_result = [
+        merger._segment_continues_operator_sequence(s, min_priority=0) for s in segments
+    ]
+    p0_expected = [False, False, False, False, True, False, False, False]
+    assert p0_result == p0_expected
+
+
+@pytest.mark.parametrize("p", [0, 1])
+def test_segment_continues_operator_sequence_empty(merger: LineMerger, p: int) -> None:
+    source_string = "\n\n\n\n"
+    q = merger.mode.dialect.initialize_analyzer(merger.mode.line_length).parse_query(
+        source_string
+    )
+    result = merger._segment_continues_operator_sequence(q.lines, min_priority=p)
+    assert result is True
 
 
 def test_merge_single_line(merger: LineMerger) -> None:

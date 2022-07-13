@@ -269,7 +269,6 @@ class Polyglot(Dialect):
                         r"like(\s+any)?",
                         r"notnull",
                         r"not",
-                        r"over",
                         r"rollup",
                         r"rlike",
                         r"some",
@@ -289,7 +288,17 @@ class Polyglot(Dialect):
                     )
                     + group(r"\s+\("),
                     action=partial(
-                        actions.add_node_to_buffer, token_type=TokenType.WORD_OPERATOR
+                        actions.add_node_to_buffer,
+                        token_type=TokenType.TIGHT_WORD_OPERATOR,
+                    ),
+                ),
+                Rule(
+                    name="over",
+                    priority=922,
+                    pattern=group(r"over") + group(r"\W", r"$"),
+                    action=partial(
+                        actions.add_node_to_buffer,
+                        token_type=TokenType.TIGHT_WORD_OPERATOR,
                     ),
                 ),
                 Rule(
