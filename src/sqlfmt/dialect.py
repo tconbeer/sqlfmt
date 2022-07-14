@@ -258,21 +258,20 @@ class Polyglot(Dialect):
                     pattern=group(
                         r"all",
                         r"any",
-                        r"between",
+                        r"(not\s+)?between",
                         r"cube",
-                        r"exists",
+                        r"(not\s+)?exists",
                         r"grouping sets",
-                        r"ilike",
-                        r"in",
-                        r"is",
+                        r"(not\s+)?ilike",
+                        r"(not\s+)?in",
+                        r"is(\s+not)?",
                         r"isnull",
-                        r"like(\s+any)?",
+                        r"(not\s+)?like(\s+any)?",
                         r"notnull",
-                        r"not",
                         r"rollup",
-                        r"rlike",
+                        r"(not\s+)?rlike",
                         r"some",
-                        r"similar\s+to",
+                        r"(not\s+)?similar\s+to",
                     )
                     + group(r"\W", r"$"),
                     action=partial(
@@ -299,6 +298,15 @@ class Polyglot(Dialect):
                     action=partial(
                         actions.add_node_to_buffer,
                         token_type=TokenType.TIGHT_WORD_OPERATOR,
+                    ),
+                ),
+                Rule(
+                    name="not",
+                    priority=923,
+                    pattern=group(r"not") + group(r"\W", r"$"),
+                    action=partial(
+                        actions.add_node_to_buffer,
+                        token_type=TokenType.WORD_OPERATOR,
                     ),
                 ),
                 Rule(

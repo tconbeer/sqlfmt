@@ -129,7 +129,7 @@ class LineMerger:
                 # some operators really should not be by themselves
                 # so if their segments are too long to be merged,
                 # we merge just their first line onto the prior segment
-                segments = self._maybe_merge_tight_operators(segments)
+                segments = self._maybe_stubbornly_merge(segments)
                 # then recurse into each segment and try to merge lines
                 # within individual segments
                 for segment in segments:
@@ -262,24 +262,26 @@ class LineMerger:
         finally:
             return new_segments
 
-    def _maybe_merge_tight_operators(
-        self, segments: List[List[Line]]
-    ) -> List[List[Line]]:
+    def _maybe_stubbornly_merge(self, segments: List[List[Line]]) -> List[List[Line]]:
         """
-        We prefer some operators, like `as()`, `over()`, `exclude()` to be
+        We prefer some operators, like `as`, `over()`, `exclude()` to be
         forced onto the prior line, even if the contents of their brackets
-        don't fit there. This method scans for segments that start with
+        don't fit there. This is also true for most operators that open
+        a bracket, like `in ()`.
+
+        This method scans for segments that start with
         such operators adds the first line of those segments to the prior
         segments
-
-        TODO: Make this less horrific
         """
         if len(segments) <= 1:
             return segments
 
         new_segments = [segments[0]]
         for segment in segments[1:]:
-            if self._segment_continues_operator_sequence(segment, min_priority=0):
+            if self._segment_continues_operator_sequence(segment, min_priority=0) or (
+                self._segment_continues_operator_sequence(segment, min_priority=1)
+                and self._tail_closes_head(segment)
+            ):
                 prev_segment = new_segments.pop()
                 merged_segments = self._stubbornly_merge(prev_segment, segment)
                 new_segments.extend(merged_segments)
@@ -299,34 +301,31 @@ class LineMerger:
         new_segments: List[List[Line]] = []
         # try to merge the first line of this segment with the previous segment
         head, i = self._get_first_nonblank_line(segment)
+
+        # TODO: refactor each merge type into its own function, loop through
+        # methods, break if works, for/else for the giving up case
         try:
             prev_segment = self.create_merged_line(prev_segment + [head])
+            new_segments.append(prev_segment)
+            new_segments.extend(self._get_remainder_of_segment(segment, i))
         except CannotMergeException:
             # try to add this segment to the last line of the previous segment
             last_line, k = self._get_first_nonblank_line(reversed(prev_segment))
             try:
                 new_last_lines = self.create_merged_line([last_line] + segment)
+                prev_segment[-(k + 1) :] = new_last_lines
+                new_segments.append(prev_segment)
             except CannotMergeException:
                 # try to add just the first line of this segment to the last
                 # line of the previous segment
                 try:
                     new_last_lines = self.create_merged_line([last_line, head])
-                except CannotMergeException:
-                    # give up and just return the original segments
-                    return [prev_segment, segment]
-                else:
                     prev_segment[-(k + 1) :] = new_last_lines
                     new_segments.append(prev_segment)
                     new_segments.extend(self._get_remainder_of_segment(segment, i))
-            # we successfully merged this segment to the last line of prev_segment
-            else:
-                prev_segment[-(k + 1) :] = new_last_lines
-                new_segments.append(prev_segment)
-        # we successfully merged the first line of segment with the entire
-        # previous segment
-        else:
-            new_segments.append(prev_segment)
-            new_segments.extend(self._get_remainder_of_segment(segment, i))
+                except CannotMergeException:
+                    # give up and just return the original segments
+                    return [prev_segment, segment]
 
         return new_segments
 
