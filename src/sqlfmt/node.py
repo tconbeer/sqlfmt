@@ -487,6 +487,7 @@ class Node:
             TokenType.STATEMENT_START,
             TokenType.STATEMENT_END,
             TokenType.WORD_OPERATOR,
+            TokenType.TIGHT_WORD_OPERATOR,
             TokenType.AS,
             TokenType.ON,
             TokenType.BOOLEAN_OPERATOR,

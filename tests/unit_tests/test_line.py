@@ -408,6 +408,27 @@ def test_capitalization(default_mode: Mode) -> None:
     assert parsed_string == expected
 
 
+@pytest.mark.parametrize(
+    "source_string",
+    [
+        "OVER",
+        "IN",
+        "AND",
+        "EXCEPT",
+        "REPLACE",
+        "UNION",
+        "SUM",
+        "BETWEEN",
+    ],
+)
+def test_capitalization_operators(default_mode: Mode, source_string: str) -> None:
+    q = default_mode.dialect.initialize_analyzer(
+        line_length=default_mode.line_length
+    ).parse_query(source_string=source_string)
+    parsed_string = "".join(str(line) for line in q.lines)
+    assert parsed_string.rstrip("\n") == source_string.lower()
+
+
 def test_formatting_disabled(default_mode: Mode) -> None:
     source_string, _ = read_test_data(
         "unit_tests/test_line/test_formatting_disabled.sql"
