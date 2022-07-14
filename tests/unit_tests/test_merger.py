@@ -1,7 +1,9 @@
+import itertools
 from typing import List
 
 import pytest
 
+from sqlfmt.exception import SqlfmtSegmentError
 from sqlfmt.line import Line
 from sqlfmt.merger import CannotMergeException, LineMerger
 from sqlfmt.mode import Mode
@@ -421,3 +423,86 @@ def test_do_not_merge_across_query_dividers(merger: LineMerger, sep: str) -> Non
     ).parse_query(source_string)
     merged_lines = merger.maybe_merge_lines(raw_query.lines)
     assert raw_query.lines == merged_lines
+
+
+@pytest.mark.parametrize(
+    "source_string,expected_result",
+    [
+        ("case\nfoo\nend\n", True),
+        ("count(\n*\n)\n", True),
+        ("count(\n*\n)\n\n\n", True),
+        ("\n\n\ncount(\n*\n)", True),
+        ("as (\nselect\n1\n)\n", True),
+        ("as foo\n", False),
+        ("from\nfoo\nwhere\n", False),
+    ],
+)
+def test_tail_closes_head(
+    merger: LineMerger, source_string: str, expected_result: bool
+) -> None:
+    q = merger.mode.dialect.initialize_analyzer(merger.mode.line_length).parse_query(
+        source_string
+    )
+    assert merger._tail_closes_head(q.lines) == expected_result
+
+
+@pytest.mark.parametrize(
+    "source_string,expected_idx",
+    [
+        ("case\nfoo\nend\n", 0),
+        ("\n\n\ncount(\n*\n)", 3),
+        ("\n\n\n    count(\n*\n)", 3),
+        ("\n     \n\n    count(\n*\n)", 3),
+    ],
+)
+def test_get_first_nonblank_line(
+    merger: LineMerger, source_string: str, expected_idx: int
+) -> None:
+    q = merger.mode.dialect.initialize_analyzer(merger.mode.line_length).parse_query(
+        source_string
+    )
+    line, i = merger._get_first_nonblank_line(q.lines)
+    assert i == expected_idx
+    assert line == q.lines[i]
+
+
+@pytest.mark.parametrize(
+    "source_string",
+    [
+        "",
+        "\n",
+        "\n\n\n    \n\n",
+    ],
+)
+def test_get_first_nonblank_line_raises(merger: LineMerger, source_string: str) -> None:
+    q = merger.mode.dialect.initialize_analyzer(merger.mode.line_length).parse_query(
+        source_string
+    )
+    with pytest.raises(SqlfmtSegmentError):
+        _, _ = merger._get_first_nonblank_line(q.lines)
+
+
+def test_maybe_stubbornly_merge(merger: LineMerger) -> None:
+    source_string, expected_string = read_test_data(
+        "unit_tests/test_merger/test_maybe_stubbornly_merge.sql"
+    )
+    q = merger.mode.dialect.initialize_analyzer(merger.mode.line_length).parse_query(
+        source_string
+    )
+    segments = merger._split_into_segments(q.lines)
+    merged_segments = merger._maybe_stubbornly_merge(segments)
+    result_string = "".join(
+        [line.render_with_comments(88) for line in itertools.chain(*merged_segments)]
+    )
+    assert result_string == expected_string
+
+
+def test_maybe_stubbornly_merge_single_segment(merger: LineMerger) -> None:
+    source_string = "select\na,\nb\n"
+    q = merger.mode.dialect.initialize_analyzer(merger.mode.line_length).parse_query(
+        source_string
+    )
+    segments = merger._split_into_segments(q.lines)
+    assert len(segments) == 1
+    merged_segments = merger._maybe_stubbornly_merge(segments)
+    assert merged_segments == segments
