@@ -143,12 +143,10 @@ class LineMerger:
             # we need to strip that off so we only segment the
             # indented lines
             else:
-                merged_lines.append(lines[0])
-                if self._tail_closes_head(lines):
-                    merged_lines.extend(self.maybe_merge_lines(lines[1:-1]))
-                    merged_lines.append(lines[-1])
-                else:
-                    merged_lines.extend(self.maybe_merge_lines(lines[1:]))
+                _, i = self._get_first_nonblank_line(lines)
+                merged_lines.extend(lines[: i + 1])
+                for segment in self._get_remainder_of_segment(lines, i):
+                    merged_lines.extend(self.maybe_merge_lines(segment))
         finally:
             return merged_lines
 
