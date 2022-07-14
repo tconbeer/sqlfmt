@@ -281,55 +281,74 @@ class LineMerger:
         for segment in segments[1:]:
             if self._segment_continues_operator_sequence(segment, min_priority=0):
                 prev_segment = new_segments.pop()
-                # try to merge the first line of this segment with the previous segment
-                head, i = self._get_first_nonblank_line(segment)
-                try:
-                    prev_segment = self.create_merged_line(prev_segment + [head])
-                except CannotMergeException:
-                    # try to add this segment to the last line of the previous segment
-                    last_line, k = self._get_first_nonblank_line(reversed(prev_segment))
-                    try:
-                        new_last_lines = self.create_merged_line([last_line] + segment)
-                    except CannotMergeException:
-                        # try to add just the first line of this segment to the last
-                        # line of the previous segment
-                        try:
-                            new_last_lines = self.create_merged_line([last_line, head])
-                        except CannotMergeException:
-                            # give up and just add the original segments back on
-                            new_segments.append(prev_segment)
-                            new_segments.append(segment)
-                            continue
-                        else:
-                            prev_segment[-(k + 1) :] = new_last_lines
-                            new_segments.append(prev_segment)
-                            if self._tail_closes_head(segment):
-                                _, j = self._get_first_nonblank_line(reversed(segment))
-                                # add the lines between the head and tail as a segment
-                                new_segments.append(segment[i + 1 : -(j + 1)])
-                                # add the tail line (and trailing whitespace)
-                                # as a segment
-                                new_segments.append(segment[-(j + 1) :])
-                            else:
-                                new_segments.append(segment[i + 1 :])
-                    else:
-                        prev_segment[-(k + 1) :] = new_last_lines
-                        new_segments.append(prev_segment)
-                else:
-                    new_segments.append(prev_segment)
-                    if self._tail_closes_head(segment):
-                        _, j = self._get_first_nonblank_line(reversed(segment))
-                        # add the lines between the head and tail as a segment
-                        new_segments.append(segment[i + 1 : -(j + 1)])
-                        # add the tail line (and trailing whitespace) as a segment
-                        new_segments.append(segment[-(j + 1) :])
-                    else:
-                        new_segments.append(segment[i + 1 :])
-
+                merged_segments = self._stubbornly_merge(prev_segment, segment)
+                new_segments.extend(merged_segments)
             else:
                 new_segments.append(segment)
 
         return new_segments
+
+    def _stubbornly_merge(
+        self, prev_segment: List[Line], segment: List[Line]
+    ) -> List[List[Line]]:
+        """
+        Attempts several different methods of merging prev_segment and
+        segment. Returns a list of segments that represent the
+        best possible merger of those two segments
+        """
+        new_segments: List[List[Line]] = []
+        # try to merge the first line of this segment with the previous segment
+        head, i = self._get_first_nonblank_line(segment)
+        try:
+            prev_segment = self.create_merged_line(prev_segment + [head])
+        except CannotMergeException:
+            # try to add this segment to the last line of the previous segment
+            last_line, k = self._get_first_nonblank_line(reversed(prev_segment))
+            try:
+                new_last_lines = self.create_merged_line([last_line] + segment)
+            except CannotMergeException:
+                # try to add just the first line of this segment to the last
+                # line of the previous segment
+                try:
+                    new_last_lines = self.create_merged_line([last_line, head])
+                except CannotMergeException:
+                    # give up and just return the original segments
+                    return [prev_segment, segment]
+                else:
+                    prev_segment[-(k + 1) :] = new_last_lines
+                    new_segments.append(prev_segment)
+                    new_segments.extend(self._get_remainder_of_segment(segment, i))
+            # we successfully merged this segment to the last line of prev_segment
+            else:
+                prev_segment[-(k + 1) :] = new_last_lines
+                new_segments.append(prev_segment)
+        # we successfully merged the first line of segment with the entire
+        # previous segment
+        else:
+            new_segments.append(prev_segment)
+            new_segments.extend(self._get_remainder_of_segment(segment, i))
+
+        return new_segments
+
+    @classmethod
+    def _get_remainder_of_segment(
+        cls, segment: List[Line], idx: int
+    ) -> List[List[Line]]:
+        """
+        Takes a segment and an index, and returns a list of either one or two segments,
+        composed of the lines of segment[idx+1:], depending on whether the segment
+        ends with a closing bracket
+        """
+        if cls._tail_closes_head(segment):
+            _, j = cls._get_first_nonblank_line(reversed(segment))
+            return [
+                # the lines between the head and tail
+                segment[idx + 1 : -(j + 1)],
+                # the tail line (and trailing whitespace)
+                segment[-(j + 1) :],
+            ]
+        else:
+            return [segment[idx + 1 :]]
 
     def _split_into_segments(self, lines: List[Line]) -> List[List[Line]]:
         """
