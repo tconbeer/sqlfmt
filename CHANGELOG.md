@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 -   set operators (like `union`) are now formatted differently. They must be on their own line, and will not cause subsequent blocks to be indented ([#188](https://github.com/tconbeer/sqlfmt/issues/188) - thank you [@Rainymood](https://github.com/Rainymood)!)
 -   `select * except(...)` syntax is now explicitly supported, and formatting is improved. Support added for BigQuery and DuckDB star options: `except`, `exclude`, `replace`
+-   formatting for chained boolean operators with complex expressions is now significantly improved ([#189](https://github.com/tconbeer/sqlfmt/issues/189) - thank you [@Rainymood](https://github.com/Rainymood)!)
 
 ## [0.9.0] - 2022-06-02
 
