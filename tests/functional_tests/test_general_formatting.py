@@ -35,6 +35,18 @@ from tests.util import check_formatting, read_test_data
         "unformatted/203_gitlab_email_domain_type.sql",
         "unformatted/204_gitlab_tag_validation.sql",
         "unformatted/205_rittman_hubspot_deals.sql",
+        "unformatted/206_gitlab_prep_geozone.sql",
+        pytest.param(
+            "unformatted/207_rittman_int_journals.sql", marks=pytest.mark.xfail
+        ),
+        pytest.param(
+            "unformatted/208_rittman_int_plan_breakout_metrics.sql",
+            marks=pytest.mark.xfail,
+        ),
+        pytest.param(
+            "unformatted/209_rittman_int_web_events_sessionized.sql",
+            marks=pytest.mark.xfail,
+        ),
         "unformatted/300_jinjafmt.sql",
     ],
 )

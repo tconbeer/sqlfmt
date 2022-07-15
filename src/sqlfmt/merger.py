@@ -305,7 +305,9 @@ class LineMerger:
         try:
             prev_segment = self.create_merged_line(prev_segment + [head])
             new_segments.append(prev_segment)
-            new_segments.extend(self._get_remainder_of_segment(segment, i))
+            remainder = self._get_remainder_of_segment(segment, i)
+            if remainder and remainder[0]:
+                new_segments.extend(remainder)
         except CannotMergeException:
             # try to add this segment to the last line of the previous segment
             last_line, k = self._get_first_nonblank_line(reversed(prev_segment))
@@ -320,7 +322,9 @@ class LineMerger:
                     new_last_lines = self.create_merged_line([last_line, head])
                     prev_segment[-(k + 1) :] = new_last_lines
                     new_segments.append(prev_segment)
-                    new_segments.extend(self._get_remainder_of_segment(segment, i))
+                    remainder = self._get_remainder_of_segment(segment, i)
+                    if remainder and remainder[0]:
+                        new_segments.extend(remainder)
                 except CannotMergeException:
                     # give up and just return the original segments
                     return [prev_segment, segment]

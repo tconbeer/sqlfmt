@@ -272,6 +272,7 @@ def test_split_into_segments(merger: LineMerger) -> None:
         "    case\n",
         "    ::numeric(\n",
         "    as casted_case\n",
+        "    ,\n",
         "    (\n",
         "    +\n",
         "    ::varchar(\n",
