@@ -114,6 +114,10 @@ class LineMerger:
 
         Returns a new list of Lines
         """
+        # print(f"merging {len(lines)} lines")
+        # print("".join([str(l) for l in lines]))
+        # if len(lines) == 8:
+        #     breakpoint()
 
         try:
             merged_lines = self.create_merged_line(lines)
@@ -122,8 +126,12 @@ class LineMerger:
             # doesn't fit onto a single line, so split into
             # segments at the depth of lines[0]
             segments = self._split_into_segments(lines)
+            # if a segment starts with a standalone operator,
+            # the first two lines of that segment should likely
+            # be merged before doing anything else
+            segments = self._fix_standalone_operators(segments)
             if len(segments) > 1:
-                # first merge together segments of equal depth that are
+                # merge together segments of equal depth that are
                 # joined by operators
                 segments = self._maybe_merge_operators(segments)
                 # some operators really should not be by themselves
@@ -178,6 +186,27 @@ class LineMerger:
                 return line, i
         else:
             raise SqlfmtSegmentError("All lines in the segment are empty")
+
+    def _fix_standalone_operators(self, segments: List[List[Line]]) -> List[List[Line]]:
+        """
+        If the first line of a segment is a standalone operator,
+        we should try to merge the first two lines together before
+        doing anything else
+        """
+        # breakpoint()
+        for segment in segments:
+            try:
+                head, i = self._get_first_nonblank_line(segment)
+                if head.is_standalone_operator:
+                    _, j = self._get_first_nonblank_line(segment[i + 1 :])
+                    try:
+                        merged_lines = self.create_merged_line(segment[: i + j + 2])
+                        segment[: i + j + 2] = merged_lines
+                    except CannotMergeException:
+                        pass
+            except SqlfmtSegmentError:
+                pass
+        return segments
 
     def _maybe_merge_operators(
         self,
