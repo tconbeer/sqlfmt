@@ -30,16 +30,16 @@ def get_projects() -> List[SQLProject]:
         SQLProject(
             name="gitlab",
             git_url="https://github.com/tconbeer/gitlab-analytics-sqlfmt.git",
-            git_ref="954df0dd1289fa14e2b711823cfa850797c42bd8",  # sqlfmt 88617d2
-            expected_changed=33,
-            expected_unchanged=2384,
+            git_ref="53725070dff545af94f31d360910b776fc717910",  # sqlfmt e406e35
+            expected_changed=15,
+            expected_unchanged=2402,
             expected_errored=0,
             sub_directory=Path("transform/snowflake-dbt/"),
         ),
         SQLProject(
             name="rittman",
             git_url="https://github.com/tconbeer/rittman_ra_data_warehouse.git",
-            git_ref="7c036ed754d40239080de5732a4f525910b66b7a",  # sqlfmt aca4b6a
+            git_ref="5c2497fdf39ae1bbf536e041a709421a530ba811",  # sqlfmt e406e35
             expected_changed=14,
             expected_unchanged=293,
             expected_errored=4,  # true mismatching brackets
@@ -48,9 +48,9 @@ def get_projects() -> List[SQLProject]:
         SQLProject(
             name="http_archive",
             git_url="https://github.com/tconbeer/http_archive_almanac.git",
-            git_ref="6e18c21ec890e604f6525e19c3df54eec402eda4",  # sqlfmt 0.8.0
-            expected_changed=0,
-            expected_unchanged=1702,
+            git_ref="b323ed5131ac5ed3017e8e667c6d5a6a35dcc44b",  # sqlfmt e406e35
+            expected_changed=1,
+            expected_unchanged=1701,
             expected_errored=0,
             sub_directory=Path("sql"),
         ),
@@ -75,7 +75,7 @@ def get_projects() -> List[SQLProject]:
         SQLProject(
             name="dbt_utils",
             git_url="https://github.com/tconbeer/dbt-utils.git",
-            git_ref="0695ce6084f39b0de761c357f43c9d6220f96d68",  # sqlfmt d0e14b9
+            git_ref="a617b80efbf1c847d2fd1db339220cca3c601a46",  # sqlfmt e406e35
             expected_changed=4,
             expected_unchanged=127,
             expected_errored=0,
