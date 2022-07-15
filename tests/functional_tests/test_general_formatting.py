@@ -34,6 +34,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/202_unpivot_macro.sql",
         "unformatted/203_gitlab_email_domain_type.sql",
         "unformatted/204_gitlab_tag_validation.sql",
+        "unformatted/205_rittman_hubspot_deals.sql",
         "unformatted/300_jinjafmt.sql",
     ],
 )

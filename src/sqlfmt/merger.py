@@ -373,7 +373,7 @@ class LineMerger:
                 if (
                     line.closes_bracket_from_previous_line
                     or line.closes_simple_jinja_block_from_previous_line
-                    or line.is_standalone_comma
+                    # or line.is_standalone_comma
                     or line.is_blank_line
                 ) and line.depth == target_depth:
                     continue
