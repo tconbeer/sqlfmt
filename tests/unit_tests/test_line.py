@@ -105,6 +105,7 @@ def test_simple_line(
     assert not simple_line.contains_multiline_node
     assert not simple_line.is_blank_line
     assert not simple_line.is_standalone_multiline_node
+    assert not simple_line.is_standalone_comma
     assert not simple_line.is_too_long(88)
     assert not simple_line.opens_new_bracket
 

@@ -114,11 +114,6 @@ class LineMerger:
 
         Returns a new list of Lines
         """
-        # print(f"merging {len(lines)} lines")
-        # print("".join([str(l) for l in lines]))
-        # if len(lines) == 8:
-        #     breakpoint()
-
         try:
             merged_lines = self.create_merged_line(lines)
         except CannotMergeException:
@@ -193,7 +188,6 @@ class LineMerger:
         we should try to merge the first two lines together before
         doing anything else
         """
-        # breakpoint()
         for segment in segments:
             try:
                 head, i = self._get_first_nonblank_line(segment)

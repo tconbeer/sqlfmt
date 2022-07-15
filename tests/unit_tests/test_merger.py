@@ -507,3 +507,21 @@ def test_maybe_stubbornly_merge_single_segment(merger: LineMerger) -> None:
     assert len(segments) == 1
     merged_segments = merger._maybe_stubbornly_merge(segments)
     assert merged_segments == segments
+
+
+def test_fix_standalone_operators(merger: LineMerger) -> None:
+    source_string, expected_string = read_test_data(
+        "unit_tests/test_merger/test_fix_standalone_operators.sql"
+    )
+    q = merger.mode.dialect.initialize_analyzer(merger.mode.line_length).parse_query(
+        source_string
+    )
+
+    # first pass shouldn't do anything
+    segments = merger._split_into_segments(q.lines)
+    assert len(segments) == 11
+    fixed_segments = merger._fix_standalone_operators(segments)
+    assert len(fixed_segments) == len(segments)
+
+    result_string = "".join([str(line) for line in itertools.chain(*fixed_segments)])
+    assert result_string == expected_string

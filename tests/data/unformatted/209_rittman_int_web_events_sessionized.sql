@@ -355,7 +355,8 @@ with
     ordered_conversion_tagged as (
         select
             o.*
-            {% if var("attribution_conversion_event_type") %},
+            {% if var("attribution_conversion_event_type") %}
+            ,
             case
                 when
                     o.event_type in (

@@ -38,10 +38,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/206_gitlab_prep_geozone.sql",
         "unformatted/207_rittman_int_journals.sql",
         "unformatted/208_rittman_int_plan_breakout_metrics.sql",
-        pytest.param(
-            "unformatted/209_rittman_int_web_events_sessionized.sql",
-            marks=pytest.mark.xfail,
-        ),
+        "unformatted/209_rittman_int_web_events_sessionized.sql",
         "unformatted/300_jinjafmt.sql",
     ],
 )
