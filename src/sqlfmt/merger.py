@@ -288,7 +288,8 @@ class LineMerger:
         We prefer some operators, like `as`, `over()`, `exclude()` to be
         forced onto the prior line, even if the contents of their brackets
         don't fit there. This is also true for most operators that open
-        a bracket, like `in ()`.
+        a bracket, like `in ()` or `+ ()`, as long as the preceding segment
+        does not also start with an operator.
 
         This method scans for segments that start with
         such operators adds the first line of those segments to the prior
@@ -299,8 +300,12 @@ class LineMerger:
 
         new_segments = [segments[0]]
         for segment in segments[1:]:
+            prev_operator = self._segment_continues_operator_sequence(
+                new_segments[-1], min_priority=1
+            )
             if self._segment_continues_operator_sequence(segment, min_priority=0) or (
-                self._segment_continues_operator_sequence(segment, min_priority=1)
+                not prev_operator
+                and self._segment_continues_operator_sequence(segment, min_priority=1)
                 and self._tail_closes_head(segment)
             ):
                 prev_segment = new_segments.pop()
@@ -323,8 +328,6 @@ class LineMerger:
         # try to merge the first line of this segment with the previous segment
         head, i = self._get_first_nonblank_line(segment)
 
-        # TODO: refactor each merge type into its own function, loop through
-        # methods, break if works, for/else for the giving up case
         try:
             prev_segment = self.create_merged_line(prev_segment + [head])
             new_segments.append(prev_segment)
