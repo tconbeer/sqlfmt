@@ -256,6 +256,13 @@ class Line:
             return False
 
     @property
+    def starts_with_opening_square_bracket(self) -> bool:
+        try:
+            return self.nodes[0].is_opening_square_bracket
+        except IndexError:
+            return False
+
+    @property
     def contains_unterm_keyword(self) -> bool:
         return any([n.is_unterm_keyword for n in self.nodes])
 

@@ -371,7 +371,6 @@ class Polyglot(Dialect):
                         r"window",
                         r"order\s+by",
                         r"limit",
-                        r"offset",
                         r"fetch\s+(first|next)",
                         r"for\s+(update|no\s+key\s+update|share|key\s+share)",
                         r"when",
@@ -381,6 +380,18 @@ class Polyglot(Dialect):
                         r"rows\s+between",
                     )
                     + group(r"\W", r"$"),
+                    action=partial(
+                        actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD
+                    ),
+                ),
+                Rule(
+                    # BQ arrays use an offset(n) function for
+                    # indexing that we do not want to match. This
+                    # should only match the offset in limit ... offset,
+                    # which must be followed by a space
+                    name="offset_keyword",
+                    priority=1001,
+                    pattern=group(r"offset") + group(r"\s+", r"$"),
                     action=partial(
                         actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD
                     ),

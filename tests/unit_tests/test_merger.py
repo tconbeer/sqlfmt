@@ -525,3 +525,23 @@ def test_fix_standalone_operators(merger: LineMerger) -> None:
 
     result_string = "".join([str(line) for line in itertools.chain(*fixed_segments)])
     assert result_string == expected_string
+
+
+@pytest.mark.parametrize(
+    "source_string,expected_result",
+    [
+        ("[\noffset(\n1\n)\n]\n", True),
+        ("[offset(1)]\n", True),
+        ("[\nsafe_offset(1)\n]\n", True),
+        ("split('abcde', 'b')[offset(1)]\n", False),
+        ("my_array[ordinal(1)]\n", False),
+        ("", False),
+    ],
+)
+def test_segment_is_array_indexing(
+    merger: LineMerger, source_string: str, expected_result: bool
+) -> None:
+    q = merger.mode.dialect.initialize_analyzer(merger.mode.line_length).parse_query(
+        source_string
+    )
+    assert merger._segment_is_array_indexing(q.lines) == expected_result

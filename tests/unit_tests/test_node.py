@@ -171,6 +171,21 @@ def test_is_the_between_operator(token: str, result: bool) -> None:
     assert n.is_the_between_operator is result
 
 
+@pytest.mark.parametrize(
+    "token,result", [("[", True), ("(", False), ("]", False), ("{", False)]
+)
+def test_is_opening_square_bracket(token: str, result: bool) -> None:
+    t = Token(
+        type=TokenType.BRACKET_OPEN,
+        prefix="",
+        token=token,
+        spos=0,
+        epos=1,
+    )
+    n = Node.from_token(t, previous_node=None)
+    assert n.is_opening_square_bracket is result
+
+
 def test_is_the_and_after_the_between_operator(default_mode: Mode) -> None:
     source_string, _ = read_test_data(
         "unit_tests/test_node/test_is_the_and_after_the_between_operator.sql"

@@ -119,6 +119,10 @@ class Node:
         )
 
     @property
+    def is_opening_square_bracket(self) -> bool:
+        return self.is_opening_bracket and "[" in self.value
+
+    @property
     def is_closing_bracket(self) -> bool:
         return self.token.type in (
             TokenType.BRACKET_CLOSE,
@@ -430,6 +434,14 @@ class Node:
             token.type == TokenType.BRACKET_OPEN
             and previous_token
             and previous_token.type in (TokenType.NAME, TokenType.QUOTED_NAME)
+        ):
+            return NO_SPACE
+        # open brackets that follow closing brackets are array indexes.
+        # No Space.
+        elif (
+            token.type == TokenType.BRACKET_OPEN
+            and previous_token
+            and previous_token.type == TokenType.BRACKET_CLOSE
         ):
             return NO_SPACE
         # need a space before any other open bracket

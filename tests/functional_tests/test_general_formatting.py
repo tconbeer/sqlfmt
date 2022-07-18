@@ -41,6 +41,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/209_rittman_int_web_events_sessionized.sql",
         "unformatted/210_gitlab_gdpr_delete.sql",
         "unformatted/211_http_2019_cdn_17_20.sql",
+        "unformatted/212_http_2019_cms_14_02.sql",
         "unformatted/300_jinjafmt.sql",
     ],
 )

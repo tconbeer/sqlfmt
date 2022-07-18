@@ -251,6 +251,19 @@ class LineMerger:
                 line.starts_with_operator or line.starts_with_comma
             ) and cls._operator_priority(line.nodes[0].token.type) <= min_priority
 
+    @classmethod
+    def _segment_is_array_indexing(cls, segment: List[Line]) -> bool:
+        """
+        Returns true if this segment starts with square brackets, and
+        so is indexing an array defined in the previous segment
+        """
+        try:
+            line, _ = cls._get_first_nonblank_line(segment)
+        except SqlfmtSegmentError:
+            return False
+        else:
+            return line.starts_with_opening_square_bracket
+
     @staticmethod
     def _operator_priority(token_type: TokenType) -> int:
         if token_type in (TokenType.BOOLEAN_OPERATOR, TokenType.ON):
@@ -291,6 +304,9 @@ class LineMerger:
         a bracket, like `in ()` or `+ ()`, as long as the preceding segment
         does not also start with an operator.
 
+        Note that array indexing with square brackets is treated as an
+        operator in this context only.
+
         This method scans for segments that start with
         such operators adds the first line of those segments to the prior
         segments
@@ -303,10 +319,22 @@ class LineMerger:
             prev_operator = self._segment_continues_operator_sequence(
                 new_segments[-1], min_priority=1
             )
-            if self._segment_continues_operator_sequence(segment, min_priority=0) or (
-                not prev_operator
-                and self._segment_continues_operator_sequence(segment, min_priority=1)
-                and self._tail_closes_head(segment)
+            if (
+                # always stubbornly merge P0 operators (e.g., `over`)
+                self._segment_continues_operator_sequence(segment, min_priority=0)
+                # stubbornly merge p1 operators only if they do NOT
+                # follow another p1 operator AND they open brackets
+                # and cover multiple lines
+                or (
+                    not prev_operator
+                    and self._segment_continues_operator_sequence(
+                        segment, min_priority=1
+                    )
+                    and self._tail_closes_head(segment)
+                )
+                # stubbornly merge segments that index into the array
+                # returned by the previous segment
+                or (self._segment_is_array_indexing(segment))
             ):
                 prev_segment = new_segments.pop()
                 merged_segments = self._stubbornly_merge(prev_segment, segment)

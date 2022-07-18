@@ -58,6 +58,7 @@ def test_bare_line(bare_line: Line) -> None:
     assert not bare_line.contains_multiline_node
     assert not bare_line.contains_operator
     assert not bare_line.starts_with_comma
+    assert not bare_line.starts_with_opening_square_bracket
     assert not bare_line.starts_with_operator
     assert not bare_line.is_blank_line
     assert not bare_line.is_standalone_multiline_node
@@ -101,6 +102,7 @@ def test_simple_line(
     assert simple_line.contains_unterm_keyword
     assert simple_line.contains_operator
     assert not simple_line.starts_with_comma
+    assert not simple_line.starts_with_opening_square_bracket
     assert not simple_line.starts_with_operator
     assert not simple_line.contains_multiline_node
     assert not simple_line.is_blank_line
@@ -379,6 +381,25 @@ def test_identifier_whitespace(default_mode: Mode, source_string: str) -> None:
     """
     Ensure we do not inject spaces into qualified identifier names
     """
+    q = default_mode.dialect.initialize_analyzer(
+        line_length=default_mode.line_length
+    ).parse_query(source_string=source_string)
+    parsed_string = "".join(str(line) for line in q.lines)
+    assert source_string == parsed_string
+
+
+@pytest.mark.parametrize(
+    "source_string",
+    [
+        "(my_schema.my_table)\n",
+        "count(*)\n",
+        "count(*) over ()\n",
+        "something in (somthing_else)\n",
+        "some_array[offset(0)]\n",
+        "some_array_func(args)[offset(0)]\n",
+    ],
+)
+def test_bracket_whitespace(default_mode: Mode, source_string: str) -> None:
     q = default_mode.dialect.initialize_analyzer(
         line_length=default_mode.line_length
     ).parse_query(source_string=source_string)
