@@ -248,21 +248,13 @@ class LineMerger:
             return True
         else:
             return (
-                line.starts_with_operator or line.starts_with_comma
-            ) and cls._operator_priority(line.nodes[0].token.type) <= min_priority
-
-    @classmethod
-    def _segment_is_array_indexing(cls, segment: List[Line]) -> bool:
-        """
-        Returns true if this segment starts with square brackets, and
-        so is indexing an array defined in the previous segment
-        """
-        try:
-            line, _ = cls._get_first_nonblank_line(segment)
-        except SqlfmtSegmentError:
-            return False
-        else:
-            return line.starts_with_opening_square_bracket
+                (
+                    line.starts_with_operator
+                    and cls._operator_priority(line.nodes[0].token.type) <= min_priority
+                )
+                or line.starts_with_comma
+                or line.starts_with_opening_square_bracket
+            )
 
     @staticmethod
     def _operator_priority(token_type: TokenType) -> int:
@@ -271,7 +263,6 @@ class LineMerger:
         elif token_type not in (
             # list of "tight binding" operators
             TokenType.AS,
-            TokenType.COMMA,
             TokenType.DOUBLE_COLON,
             TokenType.TIGHT_WORD_OPERATOR,
         ):
@@ -332,9 +323,6 @@ class LineMerger:
                     )
                     and self._tail_closes_head(segment)
                 )
-                # stubbornly merge segments that index into the array
-                # returned by the previous segment
-                or (self._segment_is_array_indexing(segment))
             ):
                 prev_segment = new_segments.pop()
                 merged_segments = self._stubbornly_merge(prev_segment, segment)
