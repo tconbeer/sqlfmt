@@ -397,6 +397,9 @@ def test_identifier_whitespace(default_mode: Mode, source_string: str) -> None:
         "something in (somthing_else)\n",
         "some_array[offset(0)]\n",
         "some_array_func(args)[offset(0)]\n",
+        "(())\n",
+        "([])\n",
+        "()[] + foo()[offset(1)]\n",
     ],
 )
 def test_bracket_whitespace(default_mode: Mode, source_string: str) -> None:

@@ -429,19 +429,19 @@ class Node:
         ):
             return NO_SPACE
         # open brackets that follow names are function calls or array indexes.
-        # No Space.
-        elif (
-            token.type == TokenType.BRACKET_OPEN
-            and previous_token
-            and previous_token.type in (TokenType.NAME, TokenType.QUOTED_NAME)
-        ):
-            return NO_SPACE
         # open brackets that follow closing brackets are array indexes.
+        # open brackets that follow open brackets are just nested brackets.
         # No Space.
         elif (
             token.type == TokenType.BRACKET_OPEN
             and previous_token
-            and previous_token.type == TokenType.BRACKET_CLOSE
+            and previous_token.type
+            in (
+                TokenType.NAME,
+                TokenType.QUOTED_NAME,
+                TokenType.BRACKET_OPEN,
+                TokenType.BRACKET_CLOSE,
+            )
         ):
             return NO_SPACE
         # need a space before any other open bracket
