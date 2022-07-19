@@ -289,18 +289,16 @@ class LineMerger:
 
     def _maybe_stubbornly_merge(self, segments: List[List[Line]]) -> List[List[Line]]:
         """
-        We prefer some operators, like `as`, `over()`, `exclude()` to be
+        We prefer some operators, like `as`, `over()`, `exclude()`, and
+        array or dictionary accessing with `[]` to be
         forced onto the prior line, even if the contents of their brackets
         don't fit there. This is also true for most operators that open
         a bracket, like `in ()` or `+ ()`, as long as the preceding segment
         does not also start with an operator.
 
-        Note that array indexing with square brackets is treated as an
-        operator in this context only.
-
         This method scans for segments that start with
-        such operators adds the first line of those segments to the prior
-        segments
+        such operators and partially merges those segments with the prior
+        segments by calling _stubbornly_merge()
         """
         if len(segments) <= 1:
             return segments
@@ -411,11 +409,9 @@ class LineMerger:
                 # if this line starts with a closing bracket,
                 # we want to include that closing bracket
                 # in the same segment as the first line.
-                # this also applies to lines that contain a comma and nothing else
                 if (
                     line.closes_bracket_from_previous_line
                     or line.closes_simple_jinja_block_from_previous_line
-                    # or line.is_standalone_comma
                     or line.is_blank_line
                 ) and line.depth == target_depth:
                     continue

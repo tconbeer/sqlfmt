@@ -75,8 +75,9 @@ class LineSplitter:
     def maybe_split_between_brackets(self, node: Node) -> bool:
         """
         Return true if this is an open bracket that follows
-        a closing bracket. This is rare, typically for BQ
-        array indexing, like split(my_field)[offset(1)]
+        a closing bracket. This is typically for BQ
+        array indexing, like split(my_field)[offset(1)],
+        or dictionary accessing, like my_json['outer']['inner']
         """
         return (
             node.is_opening_bracket
