@@ -1,8 +1,9 @@
+import itertools
 from dataclasses import dataclass
 from typing import Iterable, List, Optional, Tuple
 
 from sqlfmt.comment import Comment
-from sqlfmt.exception import CannotMergeException
+from sqlfmt.exception import CannotMergeException, SqlfmtSegmentError
 from sqlfmt.line import Line
 from sqlfmt.mode import Mode
 from sqlfmt.node import Node
@@ -22,7 +23,7 @@ class LineMerger:
 
         # if the child is just one below the parent, we're trying to
         # merge a single line.
-        if len(lines) == 1:
+        if len(lines) <= 1:
             return lines
 
         nodes, comments = self._extract_components(lines)
@@ -106,43 +107,36 @@ class LineMerger:
 
     def maybe_merge_lines(self, lines: List[Line]) -> List[Line]:
         """
-        Tries to merge any short lines split by
-        operators, and then merges any hierarchical statements
+        Tries to merge lines into a single line; if that fails,
+        splits lines into segments of equal depth, merges
+        runs of operators at that depth, and then recurses into
+        each segment
+
+        Returns a new list of Lines
         """
-        if len(lines) <= 1:
-            return lines
-        else:
-            return self._maybe_merge_segment(self._maybe_merge_operators(lines))
-
-    def _maybe_merge_segment(self, lines: List[Line]) -> List[Line]:
-        """
-        Attempts to merge all passed lines into a single line.
-
-        If that fails, divides the lines into segments, delineated
-        by lines of equal depth and recurses on each segment.
-
-        Returns a new list of lines
-        """
-
         try:
-            new_lines = self.create_merged_line(lines)
+            merged_lines = self.create_merged_line(lines)
         except CannotMergeException:
-            # lines can't be merged into a single line, so we take several
-            # steps to merge some lines together into a final collection,
-            # new_lines
-            new_lines = []
-            # if there are multiple segments of equal depth, and
-            # we know we can't merge across segments, we should try
-            # to merge within each segment
+            merged_lines = []
+            # doesn't fit onto a single line, so split into
+            # segments at the depth of lines[0]
             segments = self._split_into_segments(lines)
+            # if a segment starts with a standalone operator,
+            # the first two lines of that segment should likely
+            # be merged before doing anything else
+            segments = self._fix_standalone_operators(segments)
             if len(segments) > 1:
+                # merge together segments of equal depth that are
+                # joined by operators
+                segments = self._maybe_merge_operators(segments)
+                # some operators really should not be by themselves
+                # so if their segments are too long to be merged,
+                # we merge just their first line onto the prior segment
+                segments = self._maybe_stubbornly_merge(segments)
+                # then recurse into each segment and try to merge lines
+                # within individual segments
                 for segment in segments:
-                    new_lines.extend(self._maybe_merge_segment(segment))
-                # if merging of any segment was successful, it is
-                # possible that more merging can be done on a second
-                # pass
-                if len(new_lines) < len(lines):
-                    new_lines = self.maybe_merge_lines(new_lines)
+                    merged_lines.extend(self.maybe_merge_lines(segment))
             # if there was only a single segment at the depth of the
             # top line, we need to move down one line and try again.
             # Because of the structure of a well-split set of lines,
@@ -152,110 +146,246 @@ class LineMerger:
             # we need to strip that off so we only segment the
             # indented lines
             else:
-                new_lines.append(lines[0])
-                if self._tail_closes_head(lines):
-                    new_lines.extend(self._maybe_merge_segment(lines[1:-1]))
-                    new_lines.append(lines[-1])
-                else:
-                    new_lines.extend(self._maybe_merge_segment(lines[1:]))
+                _, i = self._get_first_nonblank_line(lines)
+                merged_lines.extend(lines[: i + 1])
+                for segment in self._get_remainder_of_segment(lines, i):
+                    merged_lines.extend(self.maybe_merge_lines(segment))
         finally:
-            return new_lines
+            return merged_lines
 
-    @staticmethod
-    def _tail_closes_head(lines: List[Line]) -> bool:
+    @classmethod
+    def _tail_closes_head(cls, segment: List[Line]) -> bool:
         """
         Returns True only if the last line in lines closes a bracket or
-        simple jinja block that is opened by the first line in lines
+        simple jinja block that is opened by the first line in lines.
         """
-        if (
-            lines[-1].closes_bracket_from_previous_line
-            or lines[-1].closes_simple_jinja_block_from_previous_line
-        ) and lines[-1].depth == lines[0].depth:
+        if len(segment) <= 1:
+            return False
+
+        head, _ = cls._get_first_nonblank_line(segment)
+        tail, _ = cls._get_first_nonblank_line(reversed(segment))
+        if head == tail:
+            return False
+        elif (
+            tail.closes_bracket_from_previous_line
+            or tail.closes_simple_jinja_block_from_previous_line
+        ) and tail.depth == head.depth:
             return True
         else:
             return False
 
-    def _maybe_merge_operators(
-        self, lines: List[Line], merge_across_low_priority_operators: bool = True
-    ) -> List[Line]:
-        """
-        Tries to merge runs of lines at the same depth that
-        start with an operator.
-        """
-        head = 0
-        target_depth = lines[head].depth
-        last_line_is_singleton_operator = False
-        new_lines: List[Line] = []
-        for tail, line in enumerate(lines[1:], start=1):
-            if not self._line_continues_operator_sequence(
-                line=line,
-                target_depth=target_depth,
-                prev_singleton=last_line_is_singleton_operator,
-                low_priority_okay=merge_across_low_priority_operators,
-            ):
-                # try to merge everything above line (from head:tail) into
-                # a single line
-                try:
-                    new_lines.extend(self.create_merged_line(lines[head:tail]))
-                except CannotMergeException:
-                    # the merged line is probably too long. Try the same section
-                    # again, but don't try to merge across word operators. This
-                    # helps format complex where and join clauses with comparisons
-                    # and logic operators
-                    if merge_across_low_priority_operators:
-                        new_lines.extend(
-                            self._maybe_merge_operators(
-                                lines[head:tail],
-                                merge_across_low_priority_operators=False,
-                            )
-                        )
-                    else:
-                        # we were already not merging across low-priority operators
-                        # so it's time to give up and just add the original
-                        # lines to the new list
-                        new_lines.extend(lines[head:tail])
-                finally:
-                    # reset the head pointer and start the process over
-                    # on the remainder of lines
-                    head = tail
-                    target_depth = lines[head].depth
+    @staticmethod
+    def _get_first_nonblank_line(segment: Iterable[Line]) -> Tuple[Line, int]:
+        for i, line in enumerate(segment):
+            if not line.is_blank_line:
+                return line, i
+        else:
+            raise SqlfmtSegmentError("All lines in the segment are empty")
 
-            # lines can't end with operators unless it's an operator on a line
-            # by itself. If that is the case, we want to try to merge the next
-            # line into the group
-            last_line_is_singleton_operator = line.is_standalone_operator
+    def _fix_standalone_operators(self, segments: List[List[Line]]) -> List[List[Line]]:
+        """
+        If the first line of a segment is a standalone operator,
+        we should try to merge the first two lines together before
+        doing anything else
+        """
+        for segment in segments:
+            try:
+                head, i = self._get_first_nonblank_line(segment)
+                if head.is_standalone_operator:
+                    _, j = self._get_first_nonblank_line(segment[i + 1 :])
+                    try:
+                        merged_lines = self.create_merged_line(segment[: i + j + 2])
+                        segment[: i + j + 2] = merged_lines
+                    except CannotMergeException:
+                        pass
+            except SqlfmtSegmentError:
+                pass
+        return segments
+
+    def _maybe_merge_operators(
+        self,
+        segments: List[List[Line]],
+        priority: int = 2,
+    ) -> List[List[Line]]:
+        """
+        Tries to merge runs of segments that start with operators into previous
+        segments. Operators have a priority that determines a sort of hierarchy;
+        if we can't merge a whole run of operators, we increase the priority to
+        create shorter runs that can be merged
+        """
+        if len(segments) <= 1 or priority < 0:
+            return segments
+        head = 0
+        new_segments: List[List[Line]] = []
+
+        for i, segment in enumerate(segments[1:], start=1):
+            if not self._segment_continues_operator_sequence(segment, priority):
+                new_segments.extend(
+                    self._try_merge_operator_segments(segments[head:i], priority)
+                )
+                head = i
 
         # we need to try one more time to merge everything after head
-        try:
-            new_lines.extend(self.create_merged_line(lines[head:]))
-        except CannotMergeException:
-            if merge_across_low_priority_operators:
-                new_lines.extend(
-                    self._maybe_merge_operators(
-                        lines[head:], merge_across_low_priority_operators=False
-                    )
-                )
-            else:
-                new_lines.extend(lines[head:])
-        finally:
-            return new_lines
+        else:
+            new_segments.extend(
+                self._try_merge_operator_segments(segments[head:], priority)
+            )
 
-    @staticmethod
-    def _line_continues_operator_sequence(
-        line: Line,
-        target_depth: Tuple[int, int],
-        prev_singleton: bool,
-        low_priority_okay: bool,
+        return new_segments
+
+    @classmethod
+    def _segment_continues_operator_sequence(
+        cls, segment: List[Line], min_priority: int
     ) -> bool:
         """
-        Returns true if line and/or the current state indicates that this line is part
+        Returns true if the first line of the segment is part
         of a sequence of operators
         """
-        return (
-            line.depth == target_depth
-            and (prev_singleton or line.starts_with_operator or line.starts_with_comma)
-            and (low_priority_okay or not line.starts_with_low_priority_merge_operator)
-        )
+        try:
+            line, _ = cls._get_first_nonblank_line(segment)
+        except SqlfmtSegmentError:
+            # if a segment is blank, keep scanning
+            return True
+        else:
+            return (
+                (
+                    line.starts_with_operator
+                    and cls._operator_priority(line.nodes[0].token.type) <= min_priority
+                )
+                or line.starts_with_comma
+                or line.starts_with_opening_square_bracket
+            )
+
+    @staticmethod
+    def _operator_priority(token_type: TokenType) -> int:
+        if token_type in (TokenType.BOOLEAN_OPERATOR, TokenType.ON):
+            return 2
+        elif token_type not in (
+            # list of "tight binding" operators
+            TokenType.AS,
+            TokenType.DOUBLE_COLON,
+            TokenType.TIGHT_WORD_OPERATOR,
+        ):
+            return 1
+        else:
+            return 0
+
+    def _try_merge_operator_segments(
+        self, segments: List[List[Line]], priority: int
+    ) -> List[List[Line]]:
+        """
+        Attempts to merge segments into a single line; if that fails,
+        recurses at a lower operator priority
+        """
+        if len(segments) <= 1:
+            return segments
+
+        try:
+            new_segments = [self.create_merged_line(list(itertools.chain(*segments)))]
+        except CannotMergeException:
+            new_segments = self._maybe_merge_operators(segments, priority - 1)
+        finally:
+            return new_segments
+
+    def _maybe_stubbornly_merge(self, segments: List[List[Line]]) -> List[List[Line]]:
+        """
+        We prefer some operators, like `as`, `over()`, `exclude()`, and
+        array or dictionary accessing with `[]` to be
+        forced onto the prior line, even if the contents of their brackets
+        don't fit there. This is also true for most operators that open
+        a bracket, like `in ()` or `+ ()`, as long as the preceding segment
+        does not also start with an operator.
+
+        This method scans for segments that start with
+        such operators and partially merges those segments with the prior
+        segments by calling _stubbornly_merge()
+        """
+        if len(segments) <= 1:
+            return segments
+
+        new_segments = [segments[0]]
+        for segment in segments[1:]:
+            prev_operator = self._segment_continues_operator_sequence(
+                new_segments[-1], min_priority=1
+            )
+            if (
+                # always stubbornly merge P0 operators (e.g., `over`)
+                self._segment_continues_operator_sequence(segment, min_priority=0)
+                # stubbornly merge p1 operators only if they do NOT
+                # follow another p1 operator AND they open brackets
+                # and cover multiple lines
+                or (
+                    not prev_operator
+                    and self._segment_continues_operator_sequence(
+                        segment, min_priority=1
+                    )
+                    and self._tail_closes_head(segment)
+                )
+            ):
+                prev_segment = new_segments.pop()
+                merged_segments = self._stubbornly_merge(prev_segment, segment)
+                new_segments.extend(merged_segments)
+            else:
+                new_segments.append(segment)
+
+        return new_segments
+
+    def _stubbornly_merge(
+        self, prev_segment: List[Line], segment: List[Line]
+    ) -> List[List[Line]]:
+        """
+        Attempts several different methods of merging prev_segment and
+        segment. Returns a list of segments that represent the
+        best possible merger of those two segments
+        """
+        new_segments: List[List[Line]] = []
+        # try to merge the first line of this segment with the previous segment
+        head, i = self._get_first_nonblank_line(segment)
+
+        try:
+            prev_segment = self.create_merged_line(prev_segment + [head])
+            prev_segment.extend(segment[i + 1 :])
+            new_segments.append(prev_segment)
+        except CannotMergeException:
+            # try to add this segment to the last line of the previous segment
+            last_line, k = self._get_first_nonblank_line(reversed(prev_segment))
+            try:
+                new_last_lines = self.create_merged_line([last_line] + segment)
+                prev_segment[-(k + 1) :] = new_last_lines
+                new_segments.append(prev_segment)
+            except CannotMergeException:
+                # try to add just the first line of this segment to the last
+                # line of the previous segment
+                try:
+                    new_last_lines = self.create_merged_line([last_line, head])
+                    prev_segment[-(k + 1) :] = new_last_lines
+                    prev_segment.extend(segment[i + 1 :])
+                    new_segments.append(prev_segment)
+                except CannotMergeException:
+                    # give up and just return the original segments
+                    return [prev_segment, segment]
+
+        return new_segments
+
+    @classmethod
+    def _get_remainder_of_segment(
+        cls, segment: List[Line], idx: int
+    ) -> List[List[Line]]:
+        """
+        Takes a segment and an index, and returns a list of either one or two segments,
+        composed of the lines of segment[idx+1:], depending on whether the segment
+        ends with a closing bracket
+        """
+        if cls._tail_closes_head(segment):
+            _, j = cls._get_first_nonblank_line(reversed(segment))
+            return [
+                # the lines between the head and tail
+                segment[idx + 1 : -(j + 1)],
+                # the tail line (and trailing whitespace)
+                segment[-(j + 1) :],
+            ]
+        else:
+            return [segment[idx + 1 :]]
 
     def _split_into_segments(self, lines: List[Line]) -> List[List[Line]]:
         """
@@ -270,40 +400,23 @@ class LineMerger:
             return []
 
         target_depth = lines[0].depth
-        for i, line in enumerate(lines[1:], start=1):
+        head_is_singleton_operator = lines[0].is_standalone_operator
+        start_idx = 2 if head_is_singleton_operator else 1
+        for i, line in enumerate(lines[start_idx:], start=start_idx):
             # scan through the lines until we get back to the
             # depth of the first line
             if line.depth <= target_depth or line.depth[1] < target_depth[1]:
                 # if this line starts with a closing bracket,
-                # we probably want to include that closing bracket
+                # we want to include that closing bracket
                 # in the same segment as the first line.
                 if (
                     line.closes_bracket_from_previous_line
                     or line.closes_simple_jinja_block_from_previous_line
+                    or line.is_blank_line
                 ) and line.depth == target_depth:
-                    idx = i + 1
-                    try:
-                        segments = [self.create_merged_line(lines[:idx])]
-                    except CannotMergeException:
-                        # it's possible a line has a closing and open
-                        # paren, like ") + (\n". In that case, if
-                        # we can't merge the first parens together,
-                        # we want to return a segment that can try
-                        # to merge the second parens together. To
-                        # ensure we don't merge the original opening
-                        # bracket into the contents, without the
-                        # closing bracket, we need to return the first
-                        # line (which must contain the opening bracket)
-                        # as its own segment
-                        if line.opens_new_bracket:
-                            idx = i
-                            segments = [lines[:1], lines[1:idx]]
-                        else:
-                            segments = [lines[:idx]]
+                    continue
                 else:
-                    idx = i
-                    segments = [lines[:idx]]
-                return segments + self._split_into_segments(lines[idx:])
+                    return [lines[:i]] + self._split_into_segments(lines[i:])
         else:
             # we've exhausted lines without finding any segments, so return a
             # single segment comprising the original list

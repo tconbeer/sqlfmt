@@ -119,6 +119,10 @@ class Node:
         )
 
     @property
+    def is_opening_square_bracket(self) -> bool:
+        return self.is_opening_bracket and "[" in self.value
+
+    @property
     def is_closing_bracket(self) -> bool:
         return self.token.type in (
             TokenType.BRACKET_CLOSE,
@@ -166,9 +170,11 @@ class Node:
             in (
                 TokenType.OPERATOR,
                 TokenType.WORD_OPERATOR,
+                TokenType.TIGHT_WORD_OPERATOR,
                 TokenType.AS,
                 TokenType.ON,
                 TokenType.BOOLEAN_OPERATOR,
+                TokenType.DOUBLE_COLON,
                 TokenType.SEMICOLON,
             )
             or self.is_multiplication_star
@@ -228,10 +234,6 @@ class Node:
             return False
         else:
             return self.has_preceding_between_operator
-
-    @property
-    def is_low_priority_merge_operator(self) -> bool:
-        return self.token.type in (TokenType.BOOLEAN_OPERATOR, TokenType.ON)
 
     @property
     def is_newline(self) -> bool:
@@ -427,11 +429,19 @@ class Node:
         ):
             return NO_SPACE
         # open brackets that follow names are function calls or array indexes.
+        # open brackets that follow closing brackets are array indexes.
+        # open brackets that follow open brackets are just nested brackets.
         # No Space.
         elif (
             token.type == TokenType.BRACKET_OPEN
             and previous_token
-            and previous_token.type in (TokenType.NAME, TokenType.QUOTED_NAME)
+            and previous_token.type
+            in (
+                TokenType.NAME,
+                TokenType.QUOTED_NAME,
+                TokenType.BRACKET_OPEN,
+                TokenType.BRACKET_CLOSE,
+            )
         ):
             return NO_SPACE
         # need a space before any other open bracket
@@ -449,6 +459,7 @@ class Node:
             TokenType.STATEMENT_START,
             TokenType.STATEMENT_END,
             TokenType.WORD_OPERATOR,
+            TokenType.TIGHT_WORD_OPERATOR,
             TokenType.BOOLEAN_OPERATOR,
             TokenType.AS,
             TokenType.ON,
@@ -488,6 +499,7 @@ class Node:
             TokenType.STATEMENT_START,
             TokenType.STATEMENT_END,
             TokenType.WORD_OPERATOR,
+            TokenType.TIGHT_WORD_OPERATOR,
             TokenType.AS,
             TokenType.ON,
             TokenType.BOOLEAN_OPERATOR,

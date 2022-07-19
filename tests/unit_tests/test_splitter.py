@@ -105,14 +105,16 @@ def test_split_count_window_function(splitter: LineSplitter) -> None:
         "        then\n"
         "            1\n"
         "    end\n"
-        ") over (\n"
+        ")\n"
+        "over (\n"
         "    partition by\n"
         "        user_id,\n"
         "        date_trunc(\n"
         "            'year',\n"
         "            performed_at\n"
         "        )\n"
-        ") as d,\n"
+        ")\n"
+        "as d,\n"
     )
     raw_query = splitter.mode.dialect.initialize_analyzer(
         splitter.mode.line_length

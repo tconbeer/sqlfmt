@@ -113,8 +113,10 @@ def test_end_to_end_check_unformatted(
     args = f"{unformatted_target.as_posix()} {options}"
     result = sqlfmt_runner.invoke(sqlfmt_main, args=args)
 
+    unformatted_count = sum((1 for f in unformatted_target.iterdir() if f.is_file))
+
     assert result
-    assert "20 files" in result.stderr
+    assert f"{unformatted_count} files" in result.stderr
     assert "failed formatting check" in result.stderr
 
     if "-q" in options or "--quiet" in options:

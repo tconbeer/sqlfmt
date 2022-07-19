@@ -51,22 +51,38 @@ class LineSplitter:
             or node.divides_queries
         ):
             return True
-        # split before any operator unless the previous node is a closing
-        # bracket or statement, or it is the "and" following a "between"
+        # split before most operators
+        elif self.maybe_split_before_operator(node):
+            return True
+        # split if an opening bracket immediately follows
+        # a closing bracket
+        elif self.maybe_split_between_brackets(node):
+            return True
         else:
-            return self.maybe_split_before_operator(node)
+            return False
 
     def maybe_split_before_operator(self, node: Node) -> bool:
         """
         Return true if this node is an operator and it has the
-        right context for splitting before it. We do not split before
-        operators that follow closing brackets
+        right context for splitting before it.
         """
         return (
             node.is_operator
             and node.previous_node is not None
-            and not node.previous_node.is_closing_bracket
             and not node.is_the_and_after_the_between_operator
+        )
+
+    def maybe_split_between_brackets(self, node: Node) -> bool:
+        """
+        Return true if this is an open bracket that follows
+        a closing bracket. This is typically for BQ
+        array indexing, like split(my_field)[offset(1)],
+        or dictionary accessing, like my_json['outer']['inner']
+        """
+        return (
+            node.is_opening_bracket
+            and node.previous_node is not None
+            and node.previous_node.is_closing_bracket
         )
 
     def maybe_split_after(self, node: Node) -> bool:

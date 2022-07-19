@@ -242,16 +242,23 @@ class Line:
             return False
 
     @property
-    def starts_with_low_priority_merge_operator(self) -> bool:
+    def starts_with_comma(self) -> bool:
         try:
-            return self.nodes[0].is_low_priority_merge_operator
+            return self.nodes[0].is_comma
         except IndexError:
             return False
 
     @property
-    def starts_with_comma(self) -> bool:
+    def starts_with_jinja_statement(self) -> bool:
         try:
-            return self.nodes[0].is_comma
+            return self.nodes[0].is_jinja_statement
+        except IndexError:
+            return False
+
+    @property
+    def starts_with_opening_square_bracket(self) -> bool:
+        try:
+            return self.nodes[0].is_opening_square_bracket
         except IndexError:
             return False
 
@@ -273,39 +280,24 @@ class Line:
 
     @property
     def is_standalone_multiline_node(self) -> bool:
-        if len(self.nodes) == 1 and self.contains_multiline_node:
-            return True
-        if (
-            len(self.nodes) == 2
-            and self.contains_multiline_node
-            and self.nodes[-1].is_newline
-        ):
-            return True
-        else:
-            return False
+        return self._is_standalone_if(self.contains_multiline_node)
 
     @property
     def is_standalone_jinja_statement(self) -> bool:
-        if len(self.nodes) == 1 and self.nodes[0].is_jinja_statement:
-            return True
-        if (
-            len(self.nodes) == 2
-            and self.nodes[0].is_jinja_statement
-            and self.nodes[1].is_newline
-        ):
-            return True
-        else:
-            return False
+        return self._is_standalone_if(self.starts_with_jinja_statement)
 
     @property
     def is_standalone_operator(self) -> bool:
-        if len(self.nodes) == 1 and self.starts_with_operator:
+        return self._is_standalone_if(self.starts_with_operator)
+
+    @property
+    def is_standalone_comma(self) -> bool:
+        return self._is_standalone_if(self.starts_with_comma)
+
+    def _is_standalone_if(self, starts_with_type: bool) -> bool:
+        if len(self.nodes) == 1 and starts_with_type:
             return True
-        if (
-            len(self.nodes) == 2
-            and self.starts_with_operator
-            and self.nodes[1].is_newline
-        ):
+        if len(self.nodes) == 2 and starts_with_type and self.nodes[1].is_newline:
             return True
         else:
             return False

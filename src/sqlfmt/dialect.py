@@ -258,22 +258,20 @@ class Polyglot(Dialect):
                     pattern=group(
                         r"all",
                         r"any",
-                        r"between",
+                        r"(not\s+)?between",
                         r"cube",
-                        r"exists",
+                        r"(not\s+)?exists",
                         r"grouping sets",
-                        r"ilike",
-                        r"in",
-                        r"is",
+                        r"(not\s+)?ilike",
+                        r"(not\s+)?in",
+                        r"is(\s+not)?",
                         r"isnull",
-                        r"like(\s+any)?",
+                        r"(not\s+)?like(\s+any)?",
                         r"notnull",
-                        r"not",
-                        r"over",
                         r"rollup",
-                        r"rlike",
+                        r"(not\s+)?rlike",
                         r"some",
-                        r"similar\s+to",
+                        r"(not\s+)?similar\s+to",
                     )
                     + group(r"\W", r"$"),
                     action=partial(
@@ -289,7 +287,26 @@ class Polyglot(Dialect):
                     )
                     + group(r"\s+\("),
                     action=partial(
-                        actions.add_node_to_buffer, token_type=TokenType.WORD_OPERATOR
+                        actions.add_node_to_buffer,
+                        token_type=TokenType.TIGHT_WORD_OPERATOR,
+                    ),
+                ),
+                Rule(
+                    name="over",
+                    priority=922,
+                    pattern=group(r"over") + group(r"\W", r"$"),
+                    action=partial(
+                        actions.add_node_to_buffer,
+                        token_type=TokenType.TIGHT_WORD_OPERATOR,
+                    ),
+                ),
+                Rule(
+                    name="not",
+                    priority=923,
+                    pattern=group(r"not") + group(r"\W", r"$"),
+                    action=partial(
+                        actions.add_node_to_buffer,
+                        token_type=TokenType.WORD_OPERATOR,
                     ),
                 ),
                 Rule(
@@ -354,7 +371,6 @@ class Polyglot(Dialect):
                         r"window",
                         r"order\s+by",
                         r"limit",
-                        r"offset",
                         r"fetch\s+(first|next)",
                         r"for\s+(update|no\s+key\s+update|share|key\s+share)",
                         r"when",
@@ -364,6 +380,18 @@ class Polyglot(Dialect):
                         r"rows\s+between",
                     )
                     + group(r"\W", r"$"),
+                    action=partial(
+                        actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD
+                    ),
+                ),
+                Rule(
+                    # BQ arrays use an offset(n) function for
+                    # indexing that we do not want to match. This
+                    # should only match the offset in limit ... offset,
+                    # which must be followed by a space
+                    name="offset_keyword",
+                    priority=1001,
+                    pattern=group(r"offset") + group(r"\s+", r"$"),
                     action=partial(
                         actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD
                     ),
