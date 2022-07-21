@@ -99,13 +99,27 @@ from sqlfmt.mode import Mode
         "output, you can use --force-color to override the env var"
     ),
 )
+@click.option(
+    "-d",
+    "--dialect",
+    "dialect_name",
+    type=click.Choice(["polyglot", "clickhouse"], case_sensitive=False),
+    default="polyglot",
+    help=(
+        "The SQL dialect for the target files. Nearly all dialects are supported "
+        "by the default polyglot dialect. Select the ClickHouse dialect to respect "
+        "case sensitivity in function, field, and alias names."
+    ),
+)
 @click.argument(
     "files",
     nargs=-1,
     type=click.Path(exists=True, allow_dash=True, path_type=Path),
 )
 @click.pass_context
-def sqlfmt(ctx: click.Context, files: List[Path], **kwargs: Union[bool, int]) -> None:
+def sqlfmt(
+    ctx: click.Context, files: List[Path], **kwargs: Union[bool, int, List[str], str]
+) -> None:
     """
     sqlfmt is a tool that formats your sql files.
 

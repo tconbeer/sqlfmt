@@ -1,8 +1,8 @@
-from typing import Counter, Dict
+from typing import Any, Counter, Dict
 
 import pytest
 
-from sqlfmt.dialect import Dialect, Polyglot, Rule, group
+from sqlfmt.dialect import ClickHouse, Dialect, Polyglot, Rule, group
 
 
 def test_group() -> None:
@@ -19,21 +19,23 @@ def test_dialect() -> None:
         _ = Dialect()  # type: ignore
 
 
-class TestPolyglot:
-    @pytest.fixture(scope="class")
-    def polyglot(self) -> Polyglot:
-        return Polyglot()
+class TestAllDialects:
+    @pytest.fixture(params=[Polyglot, ClickHouse])
+    def dialect(self, request: Any) -> Polyglot:
+        d = request.param()
+        assert isinstance(d, Polyglot)
+        return d
 
-    @pytest.fixture(scope="class")
-    def rules_dict(self, polyglot: Polyglot) -> Dict[str, Dict[str, Rule]]:
-        rules = polyglot.get_rules()
+    @pytest.fixture
+    def rules_dict(self, dialect: Polyglot) -> Dict[str, Dict[str, Rule]]:
+        rules = dialect.get_rules()
         d: Dict[str, Dict[str, Rule]] = {}
         for ruleset in rules:
             d[ruleset] = {rule.name: rule for rule in rules[ruleset]}
         return d
 
-    def test_rule_props_are_unique(self, polyglot: Polyglot) -> None:
-        rules = polyglot.get_rules()
+    def test_rule_props_are_unique(self, dialect: Polyglot) -> None:
+        rules = dialect.get_rules()
         for ruleset in rules.keys():
             name_counts = Counter([rule.name for rule in rules[ruleset]])
             assert max(name_counts.values()) == 1
@@ -260,9 +262,27 @@ class TestPolyglot:
         match = rule.program.match(value)
         assert match is None, f"{rule_name} regex should not match {value}"
 
-    def test_regex_should_not_match_empty_string(self, polyglot: Polyglot) -> None:
-        rules = polyglot.get_rules()
+    def test_regex_should_not_match_empty_string(self, dialect: Polyglot) -> None:
+        rules = dialect.get_rules()
         for ruleset in rules.keys():
             for rule in rules[ruleset]:
                 match = rule.program.match("")
                 assert match is None, f"{ruleset}.{rule.name} rule matches empty string"
+
+
+class TestPolyglot:
+    @pytest.fixture
+    def polyglot(self) -> Polyglot:
+        return Polyglot()
+
+    def test_case_insensitive(self, polyglot: Polyglot) -> None:
+        assert polyglot.case_sensitive_names is False
+
+
+class TestClickHouse:
+    @pytest.fixture
+    def clickhouse(self) -> ClickHouse:
+        return ClickHouse()
+
+    def test_case_sensitive(self, clickhouse: ClickHouse) -> None:
+        assert clickhouse.case_sensitive_names is True

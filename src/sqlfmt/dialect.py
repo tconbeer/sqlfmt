@@ -18,6 +18,7 @@ class Dialect(ABC):
     """
 
     RULES: Dict[str, List[Rule]]
+    case_sensitive_names = False
 
     @abstractmethod
     def get_rules(self) -> Dict[str, List[Rule]]:
@@ -586,3 +587,7 @@ class Polyglot(Dialect):
 
     def get_rules(self) -> Dict[str, List[Rule]]:
         return super().get_rules()
+
+
+class ClickHouse(Polyglot):
+    case_sensitive_names = True

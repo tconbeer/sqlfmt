@@ -79,12 +79,34 @@ def test_load_config_from_path_minimal_config(tmp_path: Path) -> None:
     assert config["exclude"] == ["target/**/*", "dbt_packages/**/*"]
 
 
-def test_load_config_from_path_invalid(tmp_path: Path) -> None:
+def test_load_config_from_path_invalid_toml(tmp_path: Path) -> None:
     copy_config_file_to_dst("invalid_toml_config.toml", tmp_path)
     with pytest.raises(SqlfmtConfigError) as excinfo:
         _ = _load_config_from_path(tmp_path / "pyproject.toml")
 
     assert "Check for invalid TOML" in str(excinfo.value)
+
+
+def test_load_config_from_path_invalid_key(tmp_path: Path) -> None:
+    copy_config_file_to_dst("invalid_key_config.toml", tmp_path)
+    with pytest.raises(SqlfmtConfigError) as excinfo:
+        _ = _load_config_from_path(tmp_path / "pyproject.toml")
+
+    assert "foo" in str(excinfo.value)
+
+
+def test_load_config_from_path_dialect(tmp_path: Path) -> None:
+    copy_config_file_to_dst("dialect_config.toml", tmp_path)
+    config = _load_config_from_path(tmp_path / "pyproject.toml")
+    assert config
+    assert config["dialect_name"] == "clickhouse"
+
+
+def test_load_config_from_path_dialect_name(tmp_path: Path) -> None:
+    copy_config_file_to_dst("dialect_name_config.toml", tmp_path)
+    config = _load_config_from_path(tmp_path / "pyproject.toml")
+    assert config
+    assert config["dialect_name"] == "clickhouse"
 
 
 def test_load_config_from_missing_file(tmp_path: Path) -> None:

@@ -60,6 +60,7 @@ def error_target(tmp_path: Path) -> Path:
         "--no-jinjafmt",
         "-k",
         "--reset-cache",
+        "--dialect clickhouse",
     ],
 )
 def test_end_to_end_preformatted(
@@ -100,6 +101,7 @@ def test_end_to_end_preformatted(
         "-q --check",
         "--quiet --check",
         "--check -q",
+        "--dialect clickhouse --check",
     ],
 )
 def test_end_to_end_check_unformatted(
@@ -127,7 +129,9 @@ def test_end_to_end_check_unformatted(
     assert result.exit_code == 1
 
 
-@pytest.mark.parametrize("options", ["", "--check", "--no-color", "--quiet"])
+@pytest.mark.parametrize(
+    "options", ["", "--check", "--no-color", "--quiet", "--dialect clickhouse"]
+)
 def test_end_to_end_errors(
     sqlfmt_runner: CliRunner, error_target: Path, options: str
 ) -> None:
