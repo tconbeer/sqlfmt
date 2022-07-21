@@ -2,14 +2,11 @@ from dataclasses import dataclass
 from typing import Iterator
 
 from sqlfmt.line import Line
-from sqlfmt.mode import Mode
 from sqlfmt.node import Node
 
 
 @dataclass
 class LineSplitter:
-    mode: Mode
-
     def maybe_split(self, line: Line) -> Iterator[Line]:
         """
         Evaluates a line for splitting. If line matches criteria for splitting,

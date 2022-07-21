@@ -17,8 +17,8 @@ class LineMerger:
     def create_merged_line(self, lines: List[Line]) -> List[Line]:
         """
         Returns a new line by merging together all nodes in lines. Raises an
-        exception if the returned line would be too long, would be empty,
-        or would attempt to merge a multiline token.
+        exception if the returned line would be too long, empty, or the nodes in
+        any of the lines violate the rules in _raise_unmergeable.
         """
 
         # if the child is just one below the parent, we're trying to
@@ -65,8 +65,18 @@ class LineMerger:
             ]
             if content_nodes:
                 final_newline = line.nodes[-1]
-                allow_multiline = False
                 nodes.extend(content_nodes)
+                # we can merge lines containing multiline nodes iff:
+                # 1. the multiline node is on the first line (allow_multiline
+                #    is initialized to True)
+                # 2. the multiline node is on the second line and follows a
+                #    standalone operator
+                if not (
+                    allow_multiline
+                    and len(content_nodes) == 1
+                    and content_nodes[0].is_operator
+                ):
+                    allow_multiline = False
             comments.extend(line.comments)
 
         if not nodes or not final_newline:

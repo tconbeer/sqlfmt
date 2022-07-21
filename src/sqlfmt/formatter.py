@@ -19,7 +19,7 @@ class QueryFormatter:
         Splits lines to make line depth consistent and syntax
         apparent
         """
-        splitter = LineSplitter(mode=self.mode)
+        splitter = LineSplitter()
         new_lines = []
         for line in lines:
             splits = list(splitter.maybe_split(line))
@@ -32,9 +32,10 @@ class QueryFormatter:
         the curlies) by mutating existing jinja nodes
         """
         formatter = JinjaFormatter(mode=self.mode)
+        new_lines: List[Line] = []
         for line in lines:
-            formatter.format_line(line)
-        return lines
+            new_lines.extend(formatter.format_line(line))
+        return new_lines
 
     def _merge_lines(self, lines: List[Line]) -> List[Line]:
         """

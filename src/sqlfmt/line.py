@@ -1,4 +1,3 @@
-import sys
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
 
@@ -6,11 +5,6 @@ from sqlfmt.comment import Comment
 from sqlfmt.exception import InlineCommentException
 from sqlfmt.node import Node
 from sqlfmt.token import Token, TokenType
-
-if sys.version_info >= (3, 8):
-    from functools import cached_property
-else:
-    from backports.cached_property import cached_property
 
 
 @dataclass
@@ -28,7 +22,7 @@ class Line:
     def __str__(self) -> str:
         return self._calc_str
 
-    @cached_property
+    @property
     def _calc_str(self) -> str:
         """
         A Line is printed in one of three ways:
@@ -40,8 +34,6 @@ class Line:
 
         Does not include any Comments; for those, use the render_with_comments
         method
-
-        Cached for performance.
         """
         if self.is_blank_line:
             return "\n"
@@ -216,7 +208,7 @@ class Line:
             tokens.append(node.token)
         return tokens
 
-    @cached_property
+    @property
     def is_blank_line(self) -> bool:
         if (
             len(self.nodes) == 1
@@ -270,7 +262,7 @@ class Line:
     def contains_operator(self) -> bool:
         return any([n.is_operator for n in self.nodes])
 
-    @cached_property
+    @property
     def contains_jinja(self) -> bool:
         return any([n.is_jinja for n in self.nodes])
 
