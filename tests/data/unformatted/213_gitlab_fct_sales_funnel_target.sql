@@ -189,36 +189,30 @@ target_matrix as (
     from {{ ref("sheetload_sales_funnel_targets_matrix_source") }}
     left join
         date
-        on
-        {{
+        on {{
             sales_funnel_text_slugify(
                 "sheetload_sales_funnel_targets_matrix_source.month"
             )
-        }}
-        = {{ sales_funnel_text_slugify("date.fiscal_month_name_fy") }}
+        }} = {{ sales_funnel_text_slugify("date.fiscal_month_name_fy") }}
     left join
         sales_qualified_source
-        on
-        {{
+        on {{
             sales_funnel_text_slugify(
                 "sheetload_sales_funnel_targets_matrix_source.opportunity_source"
             )
         }}
-        =
-        {{
+        = {{
             sales_funnel_text_slugify(
                 "sales_qualified_source.sales_qualified_source_name"
             )
         }}
     left join
         order_type
-        on
-        {{
+        on {{
             sales_funnel_text_slugify(
                 "sheetload_sales_funnel_targets_matrix_source.order_type"
             )
-        }}
-        = {{ sales_funnel_text_slugify("order_type.order_type_name") }}
+        }} = {{ sales_funnel_text_slugify("order_type.order_type_name") }}
 
 ),
 fy22_user_hierarchy as (
