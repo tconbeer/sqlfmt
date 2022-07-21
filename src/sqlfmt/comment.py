@@ -1,15 +1,9 @@
 import re
-import sys
 from dataclasses import dataclass
 from typing import ClassVar, Iterator, Tuple
 
 from sqlfmt.exception import InlineCommentException
 from sqlfmt.token import Token
-
-if sys.version_info >= (3, 8):
-    from functools import cached_property
-else:
-    from backports.cached_property import cached_property
 
 
 @dataclass
@@ -26,7 +20,7 @@ class Comment:
     def __str__(self) -> str:
         return self._calc_str
 
-    @cached_property
+    @property
     def _calc_str(self) -> str:
         """
         Returns the contents of the comment token plus a trailing newline,

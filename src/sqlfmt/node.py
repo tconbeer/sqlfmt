@@ -1,14 +1,8 @@
-import sys
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
 
 from sqlfmt.exception import SqlfmtBracketError
 from sqlfmt.token import Token, TokenType
-
-if sys.version_info >= (3, 8):
-    from functools import cached_property
-else:
-    from backports.cached_property import cached_property
 
 
 @dataclass
@@ -163,7 +157,7 @@ class Node:
             TokenType.JINJA_BLOCK_END,
         )
 
-    @cached_property
+    @property
     def is_operator(self) -> bool:
         return (
             self.token.type
@@ -209,7 +203,7 @@ class Node:
         """
         return self.token.type == TokenType.WORD_OPERATOR and self.value == "between"
 
-    @cached_property
+    @property
     def has_preceding_between_operator(self) -> bool:
         """
         True if this node has a preceding "between" operator at the same depth
@@ -239,7 +233,7 @@ class Node:
     def is_newline(self) -> bool:
         return self.token.type == TokenType.NEWLINE
 
-    @cached_property
+    @property
     def is_multiline(self) -> bool:
         if (
             self.token.type
