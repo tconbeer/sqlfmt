@@ -2,6 +2,7 @@ from typing import List
 
 import pytest
 
+from sqlfmt.analyzer import Analyzer
 from sqlfmt.line import Line
 from sqlfmt.mode import Mode
 from sqlfmt.splitter import LineSplitter
@@ -9,16 +10,19 @@ from tests.util import read_test_data
 
 
 @pytest.fixture
-def splitter(default_mode: Mode) -> LineSplitter:
-    return LineSplitter(default_mode)
+def splitter() -> LineSplitter:
+    return LineSplitter()
 
 
 @pytest.fixture
-def depth_split_line(default_mode: Mode) -> Line:
+def default_analyzer(default_mode: Mode) -> Analyzer:
+    return default_mode.dialect.initialize_analyzer(default_mode.line_length)
+
+
+@pytest.fixture
+def depth_split_line(default_analyzer: Analyzer) -> Line:
     source_string = "with my_cte as (select 1, b from my_schema.my_table),\n"
-    raw_query = default_mode.dialect.initialize_analyzer(
-        line_length=default_mode.line_length
-    ).parse_query(source_string)
+    raw_query = default_analyzer.parse_query(source_string)
     return raw_query.lines[0]
 
 
@@ -41,11 +45,9 @@ def test_maybe_split(splitter: LineSplitter, depth_split_line: Line) -> None:
     assert result == expected
 
 
-def test_split_one_liner(splitter: LineSplitter) -> None:
+def test_split_one_liner(splitter: LineSplitter, default_analyzer: Analyzer) -> None:
     source_string = "select * from my_table\n"
-    raw_query = splitter.mode.dialect.initialize_analyzer(
-        splitter.mode.line_length
-    ).parse_query(source_string)
+    raw_query = default_analyzer.parse_query(source_string)
 
     for raw_line in raw_query.lines:
         splits = splitter.maybe_split(raw_line)
@@ -53,13 +55,13 @@ def test_split_one_liner(splitter: LineSplitter) -> None:
         assert len(result) == 4
 
 
-def test_simple_comment_split(splitter: LineSplitter) -> None:
+def test_simple_comment_split(
+    splitter: LineSplitter, default_analyzer: Analyzer
+) -> None:
     source_string, expected_result = read_test_data(
         "unit_tests/test_splitter/test_simple_comment_split.sql"
     )
-    raw_query = splitter.mode.dialect.initialize_analyzer(
-        splitter.mode.line_length
-    ).parse_query(source_string)
+    raw_query = default_analyzer.parse_query(source_string)
 
     split_lines: List[Line] = []
     for raw_line in raw_query.lines:
@@ -91,7 +93,9 @@ def test_simple_comment_split(splitter: LineSplitter) -> None:
             assert str(line.comments[0]) == expected_comments[i]
 
 
-def test_split_count_window_function(splitter: LineSplitter) -> None:
+def test_split_count_window_function(
+    splitter: LineSplitter, default_analyzer: Analyzer
+) -> None:
     source_string = (
         "count(case when a is null then 1 end) over "
         "(partition by user_id, date_trunc('year', performed_at)) as d,\n"
@@ -116,9 +120,7 @@ def test_split_count_window_function(splitter: LineSplitter) -> None:
         ")\n"
         "as d,\n"
     )
-    raw_query = splitter.mode.dialect.initialize_analyzer(
-        splitter.mode.line_length
-    ).parse_query(source_string)
+    raw_query = default_analyzer.parse_query(source_string)
 
     split_lines: List[Line] = []
     for raw_line in raw_query.lines:
@@ -129,13 +131,13 @@ def test_split_count_window_function(splitter: LineSplitter) -> None:
     assert actual_result == expected_result
 
 
-def test_comment_split_impact_on_open_brackets(splitter: LineSplitter) -> None:
+def test_comment_split_impact_on_open_brackets(
+    splitter: LineSplitter, default_analyzer: Analyzer
+) -> None:
     source_string, expected_result = read_test_data(
         "unit_tests/test_splitter/test_comment_split_impact_on_open_brackets.sql"
     )
-    raw_query = splitter.mode.dialect.initialize_analyzer(
-        splitter.mode.line_length
-    ).parse_query(source_string)
+    raw_query = default_analyzer.parse_query(source_string)
 
     split_lines: List[Line] = []
     for raw_line in raw_query.lines:
@@ -145,14 +147,14 @@ def test_comment_split_impact_on_open_brackets(splitter: LineSplitter) -> None:
     assert actual_result == expected_result
 
 
-def test_split_long_line_on_operator(splitter: LineSplitter) -> None:
+def test_split_long_line_on_operator(
+    splitter: LineSplitter, default_analyzer: Analyzer
+) -> None:
     source_string = (
         "a_really_long_field + a_really_really_really_long_field "
         "+ a_really_really_really_really_long_field as another_field\n"
     )
-    raw_query = splitter.mode.dialect.initialize_analyzer(
-        splitter.mode.line_length
-    ).parse_query(source_string)
+    raw_query = default_analyzer.parse_query(source_string)
 
     split_lines: List[Line] = []
     for raw_line in raw_query.lines:
@@ -168,11 +170,9 @@ def test_split_long_line_on_operator(splitter: LineSplitter) -> None:
     assert actual_result == expected_result
 
 
-def test_split_at_star(splitter: LineSplitter) -> None:
+def test_split_at_star(splitter: LineSplitter, default_analyzer: Analyzer) -> None:
     source_string = "select *, my_table.*, 1 * 1, a_field * b_field from my_table\n"
-    raw_query = splitter.mode.dialect.initialize_analyzer(
-        splitter.mode.line_length
-    ).parse_query(source_string)
+    raw_query = default_analyzer.parse_query(source_string)
 
     split_lines: List[Line] = []
     for raw_line in raw_query.lines:
@@ -193,13 +193,11 @@ def test_split_at_star(splitter: LineSplitter) -> None:
     assert actual_result == expected_result
 
 
-def test_jinja_block_split(splitter: LineSplitter) -> None:
+def test_jinja_block_split(splitter: LineSplitter, default_analyzer: Analyzer) -> None:
     source_string, expected_result = read_test_data(
         "unit_tests/test_splitter/test_jinja_block_split.sql"
     )
-    raw_query = splitter.mode.dialect.initialize_analyzer(
-        splitter.mode.line_length
-    ).parse_query(source_string)
+    raw_query = default_analyzer.parse_query(source_string)
 
     split_lines: List[Line] = []
     for raw_line in raw_query.lines:
@@ -210,11 +208,9 @@ def test_jinja_block_split(splitter: LineSplitter) -> None:
     assert actual_result == expected_result
 
 
-def test_split_at_and(splitter: LineSplitter) -> None:
+def test_split_at_and(splitter: LineSplitter, default_analyzer: Analyzer) -> None:
     source_string = "select 1 where a between b and c and d between e and f and a < b\n"
-    raw_query = splitter.mode.dialect.initialize_analyzer(
-        splitter.mode.line_length
-    ).parse_query(source_string)
+    raw_query = default_analyzer.parse_query(source_string)
 
     split_lines: List[Line] = []
     for raw_line in raw_query.lines:
@@ -235,11 +231,11 @@ def test_split_at_and(splitter: LineSplitter) -> None:
     assert actual_result == expected_result
 
 
-def test_split_before_semicolon(splitter: LineSplitter) -> None:
+def test_split_before_semicolon(
+    splitter: LineSplitter, default_analyzer: Analyzer
+) -> None:
     source_string = "select 1; select 2; select 3; select 4;\n"
-    raw_query = splitter.mode.dialect.initialize_analyzer(
-        splitter.mode.line_length
-    ).parse_query(source_string)
+    raw_query = default_analyzer.parse_query(source_string)
 
     split_lines: List[Line] = []
     for raw_line in raw_query.lines:
@@ -263,13 +259,13 @@ def test_split_before_semicolon(splitter: LineSplitter) -> None:
     assert actual_result == expected_result
 
 
-def test_split_around_set_operator(splitter: LineSplitter) -> None:
+def test_split_around_set_operator(
+    splitter: LineSplitter, default_analyzer: Analyzer
+) -> None:
     source_string = (
         "select 1 union all select 2 union all (select 3) union all select 4\n"
     )
-    raw_query = splitter.mode.dialect.initialize_analyzer(
-        splitter.mode.line_length
-    ).parse_query(source_string)
+    raw_query = default_analyzer.parse_query(source_string)
 
     split_lines: List[Line] = []
     for raw_line in raw_query.lines:

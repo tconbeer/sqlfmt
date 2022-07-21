@@ -42,6 +42,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/210_gitlab_gdpr_delete.sql",
         "unformatted/211_http_2019_cdn_17_20.sql",
         "unformatted/212_http_2019_cms_14_02.sql",
+        "unformatted/213_gitlab_fct_sales_funnel_target.sql",
         "unformatted/300_jinjafmt.sql",
     ],
 )

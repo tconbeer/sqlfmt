@@ -2,13 +2,14 @@ import keyword
 import re
 from dataclasses import dataclass, field
 from importlib import import_module
-from itertools import product
+from itertools import chain, product
 from types import ModuleType
-from typing import Dict, NamedTuple, Optional, Tuple
+from typing import Dict, List, NamedTuple, Optional, Tuple
 
 from sqlfmt.line import Line
 from sqlfmt.mode import Mode
 from sqlfmt.node import Node
+from sqlfmt.splitter import LineSplitter
 
 
 class BlackWrapper:
@@ -329,21 +330,44 @@ class JinjaFormatter:
             self.code_formatter.black is not None and not self.mode.no_jinjafmt
         )
 
-    def format_line(self, line: Line) -> None:
+    def format_line(self, line: Line) -> List[Line]:
         """
-        Format each jinja tag in a line, in turn
+        Format each jinja tag in a line, in turn. If a node was made multiline,
+        split before the node (unless it is already the first node on that line)
         """
         line_length = self.mode.line_length
         if line.contains_jinja:
             running_length = len(line.prefix) - len(line.nodes[0].prefix)
-            for node in line.nodes:
-                self._format_jinja_node(node, max_length=line_length - running_length)
-                running_length += len(node)
+            for i, node in enumerate(line.nodes):
+                is_blackened = self._format_jinja_node(
+                    node, max_length=line_length - running_length
+                )
+                if i > 0 and is_blackened and node.is_multiline:
+                    # if black turned a single-line jinja expression
+                    # into a multiline one, we need to split before
+                    # this node (since on the first pass the splitter
+                    # would have split before this node if it had been
+                    # a multiline node)
+                    splitter = LineSplitter()
+                    return list(
+                        chain(
+                            *[
+                                self.format_line(new_line)
+                                for new_line in splitter.split_at_index(line, i)
+                            ]
+                        )
+                    )
+                else:
+                    running_length += len(node)
+            else:
+                return [line]
+        else:
+            return [line]
 
-    def _format_jinja_node(self, node: Node, max_length: int) -> None:
+    def _format_jinja_node(self, node: Node, max_length: int) -> bool:
         """
         Format a single jinja tag. No-ops for nodes that
-        are not jinja
+        are not jinja. Returns True if the node was blackened
         """
         if node.is_jinja:
             tag = JinjaTag.from_string(node.value, node.depth[0])
@@ -355,3 +379,8 @@ class JinjaFormatter:
                 )
 
             node.value = str(tag)
+
+            return tag.is_blackened
+
+        else:
+            return False
