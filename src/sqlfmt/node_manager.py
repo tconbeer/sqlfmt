@@ -221,7 +221,6 @@ class NodeManager:
         """
         if token.type in (
             TokenType.UNTERM_KEYWORD,
-            TokenType.NAME,
             TokenType.STATEMENT_START,
             TokenType.STATEMENT_END,
             TokenType.WORD_OPERATOR,
@@ -231,6 +230,8 @@ class NodeManager:
             TokenType.BOOLEAN_OPERATOR,
             TokenType.SET_OPERATOR,
         ):
+            return token.token.lower()
+        elif token.type == TokenType.NAME and not self.case_sensitive_names:
             return token.token.lower()
         else:
             return token.token

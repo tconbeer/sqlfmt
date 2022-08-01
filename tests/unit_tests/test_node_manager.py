@@ -211,6 +211,35 @@ def test_capitalization(default_mode: Mode) -> None:
 
 
 @pytest.mark.parametrize(
+    "source_string,expected",
+    [
+        (
+            "SELECT A, B, \"C\", {{ D }}, e, 'f', 'G'\n"
+            'fROM "H"."j" Join I ON k And L\n',
+            "select A, B, \"C\", {{ D }}, e, 'f', 'G'\n"
+            'from "H"."j" join I on k and L\n',
+        ),
+        (
+            "SELECT toString(1) AS Test_string, toDateTime64('2022-05-25', 3) "
+            "AS Test_dateTime64, ifNull(null, 'TestNull') as testIf, "
+            "JSONExtractString('{\"abc\": \"hello\"}', 'abc') as testJSON\n",
+            "select toString(1) as Test_string, toDateTime64('2022-05-25', 3) "
+            "as Test_dateTime64, ifNull(null, 'TestNull') as testIf, "
+            "JSONExtractString('{\"abc\": \"hello\"}', 'abc') as testJSON\n",
+        ),
+    ],
+)
+def test_capitalization_clickhouse(
+    source_string: str, expected: str, clickhouse_mode: Mode
+) -> None:
+    q = clickhouse_mode.dialect.initialize_analyzer(
+        line_length=clickhouse_mode.line_length
+    ).parse_query(source_string=source_string)
+    parsed_string = "".join(str(line) for line in q.lines)
+    assert parsed_string == expected
+
+
+@pytest.mark.parametrize(
     "source_string",
     [
         "OVER",
