@@ -110,11 +110,11 @@ check = true
 
 ### Using sqlfmt with different SQL dialects
 
-sqlfmt's rules are simple, which means it does not have to parse every single token in your query. This allows nearly all sql dialects to be formatted using sqlfmt's default "polyglot" dialect.
+sqlfmt's rules are simple, which means it does not have to parse every single token in your query. This allows nearly all SQL dialects to be formatted using sqlfmt's default "polyglot" dialect.
 
 #### ClickHouse
 
-The exception to this is ClickHouse, which is case-sensitive where other dialects are not. By default, sqlfmt will lowercase all SQL keywords, database identifiers, aliases, etc. (basically anything that isn't a quoted). This is bad for ClickHouse. To prevent the lowercasing of function names, database identifiers, and aliases, use the `--dialect clickhouse` option when running sqlfmt. For example,
+The exception to this is ClickHouse, which is case-sensitive where other dialects are not. By default, sqlfmt will lowercase all SQL keywords, database identifiers, aliases, etc. (basically anything that isn't quoted). This is bad for ClickHouse. To prevent the lowercasing of function names, database identifiers, and aliases, use the `--dialect clickhouse` option when running sqlfmt. For example,
 
 ```bash
 $ sqlfmt . --dialect clickhouse
@@ -131,7 +131,7 @@ Note that with this option, sqlfmt will not lowercase **most** non-reserved keyw
 
 ### Using sqlfmt with dbt
 
-sqlfmt was built for dbt, so only minimal configuration is required. We recommend excluding your `target` and `dbt_packages` directories from formatting. You can do this with the command-line `--exclude` option, or by setting `exclude` in your `pyproject.toml` file
+sqlfmt was built for dbt, so only minimal configuration is required. We recommend excluding your `target` and `dbt_packages` directories from formatting. You can do this with the command-line `--exclude` option, or by setting `exclude` in your `pyproject.toml` file:
 
 ```toml
 [tool.sqlfmt]

@@ -34,7 +34,7 @@ class Mode:
             "clickhouse": ClickHouse(),
         }
         try:
-            return options[self.dialect_name]
+            return options[self.dialect_name.lower()]
         except KeyError:
             raise SqlfmtConfigError(
                 f"Mode was created with dialect_name={self.dialect_name}, "
