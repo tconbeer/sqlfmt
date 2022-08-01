@@ -5,7 +5,6 @@ import pytest
 from sqlfmt import actions
 from sqlfmt.analyzer import Analyzer
 from sqlfmt.exception import SqlfmtBracketError, StopJinjaLexing
-from sqlfmt.node import Node
 from sqlfmt.token import Token, TokenType
 
 
@@ -207,7 +206,7 @@ def test_handle_set_operator(
 
     if has_preceding_star:
         t = Token(type=TokenType.STAR, prefix="", token="*", spos=0, epos=1)
-        n = Node.from_token(t, previous_node=None)
+        n = default_analyzer.node_manager.create_node(t, previous_node=None)
         default_analyzer.node_buffer.append(n)
 
     actions.handle_set_operator(default_analyzer, source_string, match)

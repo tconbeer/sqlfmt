@@ -1,5 +1,7 @@
 import pytest
 
+from sqlfmt.dialect import ClickHouse, Polyglot
+from sqlfmt.exception import SqlfmtConfigError
 from sqlfmt.mode import Mode
 
 
@@ -31,3 +33,20 @@ def test_color_mode(
     mode = Mode(no_color=no_color, force_color=force_color)
 
     assert mode.color is result
+
+
+def test_dialect() -> None:
+    mode = Mode()
+    assert isinstance(mode.dialect, Polyglot)
+
+    clickhouse_mode = Mode(dialect_name="clickhouse")
+    # clickhouse is a subclass of Polyglot
+    assert isinstance(clickhouse_mode.dialect, Polyglot)
+    assert isinstance(clickhouse_mode.dialect, ClickHouse)
+
+
+def test_dialect_raises() -> None:
+    m = Mode(dialect_name="foo")
+    # clickhouse is a subclass of Polyglot
+    with pytest.raises(SqlfmtConfigError):
+        _ = m.dialect

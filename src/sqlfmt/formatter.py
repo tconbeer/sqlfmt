@@ -6,6 +6,7 @@ from sqlfmt.line import Line
 from sqlfmt.merger import LineMerger
 from sqlfmt.mode import Mode
 from sqlfmt.node import Node
+from sqlfmt.node_manager import NodeManager
 from sqlfmt.query import Query
 from sqlfmt.splitter import LineSplitter
 
@@ -19,7 +20,8 @@ class QueryFormatter:
         Splits lines to make line depth consistent and syntax
         apparent
         """
-        splitter = LineSplitter()
+        node_manager = NodeManager(self.mode.dialect.case_sensitive_names)
+        splitter = LineSplitter(node_manager)
         new_lines = []
         for line in lines:
             splits = list(splitter.maybe_split(line))

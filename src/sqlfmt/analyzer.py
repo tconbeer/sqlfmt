@@ -6,6 +6,7 @@ from sqlfmt.comment import Comment
 from sqlfmt.exception import SqlfmtBracketError, SqlfmtParsingError
 from sqlfmt.line import Line
 from sqlfmt.node import Node
+from sqlfmt.node_manager import NodeManager
 from sqlfmt.query import Query
 
 
@@ -57,6 +58,7 @@ class Analyzer:
 
     line_length: int
     rules: Dict[str, List[Rule]]
+    node_manager: NodeManager
     node_buffer: List[Node] = field(default_factory=list)
     comment_buffer: List[Comment] = field(default_factory=list)
     line_buffer: List[Line] = field(default_factory=list)
@@ -105,7 +107,7 @@ class Analyzer:
                 nodes=self.node_buffer,
                 comments=self.comment_buffer,
             )
-            line.append_newline()
+            self.node_manager.append_newline(line)
             self.line_buffer.append(line)
 
         # if the final line(s) are jinja block end tags, they may be

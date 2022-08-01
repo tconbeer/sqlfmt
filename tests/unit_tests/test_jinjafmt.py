@@ -6,8 +6,13 @@ import pytest
 from sqlfmt.jinjafmt import BlackWrapper, JinjaFormatter, JinjaTag
 from sqlfmt.line import Line
 from sqlfmt.mode import Mode
-from sqlfmt.node import Node
+from sqlfmt.node_manager import NodeManager
 from sqlfmt.token import Token, TokenType
+
+
+@pytest.fixture
+def node_manager(default_mode: Mode) -> NodeManager:
+    return NodeManager(default_mode.dialect.case_sensitive_names)
 
 
 @pytest.fixture
@@ -105,10 +110,14 @@ def test_jinja_tag_from_string(tag: str, result: Tuple[str, str, str, str]) -> N
     ],
 )
 def test_format_jinja_node(
-    jinja_formatter: JinjaFormatter, type: TokenType, tag: str, formatted: str
+    jinja_formatter: JinjaFormatter,
+    type: TokenType,
+    tag: str,
+    formatted: str,
+    node_manager: NodeManager,
 ) -> None:
     t = Token(type=type, prefix="", token=tag, spos=0, epos=len(tag))
-    n = Node.from_token(t, previous_node=None)
+    n = node_manager.create_node(t, previous_node=None)
     jinja_formatter._format_jinja_node(n, 88)
     assert n.value == formatted
 
@@ -122,7 +131,9 @@ def test_format_jinja_node(
     ],
 )
 def test_no_format_jinja_node(
-    disabled_jinja_formatter: JinjaFormatter, source_string: str
+    disabled_jinja_formatter: JinjaFormatter,
+    source_string: str,
+    node_manager: NodeManager,
 ) -> None:
     t = Token(
         type=TokenType.JINJA_STATEMENT,
@@ -131,7 +142,7 @@ def test_no_format_jinja_node(
         spos=0,
         epos=len(source_string),
     )
-    n = Node.from_token(t, previous_node=None)
+    n = node_manager.create_node(t, previous_node=None)
     disabled_jinja_formatter._format_jinja_node(n, 88)
     assert n.value == source_string
 
@@ -145,7 +156,10 @@ def test_no_format_jinja_node(
     ],
 )
 def test_format_jinja_node_no_black(
-    uninstall_black: None, jinja_formatter: JinjaFormatter, source_string: str
+    uninstall_black: None,
+    jinja_formatter: JinjaFormatter,
+    source_string: str,
+    node_manager: NodeManager,
 ) -> None:
     t = Token(
         type=TokenType.JINJA_STATEMENT,
@@ -154,12 +168,14 @@ def test_format_jinja_node_no_black(
         spos=0,
         epos=len(source_string),
     )
-    n = Node.from_token(t, previous_node=None)
+    n = node_manager.create_node(t, previous_node=None)
     jinja_formatter._format_jinja_node(n, 88)
     assert n.value == source_string
 
 
-def test_format_line(jinja_formatter: JinjaFormatter) -> None:
+def test_format_line(
+    jinja_formatter: JinjaFormatter, node_manager: NodeManager
+) -> None:
     t = Token(
         type=TokenType.JINJA_EXPRESSION,
         prefix="",
@@ -167,9 +183,9 @@ def test_format_line(jinja_formatter: JinjaFormatter) -> None:
         spos=0,
         epos=14,
     )
-    n = Node.from_token(t, previous_node=None)
+    n = node_manager.create_node(t, previous_node=None)
     line = Line.from_nodes(previous_node=None, nodes=[n], comments=[])
-    line.append_newline()
+    node_manager.append_newline(line)
 
     assert n.value == "{{expression}}"
     _ = list(map(jinja_formatter.format_line, [line]))

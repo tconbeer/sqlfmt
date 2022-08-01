@@ -5,13 +5,15 @@ import pytest
 from sqlfmt.analyzer import Analyzer
 from sqlfmt.line import Line
 from sqlfmt.mode import Mode
+from sqlfmt.node_manager import NodeManager
 from sqlfmt.splitter import LineSplitter
 from tests.util import read_test_data
 
 
 @pytest.fixture
-def splitter() -> LineSplitter:
-    return LineSplitter()
+def splitter(default_mode: Mode) -> LineSplitter:
+    node_manager = NodeManager(default_mode.dialect.case_sensitive_names)
+    return LineSplitter(node_manager)
 
 
 @pytest.fixture

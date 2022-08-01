@@ -36,7 +36,7 @@ def add_node_to_buffer(
     if previous_node is None and override_analyzer_prev_node is False:
         previous_node = analyzer.previous_node
     token = Token.from_match(source_string, match, token_type)
-    node = Node.from_token(token=token, previous_node=previous_node)
+    node = analyzer.node_manager.create_node(token=token, previous_node=previous_node)
     analyzer.node_buffer.append(node)
     analyzer.pos = token.epos
 
@@ -55,10 +55,14 @@ def safe_add_node_to_buffer(
     """
     try:
         token = Token.from_match(source_string, match, token_type)
-        node = Node.from_token(token=token, previous_node=analyzer.previous_node)
+        node = analyzer.node_manager.create_node(
+            token=token, previous_node=analyzer.previous_node
+        )
     except SqlfmtBracketError:
         token = Token.from_match(source_string, match, fallback_token_type)
-        node = Node.from_token(token=token, previous_node=analyzer.previous_node)
+        node = analyzer.node_manager.create_node(
+            token=token, previous_node=analyzer.previous_node
+        )
     finally:
         analyzer.node_buffer.append(node)
         analyzer.pos = token.epos
@@ -109,7 +113,9 @@ def handle_newline(
     that contains Nodes
     """
     nl_token = Token.from_match(source_string, match, TokenType.NEWLINE)
-    nl_node = Node.from_token(token=nl_token, previous_node=analyzer.previous_node)
+    nl_node = analyzer.node_manager.create_node(
+        token=nl_token, previous_node=analyzer.previous_node
+    )
     if analyzer.node_buffer or not analyzer.comment_buffer:
         analyzer.node_buffer.append(nl_node)
         analyzer.line_buffer.append(
@@ -152,7 +158,7 @@ def handle_set_operator(
             spos=token.spos,
             epos=token.epos,
         )
-    node = Node.from_token(token=token, previous_node=previous_node)
+    node = analyzer.node_manager.create_node(token=token, previous_node=previous_node)
     analyzer.node_buffer.append(node)
     analyzer.pos = token.epos
 
@@ -198,7 +204,9 @@ def handle_jinja_set_block(
         spos=data_spos,
         epos=data_epos,
     )
-    data_node = Node.from_token(token=data_token, previous_node=analyzer.previous_node)
+    data_node = analyzer.node_manager.create_node(
+        token=data_token, previous_node=analyzer.previous_node
+    )
     analyzer.node_buffer.append(data_node)
     analyzer.pos = data_epos
     raise StopJinjaLexing
@@ -364,6 +372,6 @@ def handle_potentially_nested_tokens(
     )
     token_text = source_string[spos:epos]
     token = Token(token_type, prefix, token_text, pos, epos)
-    node = Node.from_token(token, analyzer.previous_node)
+    node = analyzer.node_manager.create_node(token, analyzer.previous_node)
     analyzer.node_buffer.append(node)
     analyzer.pos = epos

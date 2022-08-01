@@ -3,6 +3,7 @@ from functools import partial
 from typing import Dict, List
 
 from sqlfmt.analyzer import Analyzer, Rule, group
+from sqlfmt.node_manager import NodeManager
 from sqlfmt.token import TokenType
 
 NEWLINE: str = r"\r?\n"
@@ -37,6 +38,7 @@ class Dialect(ABC):
         analyzer = Analyzer(
             line_length=line_length,
             rules=self.get_rules(),
+            node_manager=NodeManager(self.case_sensitive_names),
         )
         return analyzer
 

@@ -3,10 +3,13 @@ from typing import Iterator
 
 from sqlfmt.line import Line
 from sqlfmt.node import Node
+from sqlfmt.node_manager import NodeManager
 
 
 @dataclass
 class LineSplitter:
+    node_manager: NodeManager
+
     def maybe_split(self, line: Line) -> Iterator[Line]:
         """
         Evaluates a line for splitting. If line matches criteria for splitting,
@@ -114,7 +117,7 @@ class LineSplitter:
             nodes=head,
             comments=line.comments,
         )
-        head_line.append_newline()
+        self.node_manager.append_newline(head_line)
         yield head_line
 
         tail_line = Line.from_nodes(
