@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 -   sqlfmt now standardizes whitespace inside word tokens ([#201](https://github.com/tconbeer/sqlfmt/issues/201))
 -   `using` is now treated as a word operator. It gets a space before its brackets and merging with surrounding lines is now much improved ([#218](https://github.com/tconbeer/sqlfmt/issues/218) - thank you [@nfcampos](https://github.com/nfcampos)!)
+-   `within group` and `filter` are now treated like `over`, and the formatting of those aggregate clauses is improved ([#205](https://github.com/tconbeer/sqlfmt/issues/205))
 
 ## [0.10.0] - 2022-08-02
 
