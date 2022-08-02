@@ -4,10 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.10.0] - 2022-08-02
+
 ### Features
+
 -   sqlfmt now supports ClickHouse. When run with the `--dialect clickhouse` option, sqlfmt will not lowercase names that could be case-sensitive in ClickHouse, like function names, aliases, etc. ([#193](https://github.com/tconbeer/sqlfmt/issues/193) - thank you [@Shlomixg](https://github.com/Shlomixg)!)
 
 ### Formatting Changes + Bug Fixes
+
 -   formatting for chained boolean operators with complex expressions is now significantly improved ([#189](https://github.com/tconbeer/sqlfmt/issues/189) - thank you [@Rainymood](https://github.com/Rainymood)!)
 -   formatting for array indexing is now significantly improved ([#209](https://github.com/tconbeer/sqlfmt/issues/209)) and sqlfmt no longer inserts spaces between the `offset()` function and its brackets
 -   set operators (like `union`) are now formatted differently. They must be on their own line, and will not cause subsequent blocks to be indented ([#188](https://github.com/tconbeer/sqlfmt/issues/188) - thank you [@Rainymood](https://github.com/Rainymood)!)
@@ -185,7 +189,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.9.0...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.10.0...HEAD
+
+[0.10.0]: https://github.com/tconbeer/sqlfmt/compare/0.9.0...0.10.0
 
 [0.9.0]: https://github.com/tconbeer/sqlfmt/compare/0.8.0...0.9.0
 
