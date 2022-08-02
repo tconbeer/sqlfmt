@@ -11,6 +11,22 @@ select * replace (really_long_field_a as really_long_field_b, really_long_field_
 replace(one_thing, another_thing, some_string)
 from my_table
 ;
+select
+    recentagg_root.*
+    except (recentagg),
+    (
+        select as struct
+            recentagg.*,
+            recentagg_topphases_array.topphases,
+            recentagg_topsymptoms_array.topsymptoms,
+            recentagg_toppositivesymptoms_array.toppositivesymptoms,
+            recentagg_topactivities_array.topactivities,
+    ) recentagg,
+from recentagg_root
+left join recentagg_topphases_array using(id)
+left join recentagg_topsymptoms_array using(id)
+left join recentagg_toppositivesymptoms_array using(id)
+left join recentagg_topactivities_array using(id)
 )))))__SQLFMT_OUTPUT__(((((
 select
     * except (field_a, field_b, field_c),
@@ -44,3 +60,18 @@ select
     replace(one_thing, another_thing, some_string)
 from my_table
 ;
+select
+    recentagg_root.* except (recentagg),
+    (
+        select as struct
+            recentagg.*,
+            recentagg_topphases_array.topphases,
+            recentagg_topsymptoms_array.topsymptoms,
+            recentagg_toppositivesymptoms_array.toppositivesymptoms,
+            recentagg_topactivities_array.topactivities,
+    ) recentagg,
+from recentagg_root
+left join recentagg_topphases_array using(id)
+left join recentagg_topsymptoms_array using(id)
+left join recentagg_toppositivesymptoms_array using(id)
+left join recentagg_topactivities_array using(id)

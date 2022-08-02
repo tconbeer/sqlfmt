@@ -186,18 +186,21 @@ def test_handle_newline_leading_comments(default_analyzer: Analyzer) -> None:
 
 
 @pytest.mark.parametrize(
-    "source_string,has_preceding_star,expected_type",
+    "source_string,has_preceding_star,has_preceding_newline,expected_type",
     [
-        (" except", True, TokenType.TIGHT_WORD_OPERATOR),
-        (" except", False, TokenType.SET_OPERATOR),
-        (" except all", True, TokenType.SET_OPERATOR),  # this is a syntax error
-        (" union all", False, TokenType.SET_OPERATOR),
+        (" except", True, False, TokenType.TIGHT_WORD_OPERATOR),
+        (" except", True, True, TokenType.TIGHT_WORD_OPERATOR),
+        (" except", False, False, TokenType.SET_OPERATOR),
+        (" except", False, True, TokenType.SET_OPERATOR),
+        (" except all", True, False, TokenType.SET_OPERATOR),  # this is a syntax error
+        (" union all", False, False, TokenType.SET_OPERATOR),
     ],
 )
 def test_handle_set_operator(
     default_analyzer: Analyzer,
     source_string: str,
     has_preceding_star: bool,
+    has_preceding_newline: bool,
     expected_type: TokenType,
 ) -> None:
     rule = default_analyzer.get_rule("main", "set_operator")
@@ -208,10 +211,17 @@ def test_handle_set_operator(
         t = Token(type=TokenType.STAR, prefix="", token="*", spos=0, epos=1)
         n = default_analyzer.node_manager.create_node(t, previous_node=None)
         default_analyzer.node_buffer.append(n)
+    elif has_preceding_newline:
+        t_nl = Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=0, epos=1)
+        n_nl = default_analyzer.node_manager.create_node(t_nl, previous_node=None)
+        default_analyzer.node_buffer.append(n_nl)
+
+    if has_preceding_newline and has_preceding_star:
+        t_nl = Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=1, epos=2)
+        n_nl = default_analyzer.node_manager.create_node(t_nl, previous_node=n)
+        default_analyzer.node_buffer.append(n_nl)
 
     actions.handle_set_operator(default_analyzer, source_string, match)
-
-    assert len(default_analyzer.node_buffer) == 2 if has_preceding_star else 1
 
     node = default_analyzer.node_buffer[-1]
     assert node.token.type == expected_type

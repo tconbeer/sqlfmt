@@ -5,7 +5,7 @@ from sqlfmt.analyzer import MAYBE_WHITESPACES, Analyzer, group
 from sqlfmt.comment import Comment
 from sqlfmt.exception import SqlfmtBracketError, StopJinjaLexing
 from sqlfmt.line import Line
-from sqlfmt.node import Node
+from sqlfmt.node import Node, get_previous_token
 from sqlfmt.token import Token, TokenType
 
 
@@ -146,10 +146,11 @@ def handle_set_operator(
     """
     previous_node = analyzer.previous_node
     token = Token.from_match(source_string, match, TokenType.SET_OPERATOR)
+    prev_token, _ = get_previous_token(previous_node)
     if (
         token.token.lower() == "except"
-        and previous_node
-        and previous_node.token.type == TokenType.STAR
+        and prev_token
+        and prev_token.type == TokenType.STAR
     ):
         token = Token(
             type=TokenType.TIGHT_WORD_OPERATOR,
