@@ -9,6 +9,7 @@ from typing import Dict, List, NamedTuple, Optional, Tuple
 from sqlfmt.line import Line
 from sqlfmt.mode import Mode
 from sqlfmt.node import Node
+from sqlfmt.node_manager import NodeManager
 from sqlfmt.splitter import LineSplitter
 
 
@@ -329,6 +330,7 @@ class JinjaFormatter:
         self.use_black = (
             self.code_formatter.black is not None and not self.mode.no_jinjafmt
         )
+        self.node_manager = NodeManager(self.mode.dialect.case_sensitive_names)
 
     def format_line(self, line: Line) -> List[Line]:
         """
@@ -348,7 +350,7 @@ class JinjaFormatter:
                     # this node (since on the first pass the splitter
                     # would have split before this node if it had been
                     # a multiline node)
-                    splitter = LineSplitter()
+                    splitter = LineSplitter(self.node_manager)
                     return list(
                         chain(
                             *[

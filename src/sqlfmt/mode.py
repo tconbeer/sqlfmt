@@ -2,7 +2,8 @@ import os
 from dataclasses import dataclass, field
 from typing import List
 
-from sqlfmt.dialect import Dialect, Polyglot
+from sqlfmt.dialect import ClickHouse, Dialect, Polyglot
+from sqlfmt.exception import SqlfmtConfigError
 
 
 @dataclass
@@ -13,7 +14,7 @@ class Mode:
     """
 
     SQL_EXTENSIONS: List[str] = field(default_factory=lambda: [".sql", ".sql.jinja"])
-    dialect: Dialect = field(default_factory=lambda: Polyglot())
+    dialect_name: str = "polyglot"
     line_length: int = 88
     check: bool = False
     diff: bool = False
@@ -25,6 +26,20 @@ class Mode:
     quiet: bool = False
     no_color: bool = False
     force_color: bool = False
+
+    @property
+    def dialect(self) -> Dialect:
+        options = {
+            "polyglot": Polyglot(),
+            "clickhouse": ClickHouse(),
+        }
+        try:
+            return options[self.dialect_name.lower()]
+        except KeyError:
+            raise SqlfmtConfigError(
+                f"Mode was created with dialect_name={self.dialect_name}, "
+                "which is not supported. Did you mean 'polyglot'?"
+            )
 
     @property
     def color(self) -> bool:

@@ -6,8 +6,14 @@ import pytest
 from sqlfmt.comment import Comment
 from sqlfmt.line import Line
 from sqlfmt.mode import Mode
+from sqlfmt.node_manager import NodeManager
 from sqlfmt.token import Token, TokenType
 from tests.util import read_test_data
+
+
+@pytest.fixture
+def node_manager(default_mode: Mode) -> NodeManager:
+    return NodeManager(default_mode.dialect.case_sensitive_names)
 
 
 @pytest.fixture
@@ -43,10 +49,15 @@ def tokens() -> List[Token]:
 
 
 @pytest.fixture
-def simple_line(tokens: List[Token], bare_line: Line) -> Line:
+def simple_line(
+    tokens: List[Token], bare_line: Line, node_manager: NodeManager
+) -> Line:
     simple_line = deepcopy(bare_line)
+    previous_node = None
     for token in tokens:
-        simple_line.append_token(token)
+        node = node_manager.create_node(token, previous_node)
+        simple_line.nodes.append(node)
+        previous_node = node
     return simple_line
 
 
@@ -115,12 +126,12 @@ def test_simple_line(
     assert not simple_line.nodes[5].is_multiplication_star
 
 
-def test_bare_append_newline(bare_line: Line) -> None:
+def test_bare_append_newline(bare_line: Line, node_manager: NodeManager) -> None:
     # this line has no nodes
     assert not bare_line.nodes
     assert not bare_line.previous_node
 
-    bare_line.append_newline()
+    node_manager.append_newline(bare_line)
     assert bare_line.nodes
     assert bare_line.is_blank_line
     new_last_node = bare_line.nodes[-1]
@@ -134,9 +145,11 @@ def test_bare_with_previous_open_lists(bare_line: Line, simple_line: Line) -> No
     assert bare_line.open_brackets == simple_line.nodes[-1].open_brackets
 
 
-def test_bare_with_previous_append_newline(bare_line: Line, simple_line: Line) -> None:
+def test_bare_with_previous_append_newline(
+    bare_line: Line, simple_line: Line, node_manager: NodeManager
+) -> None:
     bare_line.previous_node = simple_line.nodes[-1]
-    bare_line.append_newline()
+    node_manager.append_newline(bare_line)
     assert bare_line.nodes
     new_last_node = bare_line.nodes[-1]
     previous_token = simple_line.nodes[-1].token
@@ -147,7 +160,7 @@ def test_bare_with_previous_append_newline(bare_line: Line, simple_line: Line) -
     assert (new_last_node.token.spos, new_last_node.token.epos) == expected_position
 
 
-def test_simple_append_newline(simple_line: Line) -> None:
+def test_simple_append_newline(simple_line: Line, node_manager: NodeManager) -> None:
 
     # this line already ends with a newline
     last_node = simple_line.nodes[-1]
@@ -155,7 +168,7 @@ def test_simple_append_newline(simple_line: Line) -> None:
     assert last_node.previous_node
     assert last_node.previous_node.token.type != TokenType.NEWLINE
 
-    simple_line.append_newline()
+    node_manager.append_newline(simple_line)
     new_last_node = simple_line.nodes[-1]
     assert new_last_node != last_node
     assert new_last_node.token.type == TokenType.NEWLINE
@@ -178,7 +191,11 @@ def test_simple_append_newline(simple_line: Line) -> None:
     ],
 )
 def test_comment_rendering(
-    simple_line: Line, bare_line: Line, raw_comment: str, normalized_comment: str
+    simple_line: Line,
+    bare_line: Line,
+    raw_comment: str,
+    normalized_comment: str,
+    node_manager: NodeManager,
 ) -> None:
 
     assert simple_line.render_with_comments(88) == str(simple_line)
@@ -195,7 +212,7 @@ def test_comment_rendering(
     )
 
     inline_comment = Comment(token=comment_token, is_standalone=False)
-    bare_line.append_newline()
+    node_manager.append_newline(bare_line)
     bare_line.comments = [inline_comment]
     expected_bare_render = normalized_comment + "\n"
     assert bare_line.render_with_comments(88) == expected_bare_render
@@ -271,12 +288,14 @@ def test_long_comments_that_are_not_wrapped(
     assert simple_line.render_with_comments(88) == expected_render
 
 
-def test_is_standalone_multiline_node(bare_line: Line, simple_line: Line) -> None:
+def test_is_standalone_multiline_node(
+    bare_line: Line, simple_line: Line, node_manager: NodeManager
+) -> None:
 
     assert not bare_line.is_standalone_multiline_node
     assert not simple_line.is_standalone_multiline_node
 
-    multiline_node = Token(
+    multiline_t = Token(
         type=TokenType.JINJA_EXPRESSION,
         prefix="",
         token="{{\nmy JINJA\n}}",
@@ -284,20 +303,24 @@ def test_is_standalone_multiline_node(bare_line: Line, simple_line: Line) -> Non
         epos=16,
     )
 
-    bare_line.append_token(multiline_node)
-    simple_line.append_token(multiline_node)
+    bare_line.nodes.append(node_manager.create_node(multiline_t, None))
+    simple_line.nodes.append(
+        node_manager.create_node(multiline_t, simple_line.nodes[-1])
+    )
 
     assert bare_line.is_standalone_multiline_node
     assert not simple_line.is_standalone_multiline_node
 
-    bare_line.append_newline()
-    simple_line.append_newline()
+    node_manager.append_newline(bare_line)
+    node_manager.append_newline(simple_line)
 
     assert bare_line.is_standalone_multiline_node
     assert not simple_line.is_standalone_multiline_node
 
 
-def test_is_standalone_jinja_statement(bare_line: Line, simple_line: Line) -> None:
+def test_is_standalone_jinja_statement(
+    bare_line: Line, simple_line: Line, node_manager: NodeManager
+) -> None:
 
     assert not bare_line.is_standalone_jinja_statement
     assert not simple_line.is_standalone_jinja_statement
@@ -310,14 +333,16 @@ def test_is_standalone_jinja_statement(bare_line: Line, simple_line: Line) -> No
         epos=14,
     )
 
-    bare_line.append_token(jinja_statement)
-    simple_line.append_token(jinja_statement)
+    bare_line.nodes.append(node_manager.create_node(jinja_statement, None))
+    simple_line.nodes.append(
+        node_manager.create_node(jinja_statement, simple_line.nodes[-1])
+    )
 
     assert bare_line.is_standalone_jinja_statement
     assert not simple_line.is_standalone_jinja_statement
 
-    bare_line.append_newline()
-    simple_line.append_newline()
+    node_manager.append_newline(bare_line)
+    node_manager.append_newline(simple_line)
 
     assert bare_line.is_standalone_jinja_statement
     assert not simple_line.is_standalone_jinja_statement
@@ -351,65 +376,6 @@ def test_closes_bracket_from_previous_line(
     assert opens_result == opens_expected
 
 
-@pytest.mark.parametrize(
-    "source_string",
-    [
-        "my_schema.my_table\n",
-        "my_table.*\n",
-        '"my_table".*\n',
-        "{{ my_schema }}.my_table\n",
-        "my_schema.{{ my_table }}\n",
-        "my_database.my_schema.my_table\n",
-        'my_schema."my_table"\n',
-        '"my_schema".my_table\n',
-        '"my_schema"."my_table"\n',
-        "my_table.$2\n",
-        '"my_table".$2\n',
-        "my_schema.{% if foo %}bar{% else %}baz{% endif %}\n",
-        "json_field:key_name\n",
-        'json:"KeyName"\n',
-        "my_table.json_field:key_name\n",
-        '"JSONField":"KeyName"::varchar\n',
-        '"JSONField":"KeyName"::varchar\n',
-        "my_array[1]\n",
-        "my_array[1:2]\n",
-        '"my_array"[1]\n',
-        '"my_array"[1:2]\n',
-    ],
-)
-def test_identifier_whitespace(default_mode: Mode, source_string: str) -> None:
-    """
-    Ensure we do not inject spaces into qualified identifier names
-    """
-    q = default_mode.dialect.initialize_analyzer(
-        line_length=default_mode.line_length
-    ).parse_query(source_string=source_string)
-    parsed_string = "".join(str(line) for line in q.lines)
-    assert source_string == parsed_string
-
-
-@pytest.mark.parametrize(
-    "source_string",
-    [
-        "(my_schema.my_table)\n",
-        "count(*)\n",
-        "count(*) over ()\n",
-        "something in (somthing_else)\n",
-        "some_array[offset(0)]\n",
-        "some_array_func(args)[offset(0)]\n",
-        "(())\n",
-        "([])\n",
-        "()[] + foo()[offset(1)]\n",
-    ],
-)
-def test_bracket_whitespace(default_mode: Mode, source_string: str) -> None:
-    q = default_mode.dialect.initialize_analyzer(
-        line_length=default_mode.line_length
-    ).parse_query(source_string=source_string)
-    parsed_string = "".join(str(line) for line in q.lines)
-    assert source_string == parsed_string
-
-
 def test_jinja_whitespace_after_newline(default_mode: Mode) -> None:
     source_string = "select *\nfrom {{model}}\nwhere {{ column_name }} < 0\n"
     q = default_mode.dialect.initialize_analyzer(
@@ -417,41 +383,6 @@ def test_jinja_whitespace_after_newline(default_mode: Mode) -> None:
     ).parse_query(source_string=source_string)
     where_node = [node for node in q.nodes if node.value == "where"][0]
     assert where_node.prefix == " "  # one space
-
-
-def test_capitalization(default_mode: Mode) -> None:
-    source_string = (
-        "SELECT A, B, \"C\", {{ D }}, e, 'f', 'G'\n" 'fROM "H"."j" Join I ON k And L\n'
-    )
-    expected = (
-        "select a, b, \"C\", {{ D }}, e, 'f', 'G'\n" 'from "H"."j" join i on k and l\n'
-    )
-    q = default_mode.dialect.initialize_analyzer(
-        line_length=default_mode.line_length
-    ).parse_query(source_string=source_string)
-    parsed_string = "".join(str(line) for line in q.lines)
-    assert parsed_string == expected
-
-
-@pytest.mark.parametrize(
-    "source_string",
-    [
-        "OVER",
-        "IN",
-        "AND",
-        "EXCEPT",
-        "REPLACE",
-        "UNION",
-        "SUM",
-        "BETWEEN",
-    ],
-)
-def test_capitalization_operators(default_mode: Mode, source_string: str) -> None:
-    q = default_mode.dialect.initialize_analyzer(
-        line_length=default_mode.line_length
-    ).parse_query(source_string=source_string)
-    parsed_string = "".join(str(line) for line in q.lines)
-    assert parsed_string.rstrip("\n") == source_string.lower()
 
 
 def test_formatting_disabled(default_mode: Mode) -> None:
@@ -476,7 +407,9 @@ def test_formatting_disabled(default_mode: Mode) -> None:
     assert actual == expected
 
 
-def test_is_multiplication_star_bare_line(bare_line: Line) -> None:
+def test_is_multiplication_star_bare_line(
+    bare_line: Line, node_manager: NodeManager
+) -> None:
     star = Token(
         type=TokenType.STAR,
         prefix="",
@@ -484,12 +417,15 @@ def test_is_multiplication_star_bare_line(bare_line: Line) -> None:
         spos=0,
         epos=1,
     )
-    bare_line.append_token(star)
+    star_node = node_manager.create_node(star, None)
+    bare_line.nodes.append(star_node)
     assert bare_line.nodes[0].token == star
     assert not bare_line.nodes[0].is_multiplication_star
 
 
-def test_is_standalone_operator(bare_line: Line, simple_line: Line) -> None:
+def test_is_standalone_operator(
+    bare_line: Line, simple_line: Line, node_manager: NodeManager
+) -> None:
     assert not bare_line.is_standalone_operator
     assert not simple_line.is_standalone_operator
 
@@ -500,13 +436,14 @@ def test_is_standalone_operator(bare_line: Line, simple_line: Line) -> None:
         spos=0,
         epos=1,
     )
-    bare_line.append_token(plus)
+    plus_node = node_manager.create_node(plus, None)
+    bare_line.nodes.append(plus_node)
     assert bare_line.is_standalone_operator
-    bare_line.append_newline
+    node_manager.append_newline(bare_line)
     assert bare_line.is_standalone_operator
 
 
-def test_semicolon_resets_depth(simple_line: Line) -> None:
+def test_semicolon_resets_depth(simple_line: Line, node_manager: NodeManager) -> None:
     semicolon = Token(
         type=TokenType.SEMICOLON,
         prefix="",
@@ -514,6 +451,7 @@ def test_semicolon_resets_depth(simple_line: Line) -> None:
         spos=36,
         epos=37,
     )
+    semicolon_node = node_manager.create_node(semicolon, simple_line.nodes[-1])
     assert simple_line.nodes[-1].depth[0] > 0
-    simple_line.append_token(semicolon)
+    simple_line.nodes.append(semicolon_node)
     assert simple_line.nodes[-1].depth[0] == 0

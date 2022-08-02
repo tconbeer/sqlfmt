@@ -42,6 +42,11 @@ def default_mode(unset_no_color_env: None) -> Mode:
 
 
 @pytest.fixture
+def clickhouse_mode(unset_no_color_env: None) -> Mode:
+    return Mode(dialect_name="clickhouse")
+
+
+@pytest.fixture
 def verbose_mode(unset_no_color_env: None) -> Mode:
     return Mode(verbose=True)
 

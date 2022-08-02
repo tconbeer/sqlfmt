@@ -102,17 +102,38 @@ sqlfmt will search for the `pyproject.toml` file using the `files` passed to it 
 
 Example of a `pyproject.toml` file to override the default behaviors (run `sqlfmt --help` for more options):
 
-```
+```toml
 [tool.sqlfmt]
 line_length = 100
 check = true
 ```
 
+### Using sqlfmt with different SQL dialects
+
+sqlfmt's rules are simple, which means it does not have to parse every single token in your query. This allows nearly all SQL dialects to be formatted using sqlfmt's default "polyglot" dialect.
+
+#### ClickHouse
+
+The exception to this is ClickHouse, which is case-sensitive where other dialects are not. By default, sqlfmt will lowercase all SQL keywords, database identifiers, aliases, etc. (basically anything that isn't quoted). This is bad for ClickHouse. To prevent the lowercasing of function names, database identifiers, and aliases, use the `--dialect clickhouse` option when running sqlfmt. For example,
+
+```bash
+$ sqlfmt . --dialect clickhouse
+```
+
+This can also be configured using the `pyproject.toml` file:
+
+```toml
+[tool.sqlfmt]
+dialect = "clickhouse"
+```
+
+Note that with this option, sqlfmt will not lowercase **most** non-reserved keywords, even common ones like `sum` or `count`. See (and please join) [this issue](https://github.com/tconbeer/sqlfmt/issues/195) for a discussion of this topic.
+
 ### Using sqlfmt with dbt
 
-sqlfmt was built for dbt, so only minimal configuration is required. We recommend excluding your `target` and `dbt_packages` directories from formatting. You can do this with the command-line `--exclude` option, or by setting `exclude` in your `pyproject.toml` file
+sqlfmt was built for dbt, so only minimal configuration is required. We recommend excluding your `target` and `dbt_packages` directories from formatting. You can do this with the command-line `--exclude` option, or by setting `exclude` in your `pyproject.toml` file:
 
-```
+```toml
 [tool.sqlfmt]
 exclude=["target/**/*", "dbt_packages/**/*"]
 ```
@@ -122,7 +143,7 @@ You can configure [pre-commit](https://pre-commit.com/) to run sqlfmt on your re
 
 Add the following config to your `.pre-commit-config.yaml` file:
 
-```
+```yml
 repos:
   - repo: https://github.com/tconbeer/sqlfmt
     rev: v0.9.0
@@ -137,7 +158,7 @@ You should replace `rev` with the latest available release, but we do suggest pi
 
 You can (and should!) use SQLFluff to lint your SQL queries after they are formatted by sqlfmt. However, the two tools do not see eye-to-eye on formatting (by default), so to avoid lint errors, add the following to your `.sqlfluff` config file:
 
-```
+```ini
 [sqlfluff]
 exclude_rules = L003, L018, L036
 

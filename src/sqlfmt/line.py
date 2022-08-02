@@ -4,7 +4,7 @@ from typing import List, Optional, Tuple
 from sqlfmt.comment import Comment
 from sqlfmt.exception import InlineCommentException
 from sqlfmt.node import Node
-from sqlfmt.token import Token, TokenType
+from sqlfmt.token import Token
 
 
 @dataclass
@@ -125,50 +125,6 @@ class Line:
             )
             rendered = f"{comment}{content}"
         return rendered
-
-    def append_token(self, token: Token) -> None:
-        """
-        Creates a new Node from the passed token and the context of the current line,
-        then appends that Node to self.nodes and updates line depth and split features
-        as necessary
-        """
-        previous_node: Optional[Node]
-        if self.nodes:
-            previous_node = self.nodes[-1]
-        else:
-            previous_node = self.previous_node
-
-        node = Node.from_token(token, previous_node)
-
-        self.formatting_disabled = self.formatting_disabled or node.formatting_disabled
-
-        self.nodes.append(node)
-
-    def append_newline(self) -> None:
-        """
-        Create a new NEWLINE token and append it to the end of this line
-        """
-        previous_token: Optional[Token] = None
-        if self.nodes:
-            previous_token = self.nodes[-1].token
-        elif self.previous_node:
-            previous_token = self.previous_node.token
-
-        if previous_token:
-            spos = previous_token.epos
-            epos = spos
-        else:
-            spos = 0
-            epos = 0
-
-        nl = Token(
-            type=TokenType.NEWLINE,
-            prefix="",
-            token="\n",
-            spos=spos,
-            epos=epos,
-        )
-        self.append_token(nl)
 
     @classmethod
     def from_nodes(

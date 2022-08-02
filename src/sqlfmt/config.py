@@ -2,8 +2,8 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Union
 
-from sqlfmt.dialect import Dialect
 from sqlfmt.exception import SqlfmtConfigError
+from sqlfmt.mode import Mode
 
 if sys.version_info >= (3, 11):
     import tomllib
@@ -11,7 +11,7 @@ else:
     import tomli as tomllib
 
 
-Config = Dict[str, Union[bool, int, List[str], Dialect]]
+Config = Dict[str, Union[bool, int, List[str], str]]
 
 
 def load_config_file(files: List[Path]) -> Config:
@@ -84,5 +84,21 @@ def _load_config_from_path(config_path: Optional[Path]) -> Config:
                 f"Error decoding pyproject.toml config file at {config_path}. "
                 f"Check for invalid TOML. {e}"
             )
-        config: Config = pyproject_dict.get("tool", {}).get("sqlfmt", {})
-        return config
+        raw_config: Config = pyproject_dict.get("tool", {}).get("sqlfmt", {})
+        return _validate_config(raw_config)
+
+
+def _validate_config(raw_config: Config) -> Config:
+    config = {}
+    for k, v in ((k.lower(), v) for k, v in raw_config.items()):
+        if k == "dialect":
+            config["dialect_name"] = v
+        elif k not in Mode.__dataclass_fields__:
+            raise SqlfmtConfigError(
+                f"Config file contains key {k}, which is not a "
+                f"supported option. Must be one of "
+                f"{list(Mode.__dataclass_fields__.keys())}"
+            )
+        else:
+            config[k] = v
+    return config
