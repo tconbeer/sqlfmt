@@ -275,6 +275,7 @@ class Polyglot(Dialect):
                         r"(not\s+)?rlike",
                         r"some",
                         r"(not\s+)?similar\s+to",
+                        r"using",
                     )
                     + group(r"\W", r"$"),
                     action=partial(

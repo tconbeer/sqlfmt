@@ -23,10 +23,10 @@ select
             recentagg_topactivities_array.topactivities,
     ) recentagg,
 from recentagg_root
-left join recentagg_topphases_array using(id)
-left join recentagg_topsymptoms_array using(id)
-left join recentagg_toppositivesymptoms_array using(id)
-left join recentagg_topactivities_array using(id)
+left join recentagg_topphases_array using (id)
+left join recentagg_topsymptoms_array using (id)
+left join recentagg_toppositivesymptoms_array using (id)
+left join recentagg_topactivities_array using (id)
 )))))__SQLFMT_OUTPUT__(((((
 select
     * except (field_a, field_b, field_c),
@@ -71,7 +71,7 @@ select
             recentagg_topactivities_array.topactivities,
     ) recentagg,
 from recentagg_root
-left join recentagg_topphases_array using(id)
-left join recentagg_topsymptoms_array using(id)
-left join recentagg_toppositivesymptoms_array using(id)
-left join recentagg_topactivities_array using(id)
+left join recentagg_topphases_array using (id)
+left join recentagg_topsymptoms_array using (id)
+left join recentagg_toppositivesymptoms_array using (id)
+left join recentagg_topactivities_array using (id)

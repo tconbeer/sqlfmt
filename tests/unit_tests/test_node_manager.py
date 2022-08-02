@@ -309,6 +309,7 @@ def test_identifier_whitespace(default_mode: Mode, source_string: str) -> None:
         "(())\n",
         "([])\n",
         "()[] + foo()[offset(1)]\n",
+        "using (id)\n",
     ],
 )
 def test_bracket_whitespace(default_mode: Mode, source_string: str) -> None:
