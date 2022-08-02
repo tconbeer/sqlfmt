@@ -41,4 +41,4 @@ left join
     (
         select one_field, two_fields, sum(something), my_very_long_field_name
         from another_table
-    ) as mysubquery using(id)
+    ) as mysubquery using (id)
