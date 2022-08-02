@@ -296,9 +296,10 @@ class Polyglot(Dialect):
                     ),
                 ),
                 Rule(
-                    name="over",
+                    name="agg_modifiers",
                     priority=922,
-                    pattern=group(r"over") + group(r"\W", r"$"),
+                    pattern=group(r"over", r"within\s+group", r"filter")
+                    + group(r"\W", r"$"),
                     action=partial(
                         actions.add_node_to_buffer,
                         token_type=TokenType.TIGHT_WORD_OPERATOR,
