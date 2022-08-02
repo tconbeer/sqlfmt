@@ -69,7 +69,7 @@ class NodeManager:
 
         prev_token, extra_whitespace = get_previous_token(previous_node)
         prefix = self.whitespace(token, prev_token, extra_whitespace)
-        value = self.capitalize(token)
+        value = self.standardize_value(token)
 
         if token.type in (TokenType.FMT_OFF, TokenType.DATA):
             formatting_disabled = True
@@ -214,10 +214,11 @@ class NodeManager:
         else:
             return SPACE
 
-    def capitalize(self, token: Token) -> str:
+    def standardize_value(self, token: Token) -> str:
         """
-        Proper style is to lowercase all keywords, statements, and names.
-        If DB identifiers can't be lowercased, they should be quoted.
+        Tokens that are words (not symbols) and aren't jinja
+        or comments should be lowercased and have any internal
+        whitespace replaced with a single space
         """
         if token.type in (
             TokenType.UNTERM_KEYWORD,
@@ -230,7 +231,7 @@ class NodeManager:
             TokenType.BOOLEAN_OPERATOR,
             TokenType.SET_OPERATOR,
         ):
-            return token.token.lower()
+            return " ".join(token.token.lower().split())
         elif token.type == TokenType.NAME and not self.case_sensitive_names:
             return token.token.lower()
         else:

@@ -317,3 +317,26 @@ def test_bracket_whitespace(default_mode: Mode, source_string: str) -> None:
     ).parse_query(source_string=source_string)
     parsed_string = "".join(str(line) for line in q.lines)
     assert source_string == parsed_string
+
+
+@pytest.mark.parametrize(
+    "source_string,expected_string",
+    [
+        ("union\n\nall", "union all\n"),
+        ("union\n all", "union all\n"),
+        ("union    all", "union all\n"),
+        ("select\ntop\n10", "select top 10\n"),
+        ("group    by", "group by\n"),
+        ("not\nin", "not in\n"),
+        ("not\n  similar  \n to", "not similar to\n"),
+        ("right\n  outer  \n join", "right outer join\n"),
+    ],
+)
+def test_internal_whitespace(
+    default_mode: Mode, source_string: str, expected_string: str
+) -> None:
+    q = default_mode.dialect.initialize_analyzer(
+        line_length=default_mode.line_length
+    ).parse_query(source_string=source_string)
+    parsed_string = "".join(str(line) for line in q.lines)
+    assert parsed_string == expected_string
