@@ -39,7 +39,7 @@ black = { version = "*", optional = true }
 tomli = { version = "^2.0.1", python = "<3.11" }
 
 [tool.poetry.dev-dependencies]
-flake8 = "^5.0.3"
+flake8 = "^5.0.4"
 isort = "^5.9.3"
 mypy = "^0.971"
 pre-commit = "^2.20.0"
