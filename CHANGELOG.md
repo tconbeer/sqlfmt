@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.10.1] - 2022-08-05
+
 ### Features
 
 -   sqlfmt now supports the psycopg placeholders `%s` and `%(name)s` ([#198](https://github.com/tconbeer/sqlfmt/issues/198) - thank you [@snorkysnark](https://github.com/snorkysnark)!)
@@ -199,7 +201,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.10.0...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.10.1...HEAD
+
+[0.10.1]: https://github.com/tconbeer/sqlfmt/compare/0.10.0...0.10.1
 
 [0.10.0]: https://github.com/tconbeer/sqlfmt/compare/0.9.0...0.10.0
 
