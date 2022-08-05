@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Features
+
+-   sqlfmt now supports the psycopg placeholders `%s` and `%(name)s` ([#198](https://github.com/tconbeer/sqlfmt/issues/198) - thank you [@snorkysnark](https://github.com/snorkysnark)!)
+
 ### Formatting Changes + Bug Fixes
 
 -   sqlfmt now standardizes whitespace inside word tokens ([#201](https://github.com/tconbeer/sqlfmt/issues/201))

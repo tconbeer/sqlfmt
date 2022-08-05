@@ -220,6 +220,18 @@ class Polyglot(Dialect):
                     ),
                 ),
                 Rule(
+                    name="other_identifiers",
+                    priority=907,
+                    pattern=group(
+                        r"@\w+",  # stages
+                        r"\$\d+",  # pg placeholders
+                        r"%(\([^%()]+\))?s",  # psycopg placeholders
+                    ),
+                    action=partial(
+                        actions.add_node_to_buffer, token_type=TokenType.NAME
+                    ),
+                ),
+                Rule(
                     name="operator",
                     priority=910,
                     pattern=group(
@@ -249,6 +261,7 @@ class Polyglot(Dialect):
                         r"-\|-",
                         r"[*+?]?\?",  # regex greedy/non-greedy, also ?
                         r"!!",  # negate text match
+                        r"%%",  # psycopg escaped mod operator
                         r"[+\-*/%&|^=<>:#!]=?",  # singles
                     ),
                     action=partial(
@@ -409,14 +422,6 @@ class Polyglot(Dialect):
                     )
                     + group(r"\W", r"$"),
                     action=actions.handle_set_operator,
-                ),
-                Rule(
-                    name="other_identifiers",
-                    priority=4000,
-                    pattern=group(r"@\w+", r"\$\d+"),
-                    action=partial(
-                        actions.add_node_to_buffer, token_type=TokenType.NAME
-                    ),
                 ),
                 Rule(
                     name="name",
