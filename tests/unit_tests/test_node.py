@@ -29,20 +29,31 @@ def test_is_the_between_operator(
 
 
 @pytest.mark.parametrize(
-    "token,result", [("[", True), ("(", False), ("]", False), ("{", False)]
+    "source_string,node_index,result",
+    [
+        ("my_array[0]", 1, True),
+        ("my_dict['my_key']", 1, True),
+        ("my_dict['my_key']['my_nested_key']", 4, True),
+        ("foo, bar[0]", 3, True),
+        ("foo, [0]", 2, False),
+        ("foo, ['a', 'b', 'c']", 2, False),
+        ("foo, [1 + foo]", 2, False),
+        ('"my_quoted_array"[1]', 1, True),
+        ("my_array_func()[0]", 3, True),
+        ("[", 0, False),
+        ("[1, 2]", 0, False),
+        ("[1, 2][0]", 5, True),
+    ],
 )
-def test_is_opening_square_bracket(
-    token: str, result: bool, node_manager: NodeManager
+def test_is_square_bracket_operator(
+    source_string: str, node_index: int, result: bool, default_mode: Mode
 ) -> None:
-    t = Token(
-        type=TokenType.BRACKET_OPEN,
-        prefix="",
-        token=token,
-        spos=0,
-        epos=1,
-    )
-    n = node_manager.create_node(t, previous_node=None)
-    assert n.is_opening_square_bracket is result
+    q = default_mode.dialect.initialize_analyzer(
+        line_length=default_mode.line_length
+    ).parse_query(source_string=source_string)
+    n = q.nodes[node_index]
+    assert n.value == "["  # just to make sure our index is right
+    assert n.is_square_bracket_operator is result
 
 
 def test_is_the_and_after_the_between_operator(default_mode: Mode) -> None:

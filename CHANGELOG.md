@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ## Formatting Changes + Bug Fixes
 -   fixed a bug that could cause lines with long jinja tags to be one character over the line length limit, and could result in unstable formatting ([#237](https://github.com/tconbeer/sqlfmt/pull/237) - thank you [@nfcampos](https://github.com/nfcampos)!)
+-   fixed a bug that formatted array literals like they were indexing operations ([#235](https://github.com/tconbeer/sqlfmt/pull/235) - thank you [@nfcampos](https://github.com/nfcampos)!)
 
 ## [0.10.1] - 2022-08-05
 

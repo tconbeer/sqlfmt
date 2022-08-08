@@ -263,7 +263,7 @@ class LineMerger:
                     and cls._operator_priority(line.nodes[0].token.type) <= min_priority
                 )
                 or line.starts_with_comma
-                or line.starts_with_opening_square_bracket
+                or line.starts_with_square_bracket_operator
             )
 
     @staticmethod
