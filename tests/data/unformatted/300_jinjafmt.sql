@@ -35,6 +35,22 @@
     else 'default.html' 
 %}
 
+with
+    a as (
+
+        select
+            {{ dbt_utils.surrogate_key(var("surrogate_key_columns_menu_item_123456")) }}
+            as order_item_id,
+            -- this next line's jinja tag is one char too long
+            {{ dbt_utils.surrogate_key(var("surrogate_key_columns_menu_item_1234567")) }}
+            as menu_item_id,
+        from b
+
+    )
+
+select *
+from a
+
 )))))__SQLFMT_OUTPUT__(((((
 {{
     config(
@@ -77,3 +93,22 @@
     if layout_template is defined 
     else 'default.html' 
 %}
+
+with
+    a as (
+
+        select
+            {{ dbt_utils.surrogate_key(var("surrogate_key_columns_menu_item_123456")) }}
+            as order_item_id,
+            -- this next line's jinja tag is one char too long
+            {{
+                dbt_utils.surrogate_key(
+                    var("surrogate_key_columns_menu_item_1234567")
+                )
+            }} as menu_item_id,
+        from b
+
+    )
+
+select *
+from a

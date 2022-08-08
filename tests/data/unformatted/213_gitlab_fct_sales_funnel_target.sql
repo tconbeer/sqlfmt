@@ -260,8 +260,11 @@ unioned_targets as (
     left join
         fy22_user_hierarchy
         on {{ sales_funnel_text_slugify("target_matrix.area") }}
-        =
-        {{ sales_funnel_text_slugify("fy22_user_hierarchy.crm_opp_owner_area_stamped") }}
+        = {{
+            sales_funnel_text_slugify(
+                "fy22_user_hierarchy.crm_opp_owner_area_stamped"
+            )
+        }}
     where target_matrix.fiscal_year = 2022
 
     union all

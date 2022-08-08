@@ -339,7 +339,7 @@ class JinjaFormatter:
         """
         line_length = self.mode.line_length
         if line.contains_jinja:
-            running_length = len(line.prefix) - len(line.nodes[0].prefix)
+            running_length = len(line.prefix)
             for i, node in enumerate(line.nodes):
                 is_blackened = self._format_jinja_node(
                     node, max_length=line_length - running_length
@@ -360,7 +360,7 @@ class JinjaFormatter:
                         )
                     )
                 else:
-                    running_length += len(node)
+                    running_length += len(node) - (len(node.prefix) if i == 0 else 0)
             else:
                 return [line]
         else:
