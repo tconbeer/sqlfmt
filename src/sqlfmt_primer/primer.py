@@ -30,7 +30,7 @@ def get_projects() -> List[SQLProject]:
         SQLProject(
             name="gitlab",
             git_url="https://github.com/tconbeer/gitlab-analytics-sqlfmt.git",
-            git_ref="e234957c16c90ce3174f9bb4ed21f78a7f4277f1",  # sqlfmt bcf660d
+            git_ref="17daa5c",  # sqlfmt 6d33371
             expected_changed=4,
             expected_unchanged=2413,
             expected_errored=0,
@@ -39,7 +39,7 @@ def get_projects() -> List[SQLProject]:
         SQLProject(
             name="rittman",
             git_url="https://github.com/tconbeer/rittman_ra_data_warehouse.git",
-            git_ref="1315cdb9aeff129a16e6be0ba5696c040058a34c",  # sqlfmt 5b2d861
+            git_ref="da9d1eb",  # sqlfmt 6d33371
             expected_changed=0,
             expected_unchanged=307,
             expected_errored=4,  # true mismatching brackets
@@ -57,7 +57,7 @@ def get_projects() -> List[SQLProject]:
         SQLProject(
             name="aqi",
             git_url="https://github.com/tconbeer/aqi_livibility_analysis.git",
-            git_ref="8004f3383897d9066e3167fdfddcdd4c8418b7ea",  # sqlfmt 0.5.0
+            git_ref="cab1292",  # sqlfmt 6d33371
             expected_changed=0,
             expected_unchanged=7,
             expected_errored=0,
@@ -75,7 +75,7 @@ def get_projects() -> List[SQLProject]:
         SQLProject(
             name="dbt_utils",
             git_url="https://github.com/tconbeer/dbt-utils.git",
-            git_ref="bfe3e2d33bea6a3cbc07d27e5d6c21eaf3273126",  # sqlfmt bcf660d
+            git_ref="98ef570",  # sqlfmt 6d33371
             expected_changed=1,
             expected_unchanged=130,
             expected_errored=0,
