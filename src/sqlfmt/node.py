@@ -133,8 +133,23 @@ class Node:
         )
 
     @property
-    def is_opening_square_bracket(self) -> bool:
-        return self.is_opening_bracket and "[" in self.value
+    def is_square_bracket_operator(self) -> bool:
+        """
+        Node is an opening square bracket ("[")
+        that follows a token that could be a name
+        """
+        if self.token.type != TokenType.BRACKET_OPEN or self.value != "[":
+            return False
+
+        prev_token, _ = get_previous_token(self.previous_node)
+        if not prev_token:
+            return False
+        else:
+            return prev_token.type in (
+                TokenType.NAME,
+                TokenType.QUOTED_NAME,
+                TokenType.BRACKET_CLOSE,
+            )
 
     @property
     def is_closing_bracket(self) -> bool:

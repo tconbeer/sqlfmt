@@ -204,9 +204,9 @@ class Line:
             return False
 
     @property
-    def starts_with_opening_square_bracket(self) -> bool:
+    def starts_with_square_bracket_operator(self) -> bool:
         try:
-            return self.nodes[0].is_opening_square_bracket
+            return self.nodes[0].is_square_bracket_operator
         except IndexError:
             return False
 

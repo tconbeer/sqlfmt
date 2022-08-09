@@ -32,6 +32,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/117_whitespace_in_tokens.sql",
         "unformatted/118_within_group.sql",
         "unformatted/119_psycopg_placeholders.sql",
+        "unformatted/120_array_literals.sql",
         "unformatted/200_base_model.sql",
         "unformatted/201_basic_snapshot.sql",
         "unformatted/202_unpivot_macro.sql",
