@@ -1,5 +1,6 @@
 import os
 import sys
+from itertools import product
 from pathlib import Path
 from typing import Any
 
@@ -77,25 +78,22 @@ def reset_cache_mode(unset_no_color_env: None) -> Mode:
 
 
 @pytest.fixture
+def no_progressbar_mode(unset_no_color_env: None) -> Mode:
+    return Mode(no_progressbar=True)
+
+
+@pytest.fixture
 def single_process_mode(unset_no_color_env: None) -> Mode:
     return Mode(single_process=True)
 
 
-@pytest.fixture(
-    params=[
-        # (check, diff, single_process)
-        (False, False, False),
-        (False, True, False),
-        (True, False, False),
-        (True, True, False),
-        (False, False, True),
-        (True, False, True),
-        (False, True, True),
-    ]
-)
+@pytest.fixture(params=product([True, False], repeat=4))
 def all_output_modes(request: Any, unset_no_color_env: None) -> Mode:
     return Mode(
-        check=request.param[0], diff=request.param[1], single_process=request.param[2]
+        check=request.param[0],
+        diff=request.param[1],
+        single_process=request.param[2],
+        no_progressbar=request.param[3],
     )
 
 

@@ -32,6 +32,7 @@ jinjafmt = ["black"]
 [tool.poetry.dependencies]
 python = "^3.7"
 click = "^8.0"
+tqdm = "^4.0"
 platformdirs = "^2.4.0"
 importlib_metadata = { version = "*", python = "<3.8" }
 gitpython = { version = "^3.1.24", optional = true }

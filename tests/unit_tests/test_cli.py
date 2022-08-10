@@ -121,3 +121,11 @@ def test_preformatted_clickhouse(
     args = f"{preformatted_dir.as_posix()} --check --dialect clickhouse"
     results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
     assert results.exit_code == 0
+
+
+def test_preformatted_no_progressbar(
+    sqlfmt_runner: CliRunner, preformatted_dir: Path
+) -> None:
+    args = f"{preformatted_dir.as_posix()} --check --no-progressbar"
+    results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
+    assert results.exit_code == 0

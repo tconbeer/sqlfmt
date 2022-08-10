@@ -4,7 +4,19 @@ import sys
 from functools import partial
 from glob import glob
 from pathlib import Path
-from typing import Callable, Collection, Iterable, List, Set, TypeVar
+from typing import (
+    Awaitable,
+    Callable,
+    Collection,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    TypeVar,
+)
+
+from tqdm import tqdm
 
 from sqlfmt.cache import Cache, check_cache, clear_cache, load_cache, write_cache
 from sqlfmt.exception import SqlfmtError
@@ -28,7 +40,11 @@ def format_string(source_string: str, mode: Mode) -> str:
     return str(formatted_query)
 
 
-def run(files: Collection[Path], mode: Mode) -> Report:
+def run(
+    files: Collection[Path],
+    mode: Mode,
+    callback: Optional[Callable[[Awaitable[SqlFormatResult]], None]] = None,
+) -> Report:
     """
     Runs sqlfmt on all files in list of given paths (files), using the specified mode.
 
@@ -44,7 +60,7 @@ def run(files: Collection[Path], mode: Mode) -> Report:
     else:
         cache = load_cache()
 
-    results = _format_many(files, cache, mode)
+    results = _format_many(files, cache, mode, callback=callback)
 
     report = Report(results, mode)
 
@@ -74,6 +90,33 @@ def get_matching_paths(paths: Iterable[Path], mode: Mode) -> Set[Path]:
     return include_set - exclude_set
 
 
+def initialize_progress_bar(
+    total: int, mode: Mode, force_progress_bar: bool = False
+) -> Tuple[tqdm, Callable[[Awaitable[SqlFormatResult]], None]]:
+    """
+    Return a callable that can be used with api.run to display a progress bar
+    that updates after each file is formatted.
+
+    Pass force_progress_bar to enable the progress bar, even on non-TTY
+    terminals (this is handy for testing the progress bar).
+    """
+    if mode.no_progressbar:
+        disable = True
+    elif force_progress_bar:
+        disable = False
+    else:
+        # will be disabled on non-TTY envs, enabled otherwise
+        disable = None
+    progress_bar = tqdm(
+        iterable=None, total=total, leave=False, disable=disable, delay=0.5, unit="file"
+    )
+
+    def progress_callback(_: Awaitable[SqlFormatResult]) -> None:
+        progress_bar.update()
+
+    return progress_bar, progress_callback
+
+
 def _get_included_paths(paths: Iterable[Path], mode: Mode) -> Set[Path]:
     """
     Takes a list of paths (files or directories) and a mode as an input, and
@@ -93,7 +136,10 @@ def _get_included_paths(paths: Iterable[Path], mode: Mode) -> Set[Path]:
 
 
 def _format_many(
-    paths: Collection[Path], cache: Cache, mode: Mode
+    paths: Collection[Path],
+    cache: Cache,
+    mode: Mode,
+    callback: Optional[Callable[[Awaitable[SqlFormatResult]], None]] = None,
 ) -> List[SqlFormatResult]:
     """
     Runs sqlfmt on all files in a collection of paths, using the specified mode.
@@ -106,7 +152,7 @@ def _format_many(
     format_func = partial(_format_one, cache=cache, mode=mode)
     if len(paths) > 1 and not mode.single_process:
         results: List[SqlFormatResult] = asyncio.get_event_loop().run_until_complete(
-            _multiprocess_map(format_func, paths)
+            _multiprocess_map(format_func, paths, callback=callback)
         )
     else:
         results = list(map(format_func, paths))
@@ -114,7 +160,11 @@ def _format_many(
     return results
 
 
-async def _multiprocess_map(func: Callable[[T], R], seq: Iterable[T]) -> List[R]:
+async def _multiprocess_map(
+    func: Callable[[T], R],
+    seq: Iterable[T],
+    callback: Optional[Callable[[Awaitable[R]], None]] = None,
+) -> List[R]:
     """
     Using multiple processes, creates a Future for each application of func to
     an item in seq, then gathers all Futures and returns the result.
@@ -126,7 +176,10 @@ async def _multiprocess_map(func: Callable[[T], R], seq: Iterable[T]) -> List[R]
     with concurrent.futures.ProcessPoolExecutor() as pool:
         tasks = []
         for item in seq:
-            tasks.append(loop.run_in_executor(pool, func, item))
+            future = loop.run_in_executor(pool, func, item)
+            if callback:
+                future.add_done_callback(callback)
+            tasks.append(future)
         results: List[R] = await asyncio.gather(*tasks)
     return results
 

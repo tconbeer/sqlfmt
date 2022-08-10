@@ -1,15 +1,17 @@
 import io
 import os
 from pathlib import Path
-from typing import List, Type
+from typing import Any, List, Type
 
 import pytest
+from tqdm import tqdm
 
 from sqlfmt.api import (
     _format_many,
     _update_source_files,
     format_string,
     get_matching_paths,
+    initialize_progress_bar,
     run,
 )
 from sqlfmt.exception import SqlfmtBracketError, SqlfmtError
@@ -26,9 +28,9 @@ def unformatted_files(unformatted_dir: Path) -> List[Path]:
     return list(unformatted_dir.iterdir())
 
 
-def test_file_discovery(all_output_modes: Mode) -> None:
+def test_file_discovery(default_mode: Mode) -> None:
     p = Path("tests/data/unit_tests/test_api/test_file_discovery")
-    res = list(get_matching_paths(p.iterdir(), all_output_modes))
+    res = list(get_matching_paths(p.iterdir(), default_mode))
 
     expected = (
         p / "top_level_file.sql",
@@ -100,9 +102,9 @@ def test_format_many_preformatted(
 
 
 def test_format_many_unformatted(
-    unformatted_files: List[Path], all_output_modes: Mode
+    unformatted_files: List[Path], default_mode: Mode
 ) -> None:
-    results = list(_format_many(unformatted_files, {}, all_output_modes))
+    results = list(_format_many(unformatted_files, {}, default_mode))
 
     assert len(results) == len(
         unformatted_files
@@ -269,3 +271,52 @@ def test_run_single_process_does_not_use_multiprocessing(
     files = get_matching_paths([unformatted_dir], single_process_mode)
     monkeypatch.delattr("sqlfmt.api._multiprocess_map")
     _ = run(files=files, mode=single_process_mode)
+
+
+def test_run_with_callback(
+    capsys: Any, unformatted_dir: Path, default_mode: Mode
+) -> None:
+    def print_dot(_: Any) -> None:
+        print(".", end="", flush=True)
+
+    files = get_matching_paths([unformatted_dir], default_mode)
+    expected_dots = len(files)
+
+    _ = run(files=files, mode=default_mode, callback=print_dot)
+    captured = capsys.readouterr()
+
+    assert "." * expected_dots in captured.out
+
+
+def test_initialize_progress_bar(default_mode: Mode) -> None:
+    total = 100
+    progress_bar, progress_callback = initialize_progress_bar(
+        total=total, mode=default_mode, force_progress_bar=True
+    )
+    assert progress_bar
+    assert isinstance(progress_bar, tqdm)
+    assert progress_bar.format_dict.get("n") == 0
+    assert progress_bar.format_dict.get("total") == total
+    assert progress_bar.format_dict.get("elapsed") > 0
+
+    assert progress_callback
+    progress_callback("foo")  # type: ignore
+    assert progress_bar.format_dict.get("n") == 1
+
+
+def test_initialize_disabled_progress_bar(no_progressbar_mode: Mode) -> None:
+    total = 100
+    progress_bar, progress_callback = initialize_progress_bar(
+        total=total, mode=no_progressbar_mode, force_progress_bar=True
+    )
+    # a disabled progress bar's elapsed timer will not count up,
+    # and calling update() will not increment n
+    assert progress_bar
+    assert isinstance(progress_bar, tqdm)
+    assert progress_bar.format_dict.get("n") == 0
+    assert progress_bar.format_dict.get("total") == total
+    assert progress_bar.format_dict.get("elapsed") == 0
+
+    assert progress_callback
+    progress_callback("foo")  # type: ignore
+    assert progress_bar.format_dict.get("n") == 0
