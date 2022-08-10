@@ -1,12 +1,10 @@
 import itertools
-from typing import List
 
 import pytest
 
-from sqlfmt.exception import SqlfmtSegmentError
-from sqlfmt.line import Line
 from sqlfmt.merger import CannotMergeException, LineMerger
 from sqlfmt.mode import Mode
+from sqlfmt.segment import Segment, create_segments_from_lines
 from tests.util import read_test_data
 
 
@@ -237,58 +235,6 @@ def test_merge_count_window_function(merger: LineMerger) -> None:
     assert result == expected
 
 
-def test_split_into_segments(merger: LineMerger) -> None:
-    source_string, _ = read_test_data(
-        "unit_tests/test_merger/test_split_into_segments.sql"
-    )
-    q = merger.mode.dialect.initialize_analyzer(merger.mode.line_length).parse_query(
-        source_string
-    )
-
-    top_level_segments = merger._split_into_segments(q.lines)
-
-    assert len(top_level_segments) == 2
-    assert str(top_level_segments[0][0]).startswith("select")
-    assert str(top_level_segments[1][0]).startswith("from")
-
-    select_segment = [top_level_segments[0]]
-
-    assert select_segment == merger._split_into_segments(select_segment[0])
-
-    select_lines = select_segment[0]
-    assert not (
-        select_lines[-1].closes_bracket_from_previous_line
-        and select_lines[-1].depth == select_lines[0].depth
-    )
-
-    indented_segments = merger._split_into_segments(select_lines[1:])
-    expected_segments = [
-        "    my_first_field,\n",
-        "    my_second_field\n",
-        "    as an_alias,\n",
-        "    case\n",
-        "    as my_case_statement,\n",
-        "    case\n",
-        "    case\n",
-        "    ::numeric(\n",
-        "    as casted_case\n",
-        "    ,\n",
-        "    (\n",
-        "    +\n",
-        "    ::varchar(\n",
-        "    another_field,\n",
-        "    case\n",
-        "    + 4\n",
-    ]
-    assert [str(segment[0]) for segment in indented_segments] == expected_segments
-
-
-def test_split_into_segments_empty(merger: LineMerger) -> None:
-    no_lines: List[Line] = []
-    result = merger._split_into_segments(no_lines)
-    assert result == []
-
-
 def test_segment_continues_operator_sequence(merger: LineMerger) -> None:
     source_string, _ = read_test_data(
         "unit_tests/test_merger/test_segment_continues_operator_sequence.sql"
@@ -297,7 +243,7 @@ def test_segment_continues_operator_sequence(merger: LineMerger) -> None:
         source_string
     )
 
-    segments = merger._split_into_segments(q.lines)
+    segments = create_segments_from_lines(q.lines)
     assert len(segments) == 8
 
     p2_result = [
@@ -325,7 +271,9 @@ def test_segment_continues_operator_sequence_empty(merger: LineMerger, p: int) -
     q = merger.mode.dialect.initialize_analyzer(merger.mode.line_length).parse_query(
         source_string
     )
-    result = merger._segment_continues_operator_sequence(q.lines, min_priority=p)
+    result = merger._segment_continues_operator_sequence(
+        Segment(q.lines), min_priority=p
+    )
     assert result is True
 
 
@@ -426,63 +374,6 @@ def test_do_not_merge_across_query_dividers(merger: LineMerger, sep: str) -> Non
     assert raw_query.lines == merged_lines
 
 
-@pytest.mark.parametrize(
-    "source_string,expected_result",
-    [
-        ("case\nfoo\nend\n", True),
-        ("count(\n*\n)\n", True),
-        ("count(\n*\n)\n\n\n", True),
-        ("\n\n\ncount(\n*\n)", True),
-        ("as (\nselect\n1\n)\n", True),
-        ("as foo\n", False),
-        ("from\nfoo\nwhere\n", False),
-    ],
-)
-def test_tail_closes_head(
-    merger: LineMerger, source_string: str, expected_result: bool
-) -> None:
-    q = merger.mode.dialect.initialize_analyzer(merger.mode.line_length).parse_query(
-        source_string
-    )
-    assert merger._tail_closes_head(q.lines) == expected_result
-
-
-@pytest.mark.parametrize(
-    "source_string,expected_idx",
-    [
-        ("case\nfoo\nend\n", 0),
-        ("\n\n\ncount(\n*\n)", 3),
-        ("\n\n\n    count(\n*\n)", 3),
-        ("\n     \n\n    count(\n*\n)", 3),
-    ],
-)
-def test_get_first_nonblank_line(
-    merger: LineMerger, source_string: str, expected_idx: int
-) -> None:
-    q = merger.mode.dialect.initialize_analyzer(merger.mode.line_length).parse_query(
-        source_string
-    )
-    line, i = merger._get_first_nonblank_line(q.lines)
-    assert i == expected_idx
-    assert line == q.lines[i]
-
-
-@pytest.mark.parametrize(
-    "source_string",
-    [
-        "",
-        "\n",
-        "\n\n\n    \n\n",
-    ],
-)
-def test_get_first_nonblank_line_raises(merger: LineMerger, source_string: str) -> None:
-    q = merger.mode.dialect.initialize_analyzer(merger.mode.line_length).parse_query(
-        source_string
-    )
-    with pytest.raises(SqlfmtSegmentError):
-        _, _ = merger._get_first_nonblank_line(q.lines)
-
-
 def test_maybe_stubbornly_merge(merger: LineMerger) -> None:
     source_string, expected_string = read_test_data(
         "unit_tests/test_merger/test_maybe_stubbornly_merge.sql"
@@ -490,7 +381,7 @@ def test_maybe_stubbornly_merge(merger: LineMerger) -> None:
     q = merger.mode.dialect.initialize_analyzer(merger.mode.line_length).parse_query(
         source_string
     )
-    segments = merger._split_into_segments(q.lines)
+    segments = create_segments_from_lines(q.lines)
     merged_segments = merger._maybe_stubbornly_merge(segments)
     result_string = "".join(
         [line.render_with_comments(88) for line in itertools.chain(*merged_segments)]
@@ -503,7 +394,7 @@ def test_maybe_stubbornly_merge_single_segment(merger: LineMerger) -> None:
     q = merger.mode.dialect.initialize_analyzer(merger.mode.line_length).parse_query(
         source_string
     )
-    segments = merger._split_into_segments(q.lines)
+    segments = create_segments_from_lines(q.lines)
     assert len(segments) == 1
     merged_segments = merger._maybe_stubbornly_merge(segments)
     assert merged_segments == segments
@@ -518,7 +409,7 @@ def test_fix_standalone_operators(merger: LineMerger) -> None:
     )
 
     # first pass shouldn't do anything
-    segments = merger._split_into_segments(q.lines)
+    segments = create_segments_from_lines(q.lines)
     assert len(segments) == 11
     fixed_segments = merger._fix_standalone_operators(segments)
     assert len(fixed_segments) == len(segments)
