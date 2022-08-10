@@ -3,6 +3,7 @@ import subprocess
 from pathlib import Path
 from typing import List
 
+import pytest
 from click.testing import CliRunner
 
 from sqlfmt.cli import sqlfmt as sqlfmt_main
@@ -20,11 +21,12 @@ def run_cli_command(commands: List[str]) -> subprocess.CompletedProcess:
     return process
 
 
+@pytest.mark.parametrize("cmd", ["sqlfmt", "python -m sqlfmt"])
 def test_click_cli_runner_is_equivalent_to_py_subprocess(
-    sqlfmt_runner: CliRunner,
+    sqlfmt_runner: CliRunner, cmd: str
 ) -> None:
 
-    builtin_results = run_cli_command(["sqlfmt"])
+    builtin_results = run_cli_command([cmd])
     click_results = sqlfmt_runner.invoke(sqlfmt_main)
 
     assert builtin_results.returncode == click_results.exit_code
