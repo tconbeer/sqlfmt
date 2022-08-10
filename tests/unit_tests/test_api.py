@@ -7,9 +7,9 @@ import pytest
 
 from sqlfmt.api import (
     _format_many,
-    _get_matching_paths,
     _update_source_files,
     format_string,
+    get_matching_paths,
     run,
 )
 from sqlfmt.exception import SqlfmtBracketError, SqlfmtError
@@ -28,7 +28,7 @@ def unformatted_files(unformatted_dir: Path) -> List[Path]:
 
 def test_file_discovery(all_output_modes: Mode) -> None:
     p = Path("tests/data/unit_tests/test_api/test_file_discovery")
-    res = list(_get_matching_paths(p.iterdir(), all_output_modes))
+    res = list(get_matching_paths(p.iterdir(), all_output_modes))
 
     expected = (
         p / "top_level_file.sql",
@@ -52,7 +52,7 @@ def test_file_discovery(all_output_modes: Mode) -> None:
 def test_file_discovery_with_excludes(exclude: List[str]) -> None:
     mode = Mode(exclude=exclude)
     p = Path("tests/data/unit_tests/test_api/test_file_discovery")
-    res = _get_matching_paths(p.iterdir(), mode)
+    res = get_matching_paths(p.iterdir(), mode)
 
     expected = {
         # p / "top_level_file.sql",
@@ -179,11 +179,11 @@ def test_update_source_files_unformatted(
 def test_run_unformatted_update(
     unformatted_dir: Path, default_mode: Mode, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-
+    files = get_matching_paths([unformatted_dir], default_mode)
     # confirm that we call the _update_source function
     monkeypatch.delattr("sqlfmt.api._update_source_files")
     with pytest.raises(NameError):
-        _ = run(files=[unformatted_dir], mode=default_mode)
+        _ = run(files=files, mode=default_mode)
 
 
 def test_run_preformatted(
@@ -230,7 +230,8 @@ def test_run_unformatted(unformatted_files: List[Path], all_output_modes: Mode) 
 
 
 def test_run_error(error_dir: Path, all_output_modes: Mode) -> None:
-    files = [error_dir]
+    p = [error_dir]
+    files = get_matching_paths(p, all_output_modes)
     report = run(files=files, mode=all_output_modes)
     assert report.number_changed == 0
     assert report.number_unchanged == 0
@@ -265,5 +266,6 @@ def test_run_single_process_does_not_use_multiprocessing(
 
     # confirm that we do not call _multiprocess_map; if we do,
     # this will raise
+    files = get_matching_paths([unformatted_dir], single_process_mode)
     monkeypatch.delattr("sqlfmt.api._multiprocess_map")
-    _ = run(files=[unformatted_dir], mode=single_process_mode)
+    _ = run(files=files, mode=single_process_mode)

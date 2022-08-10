@@ -28,7 +28,7 @@ def format_string(source_string: str, mode: Mode) -> str:
     return str(formatted_query)
 
 
-def run(files: List[Path], mode: Mode) -> Report:
+def run(files: Collection[Path], mode: Mode) -> Report:
     """
     Runs sqlfmt on all files in list of given paths (files), using the specified mode.
 
@@ -44,8 +44,7 @@ def run(files: List[Path], mode: Mode) -> Report:
     else:
         cache = load_cache()
 
-    matched_paths = _get_matching_paths(files, mode)
-    results = _format_many(matched_paths, cache, mode)
+    results = _format_many(files, cache, mode)
 
     report = Report(results, mode)
 
@@ -56,7 +55,7 @@ def run(files: List[Path], mode: Mode) -> Report:
     return report
 
 
-def _get_matching_paths(paths: Iterable[Path], mode: Mode) -> Set[Path]:
+def get_matching_paths(paths: Iterable[Path], mode: Mode) -> Set[Path]:
     """
     Takes a list of paths (files or directories) and a mode as an input, and
     yields paths to individual files that match the input paths (or are contained in

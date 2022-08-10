@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## Breaking API Changes
+-   The `files` argument of `api.run` is now a `Collection[pathlib.Path]` that represents an exact collection of files to be formatted, instead of a list of paths to search for files. Use `api.get_matching_paths(paths, mode)` to return the set of exact paths expected by `api.run`
+
 ## Formatting Changes + Bug Fixes
 -   fixed a bug that could cause lines with long jinja tags to be one character over the line length limit, and could result in unstable formatting ([#237](https://github.com/tconbeer/sqlfmt/pull/237) - thank you [@nfcampos](https://github.com/nfcampos)!)
 -   fixed a bug that formatted array literals like they were indexing operations ([#235](https://github.com/tconbeer/sqlfmt/pull/235) - thank you [@nfcampos](https://github.com/nfcampos)!)
