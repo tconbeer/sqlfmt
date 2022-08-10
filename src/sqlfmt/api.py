@@ -149,13 +149,31 @@ def _format_many(
 
     Returns a list of SqlFormatResults. Does not write formatted Queries back to disk
     """
-    format_func = partial(_format_one, cache=cache, mode=mode)
-    if len(paths) > 1 and not mode.single_process:
-        results: List[SqlFormatResult] = asyncio.get_event_loop().run_until_complete(
-            _multiprocess_map(format_func, paths, callback=callback)
+    results: List[SqlFormatResult] = []
+    cache_misses: List[Path] = []
+    for path in paths:
+        cached = check_cache(cache=cache, p=path)
+        if cached:
+            results.append(
+                SqlFormatResult(
+                    source_path=path,
+                    source_string="",
+                    formatted_string="",
+                    from_cache=True,
+                )
+            )
+        else:
+            cache_misses.append(path)
+
+    format_func = partial(_format_one, mode=mode)
+    if len(cache_misses) > 1 and not mode.single_process:
+        results.extend(
+            asyncio.get_event_loop().run_until_complete(
+                _multiprocess_map(format_func, paths, callback=callback)
+            )
         )
     else:
-        results = list(map(format_func, paths))
+        results.extend((map(format_func, cache_misses)))
 
     return results
 
@@ -184,31 +202,24 @@ async def _multiprocess_map(
     return results
 
 
-def _format_one(path: Path, cache: Cache, mode: Mode) -> SqlFormatResult:
+def _format_one(path: Path, mode: Mode) -> SqlFormatResult:
     """
-    Runs format_string on the contents of a single file (found at path),
-    unless the cache contains a matching version of that file. Handles
+    Runs format_string on the contents of a single file (found at path). Handles
     potential user errors in formatted code, and returns a SqlfmtResult
     """
-    cached = check_cache(cache=cache, p=path)
-    if cached:
+    source = _read_path_or_stdin(path)
+    try:
+        formatted = format_string(source, mode)
         return SqlFormatResult(
-            source_path=path, source_string="", formatted_string="", from_cache=True
+            source_path=path, source_string=source, formatted_string=formatted
         )
-    else:
-        source = _read_path_or_stdin(path)
-        try:
-            formatted = format_string(source, mode)
-            return SqlFormatResult(
-                source_path=path, source_string=source, formatted_string=formatted
-            )
-        except SqlfmtError as e:
-            return SqlFormatResult(
-                source_path=path,
-                source_string=source,
-                formatted_string="",
-                exception=e,
-            )
+    except SqlfmtError as e:
+        return SqlFormatResult(
+            source_path=path,
+            source_string=source,
+            formatted_string="",
+            exception=e,
+        )
 
 
 def _update_source_files(results: Iterable[SqlFormatResult]) -> None:
@@ -227,7 +238,7 @@ def _read_path_or_stdin(path: Path) -> str:
     """
     If passed a Path, calls open() and read() and returns contents as a string.
 
-    If passed a TextIO buffer, calls read() directly
+    If passed Path("-"), calls sys.stdin.read()
     """
     if path == STDIN_PATH:
         source = sys.stdin.read()
