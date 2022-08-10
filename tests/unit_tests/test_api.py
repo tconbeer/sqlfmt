@@ -297,7 +297,6 @@ def test_initialize_progress_bar(default_mode: Mode) -> None:
     assert isinstance(progress_bar, tqdm)
     assert progress_bar.format_dict.get("n") == 0
     assert progress_bar.format_dict.get("total") == total
-    assert progress_bar.format_dict.get("elapsed") > 0
 
     assert progress_callback
     progress_callback("foo")  # type: ignore
