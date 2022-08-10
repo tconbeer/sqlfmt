@@ -46,7 +46,6 @@ def test_dialect() -> None:
 
 
 def test_dialect_raises() -> None:
-    m = Mode(dialect_name="foo")
     # clickhouse is a subclass of Polyglot
     with pytest.raises(SqlfmtConfigError):
-        _ = m.dialect
+        _ = Mode(dialect_name="foo")
