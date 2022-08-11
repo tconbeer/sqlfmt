@@ -2,7 +2,7 @@ import os
 from dataclasses import dataclass, field
 from typing import List
 
-from sqlfmt.dialect import ClickHouse, Dialect, Polyglot
+from sqlfmt.dialect import ClickHouse, Polyglot
 from sqlfmt.exception import SqlfmtConfigError
 
 
@@ -24,17 +24,17 @@ class Mode:
     reset_cache: bool = False
     verbose: bool = False
     quiet: bool = False
+    no_progressbar: bool = False
     no_color: bool = False
     force_color: bool = False
 
-    @property
-    def dialect(self) -> Dialect:
+    def __post_init__(self) -> None:
         options = {
             "polyglot": Polyglot(),
             "clickhouse": ClickHouse(),
         }
         try:
-            return options[self.dialect_name.lower()]
+            self.dialect = options[self.dialect_name.lower()]
         except KeyError:
             raise SqlfmtConfigError(
                 f"Mode was created with dialect_name={self.dialect_name}, "

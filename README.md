@@ -176,6 +176,26 @@ template_blocks_indent = False
 multiline_newline = True
 ```
 
+### Using sqlfmt with VS Code
+
+You can use the [Run on Save](https://marketplace.visualstudio.com/items?itemName=emeraldwalk.RunOnSave) extension with sqlfmt to automatically format files when they are saved. After installing the extension, on the extension's page, click the gear icon to access the extension settings. Choose if you would like to create either a User or Workspace setting, and select the appropriate tab. Then select "Edit in settings.json", and add the following:
+
+```JSON
+{
+    "emeraldwalk.runonsave": {
+        "commands": [
+            {
+                "match": ".*\\.sql(\\.jinja)?",
+                "isAsync": true,
+                "cmd": "sqlfmt ${file}"
+            }
+        ]
+    }
+}
+```
+
+(Note that you should either use a `pyproject.toml` file or add other options to the `cmd` key in the settings above if you would like to change the default behavior of sqlfmt)
+
 ## The sqlfmt style
 The only thing you can configure with sqlfmt is the desired line length of the formatted file. You can do this with the `--line-length` or `-l` options. The default is 88.
 

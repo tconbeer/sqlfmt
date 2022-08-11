@@ -83,6 +83,11 @@ from sqlfmt.mode import Mode
     help=("Prints much less information to stderr"),
 )
 @click.option(
+    "--no-progressbar",
+    is_flag=True,
+    help=("Never prints a progressbar to stderr"),
+)
+@click.option(
     "--no-color",
     is_flag=True,
     help=(
@@ -138,7 +143,15 @@ def sqlfmt(
         }
         config.update(non_default_options)
         mode = Mode(**config)  # type: ignore
-        report = api.run(files=files, mode=mode)
+
+        matched_files = api.get_matching_paths(files, mode=mode)
+        progress_bar, progress_callback = api.initialize_progress_bar(
+            total=len(matched_files), mode=mode
+        )
+
+        report = api.run(files=matched_files, mode=mode, callback=progress_callback)
+
+        progress_bar.close()
         report.display_report()
 
         if report.number_errored > 0:

@@ -1,8 +1,10 @@
 import re
 import subprocess
+import sys
 from pathlib import Path
 from typing import List
 
+import pytest
 from click.testing import CliRunner
 
 from sqlfmt.cli import sqlfmt as sqlfmt_main
@@ -20,11 +22,24 @@ def run_cli_command(commands: List[str]) -> subprocess.CompletedProcess:
     return process
 
 
+@pytest.mark.parametrize(
+    "cmd",
+    [
+        "sqlfmt",
+        pytest.param(
+            "python -m sqlfmt",
+            marks=pytest.mark.skipif(
+                sys.platform.startswith("win"),
+                reason="Fails on GHA windows runner, 'python not a cmd...'",
+            ),
+        ),
+    ],
+)
 def test_click_cli_runner_is_equivalent_to_py_subprocess(
-    sqlfmt_runner: CliRunner,
+    sqlfmt_runner: CliRunner, cmd: str
 ) -> None:
 
-    builtin_results = run_cli_command(["sqlfmt"])
+    builtin_results = run_cli_command([cmd])
     click_results = sqlfmt_runner.invoke(sqlfmt_main)
 
     assert builtin_results.returncode == click_results.exit_code
@@ -119,5 +134,13 @@ def test_preformatted_clickhouse(
     sqlfmt_runner: CliRunner, preformatted_dir: Path
 ) -> None:
     args = f"{preformatted_dir.as_posix()} --check --dialect clickhouse"
+    results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
+    assert results.exit_code == 0
+
+
+def test_preformatted_no_progressbar(
+    sqlfmt_runner: CliRunner, preformatted_dir: Path
+) -> None:
+    args = f"{preformatted_dir.as_posix()} --check --no-progressbar"
     results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
     assert results.exit_code == 0

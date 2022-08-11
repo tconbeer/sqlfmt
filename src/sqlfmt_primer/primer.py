@@ -9,7 +9,7 @@ import click
 from git import Repo
 from platformdirs import user_cache_dir
 
-from sqlfmt.api import run
+from sqlfmt.api import get_matching_paths, initialize_progress_bar, run
 from sqlfmt.cache import get_cache_file
 from sqlfmt.mode import Mode
 
@@ -148,9 +148,18 @@ def sqlfmt_primer(
             target_dir = get_project_source_tree(project, reset_cache, working_dir)
 
             click.echo(f"Running sqlfmt on {project.name}", err=True)
+
+            files = get_matching_paths([target_dir], mode=mode)
+            progress_bar, progress_callback = initialize_progress_bar(
+                total=len(files), mode=mode
+            )
+
             start_time = timeit.default_timer()
-            report = run(files=[target_dir], mode=mode)
+            report = run(files=files, mode=mode, callback=progress_callback)
             end_time = timeit.default_timer()
+
+            progress_bar.close()
+
             number_formatted = (
                 report.number_changed + report.number_unchanged + report.number_errored
             )
