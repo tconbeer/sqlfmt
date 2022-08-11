@@ -1,5 +1,6 @@
 import re
 import subprocess
+import sys
 from pathlib import Path
 from typing import List
 
@@ -21,7 +22,19 @@ def run_cli_command(commands: List[str]) -> subprocess.CompletedProcess:
     return process
 
 
-@pytest.mark.parametrize("cmd", ["sqlfmt", "python -m sqlfmt"])
+@pytest.mark.parametrize(
+    "cmd",
+    [
+        "sqlfmt",
+        pytest.param(
+            "python -m sqlfmt",
+            marks=pytest.mark.skipif(
+                sys.platform.startswith("win"),
+                reason="Fails on GHA windows runner, 'python not a cmd...'",
+            ),
+        ),
+    ],
+)
 def test_click_cli_runner_is_equivalent_to_py_subprocess(
     sqlfmt_runner: CliRunner, cmd: str
 ) -> None:
