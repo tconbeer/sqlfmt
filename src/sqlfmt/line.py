@@ -204,13 +204,6 @@ class Line:
             return False
 
     @property
-    def starts_with_square_bracket_operator(self) -> bool:
-        try:
-            return self.nodes[0].is_square_bracket_operator
-        except IndexError:
-            return False
-
-    @property
     def contains_unterm_keyword(self) -> bool:
         return any([n.is_unterm_keyword for n in self.nodes])
 

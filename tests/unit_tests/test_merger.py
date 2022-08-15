@@ -247,19 +247,19 @@ def test_segment_continues_operator_sequence(merger: LineMerger) -> None:
     assert len(segments) == 8
 
     p2_result = [
-        merger._segment_continues_operator_sequence(s, min_priority=2) for s in segments
+        merger._segment_continues_operator_sequence(s, max_priority=2) for s in segments
     ]
     p2_expected = [False, True, True, False, True, False, True, True]
     assert p2_result == p2_expected
 
     p1_result = [
-        merger._segment_continues_operator_sequence(s, min_priority=1) for s in segments
+        merger._segment_continues_operator_sequence(s, max_priority=1) for s in segments
     ]
     p1_expected = [False, True, False, False, True, False, False, True]
     assert p1_result == p1_expected
 
     p0_result = [
-        merger._segment_continues_operator_sequence(s, min_priority=0) for s in segments
+        merger._segment_continues_operator_sequence(s, max_priority=0) for s in segments
     ]
     p0_expected = [False, False, False, False, True, False, False, False]
     assert p0_result == p0_expected
@@ -272,7 +272,7 @@ def test_segment_continues_operator_sequence_empty(merger: LineMerger, p: int) -
         source_string
     )
     result = merger._segment_continues_operator_sequence(
-        Segment(q.lines), min_priority=p
+        Segment(q.lines), max_priority=p
     )
     assert result is True
 

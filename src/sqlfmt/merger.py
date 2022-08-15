@@ -219,11 +219,11 @@ class LineMerger:
 
     @classmethod
     def _segment_continues_operator_sequence(
-        cls, segment: Segment, min_priority: int
+        cls, segment: Segment, max_priority: int
     ) -> bool:
         """
         Returns true if the first line of the segment is part
-        of a sequence of operators
+        of a sequence of operators of priority <= max_priority
         """
         try:
             line, _ = segment.head
@@ -232,27 +232,29 @@ class LineMerger:
             return True
         else:
             return (
-                (
-                    line.starts_with_operator
-                    and cls._operator_priority(line.nodes[0].token.type) <= min_priority
-                )
-                or line.starts_with_comma
-                or line.starts_with_square_bracket_operator
-            )
+                line.starts_with_operator
+                and cls._operator_priority(line.nodes[0]) <= max_priority
+            ) or line.starts_with_comma
 
     @staticmethod
-    def _operator_priority(token_type: TokenType) -> int:
+    def _operator_priority(node: Node) -> int:
+        assert (
+            node.is_operator
+        ), f"Internal error! {node} is not an operator. Please open an issue"
+        token_type = node.token.type
         if token_type in (TokenType.BOOLEAN_OPERATOR, TokenType.ON):
             return 2
-        elif token_type not in (
+        elif token_type in (
             # list of "tight binding" operators
             TokenType.AS,
             TokenType.DOUBLE_COLON,
             TokenType.TIGHT_WORD_OPERATOR,
         ):
-            return 1
-        else:
             return 0
+        elif node.is_square_bracket_operator:
+            return 0
+        else:
+            return 1
 
     def _try_merge_operator_segments(
         self, segments: List[Segment], priority: int
@@ -292,18 +294,18 @@ class LineMerger:
         new_segments = [segments[0]]
         for segment in segments[1:]:
             prev_operator = self._segment_continues_operator_sequence(
-                new_segments[-1], min_priority=1
+                new_segments[-1], max_priority=1
             )
             if (
                 # always stubbornly merge P0 operators (e.g., `over`)
-                self._segment_continues_operator_sequence(segment, min_priority=0)
+                self._segment_continues_operator_sequence(segment, max_priority=0)
                 # stubbornly merge p1 operators only if they do NOT
                 # follow another p1 operator AND they open brackets
                 # and cover multiple lines
                 or (
                     not prev_operator
                     and self._segment_continues_operator_sequence(
-                        segment, min_priority=1
+                        segment, max_priority=1
                     )
                     and segment.tail_closes_head
                 )

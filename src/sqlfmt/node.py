@@ -207,6 +207,7 @@ class Node:
                 TokenType.SEMICOLON,
             )
             or self.is_multiplication_star
+            or self.is_square_bracket_operator
         )
 
     @property
