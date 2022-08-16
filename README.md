@@ -26,7 +26,7 @@ For now, sqlfmt only works on `select` statements (which is all you need if you 
 ## Installation
 
 ### Try it first
-Want to test out sqlfmt on a query before you install it? Go to [sqlfmt.com](http://sqlfmt.com) to use the interactive, web-based version.
+Want to test out sqlfmt on a query before you install it? Go to [sqlfmt.com](https://sqlfmt.com) to use the interactive, web-based version.
 
 ### Prerequisites
 You will need Python 3.7-3.10 installed. You should use pipx or install into a virtual environment (maybe as a dev-dependency in your project). If you do not know how to install python and use pipx and/or virtual environments, go read about that first.

@@ -9,7 +9,7 @@ description = "sqlfmt is an opinionated CLI tool that formats your sql files"
 readme = "README.md"
 authors = ["Ted Conbeer <ted@shandy.io>"]
 license = "Apache-2.0"
-homepage = "http://sqlfmt.com"
+homepage = "https://sqlfmt.com"
 repository = "https://github.com/tconbeer/sqlfmt"
 classifiers = [
     "Development Status :: 3 - Alpha",
