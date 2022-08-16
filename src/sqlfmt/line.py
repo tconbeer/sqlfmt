@@ -204,6 +204,13 @@ class Line:
             return False
 
     @property
+    def starts_with_square_bracket_operator(self) -> bool:
+        try:
+            return self.nodes[0].is_square_bracket_operator
+        except IndexError:
+            return False
+
+    @property
     def contains_unterm_keyword(self) -> bool:
         return any([n.is_unterm_keyword for n in self.nodes])
 
@@ -229,7 +236,9 @@ class Line:
 
     @property
     def is_standalone_operator(self) -> bool:
-        return self._is_standalone_if(self.starts_with_operator)
+        return self._is_standalone_if(
+            self.starts_with_operator and not self.starts_with_square_bracket_operator
+        )
 
     @property
     def is_standalone_comma(self) -> bool:

@@ -1,5 +1,6 @@
 select
     'xero' as billing_platform, [invoice_id, invoice.invoice_number] as billing_platform_references,
+    usage_activity_by_stage_monthly['manage']['events'] as monthly_active_users_last_28_days
 from hello
 ;
 select
@@ -10,6 +11,9 @@ from bar
 select
     'xero' as billing_platform,
     [invoice_id, invoice.invoice_number] as billing_platform_references,
+    usage_activity_by_stage_monthly['manage'][
+        'events'
+    ] as monthly_active_users_last_28_days
 from hello
 ;
 select

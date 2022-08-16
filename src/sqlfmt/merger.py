@@ -125,6 +125,9 @@ class LineMerger:
 
         Returns a new list of Lines
         """
+
+        # if "eventsasdf" in "".join([str(line) for line in lines]):
+        #     breakpoint()
         try:
             merged_lines = self.create_merged_line(lines)
         except CannotMergeException:
@@ -327,12 +330,12 @@ class LineMerger:
         best possible merger of those two segments
         """
         new_segments: List[Segment] = []
-        # try to merge the first line of this segment with the previous segment
         head, i = segment.head
 
+        # try to merge the first line of this segment with the previous segment
         try:
             prev_segment = Segment(self.create_merged_line(prev_segment + [head]))
-            prev_segment.extend(Segment(segment[i + 1 :]))
+            prev_segment.extend(segment[i + 1 :])
             new_segments.append(prev_segment)
         except CannotMergeException:
             # try to add this segment to the last line of the previous segment
