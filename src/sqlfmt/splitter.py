@@ -44,6 +44,8 @@ class LineSplitter:
             or node.is_unterm_keyword
             # always split before any opening jinja block
             or node.is_opening_jinja_block
+            # always split before operators
+            or node.is_operator
             # always split before any node that decreases depth
             or node.is_closing_bracket
             or node.is_closing_jinja_block
@@ -51,26 +53,12 @@ class LineSplitter:
             or node.divides_queries
         ):
             return True
-        # split before most operators
-        elif self.maybe_split_before_operator(node):
-            return True
         # split if an opening bracket immediately follows
         # a closing bracket
         elif self.maybe_split_between_brackets(node):
             return True
         else:
             return False
-
-    def maybe_split_before_operator(self, node: Node) -> bool:
-        """
-        Return true if this node is an operator and it has the
-        right context for splitting before it.
-        """
-        return (
-            node.is_operator
-            and node.previous_node is not None
-            and not node.is_the_and_after_the_between_operator
-        )
 
     def maybe_split_between_brackets(self, node: Node) -> bool:
         """

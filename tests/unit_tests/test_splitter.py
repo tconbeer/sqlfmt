@@ -224,9 +224,11 @@ def test_split_at_and(splitter: LineSplitter, default_analyzer: Analyzer) -> Non
         "    1\n",
         "where\n",
         "    a\n",
-        "    between b and c\n",
+        "    between b\n",
+        "    and c\n",
         "    and d\n",
-        "    between e and f\n",
+        "    between e\n",
+        "    and f\n",
         "    and a\n",
         "    < b\n",
     ]

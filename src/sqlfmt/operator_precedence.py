@@ -47,7 +47,7 @@ class OperatorPrecedence(IntEnum):
             TokenType.AS: lambda x: OperatorPrecedence.AS,
             TokenType.BRACKET_OPEN: lambda x: OperatorPrecedence.SQUARE_BRACKETS,
             TokenType.TIGHT_WORD_OPERATOR: lambda x: OperatorPrecedence.OTHER_TIGHT,
-            TokenType.BOOLEAN_OPERATOR: lambda x: OperatorPrecedence.BOOL_OR,
+            TokenType.BOOLEAN_OPERATOR: cls._from_boolean,
             TokenType.ON: lambda x: OperatorPrecedence.ON,
             TokenType.OPERATOR: cls._from_operator,
             TokenType.WORD_OPERATOR: cls._from_word_operator,
@@ -87,3 +87,15 @@ class OperatorPrecedence(IntEnum):
             return OperatorPrecedence.PRESENCE
         else:
             return OperatorPrecedence.OTHER
+
+    @staticmethod
+    def _from_boolean(node: Node) -> "OperatorPrecedence":
+        if node.is_the_and_after_the_between_operator:
+            return OperatorPrecedence.OTHER_TIGHT
+
+        value_mapping = {
+            "and": OperatorPrecedence.BOOL_AND,
+            "or": OperatorPrecedence.BOOL_OR,
+            "not": OperatorPrecedence.BOOL_NOT,
+        }
+        return value_mapping.get(node.value, OperatorPrecedence.BOOL_AND)
