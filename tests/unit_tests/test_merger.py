@@ -2,7 +2,7 @@ import itertools
 
 import pytest
 
-from sqlfmt.merger import CannotMergeException, LineMerger
+from sqlfmt.merger import CannotMergeException, LineMerger, OperatorPrecedence
 from sqlfmt.mode import Mode
 from sqlfmt.segment import Segment, create_segments_from_lines
 from tests.util import read_test_data
@@ -245,34 +245,45 @@ def test_segment_continues_operator_sequence(merger: LineMerger) -> None:
 
     segments = create_segments_from_lines(q.lines)
     assert len(segments) == 8
+    print([str(s[0]) for s in segments])
 
+    tiers = OperatorPrecedence.tiers()
+
+    p = tiers.pop()
     p2_result = [
-        merger._segment_continues_operator_sequence(s, max_priority=2) for s in segments
+        merger._segment_continues_operator_sequence(s, max_precedence=p)
+        for s in segments
     ]
     p2_expected = [False, True, True, False, True, False, True, True]
     assert p2_result == p2_expected
 
+    p = tiers.pop()
     p1_result = [
-        merger._segment_continues_operator_sequence(s, max_priority=1) for s in segments
+        merger._segment_continues_operator_sequence(s, max_precedence=p)
+        for s in segments
     ]
     p1_expected = [False, True, False, False, True, False, False, True]
     assert p1_result == p1_expected
 
+    p = tiers.pop()
     p0_result = [
-        merger._segment_continues_operator_sequence(s, max_priority=0) for s in segments
+        merger._segment_continues_operator_sequence(s, max_precedence=p)
+        for s in segments
     ]
     p0_expected = [False, False, False, False, True, False, False, False]
     assert p0_result == p0_expected
 
 
-@pytest.mark.parametrize("p", [0, 1])
-def test_segment_continues_operator_sequence_empty(merger: LineMerger, p: int) -> None:
+@pytest.mark.parametrize("p", OperatorPrecedence.tiers())
+def test_segment_continues_operator_sequence_empty(
+    merger: LineMerger, p: OperatorPrecedence
+) -> None:
     source_string = "\n\n\n\n"
     q = merger.mode.dialect.initialize_analyzer(merger.mode.line_length).parse_query(
         source_string
     )
     result = merger._segment_continues_operator_sequence(
-        Segment(q.lines), max_priority=p
+        Segment(q.lines), max_precedence=p
     )
     assert result is True
 

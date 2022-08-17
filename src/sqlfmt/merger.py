@@ -7,8 +7,8 @@ from sqlfmt.exception import CannotMergeException, SqlfmtSegmentError
 from sqlfmt.line import Line
 from sqlfmt.mode import Mode
 from sqlfmt.node import Node
+from sqlfmt.operator_precedence import OperatorPrecedence
 from sqlfmt.segment import Segment, create_segments_from_lines
-from sqlfmt.token import TokenType
 
 
 @dataclass
@@ -62,7 +62,7 @@ class LineMerger:
             content_nodes = [
                 cls._raise_unmergeable(node, allow_multiline)
                 for node in line.nodes
-                if node.token.type != TokenType.NEWLINE
+                if not node.is_newline
             ]
             if content_nodes:
                 final_newline = line.nodes[-1]
@@ -126,8 +126,6 @@ class LineMerger:
         Returns a new list of Lines
         """
 
-        # if "eventsasdf" in "".join([str(line) for line in lines]):
-        #     breakpoint()
         try:
             merged_lines = self.create_merged_line(lines)
         except CannotMergeException:
@@ -142,7 +140,9 @@ class LineMerger:
             if len(segments) > 1:
                 # merge together segments of equal depth that are
                 # joined by operators
-                segments = self._maybe_merge_operators(segments)
+                segments = self._maybe_merge_operators(
+                    segments, OperatorPrecedence.tiers()
+                )
                 # some operators really should not be by themselves
                 # so if their segments are too long to be merged,
                 # we merge just their first line onto the prior segment
@@ -192,7 +192,7 @@ class LineMerger:
     def _maybe_merge_operators(
         self,
         segments: List[Segment],
-        priority: int = 2,
+        op_tiers: List[OperatorPrecedence],
     ) -> List[Segment]:
         """
         Tries to merge runs of segments that start with operators into previous
@@ -200,29 +200,30 @@ class LineMerger:
         if we can't merge a whole run of operators, we increase the priority to
         create shorter runs that can be merged
         """
-        if len(segments) <= 1 or priority < 0:
+        if len(segments) <= 1 or not op_tiers:
             return segments
         head = 0
         new_segments: List[Segment] = []
+        precedence = op_tiers.pop()
 
         for i, segment in enumerate(segments[1:], start=1):
-            if not self._segment_continues_operator_sequence(segment, priority):
+            if not self._segment_continues_operator_sequence(segment, precedence):
                 new_segments.extend(
-                    self._try_merge_operator_segments(segments[head:i], priority)
+                    self._try_merge_operator_segments(segments[head:i], op_tiers)
                 )
                 head = i
 
         # we need to try one more time to merge everything after head
         else:
             new_segments.extend(
-                self._try_merge_operator_segments(segments[head:], priority)
+                self._try_merge_operator_segments(segments[head:], op_tiers)
             )
 
         return new_segments
 
     @classmethod
     def _segment_continues_operator_sequence(
-        cls, segment: Segment, max_priority: int
+        cls, segment: Segment, max_precedence: OperatorPrecedence
     ) -> bool:
         """
         Returns true if the first line of the segment is part
@@ -236,31 +237,11 @@ class LineMerger:
         else:
             return (
                 line.starts_with_operator
-                and cls._operator_priority(line.nodes[0]) <= max_priority
+                and OperatorPrecedence.from_node(line.nodes[0]) <= max_precedence
             ) or line.starts_with_comma
 
-    @staticmethod
-    def _operator_priority(node: Node) -> int:
-        assert (
-            node.is_operator
-        ), f"Internal error! {node} is not an operator. Please open an issue"
-        token_type = node.token.type
-        if token_type in (TokenType.BOOLEAN_OPERATOR, TokenType.ON):
-            return 2
-        elif token_type in (
-            # list of "tight binding" operators
-            TokenType.AS,
-            TokenType.DOUBLE_COLON,
-            TokenType.TIGHT_WORD_OPERATOR,
-        ):
-            return 0
-        elif node.is_square_bracket_operator:
-            return 0
-        else:
-            return 1
-
     def _try_merge_operator_segments(
-        self, segments: List[Segment], priority: int
+        self, segments: List[Segment], op_tiers: List[OperatorPrecedence]
     ) -> List[Segment]:
         """
         Attempts to merge segments into a single line; if that fails,
@@ -274,7 +255,7 @@ class LineMerger:
                 Segment(self.create_merged_line(list(itertools.chain(*segments))))
             ]
         except CannotMergeException:
-            new_segments = self._maybe_merge_operators(segments, priority - 1)
+            new_segments = self._maybe_merge_operators(segments, op_tiers)
         finally:
             return new_segments
 
@@ -297,18 +278,20 @@ class LineMerger:
         new_segments = [segments[0]]
         for segment in segments[1:]:
             prev_operator = self._segment_continues_operator_sequence(
-                new_segments[-1], max_priority=1
+                new_segments[-1], max_precedence=OperatorPrecedence.COMPARATORS
             )
             if (
                 # always stubbornly merge P0 operators (e.g., `over`)
-                self._segment_continues_operator_sequence(segment, max_priority=0)
+                self._segment_continues_operator_sequence(
+                    segment, max_precedence=OperatorPrecedence.OTHER_TIGHT
+                )
                 # stubbornly merge p1 operators only if they do NOT
                 # follow another p1 operator AND they open brackets
                 # and cover multiple lines
                 or (
                     not prev_operator
                     and self._segment_continues_operator_sequence(
-                        segment, max_priority=1
+                        segment, max_precedence=OperatorPrecedence.COMPARATORS
                     )
                     and segment.tail_closes_head
                 )
