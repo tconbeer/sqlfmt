@@ -209,7 +209,7 @@ class LineMerger:
         for i, segment in enumerate(segments[1:], start=1):
             if not self._segment_continues_operator_sequence(segment, precedence):
                 new_segments.extend(
-                    self._try_merge_operator_segments(segments[head:i], op_tiers)
+                    self._try_merge_operator_segments(segments[head:i], op_tiers.copy())
                 )
                 head = i
 
@@ -275,15 +275,18 @@ class LineMerger:
         if len(segments) <= 1:
             return segments
 
+        tiers = OperatorPrecedence.tiers()
+        stubborn_merge_tier = tiers[1]
+
         new_segments = [segments[0]]
         for segment in segments[1:]:
             prev_operator = self._segment_continues_operator_sequence(
-                new_segments[-1], max_precedence=OperatorPrecedence.COMPARATORS
+                new_segments[-1], max_precedence=stubborn_merge_tier
             )
             if (
                 # always stubbornly merge P0 operators (e.g., `over`)
                 self._segment_continues_operator_sequence(
-                    segment, max_precedence=OperatorPrecedence.OTHER_TIGHT
+                    segment, max_precedence=tiers[0]
                 )
                 # stubbornly merge p1 operators only if they do NOT
                 # follow another p1 operator AND they open brackets
@@ -291,7 +294,7 @@ class LineMerger:
                 or (
                     not prev_operator
                     and self._segment_continues_operator_sequence(
-                        segment, max_precedence=OperatorPrecedence.COMPARATORS
+                        segment, max_precedence=stubborn_merge_tier
                     )
                     and segment.tail_closes_head
                 )

@@ -1,5 +1,5 @@
 from enum import IntEnum
-from typing import List, Optional
+from typing import Callable, List
 
 from sqlfmt.node import Node
 from sqlfmt.token import TokenType
@@ -16,39 +16,74 @@ class OperatorPrecedence(IntEnum):
     OTHER = 7
     MEMBERSHIP = 8
     COMPARATORS = 9
-    BOOL_NOT = 10
-    BOOL_AND = 11
-    BOOL_OR = 12
-    ON = 13
+    PRESENCE = 10
+    BOOL_NOT = 11
+    BOOL_AND = 12
+    BOOL_OR = 13
+    ON = 14
 
     @staticmethod
     def tiers() -> List["OperatorPrecedence"]:
         return [
             OperatorPrecedence.OTHER_TIGHT,
-            OperatorPrecedence.COMPARATORS,
+            OperatorPrecedence.PRESENCE,
             OperatorPrecedence.ON,
         ]
-
-    @staticmethod
-    def _simple_lookup(token_type: TokenType) -> Optional["OperatorPrecedence"]:
-        mapping = {
-            TokenType.DOUBLE_COLON: OperatorPrecedence.DOUBLE_COLON,
-            TokenType.AS: OperatorPrecedence.AS,
-            TokenType.TIGHT_WORD_OPERATOR: OperatorPrecedence.OTHER_TIGHT,
-            TokenType.BOOLEAN_OPERATOR: OperatorPrecedence.BOOL_OR,
-            TokenType.ON: OperatorPrecedence.ON,
-        }
-        return mapping.get(token_type)
 
     @classmethod
     def from_node(cls, node: Node) -> "OperatorPrecedence":
         assert (
             node.is_operator
         ), f"Internal error! {node} is not an operator. Please open an issue"
-        token_lookup = cls._simple_lookup(token_type=node.token.type)
-        if token_lookup is not None:
-            return token_lookup
-        elif node.is_square_bracket_operator:
-            return OperatorPrecedence.SQUARE_BRACKETS
+        return cls._function_lookup(token_type=node.token.type)(node)
+
+    @classmethod
+    def _function_lookup(
+        cls,
+        token_type: TokenType,
+    ) -> Callable[[Node], "OperatorPrecedence"]:
+        mapping = {
+            TokenType.DOUBLE_COLON: lambda x: OperatorPrecedence.DOUBLE_COLON,
+            TokenType.AS: lambda x: OperatorPrecedence.AS,
+            TokenType.BRACKET_OPEN: lambda x: OperatorPrecedence.SQUARE_BRACKETS,
+            TokenType.TIGHT_WORD_OPERATOR: lambda x: OperatorPrecedence.OTHER_TIGHT,
+            TokenType.BOOLEAN_OPERATOR: lambda x: OperatorPrecedence.BOOL_OR,
+            TokenType.ON: lambda x: OperatorPrecedence.ON,
+            TokenType.OPERATOR: cls._from_operator,
+            TokenType.WORD_OPERATOR: cls._from_word_operator,
+        }
+        return mapping.get(token_type, lambda x: OperatorPrecedence.OTHER)
+
+    @staticmethod
+    def _from_operator(node: Node) -> "OperatorPrecedence":
+        value_mapping = {
+            "+": OperatorPrecedence.ADDITION,
+            "-": OperatorPrecedence.ADDITION,
+            "*": OperatorPrecedence.MULTIPLICATION,
+            "/": OperatorPrecedence.MULTIPLICATION,
+            "%": OperatorPrecedence.MULTIPLICATION,
+            "%%": OperatorPrecedence.MULTIPLICATION,
+            "^": OperatorPrecedence.EXPONENT,
+            "=": OperatorPrecedence.COMPARATORS,
+            "==": OperatorPrecedence.COMPARATORS,
+            "!=": OperatorPrecedence.COMPARATORS,
+            "<>": OperatorPrecedence.COMPARATORS,
+            "<=": OperatorPrecedence.COMPARATORS,
+            ">=": OperatorPrecedence.COMPARATORS,
+            "~": OperatorPrecedence.MEMBERSHIP,
+            "~*": OperatorPrecedence.MEMBERSHIP,
+            "!~": OperatorPrecedence.MEMBERSHIP,
+            "!~*": OperatorPrecedence.MEMBERSHIP,
+        }
+        return value_mapping.get(node.value, OperatorPrecedence.OTHER)
+
+    @staticmethod
+    def _from_word_operator(node: Node) -> "OperatorPrecedence":
+        membership = ["between", "like", "similar"]
+        presence = ["is", "null"]
+        if any([w in node.value for w in membership]):
+            return OperatorPrecedence.MEMBERSHIP
+        elif any([w in node.value for w in presence]):
+            return OperatorPrecedence.PRESENCE
         else:
             return OperatorPrecedence.OTHER
