@@ -13,9 +13,11 @@ All notable changes to this project will be documented in this file.
 -   sqlfmt can now be called as a python module, with `python -m sqlfmt`
 
 ### Formatting Changes + Bug Fixes
--   fixed a bug that could cause lines with long jinja tags to be one character over the line length limit, and could result in unstable formatting ([#237](https://github.com/tconbeer/sqlfmt/pull/237) - thank you [@nfcampos](https://github.com/nfcampos)!)
--   fixed a bug that formatted array literals like they were indexing operations ([#235](https://github.com/tconbeer/sqlfmt/pull/235) - thank you [@nfcampos](https://github.com/nfcampos)!)
--   fixed a bug that caused unnecessary copying of the cache when using multiprocessing. Large projects should see dramatically faster (near-instant) runs once the cache is warm
+-   adds more granularity to operator precedence and will merge lines more aggressively that start with high-precedence operators ([#200](https://github.com/tconbeer/sqlfmt/issues/200))
+-   improves the formatting of `between ... and ...`, especially in situations where the source includes a line break ([#207](https://github.com/tconbeer/sqlfmt/issues/207))
+-   fixes a bug that caused unnecessary copying of the cache when using multiprocessing. Large projects should see dramatically faster (near-instant) runs once the cache is warm
+-   fixes a bug that could cause lines with long jinja tags to be one character over the line length limit, and could result in unstable formatting ([#237](https://github.com/tconbeer/sqlfmt/issues/237) - thank you [@nfcampos](https://github.com/nfcampos)!)
+-   fixes a bug that formatted array literals like they were indexing operations ([#235](https://github.com/tconbeer/sqlfmt/issues/235) - thank you [@nfcampos](https://github.com/nfcampos)!)
 
 ## [0.10.1] - 2022-08-05
 

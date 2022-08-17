@@ -127,7 +127,7 @@ This can also be configured using the `pyproject.toml` file:
 dialect = "clickhouse"
 ```
 
-Note that with this option, sqlfmt will not lowercase **most** non-reserved keywords, even common ones like `sum` or `count`. See (and please join) [this issue](https://github.com/tconbeer/sqlfmt/issues/195) for a discussion of this topic.
+Note that with this option, sqlfmt will not lowercase **most** non-reserved keywords, even common ones like `sum` or `count`. See (and please join) [this discussion](https://github.com/tconbeer/sqlfmt/discussions/229) for more on this topic.
 
 ### Using sqlfmt with dbt
 
@@ -146,7 +146,7 @@ Add the following config to your `.pre-commit-config.yaml` file:
 ```yml
 repos:
   - repo: https://github.com/tconbeer/sqlfmt
-    rev: v0.10.0
+    rev: v0.10.1
     hooks:
       - id: sqlfmt
         language_version: python
@@ -199,11 +199,10 @@ You can use the [Run on Save](https://marketplace.visualstudio.com/items?itemNam
 ## The sqlfmt style
 The only thing you can configure with sqlfmt is the desired line length of the formatted file. You can do this with the `--line-length` or `-l` options. The default is 88.
 
-Given the desired line length, sqlfmt has four objectives:
-1. Break and indent lines to make the syntactical structure of the code apparent
-2. Break lines so they are shorter than the desired line length, if possible
-3. Combine lines to use the least possible vertical space, without violating #1 and #2
-4. Standardize capitalization (to lowercase) and in-line whitespace
+Given the desired line length, sqlfmt has three objectives:
+1. Break and indent lines to make the syntactical structure of the code apparent.
+2. Combine lines to use the least possible vertical space, without violating the line-length constraint or the structure in #1.
+3. Standardize capitalization (to lowercase) and in-line whitespace.
 
 sqlfmt borrows elements from well-accepted styles from other programming languages. It places opening brackets on the same line as preceding function names (like *black* for python and *1TBS* for C). It indents closing brackets to the same depth as the opening bracket (this is extended to statements that must be closed, like `case` and `end`).
 
@@ -211,16 +210,16 @@ The sqlfmt style is as simple as possible, with little-to-no special-casing of f
 
 ### Why lowercase?
 There are several reasons that sqlfmt insists on lowercase SQL keywords:
-1. We believe that SQL is code (this is a surprisingly controversial statement!). Shouting-case keywords perpetuate the myth that SQL isn't "real code", or isn't "modern" and somehow is trapped in the era of low-level imperative languages: BASIC, COBOL, and FORTRAN. The reality is that SQL is an incredibly powerful, declarative, and modern language. It should look like one
-1. Syntax highlighting for SQL makes shouting-case keywords redundant; the syntax highlighter in any text editor is going to be more consistent than any manual shout-casing. If you have a SQL query as a string inside of a block of code in another language, you may want to capitalize your keywords; sqlfmt only operates on dedicated SQL (and templated sql) files, so this is not relevant. However, even without syntax highlighting, the hierarchical and consistent indentation provided by sqlfmt provides sufficient visual structure without shout-casing keywords
+1. We believe that SQL is code (this is a surprisingly controversial statement!). Shouting-case keywords perpetuate the myth that SQL isn't "real code", or isn't "modern" and somehow is trapped in the era of low-level imperative languages: BASIC, COBOL, and FORTRAN. The reality is that SQL is an incredibly powerful, declarative, and modern language. It should look like one.
+1. Syntax highlighting for SQL makes shouting-case keywords redundant; the syntax highlighter in any text editor is going to be more consistent than any manual shout-casing. If you have a SQL query as a string inside of a block of code in another language, you may want to capitalize your keywords; sqlfmt only operates on dedicated SQL (and templated sql) files, so this is not relevant. However, even without syntax highlighting, the hierarchical and consistent indentation provided by sqlfmt provides sufficient visual structure without shout-casing keywords.
 1. Even among people who like shout-cased keywords, there are disagreements between what gets shout-cased. SELECT, sure, but SUM? AS? OVER? AND? All-lowercase keywords eliminates this potential source of irregularity and disagreement.
-1. Research shows that generally, lowercase words are more readable
+1. Research shows that generally, lowercase words are more readable.
 
 ### Why trailing commas?
-1. Using trailing commas follows the convention of every other written language and programming language
-1. Leading commas require placing the first field name on the same line as `select`, which can obscure that field
-1. SQL query compilation is extremely fast; the "cost" of "last field" errors is very low. Some dialects (e.g., BigQuery) even allow a trailing comma in the final field of a select statement
-1. Trailing commas generalize better within `select` statements (e.g. `group by` and `partition by` clauses) and in other kinds of SQL statements (e.g. `insert` statements)
+1. Using trailing commas follows the convention of every other written language and programming language.
+1. Leading commas require placing the first field name on the same line as `select`, which can obscure that field (especially with `select distinct top 25 ...`).
+1. SQL query compilation is extremely fast; the "cost" of "last field" errors is very low. Some dialects (e.g., BigQuery, DuckDB) even allow a trailing comma in the final field of a select statement.
+1. Trailing commas generalize better within `select` statements (e.g. `group by` and `partition by` clauses) and in other kinds of SQL statements (e.g. `insert` statements).
 
 ### Examples
 
@@ -289,7 +288,7 @@ select
     ) as e
 from my_table
 ```
-Want more examples? See the `tests/data` directory, or go to http://sqlfmt.com to see how sqlfmt will format your queries.
+Want more examples? See the `tests/data` directory, or go to https://sqlfmt.com to see how sqlfmt will format your queries.
 
 ## Contributing
 
