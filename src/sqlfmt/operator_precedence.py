@@ -26,7 +26,11 @@ class OperatorPrecedence(IntEnum):
     def tiers() -> List["OperatorPrecedence"]:
         return [
             OperatorPrecedence.OTHER_TIGHT,
-            OperatorPrecedence.PRESENCE,
+            OperatorPrecedence.EXPONENT,
+            OperatorPrecedence.MULTIPLICATION,
+            OperatorPrecedence.OTHER,
+            OperatorPrecedence.COMPARATORS,
+            OperatorPrecedence.BOOL_NOT,
             OperatorPrecedence.ON,
         ]
 
@@ -49,6 +53,7 @@ class OperatorPrecedence(IntEnum):
             TokenType.TIGHT_WORD_OPERATOR: lambda x: OperatorPrecedence.OTHER_TIGHT,
             TokenType.BOOLEAN_OPERATOR: cls._from_boolean,
             TokenType.ON: lambda x: OperatorPrecedence.ON,
+            TokenType.STAR: lambda x: OperatorPrecedence.MULTIPLICATION,
             TokenType.OPERATOR: cls._from_operator,
             TokenType.WORD_OPERATOR: cls._from_word_operator,
         }
@@ -59,7 +64,6 @@ class OperatorPrecedence(IntEnum):
         value_mapping = {
             "+": OperatorPrecedence.ADDITION,
             "-": OperatorPrecedence.ADDITION,
-            "*": OperatorPrecedence.MULTIPLICATION,
             "/": OperatorPrecedence.MULTIPLICATION,
             "%": OperatorPrecedence.MULTIPLICATION,
             "%%": OperatorPrecedence.MULTIPLICATION,
@@ -79,7 +83,7 @@ class OperatorPrecedence(IntEnum):
 
     @staticmethod
     def _from_word_operator(node: Node) -> "OperatorPrecedence":
-        membership = ["between", "like", "similar"]
+        membership = ["between", "in", "like", "similar"]
         presence = ["is", "null"]
         if any([w in node.value for w in membership]):
             return OperatorPrecedence.MEMBERSHIP

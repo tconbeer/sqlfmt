@@ -47,7 +47,19 @@ select
     and another_field,
     d_field
     ,
-    e_field
+    e_field,
+    foofoofoofoofoofoofoofoofoofoo
+    / barbarbarbarbarbarbar
+    + foofoofoofoofoofoofoofoofoofoo
+    / bazbazbazbazbazbaz
+    + foofoofoofoofoofoofoofoofoofoo
+    / quxquxquxquxqux,
+    foofoofoofoofoofoofoofoofoofoo
+    ^ barbarbarbarbarbarbar
+    * foofoofoofoofoofoofoofoofoofoo
+    ^ bazbazbazbazbazbaz
+    * foofoofoofoofoofoofoofoofoofoo
+    ^ quxquxquxquxqux
 where
     something
     < something_else
@@ -107,7 +119,13 @@ select
     + another_field
     and another_field,
     d_field,
-    e_field
+    e_field,
+    foofoofoofoofoofoofoofoofoofoo / barbarbarbarbarbarbar
+    + foofoofoofoofoofoofoofoofoofoo / bazbazbazbazbazbaz
+    + foofoofoofoofoofoofoofoofoofoo / quxquxquxquxqux,
+    foofoofoofoofoofoofoofoofoofoo ^ barbarbarbarbarbarbar
+    * foofoofoofoofoofoofoofoofoofoo ^ bazbazbazbazbazbaz
+    * foofoofoofoofoofoofoofoofoofoo ^ quxquxquxquxqux
 where
     something < something_else
     and another_thing = another_thing_entirely
