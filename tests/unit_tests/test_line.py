@@ -69,6 +69,7 @@ def test_bare_line(bare_line: Line) -> None:
     assert not bare_line.contains_multiline_node
     assert not bare_line.contains_operator
     assert not bare_line.starts_with_comma
+    assert not bare_line.starts_with_square_bracket_operator
     assert not bare_line.starts_with_operator
     assert not bare_line.is_blank_line
     assert not bare_line.is_standalone_multiline_node
@@ -112,6 +113,7 @@ def test_simple_line(
     assert simple_line.contains_unterm_keyword
     assert simple_line.contains_operator
     assert not simple_line.starts_with_comma
+    assert not simple_line.starts_with_square_bracket_operator
     assert not simple_line.starts_with_operator
     assert not simple_line.contains_multiline_node
     assert not simple_line.is_blank_line

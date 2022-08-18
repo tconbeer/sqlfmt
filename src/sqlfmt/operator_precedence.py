@@ -1,3 +1,4 @@
+import re
 from enum import IntEnum
 from typing import Callable, List
 
@@ -51,9 +52,9 @@ class OperatorPrecedence(IntEnum):
             TokenType.AS: lambda x: OperatorPrecedence.AS,
             TokenType.BRACKET_OPEN: lambda x: OperatorPrecedence.SQUARE_BRACKETS,
             TokenType.TIGHT_WORD_OPERATOR: lambda x: OperatorPrecedence.OTHER_TIGHT,
-            TokenType.BOOLEAN_OPERATOR: cls._from_boolean,
             TokenType.ON: lambda x: OperatorPrecedence.ON,
             TokenType.STAR: lambda x: OperatorPrecedence.MULTIPLICATION,
+            TokenType.BOOLEAN_OPERATOR: cls._from_boolean,
             TokenType.OPERATOR: cls._from_operator,
             TokenType.WORD_OPERATOR: cls._from_word_operator,
         }
@@ -74,6 +75,8 @@ class OperatorPrecedence(IntEnum):
             "<>": OperatorPrecedence.COMPARATORS,
             "<=": OperatorPrecedence.COMPARATORS,
             ">=": OperatorPrecedence.COMPARATORS,
+            ">": OperatorPrecedence.COMPARATORS,
+            "<": OperatorPrecedence.COMPARATORS,
             "~": OperatorPrecedence.MEMBERSHIP,
             "~*": OperatorPrecedence.MEMBERSHIP,
             "!~": OperatorPrecedence.MEMBERSHIP,
@@ -83,11 +86,25 @@ class OperatorPrecedence(IntEnum):
 
     @staticmethod
     def _from_word_operator(node: Node) -> "OperatorPrecedence":
-        membership = ["between", "in", "like", "similar"]
-        presence = ["is", "null"]
-        if any([w in node.value for w in membership]):
+        membership = [
+            r"(not\s+)?between",
+            r"(not\s+)?in",
+            r"(not\s+)?i?like(\s+any)?",
+            r"(not\s+)?similar\s+to",
+            r"(not\s+)?rlike",
+            r"(not\s+)?regexp",
+        ]
+        membership_prog = [
+            re.compile(patt, re.IGNORECASE | re.DOTALL) for patt in membership
+        ]
+        presence = [r"is(\s+not)?", r"isnull", r"notnull"]
+        presence_prog = [
+            re.compile(patt, re.IGNORECASE | re.DOTALL) for patt in presence
+        ]
+
+        if any([prog.match(node.value) for prog in membership_prog]):
             return OperatorPrecedence.MEMBERSHIP
-        elif any([w in node.value for w in presence]):
+        elif any([prog.match(node.value) for prog in presence_prog]):
             return OperatorPrecedence.PRESENCE
         else:
             return OperatorPrecedence.OTHER
