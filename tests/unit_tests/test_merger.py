@@ -2,7 +2,7 @@ import itertools
 
 import pytest
 
-from sqlfmt.merger import CannotMergeException, LineMerger
+from sqlfmt.merger import CannotMergeException, LineMerger, OperatorPrecedence
 from sqlfmt.mode import Mode
 from sqlfmt.segment import Segment, create_segments_from_lines
 from tests.util import read_test_data
@@ -244,35 +244,76 @@ def test_segment_continues_operator_sequence(merger: LineMerger) -> None:
     )
 
     segments = create_segments_from_lines(q.lines)
-    assert len(segments) == 8
+    assert len(segments) == 9
+    print([str(s[0]) for s in segments])
 
-    p2_result = [
-        merger._segment_continues_operator_sequence(s, min_priority=2) for s in segments
+    p_ON_result = [
+        merger._segment_continues_operator_sequence(
+            s, max_precedence=OperatorPrecedence.ON
+        )
+        for s in segments
     ]
-    p2_expected = [False, True, True, False, True, False, True, True]
-    assert p2_result == p2_expected
+    p_ON_expected = [False, True, True, True, False, True, False, True, True]
+    assert p_ON_result == p_ON_expected
 
-    p1_result = [
-        merger._segment_continues_operator_sequence(s, min_priority=1) for s in segments
+    p_PRESENCE_result = [
+        merger._segment_continues_operator_sequence(
+            s, max_precedence=OperatorPrecedence.PRESENCE
+        )
+        for s in segments
     ]
-    p1_expected = [False, True, False, False, True, False, False, True]
-    assert p1_result == p1_expected
+    p_PRESENCE_expected = [False, True, True, False, False, True, False, False, True]
+    assert p_PRESENCE_result == p_PRESENCE_expected
 
-    p0_result = [
-        merger._segment_continues_operator_sequence(s, min_priority=0) for s in segments
+    p_MULTIPLICATION_result = [
+        merger._segment_continues_operator_sequence(
+            s, max_precedence=OperatorPrecedence.MULTIPLICATION
+        )
+        for s in segments
     ]
-    p0_expected = [False, False, False, False, True, False, False, False]
-    assert p0_result == p0_expected
+    p_MULTIPLICATION_expected = [
+        False,
+        False,
+        True,
+        False,
+        False,
+        True,
+        False,
+        False,
+        False,
+    ]
+    assert p_MULTIPLICATION_result == p_MULTIPLICATION_expected
+
+    p_OTHER_TIGHT_result = [
+        merger._segment_continues_operator_sequence(
+            s, max_precedence=OperatorPrecedence.OTHER_TIGHT
+        )
+        for s in segments
+    ]
+    p_OTHER_TIGHT_expected = [
+        False,
+        False,
+        False,
+        False,
+        False,
+        True,
+        False,
+        False,
+        False,
+    ]
+    assert p_OTHER_TIGHT_result == p_OTHER_TIGHT_expected
 
 
-@pytest.mark.parametrize("p", [0, 1])
-def test_segment_continues_operator_sequence_empty(merger: LineMerger, p: int) -> None:
+@pytest.mark.parametrize("p", OperatorPrecedence.tiers())
+def test_segment_continues_operator_sequence_empty(
+    merger: LineMerger, p: OperatorPrecedence
+) -> None:
     source_string = "\n\n\n\n"
     q = merger.mode.dialect.initialize_analyzer(merger.mode.line_length).parse_query(
         source_string
     )
     result = merger._segment_continues_operator_sequence(
-        Segment(q.lines), min_priority=p
+        Segment(q.lines), max_precedence=p
     )
     assert result is True
 

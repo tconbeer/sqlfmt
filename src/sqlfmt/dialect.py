@@ -278,14 +278,14 @@ class Polyglot(Dialect):
                         r"cube",
                         r"(not\s+)?exists",
                         r"grouping sets",
-                        r"(not\s+)?ilike",
                         r"(not\s+)?in",
                         r"is(\s+not)?",
                         r"isnull",
-                        r"(not\s+)?like(\s+any)?",
+                        r"(not\s+)?i?like(\s+any)?",
                         r"notnull",
-                        r"rollup",
+                        r"(not\s+)?regexp",
                         r"(not\s+)?rlike",
+                        r"rollup",
                         r"some",
                         r"(not\s+)?similar\s+to",
                         r"using",
@@ -319,15 +319,6 @@ class Polyglot(Dialect):
                     ),
                 ),
                 Rule(
-                    name="not",
-                    priority=923,
-                    pattern=group(r"not") + group(r"\W", r"$"),
-                    action=partial(
-                        actions.add_node_to_buffer,
-                        token_type=TokenType.WORD_OPERATOR,
-                    ),
-                ),
-                Rule(
                     name="as",
                     priority=930,
                     pattern=group(r"as") + group(r"\W", r"$"),
@@ -345,6 +336,7 @@ class Polyglot(Dialect):
                     pattern=group(
                         r"and",
                         r"or",
+                        r"not",
                     )
                     + group(r"\W", r"$"),
                     action=partial(

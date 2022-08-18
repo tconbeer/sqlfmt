@@ -224,9 +224,11 @@ def test_split_at_and(splitter: LineSplitter, default_analyzer: Analyzer) -> Non
         "    1\n",
         "where\n",
         "    a\n",
-        "    between b and c\n",
+        "    between b\n",
+        "    and c\n",
         "    and d\n",
-        "    between e and f\n",
+        "    between e\n",
+        "    and f\n",
         "    and a\n",
         "    < b\n",
     ]
@@ -288,5 +290,38 @@ def test_split_around_set_operator(
         "union all\n",
         "select\n",
         "    4\n",
+    ]
+    assert actual_result == expected_result
+
+
+def test_split_between_brackets(
+    splitter: LineSplitter, default_analyzer: Analyzer
+) -> None:
+    source_string = "select split(my_string, ',')[offset(0)], my_dict['tlk']('arg')\n"
+    raw_query = default_analyzer.parse_query(source_string)
+
+    split_lines: List[Line] = []
+    for raw_line in raw_query.lines:
+        split_lines.extend(splitter.maybe_split(raw_line))
+
+    actual_result = [str(line) for line in split_lines]
+    expected_result = [
+        "select\n",
+        "    split(\n",
+        "        my_string,\n",
+        "        ','\n",
+        "    )\n",
+        "    [\n",
+        "        offset(\n",
+        "            0\n",
+        "        )\n",
+        "    ],\n",
+        "    my_dict\n",
+        "    [\n",
+        "        'tlk'\n",
+        "    ]\n",
+        "    (\n",
+        "        'arg'\n",
+        "    )\n",
     ]
     assert actual_result == expected_result
