@@ -44,6 +44,12 @@ class LineMerger:
 
         return leading_blank_lines + [merged_line] + trailing_blank_lines
 
+    def safe_create_merged_line(self, lines: List[Line]) -> List[Line]:
+        try:
+            return self.create_merged_line(lines)
+        except CannotMergeException:
+            return lines
+
     @classmethod
     def _extract_components(
         cls, lines: Iterable[Line]
@@ -278,10 +284,17 @@ class LineMerger:
         stubborn_merge_tier = OperatorPrecedence.COMPARATORS
 
         new_segments = [segments[0]]
-        for segment in segments[1:]:
-            prev_operator = self._segment_continues_operator_sequence(
-                new_segments[-1], max_precedence=stubborn_merge_tier
+
+        starts_with_p1_operator = [
+            self._segment_continues_operator_sequence(
+                segment, max_precedence=stubborn_merge_tier
             )
+            for segment in segments
+        ]
+        standalone_merged = [
+            Segment(self.safe_create_merged_line(segment)) for segment in segments
+        ]
+        for i, segment in enumerate(segments[1:], start=1):
             if (
                 # always stubbornly merge P0 operators (e.g., `over`)
                 self._segment_continues_operator_sequence(
@@ -289,13 +302,11 @@ class LineMerger:
                 )
                 # stubbornly merge p1 operators only if they do NOT
                 # follow another p1 operator AND they open brackets
-                # and cover multiple lines
+                # and cover multiple lines (after attempted merging)
                 or (
-                    not prev_operator
-                    and self._segment_continues_operator_sequence(
-                        segment, max_precedence=stubborn_merge_tier
-                    )
-                    and segment.tail_closes_head
+                    not starts_with_p1_operator[i - 1]
+                    and starts_with_p1_operator[i]
+                    and standalone_merged[i].tail_closes_head
                 )
             ):
                 prev_segment = new_segments.pop()

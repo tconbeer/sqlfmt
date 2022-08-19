@@ -335,7 +335,8 @@ with
             case
                 when
                     event_type = 'Page View'
-                    and session_id = lead(session_id, 1) over (
+                    and session_id
+                    = lead(session_id, 1) over (
                         partition by visitor_id order by event_number
                     )
                 then
