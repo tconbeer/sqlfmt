@@ -74,14 +74,18 @@ class Segment(List[Line]):
         if len(self) <= 1:
             return False
 
-        head, _ = self.head
-        tail, _ = self.tail
+        head, i = self.head
+        tail, j = self.tail
         if head == tail:
             return False
         elif (
-            tail.closes_bracket_from_previous_line
-            or tail.closes_simple_jinja_block_from_previous_line
-        ) and tail.depth == head.depth:
+            (
+                tail.closes_bracket_from_previous_line
+                or tail.closes_simple_jinja_block_from_previous_line
+            )
+            and (tail.depth == head.depth)
+            and (all([line.depth > head.depth for line in self[i + 1 : -(j + 1)]]))
+        ):
             return True
         else:
             return False

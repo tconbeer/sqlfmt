@@ -45,7 +45,18 @@ joined as (
         from converting_events
         group by 1
     ),
-select * from converting_sessions_deduped
+select * from converting_sessions_deduped ;
+-- COPYRIGHT HTTP ARCHIVE
+-- LICENSED UNDER APACHE 2.0, with modifications
+-- SEE: 
+-- https://github.com/tconbeer/http_archive_almanac/blob/a57e75a9d37e150cb7963b821d9a33ad3d651571/LICENSE
+-- sql/2021/accessibility/radio_checkbox_in_fieldset.sql
+select
+countif((stats.checkboxes > 0 or stats.radios > 0)
+        and stats.checkboxes_in_fieldset_with_legend = 0
+        and stats.radios_in_fieldset_with_legend = 0
+    ) / countif(stats.checkboxes > 0 or stats.radios > 0
+    ) as perc_sites_with_none_in_legend
 )))))__SQLFMT_OUTPUT__(((((
 -- COPYRIGHT RITTMAN ANALYTICS (with modifications)
 -- LICENSED UNDER APACHE 2.0
@@ -97,3 +108,17 @@ with
     ),
 select *
 from converting_sessions_deduped
+;
+-- COPYRIGHT HTTP ARCHIVE
+-- LICENSED UNDER APACHE 2.0, with modifications
+-- SEE: 
+-- https://github.com/tconbeer/http_archive_almanac/blob/a57e75a9d37e150cb7963b821d9a33ad3d651571/LICENSE
+-- sql/2021/accessibility/radio_checkbox_in_fieldset.sql
+select
+    countif(
+        (stats.checkboxes > 0 or stats.radios > 0)
+        and stats.checkboxes_in_fieldset_with_legend = 0
+        and stats.radios_in_fieldset_with_legend = 0
+    ) / countif(
+        stats.checkboxes > 0 or stats.radios > 0
+    ) as perc_sites_with_none_in_legend
