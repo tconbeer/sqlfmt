@@ -291,9 +291,6 @@ class LineMerger:
             )
             for segment in segments
         ]
-        standalone_merged = [
-            Segment(self.safe_create_merged_line(segment)) for segment in segments
-        ]
         for i, segment in enumerate(segments[1:], start=1):
             if (
                 # always stubbornly merge P0 operators (e.g., `over`)
@@ -306,7 +303,7 @@ class LineMerger:
                 or (
                     not starts_with_p1_operator[i - 1]
                     and starts_with_p1_operator[i]
-                    and standalone_merged[i].tail_closes_head
+                    and Segment(self.safe_create_merged_line(segment)).tail_closes_head
                 )
             ):
                 prev_segment = new_segments.pop()
