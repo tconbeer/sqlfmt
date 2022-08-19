@@ -14,10 +14,9 @@ def test_tiers_sorted() -> None:
     [
         ("::", OperatorPrecedence.DOUBLE_COLON),
         ("as", OperatorPrecedence.AS),
-        # ("[", OperatorPrecedence.SQUARE_BRACKETS),
         ("over", OperatorPrecedence.OTHER_TIGHT),
+        ("using", OperatorPrecedence.OTHER_TIGHT),
         ("^", OperatorPrecedence.EXPONENT),
-        # ("*", OperatorPrecedence.MULTIPLICATION),
         ("/", OperatorPrecedence.MULTIPLICATION),
         ("%", OperatorPrecedence.MULTIPLICATION),
         ("%%", OperatorPrecedence.MULTIPLICATION),
@@ -53,6 +52,24 @@ def test_operator_precedence(
 ) -> None:
     q = default_analyzer.parse_query(source_string)
     node = q.nodes[0]
+    precedence = OperatorPrecedence.from_node(node)
+    assert precedence == expected_precedence
+
+
+@pytest.mark.parametrize(
+    "source_string,expected_precedence",
+    [
+        ("1 *", OperatorPrecedence.MULTIPLICATION),
+        ("my_array[", OperatorPrecedence.SQUARE_BRACKETS),
+    ],
+)
+def test_operator_precedence_second_node(
+    source_string: str,
+    expected_precedence: OperatorPrecedence,
+    default_analyzer: Analyzer,
+) -> None:
+    q = default_analyzer.parse_query(source_string)
+    node = q.nodes[1]
     precedence = OperatorPrecedence.from_node(node)
     assert precedence == expected_precedence
 

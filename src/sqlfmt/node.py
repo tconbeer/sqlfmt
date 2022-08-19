@@ -199,8 +199,6 @@ class Node:
             in (
                 TokenType.OPERATOR,
                 TokenType.WORD_OPERATOR,
-                TokenType.TIGHT_WORD_OPERATOR,
-                TokenType.AS,
                 TokenType.ON,
                 TokenType.BOOLEAN_OPERATOR,
                 TokenType.DOUBLE_COLON,

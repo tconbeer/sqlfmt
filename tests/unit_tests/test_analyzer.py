@@ -57,7 +57,7 @@ def test_simple_query_parsing(all_output_modes: Mode) -> None:
         Token(type=TokenType.OPERATOR, prefix=" ", token="+", spos=73, epos=75),
         Token(type=TokenType.NAME, prefix=" ", token="another_field", spos=75, epos=89),
         Token(type=TokenType.BRACKET_CLOSE, prefix="", token=")", spos=89, epos=90),
-        Token(type=TokenType.AS, prefix=" ", token="as", spos=90, epos=93),
+        Token(type=TokenType.WORD_OPERATOR, prefix=" ", token="as", spos=90, epos=93),
         Token(type=TokenType.NAME, prefix=" ", token="c", spos=93, epos=95),
         Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=95, epos=96),
         Token(
@@ -246,7 +246,7 @@ def test_multiline_parsing(default_analyzer: Analyzer) -> None:
         ),
         Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=316, epos=317),
         Token(type=TokenType.NAME, prefix="    ", token="source", spos=317, epos=327),
-        Token(type=TokenType.AS, prefix=" ", token="as", spos=327, epos=330),
+        Token(type=TokenType.WORD_OPERATOR, prefix=" ", token="as", spos=327, epos=330),
         Token(type=TokenType.BRACKET_OPEN, prefix=" ", token="(", spos=330, epos=332),
         Token(
             type=TokenType.UNTERM_KEYWORD, prefix="", token="select", spos=332, epos=338
@@ -266,7 +266,7 @@ def test_multiline_parsing(default_analyzer: Analyzer) -> None:
         Token(type=TokenType.COMMA, prefix="", token=",", spos=368, epos=369),
         Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=369, epos=370),
         Token(type=TokenType.NAME, prefix="    ", token="renamed", spos=370, epos=381),
-        Token(type=TokenType.AS, prefix=" ", token="as", spos=381, epos=384),
+        Token(type=TokenType.WORD_OPERATOR, prefix=" ", token="as", spos=381, epos=384),
         Token(type=TokenType.BRACKET_OPEN, prefix=" ", token="(", spos=384, epos=386),
         Token(
             type=TokenType.UNTERM_KEYWORD,

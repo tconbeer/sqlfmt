@@ -32,7 +32,7 @@ def tokens() -> List[Token]:
     tokens = [
         Token(type=TokenType.UNTERM_KEYWORD, prefix="", token="with", spos=0, epos=4),
         Token(type=TokenType.NAME, prefix=" ", token="abc", spos=4, epos=8),
-        Token(type=TokenType.AS, prefix=" ", token="as", spos=8, epos=11),
+        Token(type=TokenType.WORD_OPERATOR, prefix=" ", token="as", spos=8, epos=11),
         Token(type=TokenType.BRACKET_OPEN, prefix=" ", token="(", spos=11, epos=13),
         Token(
             type=TokenType.UNTERM_KEYWORD, prefix="", token="select", spos=13, epos=19
