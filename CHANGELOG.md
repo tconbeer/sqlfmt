@@ -4,15 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.11.0] - 2022-08-21
+
 ### Breaking API Changes
+
 -   The `files` argument of `api.run` is now a `Collection[pathlib.Path]` that represents an exact collection of files to be formatted, instead of a list of paths to search for files. Use `api.get_matching_paths(paths, mode)` to return the set of exact paths expected by `api.run`
 
 ### Features
+
 -   sqlfmt will now display a progress bar for long runs ([#231](https://github.com/tconbeer/sqlfmt/pull/231)). You can disable this with the `--no-progressbar` option
 -   `api.run` now accepts an optional `callback` argument, which must be a `Callable[[Awaitable[SqlFormatResult]], None]`. Unless the `--single-process` option is used, the callback is executed after each file is formatted.
 -   sqlfmt can now be called as a python module, with `python -m sqlfmt`
 
 ### Formatting Changes + Bug Fixes
+
 -   adds more granularity to operator precedence and will merge lines more aggressively that start with high-precedence operators ([#200](https://github.com/tconbeer/sqlfmt/issues/200))
 -   improves the formatting of `between ... and ...`, especially in situations where the source includes a line break ([#207](https://github.com/tconbeer/sqlfmt/issues/207))
 -   improves the consistency of formatting long chains of operators that include parentheses ([#214](https://github.com/tconbeer/sqlfmt/issues/214))
@@ -217,7 +222,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.10.1...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.11.0...HEAD
+
+[0.11.0]: https://github.com/tconbeer/sqlfmt/compare/0.10.1...0.11.0
 
 [0.10.1]: https://github.com/tconbeer/sqlfmt/compare/0.10.0...0.10.1
 
