@@ -188,8 +188,8 @@ def test_handle_newline_leading_comments(default_analyzer: Analyzer) -> None:
 @pytest.mark.parametrize(
     "source_string,has_preceding_star,has_preceding_newline,expected_type",
     [
-        (" except", True, False, TokenType.TIGHT_WORD_OPERATOR),
-        (" except", True, True, TokenType.TIGHT_WORD_OPERATOR),
+        (" except", True, False, TokenType.WORD_OPERATOR),
+        (" except", True, True, TokenType.WORD_OPERATOR),
         (" except", False, False, TokenType.SET_OPERATOR),
         (" except", False, True, TokenType.SET_OPERATOR),
         (" except all", True, False, TokenType.SET_OPERATOR),  # this is a syntax error

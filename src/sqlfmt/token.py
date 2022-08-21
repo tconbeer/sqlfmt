@@ -32,8 +32,6 @@ class TokenType(Enum):
     COLON = auto()
     OPERATOR = auto()
     WORD_OPERATOR = auto()
-    TIGHT_WORD_OPERATOR = auto()
-    AS = auto()
     ON = auto()
     BOOLEAN_OPERATOR = auto()
     COMMA = auto()

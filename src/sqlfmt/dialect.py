@@ -274,14 +274,17 @@ class Polyglot(Dialect):
                     pattern=group(
                         r"all",
                         r"any",
+                        r"as",
                         r"(not\s+)?between",
                         r"cube",
                         r"(not\s+)?exists",
+                        r"filter",
                         r"grouping sets",
                         r"(not\s+)?in",
                         r"is(\s+not)?",
                         r"isnull",
                         r"(not\s+)?i?like(\s+any)?",
+                        r"over",
                         r"notnull",
                         r"(not\s+)?regexp",
                         r"(not\s+)?rlike",
@@ -289,6 +292,7 @@ class Polyglot(Dialect):
                         r"some",
                         r"(not\s+)?similar\s+to",
                         r"using",
+                        r"within\s+group",
                     )
                     + group(r"\W", r"$"),
                     action=partial(
@@ -305,24 +309,8 @@ class Polyglot(Dialect):
                     + group(r"\s+\("),
                     action=partial(
                         actions.add_node_to_buffer,
-                        token_type=TokenType.TIGHT_WORD_OPERATOR,
+                        token_type=TokenType.WORD_OPERATOR,
                     ),
-                ),
-                Rule(
-                    name="agg_modifiers",
-                    priority=922,
-                    pattern=group(r"over", r"within\s+group", r"filter")
-                    + group(r"\W", r"$"),
-                    action=partial(
-                        actions.add_node_to_buffer,
-                        token_type=TokenType.TIGHT_WORD_OPERATOR,
-                    ),
-                ),
-                Rule(
-                    name="as",
-                    priority=930,
-                    pattern=group(r"as") + group(r"\W", r"$"),
-                    action=partial(actions.add_node_to_buffer, token_type=TokenType.AS),
                 ),
                 Rule(
                     name="on",

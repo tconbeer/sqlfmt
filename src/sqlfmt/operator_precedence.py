@@ -49,9 +49,7 @@ class OperatorPrecedence(IntEnum):
     ) -> Callable[[Node], "OperatorPrecedence"]:
         mapping = {
             TokenType.DOUBLE_COLON: lambda x: OperatorPrecedence.DOUBLE_COLON,
-            TokenType.AS: lambda x: OperatorPrecedence.AS,
             TokenType.BRACKET_OPEN: lambda x: OperatorPrecedence.SQUARE_BRACKETS,
-            TokenType.TIGHT_WORD_OPERATOR: lambda x: OperatorPrecedence.OTHER_TIGHT,
             TokenType.ON: lambda x: OperatorPrecedence.ON,
             TokenType.STAR: lambda x: OperatorPrecedence.MULTIPLICATION,
             TokenType.BOOLEAN_OPERATOR: cls._from_boolean,
@@ -86,26 +84,41 @@ class OperatorPrecedence(IntEnum):
 
     @staticmethod
     def _from_word_operator(node: Node) -> "OperatorPrecedence":
-        membership = [
-            r"(not\s+)?between",
-            r"(not\s+)?in",
-            r"(not\s+)?i?like(\s+any)?",
-            r"(not\s+)?similar\s+to",
-            r"(not\s+)?rlike",
-            r"(not\s+)?regexp",
-        ]
-        membership_prog = [
-            re.compile(patt, re.IGNORECASE | re.DOTALL) for patt in membership
-        ]
-        presence = [r"is(\s+not)?", r"isnull", r"notnull"]
-        presence_prog = [
-            re.compile(patt, re.IGNORECASE | re.DOTALL) for patt in presence
+        mapping = [
+            (OperatorPrecedence.AS, [r"as"]),
+            (
+                OperatorPrecedence.OTHER_TIGHT,
+                [
+                    r"exclude",
+                    r"replace",
+                    r"except",
+                    r"over",
+                    r"within\s+group",
+                    r"filter",
+                    r"using",
+                ],
+            ),
+            (
+                OperatorPrecedence.MEMBERSHIP,
+                [
+                    r"(not\s+)?between",
+                    r"(not\s+)?in",
+                    r"(not\s+)?i?like(\s+any)?",
+                    r"(not\s+)?similar\s+to",
+                    r"(not\s+)?rlike",
+                    r"(not\s+)?regexp",
+                ],
+            ),
+            (OperatorPrecedence.PRESENCE, [r"is(\s+not)?", r"isnull", r"notnull"]),
         ]
 
-        if any([prog.match(node.value) for prog in membership_prog]):
-            return OperatorPrecedence.MEMBERSHIP
-        elif any([prog.match(node.value) for prog in presence_prog]):
-            return OperatorPrecedence.PRESENCE
+        for precedence, pattern_list in mapping:
+            programs = [
+                re.compile(f"{pattern}$", flags=re.IGNORECASE)
+                for pattern in pattern_list
+            ]
+            if any([prog.match(node.value) for prog in programs]):
+                return precedence
         else:
             return OperatorPrecedence.OTHER
 

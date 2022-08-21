@@ -44,6 +44,12 @@ class LineMerger:
 
         return leading_blank_lines + [merged_line] + trailing_blank_lines
 
+    def safe_create_merged_line(self, lines: List[Line]) -> List[Line]:
+        try:
+            return self.create_merged_line(lines)
+        except CannotMergeException:
+            return lines
+
     @classmethod
     def _extract_components(
         cls, lines: Iterable[Line]
@@ -275,46 +281,55 @@ class LineMerger:
         if len(segments) <= 1:
             return segments
 
-        stubborn_merge_tier = OperatorPrecedence.COMPARATORS
-
         new_segments = [segments[0]]
-        for segment in segments[1:]:
-            prev_operator = self._segment_continues_operator_sequence(
-                new_segments[-1], max_precedence=stubborn_merge_tier
-            )
+
+        # first stubborn-merge all p0 operators
+        for i, segment in enumerate(segments[1:], start=1):
             if (
                 # always stubbornly merge P0 operators (e.g., `over`)
                 self._segment_continues_operator_sequence(
                     segment, max_precedence=OperatorPrecedence.OTHER_TIGHT
                 )
-                # stubbornly merge p1 operators only if they do NOT
-                # follow another p1 operator AND they open brackets
-                # and cover multiple lines
-                or (
-                    not prev_operator
-                    and self._segment_continues_operator_sequence(
-                        segment, max_precedence=stubborn_merge_tier
-                    )
-                    and segment.tail_closes_head
-                )
             ):
-                prev_segment = new_segments.pop()
-                merged_segments = self._stubbornly_merge(prev_segment, segment)
-                new_segments.extend(merged_segments)
+                new_segments = self._stubbornly_merge(new_segments, segment)
+            else:
+                new_segments.append(segment)
+
+        if len(new_segments) == 1:
+            return new_segments
+
+        # next, stubbon-merge qualifying p1 operators
+        segments = new_segments
+        new_segments = [segments[0]]
+
+        starts_with_p1_operator = [
+            self._segment_continues_operator_sequence(
+                segment, max_precedence=OperatorPrecedence.COMPARATORS
+            )
+            for segment in segments
+        ]
+        for i, segment in enumerate(segments[1:], start=1):
+            if (
+                not starts_with_p1_operator[i - 1]
+                and starts_with_p1_operator[i]
+                and Segment(self.safe_create_merged_line(segment)).tail_closes_head
+            ):
+                new_segments = self._stubbornly_merge(new_segments, segment)
             else:
                 new_segments.append(segment)
 
         return new_segments
 
     def _stubbornly_merge(
-        self, prev_segment: Segment, segment: Segment
+        self, prev_segments: List[Segment], segment: Segment
     ) -> List[Segment]:
         """
-        Attempts several different methods of merging prev_segment and
-        segment. Returns a list of segments that represent the
-        best possible merger of those two segments
+        Attempts several different methods of merging the last segment in
+        new_segments and segment. Returns a list of segments that represent the
+        best possible merger of those segments
         """
-        new_segments: List[Segment] = []
+        new_segments = prev_segments.copy()
+        prev_segment = new_segments.pop()
         head, i = segment.head
 
         # try to merge the first line of this segment with the previous segment
@@ -339,6 +354,6 @@ class LineMerger:
                     new_segments.append(prev_segment)
                 except CannotMergeException:
                     # give up and just return the original segments
-                    return [prev_segment, segment]
-
-        return new_segments
+                    new_segments.extend([prev_segment, segment])
+        finally:
+            return new_segments

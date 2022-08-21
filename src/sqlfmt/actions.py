@@ -142,7 +142,7 @@ def handle_set_operator(
     Mostly, when we encounter a set operator (like union) we just want to add
     a token with a SET_OPERATOR type. However, EXCEPT is an overloaded
     keyword in some dialects (BigQuery) that support `select * except (fields)`.
-    In this case, except should be a TIGHT_WORD_OPERATOR
+    In this case, except should be a WORD_OPERATOR
     """
     previous_node = analyzer.previous_node
     token = Token.from_match(source_string, match, TokenType.SET_OPERATOR)
@@ -153,7 +153,7 @@ def handle_set_operator(
         and prev_token.type == TokenType.STAR
     ):
         token = Token(
-            type=TokenType.TIGHT_WORD_OPERATOR,
+            type=TokenType.WORD_OPERATOR,
             prefix=token.prefix,
             token=token.token,
             spos=token.spos,
