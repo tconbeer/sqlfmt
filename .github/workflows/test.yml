@@ -29,6 +29,8 @@ jobs:
           python-version: "3.9"
       - name: Install Poetry
         uses: snok/install-poetry@v1
+        with:
+          version: 1.1.15
       - name: Install python dependencies
         run: poetry install -E jinjafmt --no-interaction
       - name: Run tests
@@ -68,7 +70,7 @@ jobs:
         if: steps.cached-poetry-install.outputs.cache-hit != 'true'
         uses: snok/install-poetry@v1
         with:
-          version: latest
+          version: 1.1.15
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
