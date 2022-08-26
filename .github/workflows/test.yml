@@ -1,6 +1,8 @@
-name: Lint and Test
+name: Test
 
 on:
+  push:
+    branches: [ main ]
   pull_request:
 
 # will cancel previous workflows triggered by the same event and for the same ref for PRs or same SHA otherwise
@@ -14,7 +16,7 @@ defaults:
 
 jobs:
   test-windows:
-    name: test Windows - 3.9
+    name: Windows - 3.9
     runs-on: Windows-latest
     steps:
       - name: Check out Repo
@@ -28,21 +30,20 @@ jobs:
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
-          version: "1.1.6"
+          version: 1.1.15
       - name: Install python dependencies
-        run: |
-          pip install tox
-      - name: Run tox
-        run: tox -e py39
+        run: poetry install -E jinjafmt --no-interaction
+      - name: Run tests
+        run: poetry run pytest
 
-  test-and-lint:
-    name: test ${{ matrix.os }} - ${{ matrix.py }}
+  test:
+    name: ${{ matrix.os }} - ${{ matrix.py }}
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
       matrix:
         os:
-          - Ubuntu
+          - ubuntu
           - MacOs
         py:
           - "3.10"
@@ -55,37 +56,34 @@ jobs:
         with:
           persist-credentials: false
       - name: Set up Python ${{ matrix.py }}
+        id: setup-python
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.py }}
+      - name: Load cached Poetry installation
+        id: cached-poetry-install
+        uses: actions/cache@v3
+        with:
+          path: ~/.local
+          key: poetry-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
       - name: Install Poetry
+        if: steps.cached-poetry-install.outputs.cache-hit != 'true'
         uses: snok/install-poetry@v1
         with:
-          version: latest
+          version: 1.1.15
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
       - name: Install python dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install -E jinjafmt --no-interaction
+      - name: Run tests
         run: |
-          pip install tox-gh
-      - name: Run tox
-        run: tox
-
-  primer:
-    name: sqlfmt primer
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out Repo
-        uses: actions/checkout@v2
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v2
-        with:
-          python-version: "3.9"
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: latest
-      - name: Install python dependencies
-        run: poetry install -E sqlfmt_primer -E jinjafmt --no-interaction
-      - name: Run primer
-        run: poetry run sqlfmt_primer
-      
-
-
+          source .venv/bin/activate
+          pytest

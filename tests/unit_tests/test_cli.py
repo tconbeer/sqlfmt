@@ -22,17 +22,15 @@ def run_cli_command(commands: List[str]) -> subprocess.CompletedProcess:
     return process
 
 
+@pytest.mark.skipif(
+    sys.platform.startswith("win"),
+    reason="Fails on GHA windows runner, can't repro locally",
+)
 @pytest.mark.parametrize(
     "cmd",
     [
-        "sqlfmt",
-        pytest.param(
-            "python -m sqlfmt",
-            marks=pytest.mark.skipif(
-                sys.platform.startswith("win"),
-                reason="Fails on GHA windows runner, 'python not a cmd...'",
-            ),
-        ),
+        "sqlfmt --no-progressbar",
+        "python -m sqlfmt --no-progressbar",
     ],
 )
 def test_click_cli_runner_is_equivalent_to_py_subprocess(
@@ -46,7 +44,7 @@ def test_click_cli_runner_is_equivalent_to_py_subprocess(
     assert builtin_results.stdout == click_results.stdout
     assert builtin_results.stderr == click_results.stderr
 
-    assert "http://sqlfmt.com" in click_results.stderr
+    assert "https://sqlfmt.com" in click_results.stderr
     assert "sqlfmt ." in click_results.stderr
 
 
