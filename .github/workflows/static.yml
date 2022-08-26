@@ -46,7 +46,8 @@ jobs:
         run: poetry install -E jinjafmt --no-interaction --no-root
       - name: Run analysis
         run: |
-          poetry run isort . --check
-          poetry run black . --check
-          poetry run flake8 .
-          poetry run mypy .
+          source $VENV
+          isort . --check
+          black . --check
+          flake8 .
+          mypy .

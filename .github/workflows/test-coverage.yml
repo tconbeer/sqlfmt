@@ -48,7 +48,9 @@ jobs:
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install -E jinjafmt --no-interaction
       - name: Run unit tests and generate cov report
-        run: poetry run pytest --cov=sqlfmt --cov-report xml:tests/.coverage/cov.xml tests/unit_tests
+        run: | 
+          source $VENV
+          pytest --cov=sqlfmt --cov-report xml:tests/.coverage/cov.xml tests/unit_tests
       - name: Report coverage to CodeClimate
         uses: paambaati/codeclimate-action@v3.0.0
         env:
