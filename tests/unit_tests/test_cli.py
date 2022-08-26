@@ -22,17 +22,15 @@ def run_cli_command(commands: List[str]) -> subprocess.CompletedProcess:
     return process
 
 
+@pytest.mark.skipif(
+    sys.platform.startswith("win"),
+    reason="Fails on GHA windows runner, can't repro locally",
+)
 @pytest.mark.parametrize(
     "cmd",
     [
         "sqlfmt --no-progressbar",
-        pytest.param(
-            "python -m sqlfmt --no-progressbar",
-            marks=pytest.mark.skipif(
-                sys.platform.startswith("win"),
-                reason="Fails on GHA windows runner, 'python not a cmd...'",
-            ),
-        ),
+        "python -m sqlfmt --no-progressbar",
     ],
 )
 def test_click_cli_runner_is_equivalent_to_py_subprocess(
