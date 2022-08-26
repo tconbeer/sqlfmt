@@ -25,9 +25,9 @@ def run_cli_command(commands: List[str]) -> subprocess.CompletedProcess:
 @pytest.mark.parametrize(
     "cmd",
     [
-        "sqlfmt",
+        "sqlfmt --no-progressbar",
         pytest.param(
-            "python -m sqlfmt",
+            "python -m sqlfmt --no-progressbar",
             marks=pytest.mark.skipif(
                 sys.platform.startswith("win"),
                 reason="Fails on GHA windows runner, 'python not a cmd...'",
