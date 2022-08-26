@@ -186,7 +186,7 @@ def show_welcome_message() -> None:
     display_output(msg=art)
     message = """
     sqlfmt formats your dbt SQL files so you don't have to.
-    For more information, visit http://sqlfmt.com
+    For more information, visit https://sqlfmt.com
 
     To get started, try:
     """

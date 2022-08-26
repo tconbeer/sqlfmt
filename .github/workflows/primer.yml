@@ -1,0 +1,33 @@
+name: Primer
+
+on:
+  pull_request:
+
+# will cancel previous workflows triggered by the same event and for the same ref for PRs or same SHA otherwise
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ contains(github.event_name, 'pull_request') && github.event.pull_request.head.ref || github.sha }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  primer:
+    name: sqlfmt primer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Repo
+        uses: actions/checkout@v2
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.9"
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+      - name: Install python dependencies
+        run: poetry install -E sqlfmt_primer -E jinjafmt --no-interaction
+      - name: Run primer
+        run: poetry run sqlfmt_primer

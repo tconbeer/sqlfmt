@@ -1,7 +1,8 @@
 # sqlfmt
 
 ![PyPI](https://img.shields.io/pypi/v/shandy-sqlfmt)
-[![Lint and Test](https://github.com/tconbeer/sqlfmt/actions/workflows/test.yml/badge.svg)](https://github.com/tconbeer/sqlfmt/actions/workflows/test.yml)
+[![Downloads](https://static.pepy.tech/personalized-badge/shandy-sqlfmt?period=month&units=international_system&left_color=grey&right_color=orange&left_text=downloads/mo)](https://pepy.tech/project/shandy-sqlfmt)
+[![Test](https://github.com/tconbeer/sqlfmt/actions/workflows/test.yml/badge.svg?branch=main&event=push)](https://github.com/tconbeer/sqlfmt/actions/workflows/test.yml)
 
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/shandy-sqlfmt)
 ![Runs on Linux | MacOS | Windows](https://img.shields.io/badge/runs%20on-Linux%20%7C%20MacOS%20%7C%20Windows-blue)
