@@ -46,7 +46,7 @@ def test_click_cli_runner_is_equivalent_to_py_subprocess(
     assert builtin_results.stdout == click_results.stdout
     assert builtin_results.stderr == click_results.stderr
 
-    assert "http://sqlfmt.com" in click_results.stderr
+    assert "https://sqlfmt.com" in click_results.stderr
     assert "sqlfmt ." in click_results.stderr
 
 
