@@ -46,7 +46,7 @@ jobs:
         run: poetry install -E jinjafmt --no-interaction --no-root
       - name: Run analysis
         run: |
-          source $VENV
+          source .venv/bin/activate
           isort . --check
           black . --check
           flake8 .

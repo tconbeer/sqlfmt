@@ -83,5 +83,5 @@ jobs:
         run: poetry install -E jinjafmt --no-interaction
       - name: Run tests
         run: |
-          source $VENV
+          source .venv/bin/activate
           pytest

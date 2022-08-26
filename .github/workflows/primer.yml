@@ -48,5 +48,5 @@ jobs:
         run: poetry install -E jinjafmt -E sqlfmt_primer --no-interaction
       - name: Run primer
         run: | 
-          source $VENV
+          source .venv/bin/activate
           sqlfmt_primer
