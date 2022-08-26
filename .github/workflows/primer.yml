@@ -47,6 +47,6 @@ jobs:
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install -E jinjafmt -E sqlfmt_primer --no-interaction
       - name: Run primer
-        run: | 
+        run: |
           source .venv/bin/activate
           sqlfmt_primer
