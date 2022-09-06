@@ -46,10 +46,12 @@ def run(
     callback: Optional[Callable[[Awaitable[SqlFormatResult]], None]] = None,
 ) -> Report:
     """
-    Runs sqlfmt on all files in list of given paths (files), using the specified mode.
+    Runs sqlfmt on all files in Collection of Paths (files), using the specified Mode.
 
-    Modifies sql files in place, by default. Check or diff mode do not modify files,
-    they only create a report.
+    Modifies sql files in place, by default. Check or diff Mode do not modify files,
+    they only create a Report.
+
+    If a callback is provided, will execute the callback after each file is formatted.
 
     Returns a Report that can be queried or printed.
     """
