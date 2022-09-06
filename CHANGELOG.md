@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+-   The README has been shortened and now links to [docs.sqlfmt.com](https://docs.sqlfmt.com).
+
 ## [0.11.0] - 2022-08-21
 
 ### Breaking API Changes
