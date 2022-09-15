@@ -20,7 +20,7 @@ class Line:
     formatting_disabled: bool = False
 
     def __str__(self) -> str:
-        return self._calc_str
+        return f"{self._calc_str}\n"
 
     @property
     def _calc_str(self) -> str:
@@ -36,7 +36,7 @@ class Line:
         method
         """
         if self.is_blank_line:
-            return "\n"
+            return ""
         elif self.formatting_disabled:
             return "".join([f"{t.prefix}{t.token}" for t in self.tokens])
         else:
@@ -49,16 +49,41 @@ class Line:
             return 0
 
     @property
+    def previous_open_brackets(self) -> List[Node]:
+        """
+        The brackets open at the end of the previous Line
+        """
+        if self.previous_node:
+            brackets = self.previous_node.open_brackets.copy()
+            if self.previous_node.is_unterm_keyword or self.previous_node.is_opening_bracket:
+                brackets.append(self.previous_node)
+            return brackets
+        else:
+            return []
+
+    @property
     def open_brackets(self) -> List[Node]:
         """
         The brackets open at the start of this Line
         """
         if self.nodes:
             return self.nodes[0].open_brackets
-        elif self.previous_node:
-            return self.previous_node.open_brackets
+        else:
+            return self.previous_open_brackets
+
+    @property
+    def previous_open_jinja_blocks(self) -> List[Node]:
+        """
+        The jinja blocks open at the end of the previous Line
+        """
+        if self.previous_node:
+            blocks = self.previous_node.open_jinja_blocks.copy()
+            if self.previous_node.is_opening_jinja_block:
+                blocks.append(self.previous_node)
+            return blocks
         else:
             return []
+
 
     @property
     def open_jinja_blocks(self) -> List[Node]:
@@ -67,20 +92,15 @@ class Line:
         """
         if self.nodes:
             return self.nodes[0].open_jinja_blocks
-        elif self.previous_node:
-            return self.previous_node.open_jinja_blocks
         else:
-            return []
+            return self.previous_open_jinja_blocks
 
     @property
     def depth(self) -> Tuple[int, int]:
         """
         The depth of the start of this line
         """
-        if self.nodes:
-            return (len(self.open_brackets), len(self.open_jinja_blocks))
-        else:
-            return (0, 0)
+        return (len(self.open_brackets), len(self.open_jinja_blocks))
 
     @property
     def prefix(self) -> str:
@@ -101,7 +121,7 @@ class Line:
         rendered = content
         if len(self.comments) == 1:
             # standalone or multiline comment
-            if self.nodes[0].is_newline:
+            if not self.nodes:
                 rendered = f"{self.prefix}{self.comments[0]}"
             # inline comment
             else:
@@ -167,8 +187,7 @@ class Line:
     @property
     def is_blank_line(self) -> bool:
         if (
-            len(self.nodes) == 1
-            and self.nodes[0].is_newline
+            not self.nodes
             and len(self.comments) == 0
         ):
             return True
@@ -247,8 +266,6 @@ class Line:
     def _is_standalone_if(self, starts_with_type: bool) -> bool:
         if len(self.nodes) == 1 and starts_with_type:
             return True
-        if len(self.nodes) == 2 and starts_with_type and self.nodes[1].is_newline:
-            return True
         else:
             return False
 
@@ -270,9 +287,9 @@ class Line:
         that matches a bracket on a preceding line. False for unterminated
         keywords or any lines with matched brackets
         """
-        if self.previous_node and self.previous_node.open_brackets and self.nodes:
+        if self.previous_open_brackets and self.nodes:
             explicit_brackets = [
-                b for b in self.previous_node.open_brackets if b.is_opening_bracket
+                b for b in self.previous_open_brackets if b.is_opening_bracket
             ]
             if (
                 explicit_brackets
@@ -288,9 +305,8 @@ class Line:
         after a jinja block keyword, like {% else %}/{% elif %}
         """
         if (
-            self.previous_node
-            and self.previous_node.open_jinja_blocks
-            and not self.previous_node.open_jinja_blocks[-1].is_jinja_block_keyword
+            self.previous_open_jinja_blocks
+            and not self.previous_open_jinja_blocks[-1].is_jinja_block_keyword
         ):
             return True
         else:
@@ -304,10 +320,9 @@ class Line:
         """
         if (
             self.nodes
-            and self.previous_node
-            and self.previous_node.open_jinja_blocks
+            and self.previous_open_jinja_blocks
             and (
-                self.previous_node.open_jinja_blocks[-1]
+                self.previous_open_jinja_blocks[-1]
                 not in self.nodes[-1].open_jinja_blocks
             )
             and (
@@ -341,6 +356,8 @@ class Line:
         """
         if not self.nodes:
             return False
+        elif self.nodes[-1].is_opening_bracket:
+            return True
         elif not self.nodes[-1].open_brackets:
             return False
         else:

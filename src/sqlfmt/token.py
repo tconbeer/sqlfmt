@@ -36,7 +36,6 @@ class TokenType(Enum):
     BOOLEAN_OPERATOR = auto()
     COMMA = auto()
     DOT = auto()
-    NEWLINE = auto()
     UNTERM_KEYWORD = auto()  # Unterminated keyword
     SET_OPERATOR = auto()
     NAME = auto()
@@ -55,6 +54,7 @@ class Token(NamedTuple):
     token: str
     spos: int
     epos: int
+    lineno: int
 
     def __str__(self) -> str:
         return f"Token(type={self.type}, token={self.token}, spos={self.spos})"
@@ -63,7 +63,7 @@ class Token(NamedTuple):
         return (
             f"Token(type={self.type}, "
             f"prefix={repr(self.prefix)}, token={repr(self.token)}, "
-            f"spos={self.spos}, epos={self.epos}"
+            f"spos={self.spos}, epos={self.epos}, lineno={self.lineno}"
             f")"
         )
 
@@ -72,6 +72,7 @@ class Token(NamedTuple):
         cls,
         source_string: str,
         match: re.Match,
+        lineno: int,
         token_type: TokenType,
     ) -> "Token":
         """
@@ -81,4 +82,4 @@ class Token(NamedTuple):
         spos, epos = match.span(1)
         prefix = source_string[pos:spos]
         token_text = source_string[spos:epos]
-        return Token(token_type, prefix, token_text, pos, epos)
+        return Token(token_type, prefix, token_text, pos, epos, lineno)

@@ -35,7 +35,7 @@ def add_node_to_buffer(
     """
     if previous_node is None and override_analyzer_prev_node is False:
         previous_node = analyzer.previous_node
-    token = Token.from_match(source_string, match, token_type)
+    token = Token.from_match(source_string, match, len(analyzer.line_buffer), token_type)
     node = analyzer.node_manager.create_node(token=token, previous_node=previous_node)
     analyzer.node_buffer.append(node)
     analyzer.pos = token.epos
@@ -54,12 +54,12 @@ def safe_add_node_to_buffer(
     Then create a Node from that token and append it to the Analyzer's buffer
     """
     try:
-        token = Token.from_match(source_string, match, token_type)
+        token = Token.from_match(source_string, match, len(analyzer.line_buffer), token_type)
         node = analyzer.node_manager.create_node(
             token=token, previous_node=analyzer.previous_node
         )
     except SqlfmtBracketError:
-        token = Token.from_match(source_string, match, fallback_token_type)
+        token = Token.from_match(source_string, match, len(analyzer.line_buffer), fallback_token_type)
         node = analyzer.node_manager.create_node(
             token=token, previous_node=analyzer.previous_node
         )
@@ -77,7 +77,7 @@ def add_comment_to_buffer(
     Create a COMMENT token from the match, then create a Comment
     from that token and append it to the Analyzer's buffer
     """
-    token = Token.from_match(source_string, match, TokenType.COMMENT)
+    token = Token.from_match(source_string, match, len(analyzer.line_buffer), TokenType.COMMENT)
     is_standalone = (not bool(analyzer.node_buffer)) or "\n" in token.token
     comment = Comment(token=token, is_standalone=is_standalone)
     analyzer.comment_buffer.append(comment)
@@ -112,12 +112,7 @@ def handle_newline(
     a Line with only that comment; instead, it must be added to the next Line
     that contains Nodes
     """
-    nl_token = Token.from_match(source_string, match, TokenType.NEWLINE)
-    nl_node = analyzer.node_manager.create_node(
-        token=nl_token, previous_node=analyzer.previous_node
-    )
     if analyzer.node_buffer or not analyzer.comment_buffer:
-        analyzer.node_buffer.append(nl_node)
         analyzer.line_buffer.append(
             Line.from_nodes(
                 previous_node=analyzer.previous_line_node,
@@ -132,7 +127,7 @@ def handle_newline(
         # these need to be attached to the next line with
         # contents
         pass
-    analyzer.pos = nl_token.epos
+    analyzer.pos = match.span(1)[1]
 
 
 def handle_set_operator(
@@ -145,7 +140,7 @@ def handle_set_operator(
     In this case, except should be a WORD_OPERATOR
     """
     previous_node = analyzer.previous_node
-    token = Token.from_match(source_string, match, TokenType.SET_OPERATOR)
+    token = Token.from_match(source_string, match, len(analyzer.line_buffer), TokenType.SET_OPERATOR)
     prev_token, _ = get_previous_token(previous_node)
     if (
         token.token.lower() == "except"
@@ -204,6 +199,7 @@ def handle_jinja_set_block(
         token=source_string[data_spos:data_epos],
         spos=data_spos,
         epos=data_epos,
+        lineno=len(analyzer.line_buffer),
     )
     data_node = analyzer.node_manager.create_node(
         token=data_token, previous_node=analyzer.previous_node
@@ -372,7 +368,7 @@ def handle_potentially_nested_tokens(
         pos=epos,
     )
     token_text = source_string[spos:epos]
-    token = Token(token_type, prefix, token_text, pos, epos)
+    token = Token(token_type, prefix, token_text, pos, epos, len(analyzer.line_buffer))
     node = analyzer.node_manager.create_node(token, analyzer.previous_node)
     analyzer.node_buffer.append(node)
     analyzer.pos = epos

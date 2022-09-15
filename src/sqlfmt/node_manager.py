@@ -132,7 +132,6 @@ class NodeManager:
             TokenType.DOUBLE_COLON,
             TokenType.COMMA,
             TokenType.DOT,
-            TokenType.NEWLINE,
         ):
             return NO_SPACE
         # names preceded by dots or colons are namespaced identifiers. No space.
@@ -232,34 +231,3 @@ class NodeManager:
             return token.token.lower()
         else:
             return token.token
-
-    def append_newline(self, line: Line) -> None:
-        """
-        Create a new NEWLINE token and append it to the end of line
-        """
-        previous_node: Optional[Node] = None
-        previous_token: Optional[Token] = None
-        if line.nodes:
-            previous_node = line.nodes[-1]
-            previous_token = line.nodes[-1].token
-        elif line.previous_node:
-            previous_node = line.previous_node
-            previous_token = line.previous_node.token
-
-        if previous_token:
-            spos = previous_token.epos
-            epos = spos
-        else:
-            spos = 0
-            epos = 0
-
-        nl = Token(
-            type=TokenType.NEWLINE,
-            prefix="",
-            token="\n",
-            spos=spos,
-            epos=epos,
-        )
-
-        node = self.create_node(token=nl, previous_node=previous_node)
-        line.nodes.append(node)

@@ -22,15 +22,13 @@ class LineSplitter:
 
         split_after = False
         for i, node in enumerate(line.nodes):
-            if node.is_newline:
-                # can't split just before a newline
-                yield line
-                break
-            elif i > 0 and (split_after or self.maybe_split_before(node)):
+            if i > 0 and (split_after or self.maybe_split_before(node)):
                 yield from self.split_at_index(line, i)
                 break
-
             split_after = self.maybe_split_after(node)
+        else:
+            yield line
+
 
     def maybe_split_before(self, node: Node) -> bool:
         """
@@ -105,7 +103,6 @@ class LineSplitter:
             nodes=head,
             comments=line.comments,
         )
-        self.node_manager.append_newline(head_line)
         yield head_line
 
         tail_line = Line.from_nodes(

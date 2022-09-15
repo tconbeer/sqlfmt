@@ -61,17 +61,14 @@ class LineMerger:
         """
         nodes: List[Node] = []
         comments: List[Comment] = []
-        final_newline: Optional[Node] = None
         allow_multiline = True
         for line in lines:
             # skip over newline nodes
             content_nodes = [
                 cls._raise_unmergeable(node, allow_multiline)
                 for node in line.nodes
-                if not node.is_newline
             ]
             if content_nodes:
-                final_newline = line.nodes[-1]
                 nodes.extend(content_nodes)
                 # we can merge lines containing multiline nodes iff:
                 # 1. the multiline node is on the first line (allow_multiline
@@ -86,10 +83,8 @@ class LineMerger:
                     allow_multiline = False
             comments.extend(line.comments)
 
-        if not nodes or not final_newline:
+        if not nodes:
             raise CannotMergeException("Can't merge only whitespace/newlines")
-
-        nodes.append(final_newline)
 
         return nodes, comments
 

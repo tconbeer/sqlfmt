@@ -13,7 +13,6 @@ def get_previous_token(prev_node: Optional["Node"]) -> Tuple[Optional[Token], bo
         return None, False
     t = prev_node.token
     if t.type in (
-        TokenType.NEWLINE,
         TokenType.JINJA_STATEMENT,
         TokenType.JINJA_BLOCK_START,
         TokenType.JINJA_BLOCK_END,
@@ -262,10 +261,6 @@ class Node:
             return False
         else:
             return self.has_preceding_between_operator
-
-    @property
-    def is_newline(self) -> bool:
-        return self.token.type == TokenType.NEWLINE
 
     @property
     def is_multiline(self) -> bool:

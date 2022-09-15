@@ -80,7 +80,9 @@ class Analyzer:
         Return the last node of the last complete line
         """
         if self.line_buffer:
-            return self.line_buffer[-1].nodes[-1]
+            for line in reversed(self.line_buffer):
+                if line.nodes:
+                    return line.nodes[-1]
         else:
             return None
 
@@ -107,7 +109,6 @@ class Analyzer:
                 nodes=self.node_buffer,
                 comments=self.comment_buffer,
             )
-            self.node_manager.append_newline(line)
             self.line_buffer.append(line)
 
         # if the final line(s) are jinja block end tags, they may be

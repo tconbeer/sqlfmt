@@ -185,7 +185,6 @@ def test_format_line(
     )
     n = node_manager.create_node(t, previous_node=None)
     line = Line.from_nodes(previous_node=None, nodes=[n], comments=[])
-    node_manager.append_newline(line)
 
     assert n.value == "{{expression}}"
     _ = list(map(jinja_formatter.format_line, [line]))

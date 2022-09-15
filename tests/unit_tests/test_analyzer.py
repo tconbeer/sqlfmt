@@ -28,60 +28,58 @@ def test_simple_query_parsing(all_output_modes: Mode) -> None:
 
     assert q.nodes
 
-    assert len(q.tokens) == 26
+    assert len(q.tokens) == 20
     assert isinstance(q.tokens[0], Token)
 
     expected_tokens = [
-        Token(type=TokenType.UNTERM_KEYWORD, prefix="", token="select", spos=0, epos=6),
-        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=6, epos=7),
+        Token(type=TokenType.UNTERM_KEYWORD, prefix="", token="select", spos=0, epos=6, lineno=0),
         Token(
             type=TokenType.NAME,
             prefix="    ",
             token="a_long_field_name",
             spos=7,
             epos=28,
+            lineno=1,
         ),
-        Token(type=TokenType.COMMA, prefix="", token=",", spos=28, epos=29),
-        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=29, epos=30),
+        Token(type=TokenType.COMMA, prefix="", token=",", spos=28, epos=29, 
+            lineno=1),
         Token(
             type=TokenType.NAME,
             prefix="    ",
             token="another_long_field_name",
             spos=30,
             epos=57,
+            lineno=2,
         ),
-        Token(type=TokenType.COMMA, prefix="", token=",", spos=57, epos=58),
-        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=58, epos=59),
-        Token(type=TokenType.BRACKET_OPEN, prefix="    ", token="(", spos=59, epos=64),
-        Token(type=TokenType.NAME, prefix="", token="one_field", spos=64, epos=73),
-        Token(type=TokenType.OPERATOR, prefix=" ", token="+", spos=73, epos=75),
-        Token(type=TokenType.NAME, prefix=" ", token="another_field", spos=75, epos=89),
-        Token(type=TokenType.BRACKET_CLOSE, prefix="", token=")", spos=89, epos=90),
-        Token(type=TokenType.WORD_OPERATOR, prefix=" ", token="as", spos=90, epos=93),
-        Token(type=TokenType.NAME, prefix=" ", token="c", spos=93, epos=95),
-        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=95, epos=96),
+        Token(type=TokenType.COMMA, prefix="", token=",", spos=57, epos=58, lineno=2),
+        Token(type=TokenType.BRACKET_OPEN, prefix="    ", token="(", spos=59, epos=64, lineno=3),
+        Token(type=TokenType.NAME, prefix="", token="one_field", spos=64, epos=73, lineno=3),
+        Token(type=TokenType.OPERATOR, prefix=" ", token="+", spos=73, epos=75, lineno=3),
+        Token(type=TokenType.NAME, prefix=" ", token="another_field", spos=75, epos=89, lineno=3),
+        Token(type=TokenType.BRACKET_CLOSE, prefix="", token=")", spos=89, epos=90, lineno=3),
+        Token(type=TokenType.WORD_OPERATOR, prefix=" ", token="as", spos=90, epos=93, lineno=3),
+        Token(type=TokenType.NAME, prefix=" ", token="c", spos=93, epos=95, lineno=3),
         Token(
-            type=TokenType.UNTERM_KEYWORD, prefix="", token="from", spos=96, epos=100
+            type=TokenType.UNTERM_KEYWORD, prefix="", token="from", spos=96, epos=100, lineno=4
         ),
-        Token(type=TokenType.NAME, prefix=" ", token="my_schema", spos=100, epos=110),
-        Token(type=TokenType.DOT, prefix="", token=".", spos=110, epos=111),
+        Token(type=TokenType.NAME, prefix=" ", token="my_schema", spos=100, epos=110, lineno=4),
+        Token(type=TokenType.DOT, prefix="", token=".", spos=110, epos=111, lineno=4),
         Token(
             type=TokenType.QUOTED_NAME,
             prefix="",
             token='"my_QUOTED_ table!"',
             spos=111,
             epos=130,
+            lineno=4,
         ),
-        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=130, epos=131),
         Token(
-            type=TokenType.UNTERM_KEYWORD, prefix="", token="where", spos=131, epos=136
+            type=TokenType.UNTERM_KEYWORD, prefix="", token="where", spos=131, epos=136, lineno=5
         ),
-        Token(type=TokenType.NAME, prefix=" ", token="one_field", spos=136, epos=146),
-        Token(type=TokenType.OPERATOR, prefix=" ", token="<", spos=146, epos=148),
+        Token(type=TokenType.NAME, prefix=" ", token="one_field", spos=136, epos=146, lineno=5),
+        Token(type=TokenType.OPERATOR, prefix=" ", token="<", spos=146, epos=148, lineno=5),
         Token(
-            type=TokenType.NAME, prefix=" ", token="another_field", spos=148, epos=162
+            type=TokenType.NAME, prefix=" ", token="another_field", spos=148, epos=162, lineno=5
         ),
-        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=162, epos=162),
     ]
 
     assert q.tokens == expected_tokens
@@ -131,7 +129,6 @@ def test_cte_parsing(default_analyzer: Analyzer) -> None:
 
     expected_node_depths = [
         0,  # with
-        1,  # \n
         1,  # my_cte
         1,  # as
         1,  # (
@@ -146,12 +143,10 @@ def test_cte_parsing(default_analyzer: Analyzer) -> None:
         3,  # .
         3,  # my_table
         1,  # )
-        1,  # \n
         0,  # select
         1,  # *
         0,  # from
         1,  # my_cte
-        1,  # \n
     ]
 
     computed_node_depths = [node.depth[0] for node in q.nodes]
@@ -185,6 +180,7 @@ def test_multiline_parsing(default_analyzer: Analyzer) -> None:
                 ),
                 spos=157,
                 epos=310,
+                lineno=0,
             ),
             is_standalone=True,
         ),
@@ -198,6 +194,7 @@ def test_multiline_parsing(default_analyzer: Analyzer) -> None:
                 ),
                 spos=386,
                 epos=499,
+                lineno=0,
             ),
             is_standalone=True,
         ),
@@ -211,6 +208,7 @@ def test_multiline_parsing(default_analyzer: Analyzer) -> None:
                 ),
                 spos=757,
                 epos=837,
+                lineno=0,
             ),
             is_standalone=True,
         ),
@@ -221,6 +219,7 @@ def test_multiline_parsing(default_analyzer: Analyzer) -> None:
                 token="/* what!?! */",
                 spos=860,
                 epos=874,
+                lineno=0,
             ),
             is_standalone=False,
         ),
@@ -238,13 +237,11 @@ def test_multiline_parsing(default_analyzer: Analyzer) -> None:
             ),
             spos=0,
             epos=155,
+                lineno=0,
         ),
-        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=155, epos=156),
-        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=156, epos=157),
         Token(
             type=TokenType.UNTERM_KEYWORD, prefix="", token="with", spos=312, epos=316
         ),
-        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=316, epos=317),
         Token(type=TokenType.NAME, prefix="    ", token="source", spos=317, epos=327),
         Token(type=TokenType.WORD_OPERATOR, prefix=" ", token="as", spos=327, epos=330),
         Token(type=TokenType.BRACKET_OPEN, prefix=" ", token="(", spos=330, epos=332),
@@ -264,7 +261,6 @@ def test_multiline_parsing(default_analyzer: Analyzer) -> None:
         ),
         Token(type=TokenType.BRACKET_CLOSE, prefix="", token=")", spos=367, epos=368),
         Token(type=TokenType.COMMA, prefix="", token=",", spos=368, epos=369),
-        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=369, epos=370),
         Token(type=TokenType.NAME, prefix="    ", token="renamed", spos=370, epos=381),
         Token(type=TokenType.WORD_OPERATOR, prefix=" ", token="as", spos=381, epos=384),
         Token(type=TokenType.BRACKET_OPEN, prefix=" ", token="(", spos=384, epos=386),
@@ -275,12 +271,10 @@ def test_multiline_parsing(default_analyzer: Analyzer) -> None:
             spos=499,
             epos=507,
         ),
-        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=507, epos=508),
         Token(
             type=TokenType.NAME, prefix="            ", token="id", spos=508, epos=522
         ),
         Token(type=TokenType.COMMA, prefix="", token=",", spos=522, epos=523),
-        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=523, epos=524),
         Token(
             type=TokenType.NAME,
             prefix="            ",
@@ -289,7 +283,6 @@ def test_multiline_parsing(default_analyzer: Analyzer) -> None:
             epos=549,
         ),
         Token(type=TokenType.COMMA, prefix="", token=",", spos=549, epos=550),
-        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=550, epos=551),
         Token(
             type=TokenType.NAME,
             prefix="            ",
@@ -298,7 +291,6 @@ def test_multiline_parsing(default_analyzer: Analyzer) -> None:
             epos=574,
         ),
         Token(type=TokenType.COMMA, prefix="", token=",", spos=574, epos=575),
-        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=575, epos=576),
         Token(
             type=TokenType.NAME,
             prefix="            ",
@@ -306,7 +298,6 @@ def test_multiline_parsing(default_analyzer: Analyzer) -> None:
             spos=576,
             epos=605,
         ),
-        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=605, epos=606),
         Token(
             type=TokenType.UNTERM_KEYWORD,
             prefix="        ",
@@ -315,7 +306,6 @@ def test_multiline_parsing(default_analyzer: Analyzer) -> None:
             epos=618,
         ),
         Token(type=TokenType.NAME, prefix=" ", token="source", spos=618, epos=625),
-        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=625, epos=626),
         Token(
             type=TokenType.BRACKET_CLOSE, prefix="    ", token=")", spos=626, epos=631
         ),
@@ -331,8 +321,6 @@ def test_multiline_parsing(default_analyzer: Analyzer) -> None:
             spos=632,
             epos=755,
         ),
-        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=755, epos=756),
-        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=756, epos=757),
         Token(
             type=TokenType.UNTERM_KEYWORD, prefix="", token="select", spos=839, epos=845
         ),
@@ -345,7 +333,6 @@ def test_multiline_parsing(default_analyzer: Analyzer) -> None:
             type=TokenType.UNTERM_KEYWORD, prefix=" ", token="where", spos=874, epos=880
         ),
         Token(type=TokenType.NAME, prefix=" ", token="true", spos=880, epos=885),
-        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=885, epos=885),
     ]
 
     actual_comments = []
@@ -360,7 +347,7 @@ def test_star_parsing(default_analyzer: Analyzer) -> None:
     space_star_q = default_analyzer.parse_query(source_string=space_star)
 
     assert space_star_q
-    assert len(space_star_q.nodes) == 5
+    assert len(space_star_q.nodes) == 4
     assert (
         space_star_q.nodes[1].prefix == " "
     ), "There should be a space between select and star in select *"
@@ -369,7 +356,7 @@ def test_star_parsing(default_analyzer: Analyzer) -> None:
     dot_star_q = default_analyzer.parse_query(source_string=dot_star)
 
     assert dot_star_q
-    assert len(dot_star_q.nodes) == 7
+    assert len(dot_star_q.nodes) == 6
     assert (
         dot_star_q.nodes[3].prefix == ""
     ), "There should be no space between dot and star in my_table.*"
@@ -463,7 +450,7 @@ def test_jinja_block_parsing(default_analyzer: Analyzer) -> None:
     q = default_analyzer.parse_query(source_string)
     assert q
     assert len(q.lines) == 22
-    types = [node.token.type for node in q.nodes if not node.is_newline]
+    types = [node.token.type for node in q.nodes]
     expected_types = [
         TokenType.JINJA_BLOCK_START,  # {% macro ...(contents, num_times) %}
         TokenType.JINJA_BLOCK_START,  # {% if contents == "foo" %}

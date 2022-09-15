@@ -43,7 +43,6 @@ def tokens() -> List[Token]:
         ),
         Token(type=TokenType.NAME, prefix=" ", token="my_table", spos=26, epos=35),
         Token(type=TokenType.BRACKET_CLOSE, prefix="", token=")", spos=35, epos=36),
-        Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=36, epos=36),
     ]
     return tokens
 
@@ -62,7 +61,7 @@ def simple_line(
 
 
 def test_bare_line(bare_line: Line) -> None:
-    assert str(bare_line) == ""
+    assert str(bare_line) == "\n"
 
     assert not bare_line.starts_with_unterm_keyword
     assert not bare_line.contains_unterm_keyword
@@ -71,10 +70,10 @@ def test_bare_line(bare_line: Line) -> None:
     assert not bare_line.starts_with_comma
     assert not bare_line.starts_with_square_bracket_operator
     assert not bare_line.starts_with_operator
-    assert not bare_line.is_blank_line
     assert not bare_line.is_standalone_multiline_node
     assert not bare_line.is_too_long(88)
     assert not bare_line.opens_new_bracket
+    assert bare_line.is_blank_line
     assert bare_line.open_brackets == []
     assert bare_line.open_jinja_blocks == []
 
@@ -126,54 +125,10 @@ def test_simple_line(
     assert not simple_line.nodes[5].is_multiplication_star
 
 
-def test_bare_append_newline(bare_line: Line, node_manager: NodeManager) -> None:
-    # this line has no nodes
-    assert not bare_line.nodes
-    assert not bare_line.previous_node
-
-    node_manager.append_newline(bare_line)
-    assert bare_line.nodes
-    assert bare_line.is_blank_line
-    new_last_node = bare_line.nodes[-1]
-    assert new_last_node.token.type == TokenType.NEWLINE
-    assert (new_last_node.token.spos, new_last_node.token.epos) == (0, 0)
-
-
 def test_bare_with_previous_open_lists(bare_line: Line, simple_line: Line) -> None:
     bare_line.previous_node = simple_line.nodes[-1]
     assert bare_line.open_jinja_blocks == simple_line.nodes[-1].open_jinja_blocks
     assert bare_line.open_brackets == simple_line.nodes[-1].open_brackets
-
-
-def test_bare_with_previous_append_newline(
-    bare_line: Line, simple_line: Line, node_manager: NodeManager
-) -> None:
-    bare_line.previous_node = simple_line.nodes[-1]
-    node_manager.append_newline(bare_line)
-    assert bare_line.nodes
-    new_last_node = bare_line.nodes[-1]
-    previous_token = simple_line.nodes[-1].token
-    expected_position = (
-        previous_token.epos,
-        previous_token.epos,
-    )
-    assert (new_last_node.token.spos, new_last_node.token.epos) == expected_position
-
-
-def test_simple_append_newline(simple_line: Line, node_manager: NodeManager) -> None:
-
-    # this line already ends with a newline
-    last_node = simple_line.nodes[-1]
-    assert last_node.token.type == TokenType.NEWLINE
-    assert last_node.previous_node
-    assert last_node.previous_node.token.type != TokenType.NEWLINE
-
-    node_manager.append_newline(simple_line)
-    new_last_node = simple_line.nodes[-1]
-    assert new_last_node != last_node
-    assert new_last_node.token.type == TokenType.NEWLINE
-    assert new_last_node.previous_node == last_node
-    assert new_last_node.previous_node.token == last_node.token
 
 
 @pytest.mark.parametrize(
@@ -212,7 +167,6 @@ def test_comment_rendering(
     )
 
     inline_comment = Comment(token=comment_token, is_standalone=False)
-    node_manager.append_newline(bare_line)
     bare_line.comments = [inline_comment]
     expected_bare_render = normalized_comment + "\n"
     assert bare_line.render_with_comments(88) == expected_bare_render
@@ -311,12 +265,6 @@ def test_is_standalone_multiline_node(
     assert bare_line.is_standalone_multiline_node
     assert not simple_line.is_standalone_multiline_node
 
-    node_manager.append_newline(bare_line)
-    node_manager.append_newline(simple_line)
-
-    assert bare_line.is_standalone_multiline_node
-    assert not simple_line.is_standalone_multiline_node
-
 
 def test_is_standalone_jinja_statement(
     bare_line: Line, simple_line: Line, node_manager: NodeManager
@@ -337,12 +285,6 @@ def test_is_standalone_jinja_statement(
     simple_line.nodes.append(
         node_manager.create_node(jinja_statement, simple_line.nodes[-1])
     )
-
-    assert bare_line.is_standalone_jinja_statement
-    assert not simple_line.is_standalone_jinja_statement
-
-    node_manager.append_newline(bare_line)
-    node_manager.append_newline(simple_line)
 
     assert bare_line.is_standalone_jinja_statement
     assert not simple_line.is_standalone_jinja_statement
@@ -438,8 +380,6 @@ def test_is_standalone_operator(
     )
     plus_node = node_manager.create_node(plus, None)
     bare_line.nodes.append(plus_node)
-    assert bare_line.is_standalone_operator
-    node_manager.append_newline(bare_line)
     assert bare_line.is_standalone_operator
 
 

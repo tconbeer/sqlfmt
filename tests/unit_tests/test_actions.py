@@ -182,7 +182,7 @@ def test_handle_newline_leading_comments(default_analyzer: Analyzer) -> None:
 
     line = default_analyzer.line_buffer[0]
     assert len(line.comments) == 1
-    assert len(line.nodes) == 2  # includes nl node
+    assert len(line.nodes) == 1
 
 
 @pytest.mark.parametrize(
@@ -212,14 +212,14 @@ def test_handle_set_operator(
         n = default_analyzer.node_manager.create_node(t, previous_node=None)
         default_analyzer.node_buffer.append(n)
     elif has_preceding_newline:
-        t_nl = Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=0, epos=1)
-        n_nl = default_analyzer.node_manager.create_node(t_nl, previous_node=None)
-        default_analyzer.node_buffer.append(n_nl)
+        # TODO
+        # default_analyzer.node_buffer.append(n_nl)
+        pass
 
     if has_preceding_newline and has_preceding_star:
-        t_nl = Token(type=TokenType.NEWLINE, prefix="", token="\n", spos=1, epos=2)
-        n_nl = default_analyzer.node_manager.create_node(t_nl, previous_node=n)
-        default_analyzer.node_buffer.append(n_nl)
+        # TODO
+        # default_analyzer.node_buffer.append(n_nl)
+        pass
 
     actions.handle_set_operator(default_analyzer, source_string, match)
 

@@ -73,77 +73,44 @@ def test_jinja_depth(default_mode: Mode) -> None:
     ).parse_query(source_string=source_string)
     expected = [
         (0, 0),  # {{ config(materialized="table") }}
-        (0, 0),  # \n
-        (0, 0),  # \n
         (0, 0),  # {%- set n = 5 -%}
-        (0, 0),  # \n
         (0, 0),  # with
-        (1, 0),  # \n
         (1, 0),  # {% for i in range(n) %}
-        (1, 1),  # \n
         (1, 1),  # dont_do_this_
         (1, 1),  # {{ i }}
         (1, 1),  # as
         (1, 1),  # (
-        (2, 1),  # \n
         (2, 1),  # {% if foo %}
-        (2, 2),  # \n
         (2, 2),  # select
-        (3, 2),  # \n
         (2, 1),  # {% elif bar %}
-        (2, 2),  # \n
         (2, 2),  # select distinct
-        (3, 2),  # \n
         (2, 1),  # {% elif baz %}
-        (2, 2),  # \n
         (2, 2),  # select top 25
-        (3, 2),  # \n
         (2, 1),  # {% else %}
-        (2, 2),  # \n
         (2, 2),  # select
-        (3, 2),  # \n
         (3, 1),  # {% endif %}
-        (3, 1),  # \n
         (3, 1),  # my_col
-        (3, 1),  # \n
         (2, 1),  # from
-        (3, 1),  # \n
         (3, 1),  # {% if i == qux %}
-        (3, 2),  # \n
         (3, 2),  # zip
-        (3, 2),  # \n
         (3, 1),  # {% else %}
-        (3, 2),  # \n
         (3, 2),  # zap
-        (3, 2),  # \n
         (3, 1),  # {% endif %}
-        (3, 1),  # \n
         (1, 1),  # )
         (1, 1),  # {% if not loop.last %}
         (1, 2),  # ,
         (1, 1),  # {% endif%}
-        (1, 1),  # \n
         (1, 0),  # {% endfor %}
-        (1, 0),  # \n
         (1, 0),  # {% for i in range(n) %}
-        (1, 1),  # \n
         (0, 1),  # select
-        (1, 1),  # \n
         (1, 1),  # *
-        (1, 1),  # \n
         (0, 1),  # from
-        (1, 1),  # \n
         (1, 1),  # dont_do_this_
         (1, 1),  # {{ i }}
-        (1, 1),  # \n
         (1, 1),  # {% if not loop.last -%}
-        (1, 2),  # \n
         (0, 2),  # union all
-        (0, 2),  # \n
         (0, 1),  # {%- endif %}
-        (0, 1),  # \n
         (0, 0),  # {% endfor %}
-        (0, 0),  # \n
     ]
     actual = [node.depth for node in q.nodes]
     assert actual == expected
@@ -172,25 +139,14 @@ def test_union_depth(default_mode: Mode) -> None:
     expected = [
         (0, 0),  # select,
         (1, 0),  # 1,
-        (1, 0),  # \n,
-        (1, 0),  # \n,
         (0, 0),  # union,
-        (0, 0),  # \n,
-        (0, 0),  # \n,
         (0, 0),  # select,
         (1, 0),  # 2,
-        (1, 0),  # \n,
-        (1, 0),  # \n,
         (0, 0),  # union all,
-        (0, 0),  # \n,
-        (0, 0),  # \n,
         (0, 0),  # (,
-        (1, 0),  # \n,
         (1, 0),  # select,
         (2, 0),  # 3,
-        (2, 0),  # \n,
         (0, 0),  # ),
-        (0, 0),  # \n'
     ]
     actual_depth = [n.depth for n in q.nodes]
     assert actual_depth == expected
