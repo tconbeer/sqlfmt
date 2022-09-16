@@ -32,7 +32,14 @@ def test_simple_query_parsing(all_output_modes: Mode) -> None:
     assert isinstance(q.tokens[0], Token)
 
     expected_tokens = [
-        Token(type=TokenType.UNTERM_KEYWORD, prefix="", token="select", spos=0, epos=6, lineno=0),
+        Token(
+            type=TokenType.UNTERM_KEYWORD,
+            prefix="",
+            token="select",
+            spos=0,
+            epos=6,
+            lineno=0,
+        ),
         Token(
             type=TokenType.NAME,
             prefix="    ",
@@ -41,8 +48,7 @@ def test_simple_query_parsing(all_output_modes: Mode) -> None:
             epos=28,
             lineno=1,
         ),
-        Token(type=TokenType.COMMA, prefix="", token=",", spos=28, epos=29, 
-            lineno=1),
+        Token(type=TokenType.COMMA, prefix="", token=",", spos=28, epos=29, lineno=1),
         Token(
             type=TokenType.NAME,
             prefix="    ",
@@ -52,17 +58,66 @@ def test_simple_query_parsing(all_output_modes: Mode) -> None:
             lineno=2,
         ),
         Token(type=TokenType.COMMA, prefix="", token=",", spos=57, epos=58, lineno=2),
-        Token(type=TokenType.BRACKET_OPEN, prefix="    ", token="(", spos=59, epos=64, lineno=3),
-        Token(type=TokenType.NAME, prefix="", token="one_field", spos=64, epos=73, lineno=3),
-        Token(type=TokenType.OPERATOR, prefix=" ", token="+", spos=73, epos=75, lineno=3),
-        Token(type=TokenType.NAME, prefix=" ", token="another_field", spos=75, epos=89, lineno=3),
-        Token(type=TokenType.BRACKET_CLOSE, prefix="", token=")", spos=89, epos=90, lineno=3),
-        Token(type=TokenType.WORD_OPERATOR, prefix=" ", token="as", spos=90, epos=93, lineno=3),
+        Token(
+            type=TokenType.BRACKET_OPEN,
+            prefix="    ",
+            token="(",
+            spos=59,
+            epos=64,
+            lineno=3,
+        ),
+        Token(
+            type=TokenType.NAME,
+            prefix="",
+            token="one_field",
+            spos=64,
+            epos=73,
+            lineno=3,
+        ),
+        Token(
+            type=TokenType.OPERATOR, prefix=" ", token="+", spos=73, epos=75, lineno=3
+        ),
+        Token(
+            type=TokenType.NAME,
+            prefix=" ",
+            token="another_field",
+            spos=75,
+            epos=89,
+            lineno=3,
+        ),
+        Token(
+            type=TokenType.BRACKET_CLOSE,
+            prefix="",
+            token=")",
+            spos=89,
+            epos=90,
+            lineno=3,
+        ),
+        Token(
+            type=TokenType.WORD_OPERATOR,
+            prefix=" ",
+            token="as",
+            spos=90,
+            epos=93,
+            lineno=3,
+        ),
         Token(type=TokenType.NAME, prefix=" ", token="c", spos=93, epos=95, lineno=3),
         Token(
-            type=TokenType.UNTERM_KEYWORD, prefix="", token="from", spos=96, epos=100, lineno=4
+            type=TokenType.UNTERM_KEYWORD,
+            prefix="",
+            token="from",
+            spos=96,
+            epos=100,
+            lineno=4,
         ),
-        Token(type=TokenType.NAME, prefix=" ", token="my_schema", spos=100, epos=110, lineno=4),
+        Token(
+            type=TokenType.NAME,
+            prefix=" ",
+            token="my_schema",
+            spos=100,
+            epos=110,
+            lineno=4,
+        ),
         Token(type=TokenType.DOT, prefix="", token=".", spos=110, epos=111, lineno=4),
         Token(
             type=TokenType.QUOTED_NAME,
@@ -73,12 +128,31 @@ def test_simple_query_parsing(all_output_modes: Mode) -> None:
             lineno=4,
         ),
         Token(
-            type=TokenType.UNTERM_KEYWORD, prefix="", token="where", spos=131, epos=136, lineno=5
+            type=TokenType.UNTERM_KEYWORD,
+            prefix="",
+            token="where",
+            spos=131,
+            epos=136,
+            lineno=5,
         ),
-        Token(type=TokenType.NAME, prefix=" ", token="one_field", spos=136, epos=146, lineno=5),
-        Token(type=TokenType.OPERATOR, prefix=" ", token="<", spos=146, epos=148, lineno=5),
         Token(
-            type=TokenType.NAME, prefix=" ", token="another_field", spos=148, epos=162, lineno=5
+            type=TokenType.NAME,
+            prefix=" ",
+            token="one_field",
+            spos=136,
+            epos=146,
+            lineno=5,
+        ),
+        Token(
+            type=TokenType.OPERATOR, prefix=" ", token="<", spos=146, epos=148, lineno=5
+        ),
+        Token(
+            type=TokenType.NAME,
+            prefix=" ",
+            token="another_field",
+            spos=148,
+            epos=162,
+            lineno=5,
         ),
     ]
 
@@ -237,7 +311,7 @@ def test_multiline_parsing(default_analyzer: Analyzer) -> None:
             ),
             spos=0,
             epos=155,
-                lineno=0,
+            lineno=0,
         ),
         Token(
             type=TokenType.UNTERM_KEYWORD, prefix="", token="with", spos=312, epos=316

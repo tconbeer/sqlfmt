@@ -55,7 +55,10 @@ class Line:
         """
         if self.previous_node:
             brackets = self.previous_node.open_brackets.copy()
-            if self.previous_node.is_unterm_keyword or self.previous_node.is_opening_bracket:
+            if (
+                self.previous_node.is_unterm_keyword
+                or self.previous_node.is_opening_bracket
+            ):
                 brackets.append(self.previous_node)
             return brackets
         else:
@@ -83,7 +86,6 @@ class Line:
             return blocks
         else:
             return []
-
 
     @property
     def open_jinja_blocks(self) -> List[Node]:
@@ -186,10 +188,7 @@ class Line:
 
     @property
     def is_blank_line(self) -> bool:
-        if (
-            not self.nodes
-            and len(self.comments) == 0
-        ):
+        if not self.nodes and len(self.comments) == 0:
             return True
         else:
             return False

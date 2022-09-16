@@ -65,8 +65,7 @@ class LineMerger:
         for line in lines:
             # skip over newline nodes
             content_nodes = [
-                cls._raise_unmergeable(node, allow_multiline)
-                for node in line.nodes
+                cls._raise_unmergeable(node, allow_multiline) for node in line.nodes
             ]
             if content_nodes:
                 nodes.extend(content_nodes)

@@ -35,7 +35,9 @@ def add_node_to_buffer(
     """
     if previous_node is None and override_analyzer_prev_node is False:
         previous_node = analyzer.previous_node
-    token = Token.from_match(source_string, match, len(analyzer.line_buffer), token_type)
+    token = Token.from_match(
+        source_string, match, len(analyzer.line_buffer), token_type
+    )
     node = analyzer.node_manager.create_node(token=token, previous_node=previous_node)
     analyzer.node_buffer.append(node)
     analyzer.pos = token.epos
@@ -54,12 +56,16 @@ def safe_add_node_to_buffer(
     Then create a Node from that token and append it to the Analyzer's buffer
     """
     try:
-        token = Token.from_match(source_string, match, len(analyzer.line_buffer), token_type)
+        token = Token.from_match(
+            source_string, match, len(analyzer.line_buffer), token_type
+        )
         node = analyzer.node_manager.create_node(
             token=token, previous_node=analyzer.previous_node
         )
     except SqlfmtBracketError:
-        token = Token.from_match(source_string, match, len(analyzer.line_buffer), fallback_token_type)
+        token = Token.from_match(
+            source_string, match, len(analyzer.line_buffer), fallback_token_type
+        )
         node = analyzer.node_manager.create_node(
             token=token, previous_node=analyzer.previous_node
         )
@@ -77,7 +83,9 @@ def add_comment_to_buffer(
     Create a COMMENT token from the match, then create a Comment
     from that token and append it to the Analyzer's buffer
     """
-    token = Token.from_match(source_string, match, len(analyzer.line_buffer), TokenType.COMMENT)
+    token = Token.from_match(
+        source_string, match, len(analyzer.line_buffer), TokenType.COMMENT
+    )
     is_standalone = (not bool(analyzer.node_buffer)) or "\n" in token.token
     comment = Comment(token=token, is_standalone=is_standalone)
     analyzer.comment_buffer.append(comment)
@@ -140,7 +148,9 @@ def handle_set_operator(
     In this case, except should be a WORD_OPERATOR
     """
     previous_node = analyzer.previous_node
-    token = Token.from_match(source_string, match, len(analyzer.line_buffer), TokenType.SET_OPERATOR)
+    token = Token.from_match(
+        source_string, match, len(analyzer.line_buffer), TokenType.SET_OPERATOR
+    )
     prev_token, _ = get_previous_token(previous_node)
     if (
         token.token.lower() == "except"

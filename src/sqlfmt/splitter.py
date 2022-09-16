@@ -29,7 +29,6 @@ class LineSplitter:
         else:
             yield line
 
-
     def maybe_split_before(self, node: Node) -> bool:
         """
         Return True if we should split before node
