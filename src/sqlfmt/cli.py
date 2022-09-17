@@ -12,22 +12,25 @@ from sqlfmt.mode import Mode
 @click.version_option(package_name="shandy-sqlfmt")
 @click.option(
     "--check",
+    envvar="SQLFMT_CHECK",
     is_flag=True,
     help=(
         "Fail with an exit code of 1 if source files are not formatted to spec. "
-        "Do not write formatted queries to files"
+        "Do not write formatted queries to files."
     ),
 )
 @click.option(
     "--diff",
+    envvar="SQLFMT_DIFF",
     is_flag=True,
     help=(
         "Print a diff of any formatting changes to stdout. Fails like --check "
-        "on any changes. Do not write formatted queries to files"
+        "on any changes. Do not write formatted queries to files."
     ),
 )
 @click.option(
     "--exclude",
+    envvar="SQLFMT_EXCLUDE",
     multiple=True,
     help=(
         "A string that is passed to glob.glob as a pathname; any matching files "
@@ -38,76 +41,87 @@ from sqlfmt.mode import Mode
 )
 @click.option(
     "--single-process",
+    envvar="SQLFMT_SINGLE_PROCESS",
     is_flag=True,
     help=(
         "Run sqlfmt in a single process, even when formatting multiple "
         "files. If not set, defaults to multiprocessing using as many "
-        "cores as possible"
+        "cores as possible."
     ),
 )
 @click.option(
     "-k",
     "--reset-cache",
+    envvar="SQLFMT_RESET_CACHE",
     is_flag=True,
     help=(
         "Clear the sqlfmt cache before running, effectively forcing sqlfmt "
-        "to operate on every file. Will slow down runs"
+        "to operate on every file. Will slow down runs."
     ),
 )
 @click.option(
     "--no-jinjafmt",
+    envvar="SQLFMT_NO_JINJAFMT",
     is_flag=True,
     help=(
         "Do not format jinja tags (the code between the curlies). Only necessary "
         "to specify this flag if sqlfmt was installed with the jinjafmt extra, "
-        "or if black was already available in this environment"
+        "or if black was already available in this environment."
     ),
 )
 @click.option(
     "-l",
     "--line-length",
+    envvar="SQLFMT_LINE_LENGTH",
     default=88,
     type=int,
-    help=("The maximum line length allowed in output files. Default is 88"),
+    help=("The maximum line length allowed in output files. Default is 88."),
 )
 @click.option(
     "-v",
     "--verbose",
+    envvar="SQLFMT_VERBOSE",
     is_flag=True,
-    help=("Prints more information to stderr"),
+    help=("Prints more information to stderr."),
 )
 @click.option(
     "-q",
     "--quiet",
+    envvar="SQLFMT_QUIET",
     is_flag=True,
-    help=("Prints much less information to stderr"),
+    help=("Prints much less information to stderr."),
 )
 @click.option(
     "--no-progressbar",
+    envvar="SQLFMT_NO_PROGRESSBAR",
     is_flag=True,
-    help=("Never prints a progressbar to stderr"),
+    help=("Never prints a progressbar to stderr."),
 )
 @click.option(
     "--no-color",
+    envvar="SQLFMT_NO_COLOR",
     is_flag=True,
     help=(
         "Removes color codes from all output, including diffs. "
-        "Alternatively, set the NO_COLOR environment variable"
+        "Alternatively, set the NO_COLOR environment variable. "
+        "See https://no-color.org/ for more details."
     ),
 )
 @click.option(
     "--force-color",
+    envvar="SQLFMT_FORCE_COLOR",
     is_flag=True,
     help=(
         "sqlfmt output is colorized by default. However, if you have "
         "the NO_COLOR env var set, and still want sqlfmt to colorize "
-        "output, you can use --force-color to override the env var"
+        "output, you can use --force-color to override the env var."
     ),
 )
 @click.option(
     "-d",
     "--dialect",
     "dialect_name",
+    envvar="SQLFMT_DIALECT",
     type=click.Choice(["polyglot", "clickhouse"], case_sensitive=False),
     default="polyglot",
     help=(
@@ -126,13 +140,15 @@ def sqlfmt(
     ctx: click.Context, files: List[Path], **kwargs: Union[bool, int, List[str], str]
 ) -> None:
     """
-    sqlfmt is a tool that formats your sql files.
+    sqlfmt formats your dbt SQL files so you don't have to.
 
     The FILES argument can be one or many paths to sql files (or directories),
     or use "-" to use stdin.
 
     Exit codes: 0 indicates success, 1 indicates failed check,
-    2 indicates a handled exception caused by errors in one or more user code files
+    2 indicates a handled exception caused by errors in one or more user code files.
+
+    https://sqlfmt.com for documentation and more information.
     """
     if files:
         config = load_config_file(files)

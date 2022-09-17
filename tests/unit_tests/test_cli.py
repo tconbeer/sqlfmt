@@ -79,12 +79,45 @@ def test_preformatted_check(sqlfmt_runner: CliRunner, preformatted_dir: Path) ->
     args = f"{preformatted_dir.as_posix()} --check"
     results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
     assert results.exit_code == 0
+    assert "passed formatting check" in results.stderr
+
+    args = f"{preformatted_dir.as_posix()}"
+    results = sqlfmt_runner.invoke(sqlfmt_main, args=args, env={"SQLFMT_CHECK": "1"})
+    assert results.exit_code == 0
+    assert "passed formatting check" in results.stderr
+
+
+def test_preformatted_short_lines_env(
+    sqlfmt_runner: CliRunner, preformatted_dir: Path
+) -> None:
+    args = f"{preformatted_dir.as_posix()}"
+    results = sqlfmt_runner.invoke(
+        sqlfmt_main, args=args, env={"SQLFMT_LINE_LENGTH": "1"}
+    )
+    assert results.exit_code == 0
+    print(results.stderr)
+    assert "5 files formatted" in results.stderr
+
+    # test that CLI flag overrides ENV VAR
+    args = f"{preformatted_dir.as_posix()} -l 88 --check"
+    results = sqlfmt_runner.invoke(
+        sqlfmt_main, args=args, env={"SQLFMT_LINE_LENGTH": "1"}
+    )
+    assert results.exit_code == 0
+    print(results.stderr)
+    assert "passed formatting check" in results.stderr
 
 
 def test_unformatted_check(sqlfmt_runner: CliRunner, unformatted_dir: Path) -> None:
     args = f"{unformatted_dir.as_posix()} --check"
     results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
     assert results.exit_code == 1
+    assert "failed formatting check" in results.stderr
+
+    args = f"{unformatted_dir.as_posix()}"
+    results = sqlfmt_runner.invoke(sqlfmt_main, args=args, env={"SQLFMT_CHECK": "1"})
+    assert results.exit_code == 1
+    assert "failed formatting check" in results.stderr
 
 
 def test_error_check(sqlfmt_runner: CliRunner, error_dir: Path) -> None:

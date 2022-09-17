@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Features
+-   Any CLI option can now be configured using environment variables. Variable names are prefixed by `SQLFMT` and are the `SHOUTING_CASE` spelling of the options. For example, `sqlfmt . --line-length 100` is equivalent to `SQLFMT_LINE_LENGTH=100 sqlfmt .` ([#251](https://github.com/tconbeer/sqlfmt/issues/251)).
+
+### Documentation
 -   The README has been shortened and now links to [docs.sqlfmt.com](https://docs.sqlfmt.com).
 
 ## [0.11.0] - 2022-08-21
