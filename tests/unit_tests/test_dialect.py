@@ -163,6 +163,7 @@ class TestAllDialects:
             ("main", "word_operator", "within group"),
             ("main", "word_operator", "filter"),
             ("main", "word_operator", "as"),
+            ("main", "word_operator", "values"),
             ("main", "on", "on"),
             ("main", "boolean_operator", "AND"),
             ("main", "comma", ","),

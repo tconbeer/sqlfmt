@@ -292,6 +292,7 @@ class Polyglot(Dialect):
                         r"some",
                         r"(not\s+)?similar\s+to",
                         r"using",
+                        r"values",
                         r"within\s+group",
                     )
                     + group(r"\W", r"$"),
