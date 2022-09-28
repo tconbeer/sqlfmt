@@ -30,7 +30,7 @@ def get_projects() -> List[SQLProject]:
         SQLProject(
             name="gitlab",
             git_url="https://github.com/tconbeer/gitlab-analytics-sqlfmt.git",
-            git_ref="11d30d3",  # sqlfmt 3e0f900
+            git_ref="5dc999e",  # sqlfmt bac612a
             expected_changed=4,
             expected_unchanged=2413,
             expected_errored=0,
@@ -48,7 +48,7 @@ def get_projects() -> List[SQLProject]:
         SQLProject(
             name="http_archive",
             git_url="https://github.com/tconbeer/http_archive_almanac.git",
-            git_ref="2046b2d",  # sqlfmt 3e0f900
+            git_ref="e3db6b4",  # sqlfmt 3e0f900
             expected_changed=0,
             expected_unchanged=1702,
             expected_errored=0,
