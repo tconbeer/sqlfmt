@@ -376,6 +376,7 @@ class Polyglot(Dialect):
                         r"else",
                         r"partition\s+by",
                         r"rows\s+between",
+                        r"values",
                     )
                     + group(r"\W", r"$"),
                     action=partial(

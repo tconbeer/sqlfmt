@@ -176,6 +176,7 @@ class TestAllDialects:
             ("main", "unterm_keyword", "left join"),
             ("main", "unterm_keyword", "cross join"),
             ("main", "unterm_keyword", "join"),
+            ("main", "unterm_keyword", "values"),
             ("main", "set_operator", "union"),
             ("main", "set_operator", "union all"),
             ("main", "set_operator", "intersect"),
