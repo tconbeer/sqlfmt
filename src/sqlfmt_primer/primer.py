@@ -30,7 +30,7 @@ def get_projects() -> List[SQLProject]:
         SQLProject(
             name="gitlab",
             git_url="https://github.com/tconbeer/gitlab-analytics-sqlfmt.git",
-            git_ref="5dc999e",  # sqlfmt bac612a
+            git_ref="1bd9940",  # sqlfmt 862f9a6
             expected_changed=4,
             expected_unchanged=2413,
             expected_errored=0,
@@ -48,7 +48,7 @@ def get_projects() -> List[SQLProject]:
         SQLProject(
             name="http_archive",
             git_url="https://github.com/tconbeer/http_archive_almanac.git",
-            git_ref="e3db6b4",  # sqlfmt 3e0f900
+            git_ref="f3275ab",  # sqlfmt 862f9a6
             expected_changed=0,
             expected_unchanged=1702,
             expected_errored=0,
@@ -176,29 +176,21 @@ def sqlfmt_primer(
                 report.display_report()
 
             if report.number_changed != project.expected_changed:
-                click.echo(
-                    (
-                        f"Changed:: Expected: "
-                        f"{project.expected_changed}, Actual: {report.number_changed}"
-                    ),
-                    err=True,
+                _warn(project.name)
+                _warn(
+                    f"Changed:: Expected: "
+                    f"{project.expected_changed}, Actual: {report.number_changed}"
                 )
             if report.number_unchanged != project.expected_unchanged:
-                click.echo(
-                    (
-                        f"Unchanged:: Expected: "
-                        f"{project.expected_unchanged}, "
-                        f"Actual: {report.number_unchanged}"
-                    ),
-                    err=True,
+                _warn(
+                    f"Unchanged:: Expected: "
+                    f"{project.expected_unchanged}, "
+                    f"Actual: {report.number_unchanged}"
                 )
             if report.number_errored != project.expected_errored:
-                click.echo(
-                    (
-                        f"Errored:: Expected: "
-                        f"{project.expected_errored}, Actual: {report.number_errored}"
-                    ),
-                    err=True,
+                _warn(
+                    f"Errored:: Expected: "
+                    f"{project.expected_errored}, Actual: {report.number_errored}"
                 )
 
             exit_code = (
@@ -259,3 +251,13 @@ def clear_sqlfmt_cache() -> None:
         p.unlink()
     except FileNotFoundError:
         pass
+
+
+def _warn(msg: str) -> None:
+    """
+    Make msg bold and yellow and print to stderr
+    """
+    click.echo(
+        click.style(msg, fg="yellow", bold=True),
+        err=True,
+    )

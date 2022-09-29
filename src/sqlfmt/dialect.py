@@ -285,12 +285,14 @@ class Polyglot(Dialect):
                         r"isnull",
                         r"(not\s+)?i?like(\s+any)?",
                         r"over",
+                        r"(un)?pivot",
                         r"notnull",
                         r"(not\s+)?regexp",
                         r"(not\s+)?rlike",
                         r"rollup",
                         r"some",
                         r"(not\s+)?similar\s+to",
+                        r"tablesample",
                         r"using",
                         r"within\s+group",
                     )
@@ -362,8 +364,12 @@ class Polyglot(Dialect):
                             r"(natural\s+)?"
                             r"((inner|cross|((left|right|full)(\s+outer)?))\s+)?join"
                         ),
+                        r"lateral\s+view(\s+outer)?",
                         r"where",
                         r"group\s+by",
+                        r"cluster\s+by",
+                        r"distribute\s+by",
+                        r"sort\s+by",
                         r"having",
                         r"qualify",
                         r"window",
