@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Formatting Changes + Bug Fixes
 
+-   SparkSQL-specific keywords `tablesample`, `cluster by`, `distribute by`, `sort by`, and `lateral view` are now supported by the polyglot dialect ([#264](https://github.com/tconbeer/sqlfmt/issues/264))
+-   `pivot` and `unpivot` are now supported as word operators, and will have a space between the keyword and the following parentheses
 -   `values` is now supported as an unterminated keyword; tuples of values will be indented from the `values` keyword if they span more than one line ([#263](https://github.com/tconbeer/sqlfmt/issues/263))
 
 ## [0.11.1] - 2022-09-17
