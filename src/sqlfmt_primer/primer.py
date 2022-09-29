@@ -176,29 +176,21 @@ def sqlfmt_primer(
                 report.display_report()
 
             if report.number_changed != project.expected_changed:
-                click.echo(
-                    (
-                        f"Changed:: Expected: "
-                        f"{project.expected_changed}, Actual: {report.number_changed}"
-                    ),
-                    err=True,
+                _warn(project.name)
+                _warn(
+                    f"Changed:: Expected: "
+                    f"{project.expected_changed}, Actual: {report.number_changed}"
                 )
             if report.number_unchanged != project.expected_unchanged:
-                click.echo(
-                    (
-                        f"Unchanged:: Expected: "
-                        f"{project.expected_unchanged}, "
-                        f"Actual: {report.number_unchanged}"
-                    ),
-                    err=True,
+                _warn(
+                    f"Unchanged:: Expected: "
+                    f"{project.expected_unchanged}, "
+                    f"Actual: {report.number_unchanged}"
                 )
             if report.number_errored != project.expected_errored:
-                click.echo(
-                    (
-                        f"Errored:: Expected: "
-                        f"{project.expected_errored}, Actual: {report.number_errored}"
-                    ),
-                    err=True,
+                _warn(
+                    f"Errored:: Expected: "
+                    f"{project.expected_errored}, Actual: {report.number_errored}"
                 )
 
             exit_code = (
@@ -259,3 +251,13 @@ def clear_sqlfmt_cache() -> None:
         p.unlink()
     except FileNotFoundError:
         pass
+
+
+def _warn(msg: str) -> None:
+    """
+    Make msg bold and yellow and print to stderr
+    """
+    click.echo(
+        click.style(msg, fg="yellow", bold=True),
+        err=True,
+    )
