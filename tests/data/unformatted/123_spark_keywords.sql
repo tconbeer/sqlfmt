@@ -87,7 +87,8 @@ select *
 from
     person pivot (
         sum(age) as a,
-        avg(class) as c for (name, age) in (('John', 30) as c1, ('Mike', 40) as c2)
+        avg(class) as c
+        for(name, age) in (('John', 30) as c1, ('Mike', 40) as c2)
     )
 ;
 select *

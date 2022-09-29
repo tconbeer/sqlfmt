@@ -190,7 +190,6 @@ class TestAllDialects:
             ("main", "set_operator", "intersect"),
             ("main", "set_operator", "minus"),
             ("main", "set_operator", "except"),
-            ("main", "for", "for"),
             ("main", "name", "my_table_45"),
             ("main", "name", "replace"),
             ("main", "other_identifiers", "$2"),

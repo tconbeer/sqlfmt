@@ -411,14 +411,6 @@ class Polyglot(Dialect):
                     action=actions.handle_set_operator,
                 ),
                 Rule(
-                    name="for",
-                    priority=4000,
-                    pattern=group(r"for") + group(r"\W", r"$"),
-                    action=partial(
-                        actions.add_node_to_buffer, token_type=TokenType.WORD_OPERATOR
-                    ),
-                ),
-                Rule(
                     name="name",
                     priority=5000,
                     pattern=group(r"\w+"),
