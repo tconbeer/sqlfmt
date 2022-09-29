@@ -35,6 +35,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/120_array_literals.sql",
         "unformatted/121_stubborn_merge_edge_cases.sql",
         "unformatted/122_values.sql",
+        "unformatted/123_spark_keywords.sql",
         "unformatted/200_base_model.sql",
         "unformatted/201_basic_snapshot.sql",
         "unformatted/202_unpivot_macro.sql",
@@ -49,7 +50,6 @@ from tests.util import check_formatting, read_test_data
         "unformatted/211_http_2019_cdn_17_20.sql",
         "unformatted/212_http_2019_cms_14_02.sql",
         "unformatted/213_gitlab_fct_sales_funnel_target.sql",
-        "unformatted/214_spark_keywords.sql",
         "unformatted/300_jinjafmt.sql",
     ],
 )

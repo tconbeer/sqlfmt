@@ -285,6 +285,7 @@ class Polyglot(Dialect):
                         r"isnull",
                         r"(not\s+)?i?like(\s+any)?",
                         r"over",
+                        r"(un)?pivot",
                         r"notnull",
                         r"(not\s+)?regexp",
                         r"(not\s+)?rlike",
@@ -363,8 +364,12 @@ class Polyglot(Dialect):
                             r"(natural\s+)?"
                             r"((inner|cross|((left|right|full)(\s+outer)?))\s+)?join"
                         ),
+                        r"lateral\s+view(\s+outer)?",
                         r"where",
                         r"group\s+by",
+                        r"cluster\s+by",
+                        r"distribute\s+by",
+                        r"sort\s+by",
                         r"having",
                         r"qualify",
                         r"window",
@@ -404,6 +409,14 @@ class Polyglot(Dialect):
                     )
                     + group(r"\W", r"$"),
                     action=actions.handle_set_operator,
+                ),
+                Rule(
+                    name="for",
+                    priority=4000,
+                    pattern=group(r"for") + group(r"\W", r"$"),
+                    action=partial(
+                        actions.add_node_to_buffer, token_type=TokenType.WORD_OPERATOR
+                    ),
                 ),
                 Rule(
                     name="name",
