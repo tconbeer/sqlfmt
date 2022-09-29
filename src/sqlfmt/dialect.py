@@ -291,6 +291,7 @@ class Polyglot(Dialect):
                         r"rollup",
                         r"some",
                         r"(not\s+)?similar\s+to",
+                        r"tablesample",
                         r"using",
                         r"within\s+group",
                     )
