@@ -190,6 +190,7 @@ class TestAllDialects:
             ("main", "set_operator", "intersect"),
             ("main", "set_operator", "minus"),
             ("main", "set_operator", "except"),
+            ("main", "bq_typed_array", "array<INT64>"),
             ("main", "name", "my_table_45"),
             ("main", "name", "replace"),
             ("main", "other_identifiers", "$2"),
@@ -266,6 +267,11 @@ class TestAllDialects:
             ("main", "unterm_keyword", "for"),
             ("main", "star_replace_exclude", "replace"),
             ("main", "unterm_keyword", "selection"),
+            (
+                "main",
+                "bq_typed_array",
+                "array < something and int64 > something_else[0]",
+            ),
             ("jinja", "jinja_set_block_start", "{% set foo = 'baz' %}"),
         ],
     )

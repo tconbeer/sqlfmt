@@ -411,6 +411,17 @@ class Polyglot(Dialect):
                     action=actions.handle_set_operator,
                 ),
                 Rule(
+                    name="bq_typed_array",
+                    priority=3000,
+                    pattern=group(
+                        r"array<\w+>",
+                    )
+                    + group(r"\[", r"$"),
+                    action=partial(
+                        actions.add_node_to_buffer, token_type=TokenType.NAME
+                    ),
+                ),
+                Rule(
                     name="name",
                     priority=5000,
                     pattern=group(r"\w+"),
