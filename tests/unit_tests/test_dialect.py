@@ -191,6 +191,10 @@ class TestAllDialects:
             ("main", "set_operator", "minus"),
             ("main", "set_operator", "except"),
             ("main", "bq_typed_array", "array<INT64>"),
+            ("main", "unsupported_ddl", "create table"),
+            ("main", "unsupported_ddl", "select\ninto"),
+            ("main", "unsupported_ddl", "insert"),
+            ("main", "unsupported_ddl", "update"),
             ("main", "name", "my_table_45"),
             ("main", "name", "replace"),
             ("main", "other_identifiers", "$2"),
@@ -265,6 +269,7 @@ class TestAllDialects:
             ("main", "operator", "."),
             ("main", "unterm_keyword", "lateral flatten"),
             ("main", "unterm_keyword", "for"),
+            ("main", "unterm_keyword", "select into"),
             ("main", "star_replace_exclude", "replace"),
             ("main", "unterm_keyword", "selection"),
             (

@@ -164,6 +164,40 @@ def handle_set_operator(
     analyzer.pos = token.epos
 
 
+def handle_possible_unsupported_sql(
+    analyzer: Analyzer, source_string: str, match: re.Match
+) -> None:
+    """
+    Checks to see if we're at depth 0; if so, then lex this token as DATA,
+    otherwise try to match the current position against the ordinary
+    name rule
+    """
+    if not analyzer.previous_node or analyzer.previous_node.depth[0] == 0:
+        add_node_to_buffer(
+            analyzer=analyzer,
+            source_string=source_string,
+            match=match,
+            token_type=TokenType.DATA,
+        )
+    else:
+        # this looks like unsupported sql, but we're inside a query already, so
+        # it's probably just an ordinary name
+        name_rule = analyzer.get_rule(ruleset="main", rule_name="name")
+        name_match = name_rule.program.match(source_string, pos=analyzer.pos)
+        assert name_match, (
+            "Internal Error! Please open an issue."
+            "An error occurred when lexing unsupported SQL"
+            f"at position {match.span(1)[0]}:\n"
+            f"{source_string[slice(*match.span(1))]}"
+        )
+        add_node_to_buffer(
+            analyzer=analyzer,
+            source_string=source_string,
+            match=name_match,
+            token_type=TokenType.NAME,
+        )
+
+
 def lex_jinja(analyzer: Analyzer, source_string: str, _: re.Match) -> None:
     """
     Makes a nested call to analyzer.lex, with the jinja ruleset activated.

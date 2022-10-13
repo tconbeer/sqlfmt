@@ -358,6 +358,8 @@ class Polyglot(Dialect):
                         (
                             r"select(\s+(as\s+struct|as\s+value))?"
                             r"(\s+(all|top\s+\d+|distinct))?"
+                            # select into is ddl that needs additional handling
+                            r"(?!\s+into)"
                         ),
                         r"from",
                         (
@@ -420,6 +422,64 @@ class Polyglot(Dialect):
                     action=partial(
                         actions.add_node_to_buffer, token_type=TokenType.NAME
                     ),
+                ),
+                Rule(
+                    name="unsupported_ddl",
+                    priority=4000,
+                    pattern=group(
+                        group(
+                            r"alter",
+                            r"attach\s+rls\s+policy",
+                            r"cache\s+table",
+                            r"clear\s+cache",
+                            r"cluster",
+                            r"comment",
+                            r"copy",
+                            r"create",
+                            r"deallocate",
+                            r"declare",
+                            r"describe",
+                            r"desc\s+datashare",
+                            r"desc\s+identity\s+provider",
+                            r"delete",
+                            r"detach\s+rls\s+policy",
+                            r"discard",
+                            r"do",
+                            r"drop",
+                            r"execute",
+                            r"explain",
+                            r"export",
+                            r"fetch",
+                            r"get",
+                            r"grant",
+                            r"handler",
+                            r"import\s+foreign\s+schema",
+                            r"import\s+table",
+                            r"insert",
+                            r"list",
+                            r"lock",
+                            r"merge",
+                            r"move",
+                            # prepare transaction statements are simple enough
+                            # so we'll allow them
+                            r"prepare(?!\s+transaction)",
+                            r"put",
+                            r"reassign\s+owned",
+                            r"remove",
+                            r"rename\s+table",
+                            r"repair",
+                            r"revoke",
+                            r"security\s+label",
+                            r"select\s+into",
+                            r"truncate",
+                            r"unload",
+                            r"update",
+                            r"validate",
+                        )
+                        + r"\b[^;]*"
+                    )
+                    + group(r";", r"$"),
+                    action=actions.handle_possible_unsupported_sql,
                 ),
                 Rule(
                     name="name",
