@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.12.0] - 2022-10-14
+
 ### Formatting Changes + Bug Fixes
 
 -   DDL and DML statements (`create`, `insert`, `grant`, etc.) will no longer be formatted ([#243](https://github.com/tconbeer/sqlfmt/issues/243)). 
@@ -242,7 +244,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.11.1...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.12.0...HEAD
+
+[0.12.0]: https://github.com/tconbeer/sqlfmt/compare/0.11.1...0.12.0
 
 [0.11.1]: https://github.com/tconbeer/sqlfmt/compare/0.11.0...0.11.1
 
