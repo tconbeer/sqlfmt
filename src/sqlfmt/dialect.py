@@ -8,6 +8,19 @@ from sqlfmt.token import TokenType
 
 NEWLINE: str = r"\r?\n"
 EOL = group(NEWLINE, r"$")
+SQL_QUOTED_EXP = group(
+    # tripled single quotes (optionally raw/bytes)
+    r"(rb?|b|br)?'''.*?'''",
+    # tripled double quotes
+    r'(rb?|b|br)?""".*?"""',
+    # possibly escaped double quotes
+    r'(rb?|b|br|u&|@)?"([^"\\]*(\\.[^"\\]*|""[^"\\]*)*)"',
+    # possibly escaped single quotes
+    r"(rb?|b|br|u&|x)?'([^'\\]*(\\.[^'\\]*|''[^'\\]*)*)'",
+    r"\$\w*\$[^$]*?\$\w*\$",  # pg dollar-delimited strings
+    # possibly escaped backtick
+    r"`([^`\\]*(\\.[^`\\]*)*)`",
+)
 
 
 class Dialect(ABC):
@@ -89,19 +102,7 @@ class Polyglot(Dialect):
                 Rule(
                     name="quoted_name",
                     priority=200,
-                    pattern=group(
-                        # tripled single quotes (optionally raw/bytes)
-                        r"(rb?|b|br)?'''.*?'''",
-                        # tripled double quotes
-                        r'(rb?|b|br)?""".*?"""',
-                        # possibly escaped double quotes
-                        r'(rb?|b|br|u&|@)?"([^"\\]*(\\.[^"\\]*|""[^"\\]*)*)"',
-                        # possibly escaped single quotes
-                        r"(rb?|b|br|u&|x)?'([^'\\]*(\\.[^'\\]*|''[^'\\]*)*)'",
-                        r"\$\w*\$[^$]*?\$\w*\$",  # pg dollar-delimited strings
-                        # possibly escaped backtick
-                        r"`([^`\\]*(\\.[^`\\]*)*)`",
-                    ),
+                    pattern=SQL_QUOTED_EXP,
                     action=partial(
                         actions.add_node_to_buffer, token_type=TokenType.QUOTED_NAME
                     ),
@@ -476,7 +477,7 @@ class Polyglot(Dialect):
                             r"update",
                             r"validate",
                         )
-                        + r"\b[^;]*"
+                        + rf"\b({SQL_QUOTED_EXP}|[^'`\"$;])*"
                     )
                     + group(r";", r"$"),
                     action=actions.handle_possible_unsupported_ddl,

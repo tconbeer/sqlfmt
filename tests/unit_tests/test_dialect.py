@@ -195,6 +195,11 @@ class TestAllDialects:
             ("main", "unsupported_ddl", "select\ninto"),
             ("main", "unsupported_ddl", "insert"),
             ("main", "unsupported_ddl", "update"),
+            (
+                "main",
+                "unsupported_ddl",
+                "create function foo() returns int language javascript as $$foo;$$",
+            ),
             ("main", "name", "my_table_45"),
             ("main", "name", "replace"),
             ("main", "other_identifiers", "$2"),
