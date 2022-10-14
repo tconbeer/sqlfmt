@@ -456,7 +456,12 @@ class Polyglot(Dialect):
                             r"handler",
                             r"import\s+foreign\s+schema",
                             r"import\s+table",
-                            r"insert",
+                            # snowflake: "insert into" or "insert overwrite into"
+                            # snowflake: has insert() function
+                            # spark: "insert overwrite" without the trailing "into"
+                            # redshift/pg: "insert into" only
+                            # bigquery: bare "insert" is okay
+                            r"insert(\s+overwrite)?(\s+into)?(?!\()",
                             r"list",
                             r"lock",
                             r"merge",

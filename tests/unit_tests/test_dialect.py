@@ -194,6 +194,9 @@ class TestAllDialects:
             ("main", "unsupported_ddl", "create table"),
             ("main", "unsupported_ddl", "select\ninto"),
             ("main", "unsupported_ddl", "insert"),
+            ("main", "unsupported_ddl", "insert into"),
+            ("main", "unsupported_ddl", "insert overwrite"),
+            ("main", "unsupported_ddl", "insert overwrite into"),
             ("main", "unsupported_ddl", "update"),
             (
                 "main",
@@ -277,6 +280,7 @@ class TestAllDialects:
             ("main", "unterm_keyword", "select into"),
             ("main", "star_replace_exclude", "replace"),
             ("main", "unterm_keyword", "selection"),
+            ("main", "unsupported_ddl", "insert('abc', 1, 2, 'Z')"),
             (
                 "main",
                 "bq_typed_array",
