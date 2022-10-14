@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file.
 
 ### Formatting Changes + Bug Fixes
 
+-   DDL and DML statements (`create`, `insert`, `grant`, etc.) will no longer be formatted ([#243](https://github.com/tconbeer/sqlfmt/issues/243)). 
+    These statements were never supported by sqlfmt, and the existing algorithm produced bad formatting. Support for DDL and DML statements will be gradually added back in in future versions.
+    For more information, see the [tracking issue for DDL support](https://github.com/tconbeer/sqlfmt/issues/262).
 -   BigQuery typed array literals like `array<float64>[1, 2]` are now supported, and spaces will no longer be inserted around `<` and `>` ([#212](https://github.com/tconbeer/sqlfmt/issues/212))
 -   SparkSQL-specific keywords `tablesample`, `cluster by`, `distribute by`, `sort by`, and `lateral view` are now supported by the polyglot dialect ([#264](https://github.com/tconbeer/sqlfmt/issues/264))
 -   `pivot` and `unpivot` are now supported as word operators, and will have a space between the keyword and the following parentheses
