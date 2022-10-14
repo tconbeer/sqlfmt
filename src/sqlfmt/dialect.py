@@ -21,6 +21,11 @@ SQL_QUOTED_EXP = group(
     # possibly escaped backtick
     r"`([^`\\]*(\\.[^`\\]*)*)`",
 )
+SQL_COMMENT = group(
+    r"--[^\r\n]*",
+    r"#[^\r\n]*",
+    r"/\*[^*]*\*+(?:[^/*][^*]*\*+)*/",  # simple block comment
+)
 
 
 class Dialect(ABC):
@@ -110,11 +115,7 @@ class Polyglot(Dialect):
                 Rule(
                     name="comment",
                     priority=300,
-                    pattern=group(
-                        r"--[^\r\n]*",
-                        r"#[^\r\n]*",
-                        r"/\*[^*]*\*+(?:[^/*][^*]*\*+)*/",  # simple block comment
-                    ),
+                    pattern=SQL_COMMENT,
                     action=actions.add_comment_to_buffer,
                 ),
                 Rule(
@@ -482,8 +483,9 @@ class Polyglot(Dialect):
                             r"update",
                             r"validate",
                         )
-                        + rf"\b({SQL_QUOTED_EXP}|[^'`\"$;])*"
+                        + rf"\b({SQL_COMMENT}|{SQL_QUOTED_EXP}|[^'`\"$;])*?"
                     )
+                    + rf"{NEWLINE}*"
                     + group(r";", r"$"),
                     action=actions.handle_possible_unsupported_ddl,
                 ),
