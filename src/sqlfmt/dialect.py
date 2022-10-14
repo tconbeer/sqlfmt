@@ -479,7 +479,7 @@ class Polyglot(Dialect):
                         + r"\b[^;]*"
                     )
                     + group(r";", r"$"),
-                    action=actions.handle_possible_unsupported_sql,
+                    action=actions.handle_possible_unsupported_ddl,
                 ),
                 Rule(
                     name="name",

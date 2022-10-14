@@ -164,7 +164,7 @@ def handle_set_operator(
     analyzer.pos = token.epos
 
 
-def handle_possible_unsupported_sql(
+def handle_possible_unsupported_ddl(
     analyzer: Analyzer, source_string: str, match: re.Match
 ) -> None:
     """
@@ -172,15 +172,15 @@ def handle_possible_unsupported_sql(
     otherwise try to match the current position against the ordinary
     name rule
     """
-    if not analyzer.previous_node or analyzer.previous_node.depth[0] == 0:
-        add_node_to_buffer(
-            analyzer=analyzer,
-            source_string=source_string,
-            match=match,
-            token_type=TokenType.DATA,
-        )
+    token = Token.from_match(source_string, match, TokenType.DATA)
+    node = analyzer.node_manager.create_node(
+        token=token, previous_node=analyzer.previous_node
+    )
+    if node.depth[0] == 0:
+        analyzer.node_buffer.append(node)
+        analyzer.pos = token.epos
     else:
-        # this looks like unsupported sql, but we're inside a query already, so
+        # this looks like unsupported ddl/sql, but we're inside a query already, so
         # it's probably just an ordinary name
         name_rule = analyzer.get_rule(ruleset="main", rule_name="name")
         name_match = name_rule.program.match(source_string, pos=analyzer.pos)

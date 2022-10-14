@@ -428,3 +428,22 @@ def test_handle_jinja_for_block(default_analyzer: Analyzer) -> None:
     )
     assert len(default_analyzer.node_buffer) == 1
     assert default_analyzer.node_buffer[-1].token.type == TokenType.JINJA_BLOCK_END
+
+
+def test_handle_unsupported_ddl(default_analyzer: Analyzer) -> None:
+    source_string = """
+    create table foo (bar int);
+    select create, insert from baz;
+    create table bar (foo int);
+    """
+    query = default_analyzer.parse_query(source_string=source_string.lstrip())
+    assert len(query.lines) == 3
+    first_create_line = query.lines[0]
+    assert len(first_create_line.nodes) == 3
+    assert first_create_line.nodes[0].token.type == TokenType.DATA
+    assert first_create_line.nodes[1].token.type == TokenType.SEMICOLON
+
+    select_line = query.lines[1]
+    assert len(select_line.nodes) == 8
+    assert select_line.nodes[1].token.type == TokenType.NAME
+    assert select_line.nodes[3].token.type == TokenType.NAME
