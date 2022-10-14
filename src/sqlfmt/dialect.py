@@ -8,6 +8,24 @@ from sqlfmt.token import TokenType
 
 NEWLINE: str = r"\r?\n"
 EOL = group(NEWLINE, r"$")
+SQL_QUOTED_EXP = group(
+    # tripled single quotes (optionally raw/bytes)
+    r"(rb?|b|br)?'''.*?'''",
+    # tripled double quotes
+    r'(rb?|b|br)?""".*?"""',
+    # possibly escaped double quotes
+    r'(rb?|b|br|u&|@)?"([^"\\]*(\\.[^"\\]*|""[^"\\]*)*)"',
+    # possibly escaped single quotes
+    r"(rb?|b|br|u&|x)?'([^'\\]*(\\.[^'\\]*|''[^'\\]*)*)'",
+    r"\$\w*\$[^$]*?\$\w*\$",  # pg dollar-delimited strings
+    # possibly escaped backtick
+    r"`([^`\\]*(\\.[^`\\]*)*)`",
+)
+SQL_COMMENT = group(
+    r"--[^\r\n]*",
+    r"#[^\r\n]*",
+    r"/\*[^*]*\*+(?:[^/*][^*]*\*+)*/",  # simple block comment
+)
 
 
 class Dialect(ABC):
@@ -89,19 +107,7 @@ class Polyglot(Dialect):
                 Rule(
                     name="quoted_name",
                     priority=200,
-                    pattern=group(
-                        # tripled single quotes (optionally raw/bytes)
-                        r"(rb?|b|br)?'''.*?'''",
-                        # tripled double quotes
-                        r'(rb?|b|br)?""".*?"""',
-                        # possibly escaped double quotes
-                        r'(rb?|b|br|u&|@)?"([^"\\]*(\\.[^"\\]*|""[^"\\]*)*)"',
-                        # possibly escaped single quotes
-                        r"(rb?|b|br|u&|x)?'([^'\\]*(\\.[^'\\]*|''[^'\\]*)*)'",
-                        r"\$\w*\$[^$]*?\$\w*\$",  # pg dollar-delimited strings
-                        # possibly escaped backtick
-                        r"`([^`\\]*(\\.[^`\\]*)*)`",
-                    ),
+                    pattern=SQL_QUOTED_EXP,
                     action=partial(
                         actions.add_node_to_buffer, token_type=TokenType.QUOTED_NAME
                     ),
@@ -109,11 +115,7 @@ class Polyglot(Dialect):
                 Rule(
                     name="comment",
                     priority=300,
-                    pattern=group(
-                        r"--[^\r\n]*",
-                        r"#[^\r\n]*",
-                        r"/\*[^*]*\*+(?:[^/*][^*]*\*+)*/",  # simple block comment
-                    ),
+                    pattern=SQL_COMMENT,
                     action=actions.add_comment_to_buffer,
                 ),
                 Rule(
@@ -358,6 +360,8 @@ class Polyglot(Dialect):
                         (
                             r"select(\s+(as\s+struct|as\s+value))?"
                             r"(\s+(all|top\s+\d+|distinct))?"
+                            # select into is ddl that needs additional handling
+                            r"(?!\s+into)"
                         ),
                         r"from",
                         (
@@ -420,6 +424,70 @@ class Polyglot(Dialect):
                     action=partial(
                         actions.add_node_to_buffer, token_type=TokenType.NAME
                     ),
+                ),
+                Rule(
+                    name="unsupported_ddl",
+                    priority=4000,
+                    pattern=group(
+                        group(
+                            r"alter",
+                            r"attach\s+rls\s+policy",
+                            r"cache\s+table",
+                            r"clear\s+cache",
+                            r"cluster",
+                            r"comment",
+                            r"copy",
+                            r"create",
+                            r"deallocate",
+                            r"declare",
+                            r"describe",
+                            r"desc\s+datashare",
+                            r"desc\s+identity\s+provider",
+                            r"delete",
+                            r"detach\s+rls\s+policy",
+                            r"discard",
+                            r"do",
+                            r"drop",
+                            r"execute",
+                            r"explain",
+                            r"export",
+                            r"fetch",
+                            r"get",
+                            r"grant",
+                            r"handler",
+                            r"import\s+foreign\s+schema",
+                            r"import\s+table",
+                            # snowflake: "insert into" or "insert overwrite into"
+                            # snowflake: has insert() function
+                            # spark: "insert overwrite" without the trailing "into"
+                            # redshift/pg: "insert into" only
+                            # bigquery: bare "insert" is okay
+                            r"insert(\s+overwrite)?(\s+into)?(?!\()",
+                            r"list",
+                            r"lock",
+                            r"merge",
+                            r"move",
+                            # prepare transaction statements are simple enough
+                            # so we'll allow them
+                            r"prepare(?!\s+transaction)",
+                            r"put",
+                            r"reassign\s+owned",
+                            r"remove",
+                            r"rename\s+table",
+                            r"repair",
+                            r"revoke",
+                            r"security\s+label",
+                            r"select\s+into",
+                            r"truncate",
+                            r"unload",
+                            r"update",
+                            r"validate",
+                        )
+                        + rf"\b({SQL_COMMENT}|{SQL_QUOTED_EXP}|[^'`\"$;])*?"
+                    )
+                    + rf"{NEWLINE}*"
+                    + group(r";", r"$"),
+                    action=actions.handle_possible_unsupported_ddl,
                 ),
                 Rule(
                     name="name",

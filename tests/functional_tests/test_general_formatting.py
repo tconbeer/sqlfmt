@@ -13,6 +13,7 @@ from tests.util import check_formatting, read_test_data
         "preformatted/003_literals.sql",
         "preformatted/004_with_select.sql",
         "preformatted/301_multiline_jinjafmt.sql",
+        "preformatted/400_create_table.sql",
         "unformatted/100_select_case.sql",
         "unformatted/101_multiline.sql",
         "unformatted/102_lots_of_comments.sql",
@@ -52,6 +53,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/212_http_2019_cms_14_02.sql",
         "unformatted/213_gitlab_fct_sales_funnel_target.sql",
         "unformatted/300_jinjafmt.sql",
+        "unformatted/400_create_fn_and_select.sql",
     ],
 )
 def test_formatting(p: str) -> None:
