@@ -426,8 +426,17 @@ class Polyglot(Dialect):
                     ),
                 ),
                 Rule(
-                    name="unsupported_ddl",
+                    name="nonreserved_keyword",
                     priority=4000,
+                    pattern=group(r"explain") + group(r"\s+", r"$"),
+                    action=partial(
+                        actions.handle_nonreserved_keyword,
+                        token_type=TokenType.UNTERM_KEYWORD,
+                    ),
+                ),
+                Rule(
+                    name="unsupported_ddl",
+                    priority=4999,
                     pattern=group(
                         group(
                             r"alter",
@@ -449,7 +458,6 @@ class Polyglot(Dialect):
                             r"do",
                             r"drop",
                             r"execute",
-                            r"explain",
                             r"export",
                             r"fetch",
                             r"get",

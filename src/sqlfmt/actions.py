@@ -164,6 +164,32 @@ def handle_set_operator(
     analyzer.pos = token.epos
 
 
+def handle_nonreserved_keyword(
+    analyzer: Analyzer,
+    source_string: str,
+    match: re.Match,
+    token_type: TokenType,
+) -> None:
+    """
+    Checks to see if we're at depth 0; if so, then lex this token as the passed type,
+    otherwise lex it as a name.
+    """
+    token = Token.from_match(source_string, match, token_type=token_type)
+    node = analyzer.node_manager.create_node(
+        token=token, previous_node=analyzer.previous_node
+    )
+    if node.depth[0] == 0:
+        analyzer.node_buffer.append(node)
+        analyzer.pos = token.epos
+    else:
+        add_node_to_buffer(
+            analyzer=analyzer,
+            source_string=source_string,
+            match=match,
+            token_type=TokenType.NAME,
+        )
+
+
 def handle_possible_unsupported_ddl(
     analyzer: Analyzer, source_string: str, match: re.Match
 ) -> None:
