@@ -15,7 +15,6 @@ def test_tiers_sorted() -> None:
         ("::", OperatorPrecedence.DOUBLE_COLON),
         ("as", OperatorPrecedence.AS),
         ("over", OperatorPrecedence.OTHER_TIGHT),
-        ("using", OperatorPrecedence.OTHER_TIGHT),
         ("^", OperatorPrecedence.EXPONENT),
         ("/", OperatorPrecedence.MULTIPLICATION),
         ("%", OperatorPrecedence.MULTIPLICATION),

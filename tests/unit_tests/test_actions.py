@@ -447,3 +447,21 @@ def test_handle_unsupported_ddl(default_analyzer: Analyzer) -> None:
     assert len(select_line.nodes) == 8
     assert select_line.nodes[1].token.type == TokenType.NAME
     assert select_line.nodes[3].token.type == TokenType.NAME
+
+
+def test_handle_nonreserved_keyword(default_analyzer: Analyzer) -> None:
+    source_string = """
+    explain select 1;
+    select explain, 1 from baz;
+    """
+    query = default_analyzer.parse_query(source_string=source_string.lstrip())
+    assert len(query.lines) == 2
+    explain_line = query.lines[0]
+    assert len(explain_line.nodes) == 5
+    assert explain_line.nodes[0].token.type == TokenType.UNTERM_KEYWORD
+    assert explain_line.nodes[1].token.type == TokenType.UNTERM_KEYWORD
+
+    select_line = query.lines[1]
+    assert len(select_line.nodes) == 8
+    assert select_line.nodes[0].token.type == TokenType.UNTERM_KEYWORD
+    assert select_line.nodes[1].token.type == TokenType.NAME
