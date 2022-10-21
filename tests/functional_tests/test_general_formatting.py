@@ -55,6 +55,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/300_jinjafmt.sql",
         "unformatted/400_create_fn_and_select.sql",
         "unformatted/401_explain_select.sql",
+        "unformatted/402_delete_from_using.sql",
     ],
 )
 def test_formatting(p: str) -> None:

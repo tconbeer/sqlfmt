@@ -295,7 +295,6 @@ class Polyglot(Dialect):
                         r"some",
                         r"(not\s+)?similar\s+to",
                         r"tablesample",
-                        r"using",
                         r"within\s+group",
                     )
                     + group(r"\W", r"$"),
@@ -314,6 +313,18 @@ class Polyglot(Dialect):
                     action=partial(
                         actions.add_node_to_buffer,
                         token_type=TokenType.WORD_OPERATOR,
+                    ),
+                ),
+                Rule(
+                    # a join's using word operator must be followed
+                    # by parens; otherwise, it's probably a
+                    # delete's USING, which is an unterminated
+                    # keyword
+                    name="join_using",
+                    priority=922,
+                    pattern=group(r"using") + group(r"\s*\("),
+                    action=partial(
+                        actions.add_node_to_buffer, token_type=TokenType.WORD_OPERATOR
                     ),
                 ),
                 Rule(
@@ -363,11 +374,15 @@ class Polyglot(Dialect):
                             # select into is ddl that needs additional handling
                             r"(?!\s+into)"
                         ),
+                        r"delete\s+from",
                         r"from",
                         (
                             r"(natural\s+)?"
                             r"((inner|cross|((left|right|full)(\s+outer)?))\s+)?join"
                         ),
+                        # this is the USING following DELETE, not the join operator
+                        # (see above)
+                        r"using",
                         r"lateral\s+view(\s+outer)?",
                         r"where",
                         r"group\s+by",
@@ -387,6 +402,9 @@ class Polyglot(Dialect):
                         r"partition\s+by",
                         r"rows\s+between",
                         r"values",
+                        # in pg, RETURNING can be the last clause of
+                        # a DELETE statement
+                        r"returning",
                     )
                     + group(r"\W", r"$"),
                     action=partial(
