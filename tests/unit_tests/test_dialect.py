@@ -192,6 +192,8 @@ class TestAllDialects:
             ("main", "set_operator", "except"),
             ("main", "bq_typed_array", "array<INT64>"),
             ("main", "nonreserved_keyword", "explain"),
+            ("main", "nonreserved_keyword", "explain analyze"),
+            ("main", "nonreserved_keyword", "explain using text"),
             ("main", "unsupported_ddl", "create table"),
             ("main", "unsupported_ddl", "select\ninto"),
             ("main", "unsupported_ddl", "insert"),

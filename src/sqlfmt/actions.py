@@ -171,14 +171,14 @@ def handle_nonreserved_keyword(
     token_type: TokenType,
 ) -> None:
     """
-    Checks to see if we're at depth 0; if so, then lex this token as the passed type,
-    otherwise lex it as a name.
+    Checks to see if we're at depth 0 (assuming this is a name); if so, then lex
+    this token as the passed type, otherwise lex it as a name.
     """
-    token = Token.from_match(source_string, match, token_type=token_type)
+    token = Token.from_match(source_string, match, token_type=TokenType.NAME)
     node = analyzer.node_manager.create_node(
         token=token, previous_node=analyzer.previous_node
     )
-    if node.depth[0] == 0:
+    if node.depth[0] > 0:
         analyzer.node_buffer.append(node)
         analyzer.pos = token.epos
     else:
@@ -186,7 +186,7 @@ def handle_nonreserved_keyword(
             analyzer=analyzer,
             source_string=source_string,
             match=match,
-            token_type=TokenType.NAME,
+            token_type=token_type,
         )
 
 

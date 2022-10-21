@@ -428,7 +428,10 @@ class Polyglot(Dialect):
                 Rule(
                     name="nonreserved_keyword",
                     priority=4000,
-                    pattern=group(r"explain") + group(r"\s+", r"$"),
+                    pattern=group(
+                        r"explain(\s+(analyze|verbose|using\s+(tabular|json|text)))?"
+                    )
+                    + group(r"\W", r"$"),
                     action=partial(
                         actions.handle_nonreserved_keyword,
                         token_type=TokenType.UNTERM_KEYWORD,
