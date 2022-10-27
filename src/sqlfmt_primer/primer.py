@@ -32,8 +32,8 @@ def get_projects() -> List[SQLProject]:
             git_url="https://github.com/tconbeer/gitlab-analytics-sqlfmt.git",
             git_ref="e3d43b4",  # sqlfmt b21ea88
             expected_changed=4,
-            expected_unchanged=2409,
-            expected_errored=4,
+            expected_unchanged=2408,
+            expected_errored=5,
             sub_directory=Path("transform/snowflake-dbt/"),
         ),
         SQLProject(
