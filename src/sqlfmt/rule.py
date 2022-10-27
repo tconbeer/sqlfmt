@@ -117,38 +117,8 @@ MAIN = [
         action=actions.raise_sqlfmt_bracket_error,
     ),
     Rule(
-        name="semicolon",
-        priority=400,
-        pattern=group(r";"),
-        action=partial(actions.add_node_to_buffer, token_type=TokenType.SEMICOLON),
-    ),
-    Rule(
-        name="statement_start",
-        priority=500,
-        pattern=group(r"case") + group(r"\W", r"$"),
-        action=partial(
-            actions.add_node_to_buffer, token_type=TokenType.STATEMENT_START
-        ),
-    ),
-    Rule(
-        name="statement_end",
-        priority=510,
-        pattern=group(r"end") + group(r"\W", r"$"),
-        action=partial(
-            actions.safe_add_node_to_buffer,
-            token_type=TokenType.STATEMENT_END,
-            fallback_token_type=TokenType.NAME,
-        ),
-    ),
-    Rule(
-        name="star",
-        priority=600,
-        pattern=group(r"\*"),
-        action=partial(actions.add_node_to_buffer, token_type=TokenType.STAR),
-    ),
-    Rule(
         name="number",
-        priority=700,
+        priority=350,
         pattern=group(
             r"-?\d+\.?\d*",
             r"-?\.\d+",
@@ -156,8 +126,44 @@ MAIN = [
         action=partial(actions.add_node_to_buffer, token_type=TokenType.NUMBER),
     ),
     Rule(
+        name="semicolon",
+        priority=400,
+        pattern=group(r";"),
+        action=partial(actions.add_node_to_buffer, token_type=TokenType.SEMICOLON),
+    ),
+    Rule(
+        name="star",
+        priority=410,
+        pattern=group(r"\*"),
+        action=partial(actions.add_node_to_buffer, token_type=TokenType.STAR),
+    ),
+    Rule(
+        name="double_colon",
+        priority=420,
+        pattern=group(r"::"),
+        action=partial(actions.add_node_to_buffer, token_type=TokenType.DOUBLE_COLON),
+    ),
+    Rule(
+        name="colon",
+        priority=430,
+        pattern=group(r":"),
+        action=partial(actions.add_node_to_buffer, token_type=TokenType.COLON),
+    ),
+    Rule(
+        name="comma",
+        priority=440,
+        pattern=group(r","),
+        action=partial(actions.add_node_to_buffer, token_type=TokenType.COMMA),
+    ),
+    Rule(
+        name="dot",
+        priority=450,
+        pattern=group(r"\."),
+        action=partial(actions.add_node_to_buffer, token_type=TokenType.DOT),
+    ),
+    Rule(
         name="bracket_open",
-        priority=800,
+        priority=500,
         pattern=group(
             r"\[",
             r"\(",
@@ -167,7 +173,7 @@ MAIN = [
     ),
     Rule(
         name="bracket_close",
-        priority=810,
+        priority=510,
         pattern=group(
             r"\]",
             r"\)",
@@ -176,20 +182,8 @@ MAIN = [
         action=partial(actions.add_node_to_buffer, token_type=TokenType.BRACKET_CLOSE),
     ),
     Rule(
-        name="double_colon",
-        priority=900,
-        pattern=group(r"::"),
-        action=partial(actions.add_node_to_buffer, token_type=TokenType.DOUBLE_COLON),
-    ),
-    Rule(
-        name="colon",
-        priority=905,
-        pattern=group(r":"),
-        action=partial(actions.add_node_to_buffer, token_type=TokenType.COLON),
-    ),
-    Rule(
         name="other_identifiers",
-        priority=907,
+        priority=600,
         pattern=group(
             r"@\w+",  # stages
             r"\$\d+",  # pg placeholders
@@ -199,7 +193,7 @@ MAIN = [
     ),
     Rule(
         name="operator",
-        priority=910,
+        priority=800,
         pattern=group(
             r"\|\|?\/",  # square or cube root ||/
             r"~=",  # geo compare
@@ -231,156 +225,6 @@ MAIN = [
             r"[+\-*/%&|^=<>:#!]=?",  # singles
         ),
         action=partial(actions.add_node_to_buffer, token_type=TokenType.OPERATOR),
-    ),
-    Rule(
-        name="word_operator",
-        priority=920,
-        pattern=group(
-            r"all",
-            r"any",
-            r"as",
-            r"(not\s+)?between",
-            r"cube",
-            r"(not\s+)?exists",
-            r"filter",
-            r"grouping sets",
-            r"(not\s+)?in",
-            r"is(\s+not)?",
-            r"isnull",
-            r"(not\s+)?i?like(\s+any)?",
-            r"over",
-            r"(un)?pivot",
-            r"notnull",
-            r"(not\s+)?regexp",
-            r"(not\s+)?rlike",
-            r"rollup",
-            r"some",
-            r"(not\s+)?similar\s+to",
-            r"tablesample",
-            r"within\s+group",
-        )
-        + group(r"\W", r"$"),
-        action=partial(actions.add_node_to_buffer, token_type=TokenType.WORD_OPERATOR),
-    ),
-    Rule(
-        name="star_replace_exclude",
-        priority=921,
-        pattern=group(
-            r"exclude",
-            r"replace",
-        )
-        + group(r"\s+\("),
-        action=partial(
-            actions.add_node_to_buffer,
-            token_type=TokenType.WORD_OPERATOR,
-        ),
-    ),
-    Rule(
-        # a join's using word operator must be followed
-        # by parens; otherwise, it's probably a
-        # delete's USING, which is an unterminated
-        # keyword
-        name="join_using",
-        priority=922,
-        pattern=group(r"using") + group(r"\s*\("),
-        action=partial(actions.add_node_to_buffer, token_type=TokenType.WORD_OPERATOR),
-    ),
-    Rule(
-        name="on",
-        priority=940,
-        pattern=group(r"on") + group(r"\W", r"$"),
-        action=partial(actions.add_node_to_buffer, token_type=TokenType.ON),
-    ),
-    Rule(
-        name="boolean_operator",
-        priority=950,
-        pattern=group(
-            r"and",
-            r"or",
-            r"not",
-        )
-        + group(r"\W", r"$"),
-        action=partial(
-            actions.add_node_to_buffer,
-            token_type=TokenType.BOOLEAN_OPERATOR,
-        ),
-    ),
-    Rule(
-        name="comma",
-        priority=960,
-        pattern=group(r","),
-        action=partial(actions.add_node_to_buffer, token_type=TokenType.COMMA),
-    ),
-    Rule(
-        name="dot",
-        priority=970,
-        pattern=group(r"\."),
-        action=partial(actions.add_node_to_buffer, token_type=TokenType.DOT),
-    ),
-    Rule(
-        name="unterm_keyword",
-        priority=1000,
-        pattern=group(
-            r"with(\s+recursive)?",
-            (
-                r"select(\s+(as\s+struct|as\s+value))?"
-                r"(\s+(all|top\s+\d+|distinct))?"
-                # select into is ddl that needs additional handling
-                r"(?!\s+into)"
-            ),
-            r"delete\s+from",
-            r"from",
-            (
-                r"(natural\s+)?"
-                r"((inner|cross|((left|right|full)(\s+outer)?))\s+)?join"
-            ),
-            # this is the USING following DELETE, not the join operator
-            # (see above)
-            r"using",
-            r"lateral\s+view(\s+outer)?",
-            r"where",
-            r"group\s+by",
-            r"cluster\s+by",
-            r"distribute\s+by",
-            r"sort\s+by",
-            r"having",
-            r"qualify",
-            r"window",
-            r"order\s+by",
-            r"limit",
-            r"fetch\s+(first|next)",
-            r"for\s+(update|no\s+key\s+update|share|key\s+share)",
-            r"when",
-            r"then",
-            r"else",
-            r"partition\s+by",
-            r"rows\s+between",
-            r"values",
-            # in pg, RETURNING can be the last clause of
-            # a DELETE statement
-            r"returning",
-        )
-        + group(r"\W", r"$"),
-        action=partial(actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD),
-    ),
-    Rule(
-        # BQ arrays use an offset(n) function for
-        # indexing that we do not want to match. This
-        # should only match the offset in limit ... offset,
-        # which must be followed by a space
-        name="offset_keyword",
-        priority=1001,
-        pattern=group(r"offset") + group(r"\s+", r"$"),
-        action=partial(actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD),
-    ),
-    Rule(
-        name="set_operator",
-        priority=1010,
-        pattern=group(
-            r"(union|intersect|except|minus)(\s+all|distinct)?",
-        )
-        + group(r"\W", r"$"),
-        action=actions.handle_set_operator,
     ),
     Rule(
         name="bq_typed_array",
@@ -475,6 +319,165 @@ MAIN = [
         priority=9000,
         pattern=group(NEWLINE),
         action=actions.handle_newline,
+    ),
+]
+
+SELECT = [
+    Rule(
+        name="statement_start",
+        priority=1000,
+        pattern=group(r"case") + group(r"\W", r"$"),
+        action=partial(
+            actions.add_node_to_buffer, token_type=TokenType.STATEMENT_START
+        ),
+    ),
+    Rule(
+        name="statement_end",
+        priority=1010,
+        pattern=group(r"end") + group(r"\W", r"$"),
+        action=partial(
+            actions.safe_add_node_to_buffer,
+            token_type=TokenType.STATEMENT_END,
+            fallback_token_type=TokenType.NAME,
+        ),
+    ),
+    Rule(
+        name="word_operator",
+        priority=1100,
+        pattern=group(
+            r"all",
+            r"any",
+            r"as",
+            r"(not\s+)?between",
+            r"cube",
+            r"(not\s+)?exists",
+            r"filter",
+            r"grouping sets",
+            r"(not\s+)?in",
+            r"is(\s+not)?",
+            r"isnull",
+            r"(not\s+)?i?like(\s+any)?",
+            r"over",
+            r"(un)?pivot",
+            r"notnull",
+            r"(not\s+)?regexp",
+            r"(not\s+)?rlike",
+            r"rollup",
+            r"some",
+            r"(not\s+)?similar\s+to",
+            r"tablesample",
+            r"within\s+group",
+        )
+        + group(r"\W", r"$"),
+        action=partial(actions.add_node_to_buffer, token_type=TokenType.WORD_OPERATOR),
+    ),
+    Rule(
+        name="star_replace_exclude",
+        priority=1101,
+        pattern=group(
+            r"exclude",
+            r"replace",
+        )
+        + group(r"\s+\("),
+        action=partial(
+            actions.add_node_to_buffer,
+            token_type=TokenType.WORD_OPERATOR,
+        ),
+    ),
+    Rule(
+        # a join's using word operator must be followed
+        # by parens; otherwise, it's probably a
+        # delete's USING, which is an unterminated
+        # keyword
+        name="join_using",
+        priority=1110,
+        pattern=group(r"using") + group(r"\s*\("),
+        action=partial(actions.add_node_to_buffer, token_type=TokenType.WORD_OPERATOR),
+    ),
+    Rule(
+        name="on",
+        priority=1120,
+        pattern=group(r"on") + group(r"\W", r"$"),
+        action=partial(actions.add_node_to_buffer, token_type=TokenType.ON),
+    ),
+    Rule(
+        name="boolean_operator",
+        priority=1200,
+        pattern=group(
+            r"and",
+            r"or",
+            r"not",
+        )
+        + group(r"\W", r"$"),
+        action=partial(
+            actions.add_node_to_buffer,
+            token_type=TokenType.BOOLEAN_OPERATOR,
+        ),
+    ),
+    Rule(
+        name="unterm_keyword",
+        priority=1300,
+        pattern=group(
+            r"with(\s+recursive)?",
+            (
+                r"select(\s+(as\s+struct|as\s+value))?"
+                r"(\s+(all|top\s+\d+|distinct))?"
+                # select into is ddl that needs additional handling
+                r"(?!\s+into)"
+            ),
+            r"delete\s+from",
+            r"from",
+            (
+                r"(natural\s+)?"
+                r"((inner|cross|((left|right|full)(\s+outer)?))\s+)?join"
+            ),
+            # this is the USING following DELETE, not the join operator
+            # (see above)
+            r"using",
+            r"lateral\s+view(\s+outer)?",
+            r"where",
+            r"group\s+by",
+            r"cluster\s+by",
+            r"distribute\s+by",
+            r"sort\s+by",
+            r"having",
+            r"qualify",
+            r"window",
+            r"order\s+by",
+            r"limit",
+            r"fetch\s+(first|next)",
+            r"for\s+(update|no\s+key\s+update|share|key\s+share)",
+            r"when",
+            r"then",
+            r"else",
+            r"partition\s+by",
+            r"rows\s+between",
+            r"values",
+            # in pg, RETURNING can be the last clause of
+            # a DELETE statement
+            r"returning",
+        )
+        + group(r"\W", r"$"),
+        action=partial(actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD),
+    ),
+    Rule(
+        # BQ arrays use an offset(n) function for
+        # indexing that we do not want to match. This
+        # should only match the offset in limit ... offset,
+        # which must be followed by a space
+        name="offset_keyword",
+        priority=1310,
+        pattern=group(r"offset") + group(r"\s+", r"$"),
+        action=partial(actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD),
+    ),
+    Rule(
+        name="set_operator",
+        priority=1320,
+        pattern=group(
+            r"(union|intersect|except|minus)(\s+all|distinct)?",
+        )
+        + group(r"\W", r"$"),
+        action=actions.handle_set_operator,
     ),
 ]
 JINJA = [

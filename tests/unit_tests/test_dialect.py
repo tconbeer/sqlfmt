@@ -1,4 +1,5 @@
-from typing import Any, Counter, Dict
+from collections import Counter
+from typing import Any, Dict
 
 import pytest
 

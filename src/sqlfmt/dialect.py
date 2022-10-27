@@ -3,7 +3,7 @@ from typing import Dict, List
 
 from sqlfmt.analyzer import Analyzer
 from sqlfmt.node_manager import NodeManager
-from sqlfmt.rule import JINJA, MAIN, Rule
+from sqlfmt.rule import JINJA, MAIN, SELECT, Rule
 
 
 class Dialect(ABC):
@@ -48,7 +48,7 @@ class Polyglot(Dialect):
     def __init__(self) -> None:
 
         self.RULES: Dict[str, List[Rule]] = {
-            "main": [*MAIN],
+            "main": [*MAIN, *SELECT],
             "jinja": [*JINJA],
         }
 

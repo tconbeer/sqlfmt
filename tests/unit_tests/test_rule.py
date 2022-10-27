@@ -1,8 +1,9 @@
+from collections import Counter
 from typing import List
 
 import pytest
 
-from sqlfmt.rule import JINJA, MAIN, Rule
+from sqlfmt.rule import JINJA, MAIN, SELECT, Rule
 
 
 def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
@@ -47,8 +48,8 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (MAIN, "comment", "#nospace"),
         (MAIN, "comment_start", "/*"),
         (MAIN, "comment_end", "*/"),
-        (MAIN, "statement_start", "case"),
-        (MAIN, "statement_end", "END"),
+        (SELECT, "statement_start", "case"),
+        (SELECT, "statement_end", "END"),
         (MAIN, "star", "*"),
         (MAIN, "number", "145.8"),
         (MAIN, "number", "-.58"),
@@ -111,57 +112,57 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (MAIN, "operator", "#>"),
         (MAIN, "operator", "#>>"),
         (MAIN, "operator", "-|-"),  # range adjacency
-        (MAIN, "word_operator", "is"),
-        (MAIN, "word_operator", "is not"),
-        (MAIN, "word_operator", "in"),
-        (MAIN, "word_operator", "not in"),
-        (MAIN, "word_operator", "not\n\nin"),
-        (MAIN, "word_operator", "like"),
-        (MAIN, "word_operator", "not like"),
-        (MAIN, "word_operator", "ilike"),
-        (MAIN, "word_operator", "not ilike"),
-        (MAIN, "word_operator", "like any"),
-        (MAIN, "word_operator", "not like any"),
-        (MAIN, "word_operator", "any"),
-        (MAIN, "word_operator", "some"),
-        (MAIN, "word_operator", "exists"),
-        (MAIN, "word_operator", "not exists"),
-        (MAIN, "word_operator", "all"),
-        (MAIN, "word_operator", "grouping sets"),
-        (MAIN, "word_operator", "cube"),
-        (MAIN, "word_operator", "rollup"),
-        (MAIN, "word_operator", "over"),
-        (MAIN, "word_operator", "within group"),
-        (MAIN, "word_operator", "filter"),
-        (MAIN, "word_operator", "as"),
-        (MAIN, "word_operator", "tablesample"),
-        (MAIN, "word_operator", "pivot"),
-        (MAIN, "word_operator", "unpivot"),
-        (MAIN, "on", "on"),
-        (MAIN, "boolean_operator", "AND"),
+        (SELECT, "word_operator", "is"),
+        (SELECT, "word_operator", "is not"),
+        (SELECT, "word_operator", "in"),
+        (SELECT, "word_operator", "not in"),
+        (SELECT, "word_operator", "not\n\nin"),
+        (SELECT, "word_operator", "like"),
+        (SELECT, "word_operator", "not like"),
+        (SELECT, "word_operator", "ilike"),
+        (SELECT, "word_operator", "not ilike"),
+        (SELECT, "word_operator", "like any"),
+        (SELECT, "word_operator", "not like any"),
+        (SELECT, "word_operator", "any"),
+        (SELECT, "word_operator", "some"),
+        (SELECT, "word_operator", "exists"),
+        (SELECT, "word_operator", "not exists"),
+        (SELECT, "word_operator", "all"),
+        (SELECT, "word_operator", "grouping sets"),
+        (SELECT, "word_operator", "cube"),
+        (SELECT, "word_operator", "rollup"),
+        (SELECT, "word_operator", "over"),
+        (SELECT, "word_operator", "within group"),
+        (SELECT, "word_operator", "filter"),
+        (SELECT, "word_operator", "as"),
+        (SELECT, "word_operator", "tablesample"),
+        (SELECT, "word_operator", "pivot"),
+        (SELECT, "word_operator", "unpivot"),
+        (SELECT, "on", "on"),
+        (SELECT, "boolean_operator", "AND"),
         (MAIN, "comma", ","),
         (MAIN, "dot", "."),
-        (MAIN, "unterm_keyword", "select DISTINCT"),
-        (MAIN, "unterm_keyword", "select"),
-        (MAIN, "unterm_keyword", "select\n\t    distinct"),
-        (MAIN, "unterm_keyword", "select top 25"),
-        (MAIN, "unterm_keyword", "select all"),
-        (MAIN, "unterm_keyword", "natural\t    full outer join"),
-        (MAIN, "unterm_keyword", "left join"),
-        (MAIN, "unterm_keyword", "cross join"),
-        (MAIN, "unterm_keyword", "join"),
-        (MAIN, "unterm_keyword", "values"),
-        (MAIN, "unterm_keyword", "cluster by"),
-        (MAIN, "unterm_keyword", "sort\nby"),
-        (MAIN, "unterm_keyword", "distribute\t by"),
-        (MAIN, "unterm_keyword", "lateral view"),
-        (MAIN, "unterm_keyword", "lateral view outer"),
-        (MAIN, "unterm_keyword", "delete from"),
-        (MAIN, "set_operator", "union"),
-        (MAIN, "set_operator", "union all"),
-        (MAIN, "set_operator", "intersect"),
-        (MAIN, "set_operator", "minus"),
-        (MAIN, "set_operator", "except"),
+        (SELECT, "unterm_keyword", "select DISTINCT"),
+        (SELECT, "unterm_keyword", "select"),
+        (SELECT, "unterm_keyword", "select\n\t    distinct"),
+        (SELECT, "unterm_keyword", "select top 25"),
+        (SELECT, "unterm_keyword", "select all"),
+        (SELECT, "unterm_keyword", "natural\t    full outer join"),
+        (SELECT, "unterm_keyword", "left join"),
+        (SELECT, "unterm_keyword", "cross join"),
+        (SELECT, "unterm_keyword", "join"),
+        (SELECT, "unterm_keyword", "values"),
+        (SELECT, "unterm_keyword", "cluster by"),
+        (SELECT, "unterm_keyword", "sort\nby"),
+        (SELECT, "unterm_keyword", "distribute\t by"),
+        (SELECT, "unterm_keyword", "lateral view"),
+        (SELECT, "unterm_keyword", "lateral view outer"),
+        (SELECT, "unterm_keyword", "delete from"),
+        (SELECT, "set_operator", "union"),
+        (SELECT, "set_operator", "union all"),
+        (SELECT, "set_operator", "intersect"),
+        (SELECT, "set_operator", "minus"),
+        (SELECT, "set_operator", "except"),
         (MAIN, "bq_typed_array", "array<INT64>"),
         (MAIN, "nonreserved_keyword", "explain"),
         (MAIN, "nonreserved_keyword", "explain analyze"),
@@ -251,13 +252,13 @@ def test_regex_exact_match(
         (MAIN, "quoted_name", "my_unquoted_name"),
         (MAIN, "double_colon", ":"),
         (MAIN, "operator", "."),
-        (MAIN, "word_operator", "using"),
-        (MAIN, "unterm_keyword", "lateral flatten"),
-        (MAIN, "unterm_keyword", "for"),
-        (MAIN, "unterm_keyword", "select into"),
-        (MAIN, "star_replace_exclude", "replace"),
-        (MAIN, "unterm_keyword", "selection"),
-        (MAIN, "unterm_keyword", "delete"),
+        (SELECT, "word_operator", "using"),
+        (SELECT, "unterm_keyword", "lateral flatten"),
+        (SELECT, "unterm_keyword", "for"),
+        (SELECT, "unterm_keyword", "select into"),
+        (SELECT, "star_replace_exclude", "replace"),
+        (SELECT, "unterm_keyword", "selection"),
+        (SELECT, "unterm_keyword", "delete"),
         (MAIN, "unsupported_ddl", "insert('abc', 1, 2, 'Z')"),
         (
             MAIN,
@@ -279,7 +280,31 @@ def test_regex_anti_match(
 
 
 def test_regex_should_not_match_empty_string() -> None:
-    rules = [*MAIN, *JINJA]
+    rules = [*MAIN, *SELECT, *JINJA]
     for rule in rules:
         match = rule.program.match("")
         assert match is None, f"{rule.name} rule matches empty string"
+
+
+def test_main_priority_range() -> None:
+    for rule in MAIN:
+        assert rule.priority >= 0
+        assert rule.priority < 10000
+        #  this range reserved for other rulesets
+        assert not (rule.priority > 1000 and rule.priority < 3000)
+
+
+def test_select_priority_range() -> None:
+    for rule in SELECT:
+        assert rule.priority >= 1000
+        assert rule.priority < 3000
+
+
+@pytest.mark.parametrize("ruleset", [MAIN, SELECT, JINJA])
+def test_rule_priorities_unique_within_ruleset(ruleset: List[Rule]) -> None:
+    name_counts = Counter([rule.name for rule in ruleset])
+    assert max(name_counts.values()) == 1
+    priority_counts = Counter([rule.priority for rule in ruleset])
+    assert max(priority_counts.values()) == 1
+    pattern_counts = Counter([rule.pattern for rule in ruleset])
+    assert max(pattern_counts.values()) == 1
