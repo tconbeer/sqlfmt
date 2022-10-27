@@ -164,18 +164,20 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (MAIN, "set_operator", "minus"),
         (MAIN, "set_operator", "except"),
         (CORE, "bq_typed_array", "array<INT64>"),
-        (CORE, "explain", "explain"),
-        (CORE, "explain", "explain analyze"),
-        (CORE, "explain", "explain using text"),
-        (CORE, "unsupported_ddl", "create table"),
-        (CORE, "unsupported_ddl", "select\ninto"),
-        (CORE, "unsupported_ddl", "insert"),
-        (CORE, "unsupported_ddl", "insert into"),
-        (CORE, "unsupported_ddl", "insert overwrite"),
-        (CORE, "unsupported_ddl", "insert overwrite into"),
-        (CORE, "unsupported_ddl", "update"),
+        (MAIN, "explain", "explain"),
+        (MAIN, "explain", "explain analyze"),
+        (MAIN, "explain", "explain using text"),
+        (MAIN, "grant", "grant"),
+        (MAIN, "grant", "revoke"),
+        (MAIN, "unsupported_ddl", "create table"),
+        (MAIN, "unsupported_ddl", "select\ninto"),
+        (MAIN, "unsupported_ddl", "insert"),
+        (MAIN, "unsupported_ddl", "insert into"),
+        (MAIN, "unsupported_ddl", "insert overwrite"),
+        (MAIN, "unsupported_ddl", "insert overwrite into"),
+        (MAIN, "unsupported_ddl", "update"),
         (
-            CORE,
+            MAIN,
             "unsupported_ddl",
             (
                 "create function foo()\n"
@@ -183,14 +185,14 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
                 "returns int language javascript as $$foo;$$"
             ),
         ),
-        (CORE, "name", "my_table_45"),
-        (CORE, "name", "replace"),
-        (CORE, "other_identifiers", "$2"),
-        (CORE, "other_identifiers", "@my_unquoted_stage"),
-        (CORE, "other_identifiers", "%s"),
-        (CORE, "other_identifiers", "%(name)s"),
-        (CORE, "other_identifiers", "%(anything! else!)s"),
-        (CORE, "newline", "\n"),
+        (MAIN, "name", "my_table_45"),
+        (MAIN, "name", "replace"),
+        (MAIN, "other_identifiers", "$2"),
+        (MAIN, "other_identifiers", "@my_unquoted_stage"),
+        (MAIN, "other_identifiers", "%s"),
+        (MAIN, "other_identifiers", "%(name)s"),
+        (MAIN, "other_identifiers", "%(anything! else!)s"),
+        (MAIN, "newline", "\n"),
         (JINJA, "jinja_comment", "{# my comment #}"),
         (JINJA, "jinja_comment", "{#-my comment -#}"),
         (JINJA, "jinja_comment", "{#-\nmy\ncomment\n-#}"),
@@ -229,6 +231,7 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (JINJA, "jinja_snapshot_block_end", "{% endsnapshot %}"),
         (GRANT, "unterm_keyword", "grant"),
         (GRANT, "unterm_keyword", "revoke"),
+        (GRANT, "unterm_keyword", "revoke grant option for"),
         (GRANT, "unterm_keyword", "to"),
         (GRANT, "unterm_keyword", "from"),
         (GRANT, "unterm_keyword", "with grant option"),
@@ -264,13 +267,14 @@ def test_regex_exact_match(
         (MAIN, "star_replace_exclude", "replace"),
         (MAIN, "unterm_keyword", "MAINion"),
         (MAIN, "unterm_keyword", "delete"),
-        (CORE, "unsupported_ddl", "insert('abc', 1, 2, 'Z')"),
+        (MAIN, "unsupported_ddl", "insert('abc', 1, 2, 'Z')"),
         (
             CORE,
             "bq_typed_array",
             "array < something and int64 > something_else[0]",
         ),
         (JINJA, "jinja_set_block_start", "{% set foo = 'baz' %}"),
+        (GRANT, "unterm_keyword", "select"),
     ],
 )
 def test_regex_anti_match(
@@ -296,7 +300,7 @@ def test_core_priority_range() -> None:
         assert rule.priority >= 0
         assert rule.priority < 10000
         #  this range reserved for other rulesets
-        assert not (rule.priority > 1000 and rule.priority < 3000)
+        assert not (rule.priority > 1000 and rule.priority < 5000)
 
 
 @pytest.mark.parametrize("ruleset", [CORE, MAIN, JINJA, GRANT])

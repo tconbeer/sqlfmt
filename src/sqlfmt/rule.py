@@ -385,85 +385,12 @@ CORE = [
     ),
     Rule(
         name="bq_typed_array",
-        priority=3000,
+        priority=900,
         pattern=group(
             r"array<\w+>",
         )
         + group(r"\[", r"$"),
         action=partial(actions.add_node_to_buffer, token_type=TokenType.NAME),
-    ),
-    Rule(
-        name="explain",
-        priority=4000,
-        pattern=group(r"explain(\s+(analyze|verbose|using\s+(tabular|json|text)))?")
-        + group(r"\W", r"$"),
-        action=partial(
-            actions.handle_nonreserved_keyword,
-            action=partial(
-                actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD
-            ),
-        ),
-    ),
-    Rule(
-        name="unsupported_ddl",
-        priority=4999,
-        pattern=group(
-            group(
-                r"alter",
-                r"attach\s+rls\s+policy",
-                r"cache\s+table",
-                r"clear\s+cache",
-                r"cluster",
-                r"comment",
-                r"copy",
-                r"create",
-                r"deallocate",
-                r"declare",
-                r"describe",
-                r"desc\s+datashare",
-                r"desc\s+identity\s+provider",
-                r"delete",
-                r"detach\s+rls\s+policy",
-                r"discard",
-                r"do",
-                r"drop",
-                r"execute",
-                r"export",
-                r"fetch",
-                r"get",
-                r"handler",
-                r"import\s+foreign\s+schema",
-                r"import\s+table",
-                # snowflake: "insert into" or "insert overwrite into"
-                # snowflake: has insert() function
-                # spark: "insert overwrite" without the trailing "into"
-                # redshift/pg: "insert into" only
-                # bigquery: bare "insert" is okay
-                r"insert(\s+overwrite)?(\s+into)?(?!\()",
-                r"list",
-                r"lock",
-                r"merge",
-                r"move",
-                # prepare transaction statements are simple enough
-                # so we'll allow them
-                r"prepare(?!\s+transaction)",
-                r"put",
-                r"reassign\s+owned",
-                r"remove",
-                r"rename\s+table",
-                r"repair",
-                r"security\s+label",
-                r"select\s+into",
-                r"truncate",
-                r"unload",
-                r"update",
-                r"validate",
-            )
-            + rf"\b({SQL_COMMENT}|{SQL_QUOTED_EXP}|[^'`\"$;])*?"
-        )
-        + rf"{NEWLINE}*"
-        + group(r";", r"$"),
-        action=actions.handle_possible_unsupported_ddl,
     ),
     Rule(
         name="name",
@@ -500,23 +427,8 @@ GRANT = [
     ),
 ]
 
-DDL = [
-    Rule(
-        name="grant",
-        priority=4010,
-        pattern=group(r"grant", r"revoke") + group(r"\W", r"$"),
-        action=partial(
-            actions.handle_nonreserved_keyword,
-            action=partial(
-                actions.lex_ruleset, new_ruleset=GRANT, stop_exception=StopRulesetLexing
-            ),
-        ),
-    ),
-]
-
 MAIN = [
     *CORE,
-    *DDL,
     Rule(
         name="statement_start",
         priority=1000,
@@ -672,5 +584,89 @@ MAIN = [
         )
         + group(r"\W", r"$"),
         action=actions.handle_set_operator,
+    ),
+    Rule(
+        name="explain",
+        priority=2000,
+        pattern=group(r"explain(\s+(analyze|verbose|using\s+(tabular|json|text)))?")
+        + group(r"\W", r"$"),
+        action=partial(
+            actions.handle_nonreserved_keyword,
+            action=partial(
+                actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD
+            ),
+        ),
+    ),
+    Rule(
+        name="grant",
+        priority=2010,
+        pattern=group(r"grant", r"revoke") + group(r"\W", r"$"),
+        action=partial(
+            actions.handle_nonreserved_keyword,
+            action=partial(
+                actions.lex_ruleset, new_ruleset=GRANT, stop_exception=StopRulesetLexing
+            ),
+        ),
+    ),
+    Rule(
+        name="unsupported_ddl",
+        priority=2999,
+        pattern=group(
+            group(
+                r"alter",
+                r"attach\s+rls\s+policy",
+                r"cache\s+table",
+                r"clear\s+cache",
+                r"cluster",
+                r"comment",
+                r"copy",
+                r"create",
+                r"deallocate",
+                r"declare",
+                r"describe",
+                r"desc\s+datashare",
+                r"desc\s+identity\s+provider",
+                r"delete",
+                r"detach\s+rls\s+policy",
+                r"discard",
+                r"do",
+                r"drop",
+                r"execute",
+                r"export",
+                r"fetch",
+                r"get",
+                r"handler",
+                r"import\s+foreign\s+schema",
+                r"import\s+table",
+                # snowflake: "insert into" or "insert overwrite into"
+                # snowflake: has insert() function
+                # spark: "insert overwrite" without the trailing "into"
+                # redshift/pg: "insert into" only
+                # bigquery: bare "insert" is okay
+                r"insert(\s+overwrite)?(\s+into)?(?!\()",
+                r"list",
+                r"lock",
+                r"merge",
+                r"move",
+                # prepare transaction statements are simple enough
+                # so we'll allow them
+                r"prepare(?!\s+transaction)",
+                r"put",
+                r"reassign\s+owned",
+                r"remove",
+                r"rename\s+table",
+                r"repair",
+                r"security\s+label",
+                r"select\s+into",
+                r"truncate",
+                r"unload",
+                r"update",
+                r"validate",
+            )
+            + rf"\b({SQL_COMMENT}|{SQL_QUOTED_EXP}|[^'`\"$;])*?"
+        )
+        + rf"{NEWLINE}*"
+        + group(r";", r"$"),
+        action=actions.handle_possible_unsupported_ddl,
     ),
 ]
