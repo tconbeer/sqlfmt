@@ -452,7 +452,7 @@ def test_handle_unsupported_ddl(default_analyzer: Analyzer) -> None:
     assert select_line.nodes[3].token.type == TokenType.NAME
 
 
-def test_handle_nonreserved_keyword(default_analyzer: Analyzer) -> None:
+def test_handle_explain(default_analyzer: Analyzer) -> None:
     source_string = """
     explain select 1;
     select explain, 1 from baz;

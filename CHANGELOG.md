@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Formatting Changes + Bug Fixes
 
 -   sqlfmt now supports `delete` statements and the associated keywords `using` and `returning` ([#281](https://github.com/tconbeer/sqlfmt/issues/281))
+-   sqlfmt now supports `grant` and `revoke` statements and all associated keywords ([#283](https://github.com/tconbeer/sqlfmt/issues/283))
 -   sqlfmt now supports the `explain` keyword ([#280](https://github.com/tconbeer/sqlfmt/issues/280))
 
 
