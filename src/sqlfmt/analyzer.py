@@ -1,6 +1,6 @@
 import re
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from sqlfmt.comment import Comment
 from sqlfmt.exception import SqlfmtBracketError, SqlfmtParsingError
@@ -21,11 +21,12 @@ class Analyzer:
     """
 
     line_length: int
-    rules: Dict[str, List[Rule]]
+    rules: List[Rule]
     node_manager: NodeManager
     node_buffer: List[Node] = field(default_factory=list)
     comment_buffer: List[Comment] = field(default_factory=list)
     line_buffer: List[Line] = field(default_factory=list)
+    rule_stack: List[List[Rule]] = field(default_factory=list)
     pos: int = 0
 
     @property
@@ -97,19 +98,26 @@ class Analyzer:
         self.write_buffers_to_query(q)
         return q
 
-    def get_rule(self, ruleset: str, rule_name: str) -> Rule:
+    def push_rules(self, new_rules: List[Rule]) -> None:
+        self.rule_stack.append(self.rules.copy())
+        self.rules = new_rules
+
+    def pop_rules(self) -> List[Rule]:
+        old_rules = self.rules
+        self.rules = self.rule_stack.pop()
+        return old_rules
+
+    def get_rule(self, rule_name: str) -> Rule:
         """
         Return the rule from ruleset that matches rule_name
         """
-        matching_rules = filter(
-            lambda rule: rule.name == rule_name, self.rules[ruleset]
-        )
+        matching_rules = filter(lambda rule: rule.name == rule_name, self.rules)
         try:
             return next(matching_rules)
         except StopIteration:
-            raise ValueError(f"No rule '{rule_name}' in ruleset '{ruleset}'")
+            raise ValueError(f"No rule '{rule_name}'")
 
-    def lex(self, source_string: str, ruleset: str = "main", eof_pos: int = -1) -> None:
+    def lex(self, source_string: str, eof_pos: int = -1) -> None:
         """
         Repeatedly match Rules to the source_string (until the source_string is
         exhausted) and apply the matched action.
@@ -125,7 +133,7 @@ class Analyzer:
         last_loop_pos = -1
         while self.pos < eof_pos and self.pos > last_loop_pos:
             last_loop_pos = self.pos
-            for rule in self.rules[ruleset]:
+            for rule in self.rules:
                 match = rule.program.match(source_string, self.pos)
                 if match:
                     rule.action(self, source_string, match)

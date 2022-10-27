@@ -5,7 +5,14 @@ import pytest
 from sqlfmt import actions
 from sqlfmt.analyzer import Analyzer
 from sqlfmt.exception import SqlfmtBracketError, StopJinjaLexing
+from sqlfmt.rule import JINJA
 from sqlfmt.token import Token, TokenType
+
+
+@pytest.fixture
+def jinja_analyzer(default_analyzer: Analyzer) -> Analyzer:
+    default_analyzer.push_rules(JINJA)
+    return default_analyzer
 
 
 def test_raise_sqlfmt_bracket_error(default_analyzer: Analyzer) -> None:
@@ -19,7 +26,7 @@ def test_raise_sqlfmt_bracket_error(default_analyzer: Analyzer) -> None:
 
 def test_add_node_to_buffer(default_analyzer: Analyzer) -> None:
     source_string = "select a, b, c\n"
-    rule = default_analyzer.get_rule("main", "unterm_keyword")
+    rule = default_analyzer.get_rule("unterm_keyword")
     match = rule.program.match(source_string, pos=default_analyzer.pos)
     assert match
     actions.add_node_to_buffer(
@@ -35,7 +42,7 @@ def test_add_node_to_buffer(default_analyzer: Analyzer) -> None:
 
     assert default_analyzer.pos == 6
 
-    rule = default_analyzer.get_rule("main", "name")
+    rule = default_analyzer.get_rule("name")
     match = rule.program.match(source_string, pos=default_analyzer.pos)
     assert match
     actions.add_node_to_buffer(default_analyzer, source_string, match, TokenType.NAME)
@@ -52,7 +59,7 @@ def test_add_node_to_buffer(default_analyzer: Analyzer) -> None:
 
 def test_safe_add_node_to_buffer(default_analyzer: Analyzer) -> None:
     source_string = "end\n"
-    rule = default_analyzer.get_rule("main", "statement_end")
+    rule = default_analyzer.get_rule("statement_end")
     match = rule.program.match(source_string, pos=default_analyzer.pos)
     assert match
     with pytest.raises(SqlfmtBracketError):
@@ -77,7 +84,7 @@ def test_safe_add_node_to_buffer(default_analyzer: Analyzer) -> None:
 
 def test_add_comment_to_buffer(default_analyzer: Analyzer) -> None:
     source_string = "-- a comment\n"
-    rule = default_analyzer.get_rule("main", "comment")
+    rule = default_analyzer.get_rule("comment")
     match = rule.program.match(source_string, pos=default_analyzer.pos)
     assert match
     actions.add_comment_to_buffer(default_analyzer, source_string, match)
@@ -94,7 +101,7 @@ def test_add_comment_to_buffer(default_analyzer: Analyzer) -> None:
 
 def test_handle_newline_with_nodes(default_analyzer: Analyzer) -> None:
     source_string = "a_name\n"
-    rule = default_analyzer.get_rule("main", "name")
+    rule = default_analyzer.get_rule("name")
     match = rule.program.match(source_string, pos=default_analyzer.pos)
     assert match
     actions.add_node_to_buffer(default_analyzer, source_string, match, TokenType.NAME)
@@ -102,7 +109,7 @@ def test_handle_newline_with_nodes(default_analyzer: Analyzer) -> None:
     assert len(default_analyzer.node_buffer) > 0
     assert default_analyzer.comment_buffer == []
 
-    rule = default_analyzer.get_rule("main", "newline")
+    rule = default_analyzer.get_rule("newline")
     match = rule.program.match(source_string, pos=default_analyzer.pos)
     assert match
     actions.handle_newline(default_analyzer, source_string, match)
@@ -120,7 +127,7 @@ def test_handle_newline_empty(default_analyzer: Analyzer) -> None:
     assert default_analyzer.comment_buffer == []
     assert default_analyzer.node_buffer == []
     assert default_analyzer.pos == 0
-    rule = default_analyzer.get_rule("main", "newline")
+    rule = default_analyzer.get_rule("newline")
     for i in range(1, 4):
         match = rule.program.match(source_string, default_analyzer.pos)
         assert match
@@ -139,7 +146,7 @@ def test_handle_newline_leading_comments(default_analyzer: Analyzer) -> None:
     assert default_analyzer.comment_buffer == []
     assert default_analyzer.node_buffer == []
 
-    comment_rule = default_analyzer.get_rule("main", "comment")
+    comment_rule = default_analyzer.get_rule("comment")
     match = comment_rule.program.match(source_string, pos=default_analyzer.pos)
     assert match
     actions.add_comment_to_buffer(default_analyzer, source_string, match)
@@ -147,7 +154,7 @@ def test_handle_newline_leading_comments(default_analyzer: Analyzer) -> None:
     assert len(default_analyzer.comment_buffer) == 1
     assert default_analyzer.node_buffer == []
 
-    nl_rule = default_analyzer.get_rule("main", "newline")
+    nl_rule = default_analyzer.get_rule("newline")
     match = nl_rule.program.match(source_string, pos=default_analyzer.pos)
     assert match
     actions.handle_newline(default_analyzer, source_string, match)
@@ -164,7 +171,7 @@ def test_handle_newline_leading_comments(default_analyzer: Analyzer) -> None:
     assert default_analyzer.node_buffer == []
     assert len(default_analyzer.comment_buffer) == 1
 
-    name_rule = default_analyzer.get_rule("main", "name")
+    name_rule = default_analyzer.get_rule("name")
     match = name_rule.program.match(source_string, pos=default_analyzer.pos)
     assert match
     actions.add_node_to_buffer(default_analyzer, source_string, match, TokenType.NAME)
@@ -203,7 +210,7 @@ def test_handle_set_operator(
     has_preceding_newline: bool,
     expected_type: TokenType,
 ) -> None:
-    rule = default_analyzer.get_rule("main", "set_operator")
+    rule = default_analyzer.get_rule("set_operator")
     match = rule.program.match(source_string, pos=default_analyzer.pos)
     assert match
 
@@ -241,7 +248,7 @@ def test_handle_set_operator(
     ],
 )
 def test_handle_jinja(
-    default_analyzer: Analyzer,
+    jinja_analyzer: Analyzer,
     source_string: str,
     start_name: str,
     end_name: str,
@@ -250,17 +257,17 @@ def test_handle_jinja(
         token_type = TokenType.JINJA_STATEMENT
     else:
         token_type = TokenType.JINJA_EXPRESSION
-    start_rule = default_analyzer.get_rule("jinja", start_name)
+    start_rule = jinja_analyzer.get_rule(start_name)
     match = start_rule.program.match(source_string)
     assert match, "Start Rule does not match start of test string"
     with pytest.raises(StopJinjaLexing):
         actions.handle_jinja(
-            default_analyzer, source_string, match, start_name, end_name, token_type
+            jinja_analyzer, source_string, match, start_name, end_name, token_type
         )
-    assert len(source_string) == default_analyzer.pos
-    assert len(default_analyzer.node_buffer) == 1
-    assert default_analyzer.node_buffer[0].token.type == token_type
-    assert len(str(default_analyzer.node_buffer[0]).strip()) == len(source_string)
+    assert len(source_string) == jinja_analyzer.pos
+    assert len(jinja_analyzer.node_buffer) == 1
+    assert jinja_analyzer.node_buffer[0].token.type == token_type
+    assert len(str(jinja_analyzer.node_buffer[0]).strip()) == len(source_string)
 
 
 @pytest.mark.parametrize(
@@ -270,34 +277,34 @@ def test_handle_jinja(
         "{% set ns.my_var %}\n!\n{% endset %}",
     ],
 )
-def test_handle_jinja_set_block(default_analyzer: Analyzer, source_string: str) -> None:
-    start_rule = default_analyzer.get_rule("jinja", "jinja_set_block_start")
+def test_handle_jinja_set_block(jinja_analyzer: Analyzer, source_string: str) -> None:
+    start_rule = jinja_analyzer.get_rule("jinja_set_block_start")
     match = start_rule.program.match(source_string)
     assert match is not None
     with pytest.raises(StopJinjaLexing):
-        actions.handle_jinja_set_block(default_analyzer, source_string, match)
-    assert default_analyzer.line_buffer == []
-    assert default_analyzer.comment_buffer == []
-    assert len(default_analyzer.node_buffer) == 1
-    assert default_analyzer.node_buffer[0].token.type == TokenType.DATA
+        actions.handle_jinja_set_block(jinja_analyzer, source_string, match)
+    assert jinja_analyzer.line_buffer == []
+    assert jinja_analyzer.comment_buffer == []
+    assert len(jinja_analyzer.node_buffer) == 1
+    assert jinja_analyzer.node_buffer[0].token.type == TokenType.DATA
 
 
-def test_handle_jinja_set_block_unterminated(default_analyzer: Analyzer) -> None:
+def test_handle_jinja_set_block_unterminated(jinja_analyzer: Analyzer) -> None:
     source_string = """
     {% set foo %}
     !
     something_else
     """.strip()
-    start_rule = default_analyzer.get_rule("jinja", "jinja_set_block_start")
+    start_rule = jinja_analyzer.get_rule("jinja_set_block_start")
     match = start_rule.program.match(source_string)
     assert match is not None
     with pytest.raises(SqlfmtBracketError) as excinfo:
-        actions.handle_jinja_set_block(default_analyzer, source_string, match)
+        actions.handle_jinja_set_block(jinja_analyzer, source_string, match)
 
     assert "{% endset %}" in str(excinfo.value)
 
 
-def test_handle_jinja_if_block(default_analyzer: Analyzer) -> None:
+def test_handle_jinja_if_block(jinja_analyzer: Analyzer) -> None:
     source_string = """
     {% if foo == bar %}
         column_a,
@@ -305,44 +312,43 @@ def test_handle_jinja_if_block(default_analyzer: Analyzer) -> None:
         column_b,
     {% endif %}
     """.strip()
-    start_rule = default_analyzer.get_rule("jinja", "jinja_if_block_start")
+    start_rule = jinja_analyzer.get_rule("jinja_if_block_start")
     match = start_rule.program.match(source_string)
     assert match is not None
     with pytest.raises(StopJinjaLexing):
         actions.handle_jinja_block(
-            default_analyzer,
+            jinja_analyzer,
             source_string,
             match,
             "jinja_if_block_start",
             "jinja_if_block_end",
             ["jinja_elif_block_start", "jinja_else_block_start"],
         )
-    assert len(default_analyzer.line_buffer) == 4
+    assert len(jinja_analyzer.line_buffer) == 4
     assert (
-        default_analyzer.line_buffer[0].nodes[0].token.type
-        == TokenType.JINJA_BLOCK_START
+        jinja_analyzer.line_buffer[0].nodes[0].token.type == TokenType.JINJA_BLOCK_START
     )
     assert (
-        default_analyzer.line_buffer[2].nodes[0].token.type
+        jinja_analyzer.line_buffer[2].nodes[0].token.type
         == TokenType.JINJA_BLOCK_KEYWORD
     )
-    assert len(default_analyzer.node_buffer) == 1
-    assert default_analyzer.node_buffer[-1].token.type == TokenType.JINJA_BLOCK_END
+    assert len(jinja_analyzer.node_buffer) == 1
+    assert jinja_analyzer.node_buffer[-1].token.type == TokenType.JINJA_BLOCK_END
 
 
-def test_handle_jinja_if_block_unterminated(default_analyzer: Analyzer) -> None:
+def test_handle_jinja_if_block_unterminated(jinja_analyzer: Analyzer) -> None:
     source_string = """
     {% if foo == bar %}
         column_a,
     {%- else -%}
         1+1
     """.strip()
-    start_rule = default_analyzer.get_rule("jinja", "jinja_if_block_start")
+    start_rule = jinja_analyzer.get_rule("jinja_if_block_start")
     match = start_rule.program.match(source_string)
     assert match is not None
     with pytest.raises(SqlfmtBracketError) as excinfo:
         actions.handle_jinja_block(
-            default_analyzer,
+            jinja_analyzer,
             source_string,
             match,
             "jinja_if_block_start",
@@ -352,7 +358,7 @@ def test_handle_jinja_if_block_unterminated(default_analyzer: Analyzer) -> None:
     assert "{% endif %}" in str(excinfo.value)
 
 
-def test_handle_jinja_if_block_nested(default_analyzer: Analyzer) -> None:
+def test_handle_jinja_if_block_nested(jinja_analyzer: Analyzer) -> None:
     source_string = """
     {% if foo == bar %}
         {%- if baz == qux %}
@@ -364,43 +370,41 @@ def test_handle_jinja_if_block_nested(default_analyzer: Analyzer) -> None:
         column_c
     {% endif -%}
     """.strip()
-    start_rule = default_analyzer.get_rule("jinja", "jinja_if_block_start")
+    start_rule = jinja_analyzer.get_rule("jinja_if_block_start")
     match = start_rule.program.match(source_string)
     assert match is not None
     with pytest.raises(StopJinjaLexing):
         actions.handle_jinja_block(
-            default_analyzer,
+            jinja_analyzer,
             source_string,
             match,
             "jinja_if_block_start",
             "jinja_if_block_end",
             ["jinja_elif_block_start", "jinja_else_block_start"],
         )
-    assert len(default_analyzer.line_buffer) == 8
+    assert len(jinja_analyzer.line_buffer) == 8
     assert (
-        default_analyzer.line_buffer[0].nodes[0].token.type
-        == TokenType.JINJA_BLOCK_START
+        jinja_analyzer.line_buffer[0].nodes[0].token.type == TokenType.JINJA_BLOCK_START
     )
     assert (
-        default_analyzer.line_buffer[1].nodes[0].token.type
-        == TokenType.JINJA_BLOCK_START
+        jinja_analyzer.line_buffer[1].nodes[0].token.type == TokenType.JINJA_BLOCK_START
     )
     assert (
-        default_analyzer.line_buffer[3].nodes[0].token.type
+        jinja_analyzer.line_buffer[3].nodes[0].token.type
         == TokenType.JINJA_BLOCK_KEYWORD
     )
     assert (
-        default_analyzer.line_buffer[5].nodes[0].token.type == TokenType.JINJA_BLOCK_END
+        jinja_analyzer.line_buffer[5].nodes[0].token.type == TokenType.JINJA_BLOCK_END
     )
     assert (
-        default_analyzer.line_buffer[6].nodes[0].token.type
+        jinja_analyzer.line_buffer[6].nodes[0].token.type
         == TokenType.JINJA_BLOCK_KEYWORD
     )
-    assert len(default_analyzer.node_buffer) == 1
-    assert default_analyzer.node_buffer[-1].token.type == TokenType.JINJA_BLOCK_END
+    assert len(jinja_analyzer.node_buffer) == 1
+    assert jinja_analyzer.node_buffer[-1].token.type == TokenType.JINJA_BLOCK_END
 
 
-def test_handle_jinja_for_block(default_analyzer: Analyzer) -> None:
+def test_handle_jinja_for_block(jinja_analyzer: Analyzer) -> None:
     source_string = """
     {% for source in var('marketing_warehouse_ad_group_sources') %}
         {% set relation_source = 'stg_' + source + '_ad_groups' %}
@@ -413,21 +417,20 @@ def test_handle_jinja_for_block(default_analyzer: Analyzer) -> None:
             {% if not loop.last %}union all{% endif %}
     {% endfor %}
     """.strip()
-    start_rule = default_analyzer.get_rule("jinja", "jinja_for_block_start")
+    start_rule = jinja_analyzer.get_rule("jinja_for_block_start")
     match = start_rule.program.match(source_string)
     assert match is not None, "Did not match starting block"
     with pytest.raises(StopJinjaLexing):
-        start_rule.action(default_analyzer, source_string, match)
-    assert len(default_analyzer.line_buffer) == 9
+        start_rule.action(jinja_analyzer, source_string, match)
+    assert len(jinja_analyzer.line_buffer) == 9
     assert (
-        default_analyzer.line_buffer[0].nodes[0].token.type
-        == TokenType.JINJA_BLOCK_START
+        jinja_analyzer.line_buffer[0].nodes[0].token.type == TokenType.JINJA_BLOCK_START
     )
     assert (
-        default_analyzer.line_buffer[1].nodes[0].token.type == TokenType.JINJA_STATEMENT
+        jinja_analyzer.line_buffer[1].nodes[0].token.type == TokenType.JINJA_STATEMENT
     )
-    assert len(default_analyzer.node_buffer) == 1
-    assert default_analyzer.node_buffer[-1].token.type == TokenType.JINJA_BLOCK_END
+    assert len(jinja_analyzer.node_buffer) == 1
+    assert jinja_analyzer.node_buffer[-1].token.type == TokenType.JINJA_BLOCK_END
 
 
 def test_handle_unsupported_ddl(default_analyzer: Analyzer) -> None:

@@ -4,6 +4,7 @@ from functools import partial
 from typing import TYPE_CHECKING, Callable
 
 from sqlfmt import actions
+from sqlfmt.exception import StopJinjaLexing
 from sqlfmt.re_utils import EOL, MAYBE_WHITESPACES, NEWLINE, group
 from sqlfmt.token import TokenType
 
@@ -57,6 +58,161 @@ SQL_COMMENT = group(
     r"/\*[^*]*\*+(?:[^/*][^*]*\*+)*/",  # simple block comment
 )
 
+JINJA = [
+    Rule(
+        name="jinja_comment",
+        priority=0,
+        pattern=group(r"\{\#.*?\#\}"),
+        action=actions.add_jinja_comment_to_buffer,
+    ),
+    Rule(
+        name="jinja_set_block_start",
+        priority=100,
+        pattern=group(r"\{%-?\s*set\s+[^=]+?-?%\}"),
+        action=actions.handle_jinja_set_block,
+    ),
+    Rule(
+        name="jinja_set_block_end",
+        priority=101,
+        pattern=group(r"\{%-?\s*endset\s*-?%\}"),
+        action=actions.raise_sqlfmt_bracket_error,
+    ),
+    Rule(
+        name="jinja_if_block_start",
+        priority=200,
+        pattern=group(r"\{%-?\s*if.*?-?%\}"),
+        action=partial(
+            actions.handle_jinja_block,
+            start_name="jinja_if_block_start",
+            end_name="jinja_if_block_end",
+            other_names=[
+                "jinja_elif_block_start",
+                "jinja_else_block_start",
+            ],
+        ),
+    ),
+    Rule(
+        name="jinja_elif_block_start",
+        priority=201,
+        pattern=group(r"\{%-?\s*elif\s+\w+.*?-?%\}"),
+        action=actions.raise_sqlfmt_bracket_error,
+    ),
+    Rule(
+        name="jinja_else_block_start",
+        priority=202,
+        pattern=group(r"\{%-?\s*else\s*-?%\}"),
+        action=actions.raise_sqlfmt_bracket_error,
+    ),
+    Rule(
+        name="jinja_if_block_end",
+        priority=203,
+        pattern=group(r"\{%-?\s*endif\s*-?%\}"),
+        action=actions.raise_sqlfmt_bracket_error,
+    ),
+    Rule(
+        name="jinja_for_block_start",
+        priority=210,
+        pattern=group(r"\{%-?\s*for\s+.*?-?%\}"),
+        action=partial(
+            actions.handle_jinja_block,
+            start_name="jinja_for_block_start",
+            end_name="jinja_for_block_end",
+            other_names=[],
+        ),
+    ),
+    Rule(
+        name="jinja_for_block_end",
+        priority=211,
+        pattern=group(r"\{%-?\s*endfor\s*-?%\}"),
+        action=actions.raise_sqlfmt_bracket_error,
+    ),
+    Rule(
+        name="jinja_macro_block_start",
+        priority=220,
+        pattern=group(r"\{%-?\s*macro\s+\w+.*?-?%\}"),
+        action=partial(
+            actions.handle_jinja_block,
+            start_name="jinja_macro_block_start",
+            end_name="jinja_macro_block_end",
+            other_names=[],
+        ),
+    ),
+    Rule(
+        name="jinja_macro_block_end",
+        priority=221,
+        pattern=group(r"\{%-?\s*endmacro\s*-?%\}"),
+        action=actions.raise_sqlfmt_bracket_error,
+    ),
+    Rule(
+        name="jinja_test_block_start",
+        priority=230,
+        pattern=group(r"\{%-?\s*test\s+\w+.*?-?%\}"),
+        action=partial(
+            actions.handle_jinja_block,
+            start_name="jinja_test_block_start",
+            end_name="jinja_test_block_end",
+            other_names=[],
+        ),
+    ),
+    Rule(
+        name="jinja_test_block_end",
+        priority=231,
+        pattern=group(r"\{%-?\s*endtest\s*-?%\}"),
+        action=actions.raise_sqlfmt_bracket_error,
+    ),
+    Rule(
+        name="jinja_snapshot_block_start",
+        priority=240,
+        pattern=group(r"\{%-?\s*snapshot\s+\w+.*?-?%\}"),
+        action=partial(
+            actions.handle_jinja_block,
+            start_name="jinja_snapshot_block_start",
+            end_name="jinja_snapshot_block_end",
+            other_names=[],
+        ),
+    ),
+    Rule(
+        name="jinja_snapshot_block_end",
+        priority=241,
+        pattern=group(r"\{%-?\s*endsnapshot\s*-?%\}"),
+        action=actions.raise_sqlfmt_bracket_error,
+    ),
+    Rule(
+        name="jinja_statement_start",
+        priority=500,
+        pattern=group(r"\{%-?"),
+        action=partial(
+            actions.handle_jinja,
+            start_name="jinja_statement_start",
+            end_name="jinja_statement_end",
+            token_type=TokenType.JINJA_STATEMENT,
+        ),
+    ),
+    Rule(
+        name="jinja_expression_start",
+        priority=510,
+        pattern=group(r"\{\{-?"),
+        action=partial(
+            actions.handle_jinja,
+            start_name="jinja_expression_start",
+            end_name="jinja_expression_end",
+            token_type=TokenType.JINJA_EXPRESSION,
+        ),
+    ),
+    Rule(
+        name="jinja_statement_end",
+        priority=600,
+        pattern=group(r"-?%\}"),
+        action=actions.raise_sqlfmt_bracket_error,
+    ),
+    Rule(
+        name="jinja_expression_end",
+        priority=610,
+        pattern=group(r"-?\}\}"),
+        action=actions.raise_sqlfmt_bracket_error,
+    ),
+]
+
 MAIN = [
     Rule(
         name="fmt_off",
@@ -77,7 +233,9 @@ MAIN = [
         name="jinja_start",
         priority=120,
         pattern=group(r"\{[{%#]"),
-        action=actions.lex_jinja,
+        action=partial(
+            actions.lex_ruleset, new_ruleset=JINJA, stop_exception=StopJinjaLexing
+        ),
     ),
     # we should never match the end of a jinja tag by itself
     Rule(
@@ -104,7 +262,6 @@ MAIN = [
         pattern=group(r"/\*"),
         action=partial(
             actions.handle_potentially_nested_tokens,
-            ruleset="main",
             start_name="comment_start",
             end_name="comment_end",
             token_type=TokenType.COMMENT,
@@ -478,159 +635,5 @@ SELECT = [
         )
         + group(r"\W", r"$"),
         action=actions.handle_set_operator,
-    ),
-]
-JINJA = [
-    Rule(
-        name="jinja_comment",
-        priority=0,
-        pattern=group(r"\{\#.*?\#\}"),
-        action=actions.add_jinja_comment_to_buffer,
-    ),
-    Rule(
-        name="jinja_set_block_start",
-        priority=100,
-        pattern=group(r"\{%-?\s*set\s+[^=]+?-?%\}"),
-        action=actions.handle_jinja_set_block,
-    ),
-    Rule(
-        name="jinja_set_block_end",
-        priority=101,
-        pattern=group(r"\{%-?\s*endset\s*-?%\}"),
-        action=actions.raise_sqlfmt_bracket_error,
-    ),
-    Rule(
-        name="jinja_if_block_start",
-        priority=200,
-        pattern=group(r"\{%-?\s*if.*?-?%\}"),
-        action=partial(
-            actions.handle_jinja_block,
-            start_name="jinja_if_block_start",
-            end_name="jinja_if_block_end",
-            other_names=[
-                "jinja_elif_block_start",
-                "jinja_else_block_start",
-            ],
-        ),
-    ),
-    Rule(
-        name="jinja_elif_block_start",
-        priority=201,
-        pattern=group(r"\{%-?\s*elif\s+\w+.*?-?%\}"),
-        action=actions.raise_sqlfmt_bracket_error,
-    ),
-    Rule(
-        name="jinja_else_block_start",
-        priority=202,
-        pattern=group(r"\{%-?\s*else\s*-?%\}"),
-        action=actions.raise_sqlfmt_bracket_error,
-    ),
-    Rule(
-        name="jinja_if_block_end",
-        priority=203,
-        pattern=group(r"\{%-?\s*endif\s*-?%\}"),
-        action=actions.raise_sqlfmt_bracket_error,
-    ),
-    Rule(
-        name="jinja_for_block_start",
-        priority=210,
-        pattern=group(r"\{%-?\s*for\s+.*?-?%\}"),
-        action=partial(
-            actions.handle_jinja_block,
-            start_name="jinja_for_block_start",
-            end_name="jinja_for_block_end",
-            other_names=[],
-        ),
-    ),
-    Rule(
-        name="jinja_for_block_end",
-        priority=211,
-        pattern=group(r"\{%-?\s*endfor\s*-?%\}"),
-        action=actions.raise_sqlfmt_bracket_error,
-    ),
-    Rule(
-        name="jinja_macro_block_start",
-        priority=220,
-        pattern=group(r"\{%-?\s*macro\s+\w+.*?-?%\}"),
-        action=partial(
-            actions.handle_jinja_block,
-            start_name="jinja_macro_block_start",
-            end_name="jinja_macro_block_end",
-            other_names=[],
-        ),
-    ),
-    Rule(
-        name="jinja_macro_block_end",
-        priority=221,
-        pattern=group(r"\{%-?\s*endmacro\s*-?%\}"),
-        action=actions.raise_sqlfmt_bracket_error,
-    ),
-    Rule(
-        name="jinja_test_block_start",
-        priority=230,
-        pattern=group(r"\{%-?\s*test\s+\w+.*?-?%\}"),
-        action=partial(
-            actions.handle_jinja_block,
-            start_name="jinja_test_block_start",
-            end_name="jinja_test_block_end",
-            other_names=[],
-        ),
-    ),
-    Rule(
-        name="jinja_test_block_end",
-        priority=231,
-        pattern=group(r"\{%-?\s*endtest\s*-?%\}"),
-        action=actions.raise_sqlfmt_bracket_error,
-    ),
-    Rule(
-        name="jinja_snapshot_block_start",
-        priority=240,
-        pattern=group(r"\{%-?\s*snapshot\s+\w+.*?-?%\}"),
-        action=partial(
-            actions.handle_jinja_block,
-            start_name="jinja_snapshot_block_start",
-            end_name="jinja_snapshot_block_end",
-            other_names=[],
-        ),
-    ),
-    Rule(
-        name="jinja_snapshot_block_end",
-        priority=241,
-        pattern=group(r"\{%-?\s*endsnapshot\s*-?%\}"),
-        action=actions.raise_sqlfmt_bracket_error,
-    ),
-    Rule(
-        name="jinja_statement_start",
-        priority=500,
-        pattern=group(r"\{%-?"),
-        action=partial(
-            actions.handle_jinja,
-            start_name="jinja_statement_start",
-            end_name="jinja_statement_end",
-            token_type=TokenType.JINJA_STATEMENT,
-        ),
-    ),
-    Rule(
-        name="jinja_expression_start",
-        priority=510,
-        pattern=group(r"\{\{-?"),
-        action=partial(
-            actions.handle_jinja,
-            start_name="jinja_expression_start",
-            end_name="jinja_expression_end",
-            token_type=TokenType.JINJA_EXPRESSION,
-        ),
-    ),
-    Rule(
-        name="jinja_statement_end",
-        priority=600,
-        pattern=group(r"-?%\}"),
-        action=actions.raise_sqlfmt_bracket_error,
-    ),
-    Rule(
-        name="jinja_expression_end",
-        priority=610,
-        pattern=group(r"-?\}\}"),
-        action=actions.raise_sqlfmt_bracket_error,
     ),
 ]

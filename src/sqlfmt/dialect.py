@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List
+from typing import List
 
 from sqlfmt.analyzer import Analyzer
 from sqlfmt.node_manager import NodeManager
-from sqlfmt.rule import JINJA, MAIN, SELECT, Rule
+from sqlfmt.rule import MAIN, SELECT, Rule
 
 
 class Dialect(ABC):
@@ -14,18 +14,15 @@ class Dialect(ABC):
     must have a key "main" that contains the rules for the main lexing loop.
     """
 
-    RULES: Dict[str, List[Rule]]
+    RULES: List[Rule]
     case_sensitive_names = False
 
     @abstractmethod
-    def get_rules(self) -> Dict[str, List[Rule]]:
+    def get_rules(self) -> List[Rule]:
         """
-        Returns the Dialect's Rules, as a dict keyed by the name of the ruleset,
-        e.g., main
+        Returns the Dialect's Rules, sorted by priority
         """
-        return {
-            k: sorted(v, key=lambda rule: rule.priority) for k, v in self.RULES.items()
-        }
+        return sorted(self.RULES, key=lambda rule: rule.priority)
 
     def initialize_analyzer(self, line_length: int) -> Analyzer:
         """
@@ -46,13 +43,9 @@ class Polyglot(Dialect):
     """
 
     def __init__(self) -> None:
+        self.RULES = [*MAIN, *SELECT]
 
-        self.RULES: Dict[str, List[Rule]] = {
-            "main": [*MAIN, *SELECT],
-            "jinja": [*JINJA],
-        }
-
-    def get_rules(self) -> Dict[str, List[Rule]]:
+    def get_rules(self) -> List[Rule]:
         return super().get_rules()
 
 

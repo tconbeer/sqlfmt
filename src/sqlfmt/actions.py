@@ -1,14 +1,19 @@
 import re
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Type
 
 from sqlfmt.comment import Comment
-from sqlfmt.exception import SqlfmtBracketError, StopJinjaLexing
+from sqlfmt.exception import (
+    SqlfmtBracketError,
+    SqlfmtControlFlowException,
+    StopJinjaLexing,
+)
 from sqlfmt.line import Line
 from sqlfmt.node import Node, get_previous_token
 from sqlfmt.token import Token, TokenType
 
 if TYPE_CHECKING:
     from sqlfmt.analyzer import Analyzer
+    from sqlfmt.rule import Rule
 
 
 def group(*choices: str) -> str:
@@ -220,7 +225,7 @@ def handle_possible_unsupported_ddl(
     else:
         # this looks like unsupported ddl/sql, but we're inside a query already, so
         # it's probably just an ordinary name
-        name_rule = analyzer.get_rule(ruleset="main", rule_name="name")
+        name_rule = analyzer.get_rule(rule_name="name")
         name_match = name_rule.program.match(source_string, pos=analyzer.pos)
         assert name_match, (
             "Internal Error! Please open an issue."
@@ -236,14 +241,21 @@ def handle_possible_unsupported_ddl(
         )
 
 
-def lex_jinja(analyzer: "Analyzer", source_string: str, _: re.Match) -> None:
+def lex_ruleset(
+    analyzer: "Analyzer",
+    source_string: str,
+    _: re.Match,
+    new_ruleset: List["Rule"],
+    stop_exception: Type[SqlfmtControlFlowException],
+) -> None:
     """
-    Makes a nested call to analyzer.lex, with the jinja ruleset activated.
+    Makes a nested call to analyzer.lex, with the new ruleset activated.
     """
+    analyzer.push_rules(new_ruleset)
     try:
-        analyzer.lex(source_string, ruleset="jinja")
-    except StopJinjaLexing:
-        pass
+        analyzer.lex(source_string)
+    except stop_exception:
+        analyzer.pop_rules()
 
 
 def handle_jinja_set_block(
@@ -257,7 +269,7 @@ def handle_jinja_set_block(
     sql or python, and should not be formatted.
     """
     # find the ending tag
-    end_rule = analyzer.get_rule(ruleset="jinja", rule_name="jinja_set_block_end")
+    end_rule = analyzer.get_rule(rule_name="jinja_set_block_end")
     end_match = end_rule.program.search(source_string, pos=analyzer.pos)
     if end_match is None:
         spos, epos = match.span(1)
@@ -309,9 +321,9 @@ def handle_jinja_block(
     )
 
     # configure the block parser
-    start_rule = analyzer.get_rule(ruleset="jinja", rule_name=start_name)
-    end_rule = analyzer.get_rule(ruleset="jinja", rule_name=end_name)
-    other_rules = [analyzer.get_rule(ruleset="jinja", rule_name=r) for r in other_names]
+    start_rule = analyzer.get_rule(rule_name=start_name)
+    end_rule = analyzer.get_rule(rule_name=end_name)
+    other_rules = [analyzer.get_rule(rule_name=r) for r in other_names]
     patterns = [start_rule.pattern, end_rule.pattern] + [r.pattern for r in other_rules]
     program = re.compile(
         MAYBE_WHITESPACES + group(*patterns), re.IGNORECASE | re.DOTALL
@@ -338,9 +350,12 @@ def handle_jinja_block(
                 f" {match.span(0)[0]}. Expected end tag: "
                 f"{simplify_regex(end_rule.pattern)}"
             )
-        # otherwise, if the tag matches, lex everything up to that token, assume sql
+        # otherwise, if the tag matches, lex everything up to that token
+        # using the ruleset that was active before jinja
         next_tag_pos = next_tag_match.span(0)[0]
-        analyzer.lex(source_string, ruleset="main", eof_pos=next_tag_pos)
+        jinja_rules = analyzer.pop_rules()
+        analyzer.lex(source_string, eof_pos=next_tag_pos)
+        analyzer.push_rules(jinja_rules)
         # it is possible for the next_tag_match found above to have already been lexed.
         # but if it hasn't, we need to process it
         if analyzer.pos == next_tag_pos:
@@ -402,7 +417,6 @@ def handle_jinja(
         analyzer=analyzer,
         source_string=source_string,
         match=match,
-        ruleset="jinja",
         start_name=start_name,
         end_name=end_name,
         token_type=token_type,
@@ -414,7 +428,6 @@ def handle_potentially_nested_tokens(
     analyzer: "Analyzer",
     source_string: str,
     match: re.Match,
-    ruleset: str,
     start_name: str,
     end_name: str,
     token_type: TokenType,
@@ -424,8 +437,8 @@ def handle_potentially_nested_tokens(
     Lex potentially nested statements, like jinja statements or
     c-style block comments
     """
-    start_rule = analyzer.get_rule(ruleset=ruleset, rule_name=start_name)
-    end_rule = analyzer.get_rule(ruleset=ruleset, rule_name=end_name)
+    start_rule = analyzer.get_rule(rule_name=start_name)
+    end_rule = analyzer.get_rule(rule_name=end_name)
     # extract properties from matching start of token
     pos, _ = match.span(0)
     spos, epos = match.span(1)

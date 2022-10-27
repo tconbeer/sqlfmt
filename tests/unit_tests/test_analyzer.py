@@ -431,16 +431,12 @@ def test_no_raise_bracket_error_on_end_name(
 
 
 def test_get_rule(default_analyzer: Analyzer) -> None:
-    for ruleset in default_analyzer.rules.keys():
-        for rule in default_analyzer.rules[ruleset]:
-            matched_rule = default_analyzer.get_rule(ruleset, rule.name)
-            assert matched_rule == rule
-
-    with pytest.raises(KeyError):
-        _ = default_analyzer.get_rule("foo", "name")
+    for rule in default_analyzer.rules:
+        matched_rule = default_analyzer.get_rule(rule.name)
+        assert matched_rule == rule
 
     with pytest.raises(ValueError):
-        _ = default_analyzer.get_rule("main", "bar")
+        _ = default_analyzer.get_rule("bar")
 
 
 def test_match_first_jinja_Tag(default_analyzer: Analyzer) -> None:
