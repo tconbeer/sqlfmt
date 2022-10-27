@@ -3,7 +3,7 @@ from typing import List
 
 from sqlfmt.analyzer import Analyzer
 from sqlfmt.node_manager import NodeManager
-from sqlfmt.rule import MAIN, SELECT, Rule
+from sqlfmt.rule import MAIN, Rule
 
 
 class Dialect(ABC):
@@ -43,7 +43,7 @@ class Polyglot(Dialect):
     """
 
     def __init__(self) -> None:
-        self.RULES = [*MAIN, *SELECT]
+        self.RULES = MAIN
 
     def get_rules(self) -> List[Rule]:
         return super().get_rules()

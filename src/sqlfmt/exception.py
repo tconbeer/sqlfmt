@@ -73,6 +73,15 @@ class StopJinjaLexing(SqlfmtControlFlowException):
     pass
 
 
+class StopRulesetLexing(SqlfmtControlFlowException):
+    """
+    Raised by the Analyzer or one of its actions to indicate
+    that further lexing should use the main ruleset
+    """
+
+    pass
+
+
 class CannotMergeException(SqlfmtControlFlowException):
     """
     Raised by the merger if the passed lines cannot be merged

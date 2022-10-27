@@ -4,7 +4,7 @@ from functools import partial
 from typing import TYPE_CHECKING, Callable
 
 from sqlfmt import actions
-from sqlfmt.exception import StopJinjaLexing
+from sqlfmt.exception import StopJinjaLexing, StopRulesetLexing
 from sqlfmt.re_utils import EOL, MAYBE_WHITESPACES, NEWLINE, group
 from sqlfmt.token import TokenType
 
@@ -213,7 +213,7 @@ JINJA = [
     ),
 ]
 
-MAIN = [
+CORE = [
     Rule(
         name="fmt_off",
         priority=0,
@@ -286,7 +286,7 @@ MAIN = [
         name="semicolon",
         priority=400,
         pattern=group(r";"),
-        action=partial(actions.add_node_to_buffer, token_type=TokenType.SEMICOLON),
+        action=actions.handle_semicolon,
     ),
     Rule(
         name="star",
@@ -393,13 +393,15 @@ MAIN = [
         action=partial(actions.add_node_to_buffer, token_type=TokenType.NAME),
     ),
     Rule(
-        name="nonreserved_keyword",
+        name="explain",
         priority=4000,
         pattern=group(r"explain(\s+(analyze|verbose|using\s+(tabular|json|text)))?")
         + group(r"\W", r"$"),
         action=partial(
             actions.handle_nonreserved_keyword,
-            token_type=TokenType.UNTERM_KEYWORD,
+            action=partial(
+                actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD
+            ),
         ),
     ),
     Rule(
@@ -429,7 +431,6 @@ MAIN = [
                 r"export",
                 r"fetch",
                 r"get",
-                r"grant",
                 r"handler",
                 r"import\s+foreign\s+schema",
                 r"import\s+table",
@@ -451,7 +452,6 @@ MAIN = [
                 r"remove",
                 r"rename\s+table",
                 r"repair",
-                r"revoke",
                 r"security\s+label",
                 r"select\s+into",
                 r"truncate",
@@ -479,7 +479,44 @@ MAIN = [
     ),
 ]
 
-SELECT = [
+GRANT = [
+    *CORE,
+    Rule(
+        name="unterm_keyword",
+        priority=1300,
+        pattern=group(
+            r"grant",
+            r"revoke(\s+grant\s+option\s+for)?",
+            r"on",
+            r"to",
+            r"from",
+            r"with\s+grant\s+option",
+            r"granted\s+by",
+            r"cascade",
+            r"restrict",
+        )
+        + group(r"\W", r"$"),
+        action=partial(actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD),
+    ),
+]
+
+DDL = [
+    Rule(
+        name="grant",
+        priority=4010,
+        pattern=group(r"grant", r"revoke") + group(r"\W", r"$"),
+        action=partial(
+            actions.handle_nonreserved_keyword,
+            action=partial(
+                actions.lex_ruleset, new_ruleset=GRANT, stop_exception=StopRulesetLexing
+            ),
+        ),
+    ),
+]
+
+MAIN = [
+    *CORE,
+    *DDL,
     Rule(
         name="statement_start",
         priority=1000,

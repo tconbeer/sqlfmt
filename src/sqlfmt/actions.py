@@ -1,5 +1,5 @@
 import re
-from typing import TYPE_CHECKING, List, Optional, Type
+from typing import TYPE_CHECKING, Callable, List, Optional, Type
 
 from sqlfmt.comment import Comment
 from sqlfmt.exception import (
@@ -152,6 +152,28 @@ def handle_newline(
     analyzer.pos = nl_token.epos
 
 
+def handle_semicolon(
+    analyzer: "Analyzer",
+    source_string: str,
+    match: re.Match,
+) -> None:
+    """
+    When we hit a semicolon, the next token may require a different rule set,
+    so we need to reset the analyzer's rule stack, if new rules have been
+    pushed
+    """
+    if analyzer.rule_stack:
+        analyzer.rules = analyzer.rule_stack[0]
+        analyzer.rule_stack = []
+
+    add_node_to_buffer(
+        analyzer=analyzer,
+        source_string=source_string,
+        match=match,
+        token_type=TokenType.SEMICOLON,
+    )
+
+
 def handle_set_operator(
     analyzer: "Analyzer", source_string: str, match: re.Match
 ) -> None:
@@ -185,11 +207,11 @@ def handle_nonreserved_keyword(
     analyzer: "Analyzer",
     source_string: str,
     match: re.Match,
-    token_type: TokenType,
+    action: Callable[["Analyzer", str, re.Match], None],
 ) -> None:
     """
-    Checks to see if we're at depth 0 (assuming this is a name); if so, then lex
-    this token as the passed type, otherwise lex it as a name.
+    Checks to see if we're at depth 0 (assuming this is a name); if so, then take the
+    passed action, otherwise lex it as a name.
     """
     token = Token.from_match(source_string, match, token_type=TokenType.NAME)
     node = analyzer.node_manager.create_node(
@@ -199,12 +221,7 @@ def handle_nonreserved_keyword(
         analyzer.node_buffer.append(node)
         analyzer.pos = token.epos
     else:
-        add_node_to_buffer(
-            analyzer=analyzer,
-            source_string=source_string,
-            match=match,
-            token_type=token_type,
-        )
+        action(analyzer, source_string, match)
 
 
 def handle_possible_unsupported_ddl(
@@ -251,7 +268,8 @@ def lex_ruleset(
     """
     Makes a nested call to analyzer.lex, with the new ruleset activated.
     """
-    analyzer.push_rules(new_ruleset)
+    rules = sorted(new_ruleset, key=lambda rule: rule.priority)
+    analyzer.push_rules(rules)
     try:
         analyzer.lex(source_string)
     except stop_exception:
