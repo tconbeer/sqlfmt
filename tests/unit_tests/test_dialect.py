@@ -2,7 +2,9 @@ from typing import Any, Counter, Dict
 
 import pytest
 
-from sqlfmt.dialect import ClickHouse, Dialect, Polyglot, Rule, group
+from sqlfmt.dialect import ClickHouse, Dialect, Polyglot
+from sqlfmt.re_utils import group
+from sqlfmt.rule import Rule
 
 
 def test_group() -> None:
@@ -20,6 +22,7 @@ def test_dialect() -> None:
 
 
 class TestAllDialects:
+    # TODO: REFACTOR TO REMOVE DUPLICATION WITH test_rule.py
     @pytest.fixture(params=[Polyglot, ClickHouse])
     def dialect(self, request: Any) -> Polyglot:
         d = request.param()

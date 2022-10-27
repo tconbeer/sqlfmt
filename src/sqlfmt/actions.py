@@ -1,16 +1,28 @@
 import re
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
-from sqlfmt.analyzer import MAYBE_WHITESPACES, Analyzer, group
 from sqlfmt.comment import Comment
 from sqlfmt.exception import SqlfmtBracketError, StopJinjaLexing
 from sqlfmt.line import Line
 from sqlfmt.node import Node, get_previous_token
 from sqlfmt.token import Token, TokenType
 
+if TYPE_CHECKING:
+    from sqlfmt.analyzer import Analyzer
+
+
+def group(*choices: str) -> str:
+    """
+    Convenience function for creating grouped alternatives in regex
+    """
+    return f"({'|'.join(choices)})"
+
+
+MAYBE_WHITESPACES: str = r"[^\S\n]*"  # any whitespace except newline
+
 
 def raise_sqlfmt_bracket_error(
-    _: Analyzer, source_string: str, match: re.Match
+    _: "Analyzer", source_string: str, match: re.Match
 ) -> None:
     spos, epos = match.span(1)
     raw_token = source_string[spos:epos]
@@ -22,7 +34,7 @@ def raise_sqlfmt_bracket_error(
 
 
 def add_node_to_buffer(
-    analyzer: Analyzer,
+    analyzer: "Analyzer",
     source_string: str,
     match: re.Match,
     token_type: TokenType,
@@ -42,7 +54,7 @@ def add_node_to_buffer(
 
 
 def safe_add_node_to_buffer(
-    analyzer: Analyzer,
+    analyzer: "Analyzer",
     source_string: str,
     match: re.Match,
     token_type: TokenType,
@@ -69,7 +81,7 @@ def safe_add_node_to_buffer(
 
 
 def add_comment_to_buffer(
-    analyzer: Analyzer,
+    analyzer: "Analyzer",
     source_string: str,
     match: re.Match,
 ) -> None:
@@ -85,7 +97,7 @@ def add_comment_to_buffer(
 
 
 def add_jinja_comment_to_buffer(
-    analyzer: Analyzer,
+    analyzer: "Analyzer",
     source_string: str,
     match: re.Match,
 ) -> None:
@@ -99,7 +111,7 @@ def add_jinja_comment_to_buffer(
 
 
 def handle_newline(
-    analyzer: Analyzer,
+    analyzer: "Analyzer",
     source_string: str,
     match: re.Match,
 ) -> None:
@@ -136,7 +148,7 @@ def handle_newline(
 
 
 def handle_set_operator(
-    analyzer: Analyzer, source_string: str, match: re.Match
+    analyzer: "Analyzer", source_string: str, match: re.Match
 ) -> None:
     """
     Mostly, when we encounter a set operator (like union) we just want to add
@@ -165,7 +177,7 @@ def handle_set_operator(
 
 
 def handle_nonreserved_keyword(
-    analyzer: Analyzer,
+    analyzer: "Analyzer",
     source_string: str,
     match: re.Match,
     token_type: TokenType,
@@ -191,7 +203,7 @@ def handle_nonreserved_keyword(
 
 
 def handle_possible_unsupported_ddl(
-    analyzer: Analyzer, source_string: str, match: re.Match
+    analyzer: "Analyzer", source_string: str, match: re.Match
 ) -> None:
     """
     Checks to see if we're at depth 0; if so, then lex this token as DATA,
@@ -224,7 +236,7 @@ def handle_possible_unsupported_ddl(
         )
 
 
-def lex_jinja(analyzer: Analyzer, source_string: str, _: re.Match) -> None:
+def lex_jinja(analyzer: "Analyzer", source_string: str, _: re.Match) -> None:
     """
     Makes a nested call to analyzer.lex, with the jinja ruleset activated.
     """
@@ -235,7 +247,7 @@ def lex_jinja(analyzer: Analyzer, source_string: str, _: re.Match) -> None:
 
 
 def handle_jinja_set_block(
-    analyzer: Analyzer,
+    analyzer: "Analyzer",
     source_string: str,
     match: re.Match,
 ) -> None:
@@ -274,7 +286,7 @@ def handle_jinja_set_block(
 
 
 def handle_jinja_block(
-    analyzer: Analyzer,
+    analyzer: "Analyzer",
     source_string: str,
     match: re.Match,
     start_name: str,
@@ -375,7 +387,7 @@ def handle_jinja_block(
 
 
 def handle_jinja(
-    analyzer: Analyzer,
+    analyzer: "Analyzer",
     source_string: str,
     match: re.Match,
     start_name: str,
@@ -399,7 +411,7 @@ def handle_jinja(
 
 
 def handle_potentially_nested_tokens(
-    analyzer: Analyzer,
+    analyzer: "Analyzer",
     source_string: str,
     match: re.Match,
     ruleset: str,
