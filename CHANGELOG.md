@@ -10,6 +10,10 @@ All notable changes to this project will be documented in this file.
 -   sqlfmt now supports `grant` and `revoke` statements and all associated keywords ([#283](https://github.com/tconbeer/sqlfmt/issues/283))
 -   sqlfmt now supports the `explain` keyword ([#280](https://github.com/tconbeer/sqlfmt/issues/280))
 
+### Features
+
+-   sqlfmt is now tested against Python 3.11 ([#242](https://github.com/tconbeer/sqlfmt/issues/242)). Previous versions of sqlfmt are also compatible
+    with Python 3.11. When installed in 3.11, sqlfmt no longer requires the `tomli` dependency.
 
 ## [0.12.0] - 2022-10-14
 
