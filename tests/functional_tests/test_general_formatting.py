@@ -37,7 +37,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/121_stubborn_merge_edge_cases.sql",
         "unformatted/122_values.sql",
         "unformatted/123_spark_keywords.sql",
-        "unformatted/124_bq_typed_array_literals.sql",
+        "unformatted/124_bq_compound_types.sql",
         "unformatted/200_base_model.sql",
         "unformatted/201_basic_snapshot.sql",
         "unformatted/202_unpivot_macro.sql",
@@ -57,6 +57,9 @@ from tests.util import check_formatting, read_test_data
         "unformatted/401_explain_select.sql",
         "unformatted/402_delete_from_using.sql",
         "unformatted/403_grant_revoke.sql",
+        "unformatted/404_create_function_pg_examples.sql",
+        "unformatted/405_create_function_snowflake_examples.sql",
+        "unformatted/406_create_function_bq_examples.sql",
     ],
 )
 def test_formatting(p: str) -> None:

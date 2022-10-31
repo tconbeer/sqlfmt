@@ -174,6 +174,38 @@ def handle_semicolon(
     )
 
 
+def handle_ddl_as(
+    analyzer: "Analyzer",
+    source_string: str,
+    match: re.Match,
+) -> None:
+    """
+    When we hit "as" in a create function or table statement,
+    the following syntax should be parsed using the main (select) rules,
+    unless the next token is a quoted name.
+    """
+    add_node_to_buffer(
+        analyzer=analyzer,
+        source_string=source_string,
+        match=match,
+        token_type=TokenType.UNTERM_KEYWORD,
+    )
+
+    quoted_name_rule = analyzer.get_rule("quoted_name")
+    comment_rule = analyzer.get_rule("comment")
+
+    quoted_name_pattern = rf"({comment_rule.pattern}|\s)*" + quoted_name_rule.pattern
+    quoted_name_match = re.match(
+        quoted_name_pattern, source_string[analyzer.pos :], re.IGNORECASE | re.DOTALL
+    )
+
+    if not quoted_name_match:
+        assert (
+            analyzer.rule_stack
+        ), "Internal Error! Open an issue. Could not parse DDL 'AS'"
+        analyzer.pop_rules()
+
+
 def handle_set_operator(
     analyzer: "Analyzer", source_string: str, match: re.Match
 ) -> None:
@@ -268,8 +300,7 @@ def lex_ruleset(
     """
     Makes a nested call to analyzer.lex, with the new ruleset activated.
     """
-    rules = sorted(new_ruleset, key=lambda rule: rule.priority)
-    analyzer.push_rules(rules)
+    analyzer.push_rules(new_ruleset)
     try:
         analyzer.lex(source_string)
     except stop_exception:

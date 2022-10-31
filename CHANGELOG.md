@@ -8,7 +8,9 @@ All notable changes to this project will be documented in this file.
 
 -   sqlfmt now supports `delete` statements and the associated keywords `using` and `returning` ([#281](https://github.com/tconbeer/sqlfmt/issues/281))
 -   sqlfmt now supports `grant` and `revoke` statements and all associated keywords ([#283](https://github.com/tconbeer/sqlfmt/issues/283))
+-   sqlfmt now supports `create function` statements and all associated keywords ([#282](https://github.com/tconbeer/sqlfmt/issues/282))
 -   sqlfmt now supports the `explain` keyword ([#280](https://github.com/tconbeer/sqlfmt/issues/280))
+-   sqlfmt now supports BigQuery typed table and struct definitions and literals, like `table<a int64, b bytes(5), c string>`
 
 ### Features
 

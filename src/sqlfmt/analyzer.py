@@ -100,7 +100,7 @@ class Analyzer:
 
     def push_rules(self, new_rules: List[Rule]) -> None:
         self.rule_stack.append(self.rules.copy())
-        self.rules = new_rules
+        self.rules = sorted(new_rules, key=lambda rule: rule.priority)
 
     def pop_rules(self) -> List[Rule]:
         old_rules = self.rules
@@ -116,6 +116,25 @@ class Analyzer:
             return next(matching_rules)
         except StopIteration:
             raise ValueError(f"No rule '{rule_name}'")
+
+    def lex_one(self, source_string: str) -> None:
+        """
+        Repeatedly match Rules to the source_string (at self.pos)
+        and apply the matched action.
+
+        Mutates the analyzer's buffers and pos
+        """
+        for rule in self.rules:
+            match = rule.program.match(source_string, self.pos)
+            if match:
+                rule.action(self, source_string, match)
+                return
+        # nothing matched. Either whitespace or an error
+        else:
+            raise SqlfmtParsingError(
+                f"Could not parse SQL at position {self.pos}:"
+                f" '{source_string[self.pos:self.pos+50].strip()}'"
+            )
 
     def lex(self, source_string: str, eof_pos: int = -1) -> None:
         """
@@ -133,17 +152,7 @@ class Analyzer:
         last_loop_pos = -1
         while self.pos < eof_pos and self.pos > last_loop_pos:
             last_loop_pos = self.pos
-            for rule in self.rules:
-                match = rule.program.match(source_string, self.pos)
-                if match:
-                    rule.action(self, source_string, match)
-                    break
-            # nothing matched. Either whitespace or an error
-            else:
-                raise SqlfmtParsingError(
-                    f"Could not parse SQL at position {self.pos}:"
-                    f" '{source_string[self.pos:self.pos+50].strip()}'"
-                )
+            self.lex_one(source_string)
 
     def search_for_terminating_token(
         self,

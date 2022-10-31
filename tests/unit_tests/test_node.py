@@ -53,7 +53,25 @@ def test_is_square_bracket_operator(
     ).parse_query(source_string=source_string)
     n = q.nodes[node_index]
     assert n.value == "["  # just to make sure our index is right
-    assert n.is_square_bracket_operator is result
+    assert n.is_bracket_operator is result
+
+
+@pytest.mark.parametrize(
+    "source_string,node_index,result",
+    [
+        ("foo(0)", 1, False),
+        ("struct<a int64, b int64>(1, 2)", 7, True),
+    ],
+)
+def test_is_paren_bracket_operator(
+    source_string: str, node_index: int, result: bool, default_mode: Mode
+) -> None:
+    q = default_mode.dialect.initialize_analyzer(
+        line_length=default_mode.line_length
+    ).parse_query(source_string=source_string)
+    n = q.nodes[node_index]
+    assert n.value == "("  # just to make sure our index is right
+    assert n.is_bracket_operator is result
 
 
 def test_is_the_and_after_the_between_operator(default_mode: Mode) -> None:

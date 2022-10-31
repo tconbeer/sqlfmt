@@ -20,7 +20,7 @@ sqlfmt is not configurable, except for line length. It enforces a single style. 
 
 sqlfmt is not a linter. It does not parse your code into an AST; it just lexes it and tracks a small subset of tokens that impact formatting. This lets us "do one thing and do it well:" sqlfmt is very fast, and easier to maintain and extend than linters that need a full SQL grammar.
 
-For now, sqlfmt only works on `select` statements (which is all you need if you use sqlfmt with a dbt project). In the future, it will be extended to DDL statements, as well.
+For now, sqlfmt only works on `select`, `delete`, `grant`, `revoke`, and `create function` statements (which is all you need if you use sqlfmt with a dbt project). It is being extended to additional DDL and DML. Visit [this tracking issue](https://github.com/tconbeer/sqlfmt/issues/262) for more information.
 
 ## Documentation
 

@@ -96,6 +96,9 @@ class NodeManager:
             "(": ")",
             "[": "]",
             "case": "end",
+            "array<": ">",
+            "table<": ">",
+            "struct<": ">",
         }
         if (
             last_bracket.token.type
@@ -155,6 +158,10 @@ class NodeManager:
             and previous_token.type == TokenType.COLON
         ):
             return NO_SPACE
+        # open brackets that contain `<` are bq type definitions
+        # like `array<` in `array<int64>` and require a space
+        elif token.type == TokenType.BRACKET_OPEN and "<" in token.token:
+            return SPACE
         # open brackets that follow names are function calls or array indexes.
         # open brackets that follow closing brackets are array indexes.
         # open brackets that follow open brackets are just nested brackets.
@@ -220,6 +227,7 @@ class NodeManager:
         """
         if token.type in (
             TokenType.UNTERM_KEYWORD,
+            TokenType.BRACKET_OPEN,
             TokenType.STATEMENT_START,
             TokenType.STATEMENT_END,
             TokenType.WORD_OPERATOR,
