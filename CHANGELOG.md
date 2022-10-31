@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 -   sqlfmt now supports `create function` statements and all associated keywords ([#282](https://github.com/tconbeer/sqlfmt/issues/282))
 -   sqlfmt now supports the `explain` keyword ([#280](https://github.com/tconbeer/sqlfmt/issues/280))
 -   sqlfmt now supports BigQuery typed table and struct definitions and literals, like `table<a int64, b bytes(5), c string>`
+-   sqlfmt now supports variables like `$foo` as ordinary identifiers
 
 ### Features
 

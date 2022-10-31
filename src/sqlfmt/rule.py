@@ -48,7 +48,7 @@ SQL_QUOTED_EXP = group(
     r'(rb?|b|br|u&|@)?"([^"\\]*(\\.[^"\\]*|""[^"\\]*)*)"',
     # possibly escaped single quotes
     r"(rb?|b|br|u&|x)?'([^'\\]*(\\.[^'\\]*|''[^'\\]*)*)'",
-    r"\$\w*\$.*?\$\w*\$",  # pg dollar-delimited strings
+    r"\$(?P<tag>\w*)\$.*?\$(?P=tag)\$",  # pg dollar-delimited strings
     # possibly escaped backtick
     r"`([^`\\]*(\\.[^`\\]*)*)`",
 )
@@ -346,6 +346,7 @@ CORE = [
         pattern=group(
             r"@\w+",  # stages
             r"\$\d+",  # pg placeholders
+            r"\$\w+",  # variables
             r"%(\([^%()]+\))?s",  # psycopg placeholders
         ),
         action=partial(actions.add_node_to_buffer, token_type=TokenType.NAME),
