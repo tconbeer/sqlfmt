@@ -27,6 +27,7 @@ class Analyzer:
     comment_buffer: List[Comment] = field(default_factory=list)
     line_buffer: List[Line] = field(default_factory=list)
     rule_stack: List[List[Rule]] = field(default_factory=list)
+    stops: List[int] = field(default_factory=list)
     pos: int = 0
 
     @property
@@ -124,6 +125,9 @@ class Analyzer:
 
         Mutates the analyzer's buffers and pos
         """
+        if self.stops and self.pos >= self.stops[-1]:
+            raise StopIteration
+
         for rule in self.rules:
             match = rule.program.match(source_string, self.pos)
             if match:

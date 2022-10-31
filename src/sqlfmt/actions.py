@@ -33,7 +33,7 @@ def raise_sqlfmt_bracket_error(
     raw_token = source_string[spos:epos]
     raise SqlfmtBracketError(
         f"Encountered closing bracket '{raw_token}' at position"
-        f" {spos}, before matching opening bracket:"
+        f" {spos}, before matching opening bracket. Context:"
         f" {source_string[spos:spos+50]}"
     )
 
@@ -403,7 +403,12 @@ def handle_jinja_block(
         # using the ruleset that was active before jinja
         next_tag_pos = next_tag_match.span(0)[0]
         jinja_rules = analyzer.pop_rules()
-        analyzer.lex(source_string, eof_pos=next_tag_pos)
+        analyzer.stops.append(next_tag_pos)
+        try:
+            analyzer.lex(source_string)
+        except StopIteration:
+            analyzer.stops.pop()
+
         analyzer.push_rules(jinja_rules)
         # it is possible for the next_tag_match found above to have already been lexed.
         # but if it hasn't, we need to process it
