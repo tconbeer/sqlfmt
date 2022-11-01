@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.13.0] - 2022-11-01
+
 ### Formatting Changes + Bug Fixes
 
 -   sqlfmt now supports `delete` statements and the associated keywords `using` and `returning` ([#281](https://github.com/tconbeer/sqlfmt/issues/281))
@@ -258,7 +260,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.12.0...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.13.0...HEAD
+
+[0.13.0]: https://github.com/tconbeer/sqlfmt/compare/0.12.0...0.13.0
 
 [0.12.0]: https://github.com/tconbeer/sqlfmt/compare/0.11.1...0.12.0
 
