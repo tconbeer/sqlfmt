@@ -14,11 +14,11 @@ jobs:
 
     steps:
       - name: Check out sqlfmt main branch
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: main
       - name: Set up Python 3.9
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: "3.9"
       - name: Install Poetry
@@ -29,7 +29,7 @@ jobs:
         run: poetry config --no-interaction pypi-token.pypi ${{ secrets.SQLFMT_PYPI_TOKEN }}
       - name: Get sqlfmt Version
         id: sqlfmt_version
-        run: echo "::set-output name=sqlfmt_version::$(poetry version --short)"
+        run: echo "sqlfmt_version=$(poetry version --short)" >> $GITHUB_OUTPUT
       - name: Build package
         run: poetry build --no-interaction
       - name: Publish package to PyPI

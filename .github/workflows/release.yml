@@ -13,11 +13,11 @@ jobs:
 
     steps:
       - name: Check out sqlfmt main branch
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: main
       - name: Set up Python 3.9
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: "3.9"
       - name: Install Poetry
@@ -41,7 +41,7 @@ jobs:
         with:
           commit_message: Bumps version to ${{ github.event.inputs.newVersion }}
       - name: Create pull request into main
-        uses: thomaseizinger/create-pull-request@1.0.0
+        uses: thomaseizinger/create-pull-request@1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
