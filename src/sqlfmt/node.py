@@ -155,12 +155,12 @@ class Node:
             )
         # BQ struct literals have parens that follow closing angle
         # brackets
-        elif self.value == "(":
-            return (
-                prev_token.type == TokenType.BRACKET_CLOSE and ">" in prev_token.token
-            )
         else:
-            return False
+            return (
+                self.value == "("
+                and prev_token.type == TokenType.BRACKET_CLOSE
+                and ">" in prev_token.token
+            )
 
     @property
     def is_closing_bracket(self) -> bool:
