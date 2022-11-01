@@ -505,3 +505,23 @@ def test_handle_ddl_as_quoted(create_function_analyzer: Analyzer) -> None:
     assert create_function_analyzer.rule_stack
     # ensure security definer is being lexed with the create_function ruleset (as a kw)
     assert create_function_analyzer.node_buffer[2].is_unterm_keyword
+
+
+def test_handle_closing_angle_bracket(default_analyzer: Analyzer) -> None:
+    source_string = """
+    table<a int, b int>,
+    array<struct<a int, b string>>,
+    x >> 2,
+    yr > 2022,
+    foo >>= 'bar',
+    """
+    query = default_analyzer.parse_query(source_string=source_string.lstrip())
+    assert all([line.depth == (0, 0) for line in query.lines])
+    table_line = query.lines[0]
+    assert table_line.nodes[0].is_opening_bracket
+    assert table_line.nodes[-3].is_closing_bracket
+    array_line = query.lines[1]
+    assert array_line.nodes[0].is_opening_bracket
+    assert array_line.nodes[-3].is_closing_bracket
+    assert array_line.nodes[-4].is_closing_bracket
+    assert all([line.nodes[1].is_operator for line in query.lines[2:]])

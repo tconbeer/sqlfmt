@@ -352,6 +352,14 @@ CORE = [
         action=partial(actions.add_node_to_buffer, token_type=TokenType.NAME),
     ),
     Rule(
+        name="angle_bracket_close",
+        priority=790,
+        pattern=group(
+            r">",
+        ),
+        action=actions.handle_closing_angle_bracket,
+    ),
+    Rule(
         name="operator",
         priority=800,
         pattern=group(
@@ -382,22 +390,9 @@ CORE = [
             r"[*+?]?\?",  # regex greedy/non-greedy, also ?
             r"!!",  # negate text match
             r"%%",  # psycopg escaped mod operator
-            r">=",  # gte
-            r"[+\-*/%&|^=<:#!]=?",  # singles
+            r"[+\-*/%&|^=<>:#!]=?",  # singles
         ),
         action=partial(actions.add_node_to_buffer, token_type=TokenType.OPERATOR),
-    ),
-    Rule(
-        name="angle_bracket_close",
-        priority=810,
-        pattern=group(
-            r">",
-        ),
-        action=partial(
-            actions.safe_add_node_to_buffer,
-            token_type=TokenType.BRACKET_CLOSE,
-            fallback_token_type=TokenType.OPERATOR,
-        ),
     ),
     Rule(
         name="name",
