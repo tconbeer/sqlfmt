@@ -5,13 +5,19 @@ import pytest
 from sqlfmt import actions
 from sqlfmt.analyzer import Analyzer
 from sqlfmt.exception import SqlfmtBracketError, StopJinjaLexing
-from sqlfmt.rule import JINJA
+from sqlfmt.rule import CREATE_FUNCTION, JINJA
 from sqlfmt.token import Token, TokenType
 
 
 @pytest.fixture
 def jinja_analyzer(default_analyzer: Analyzer) -> Analyzer:
     default_analyzer.push_rules(JINJA)
+    return default_analyzer
+
+
+@pytest.fixture
+def create_function_analyzer(default_analyzer: Analyzer) -> Analyzer:
+    default_analyzer.push_rules(CREATE_FUNCTION)
     return default_analyzer
 
 
@@ -468,3 +474,54 @@ def test_handle_explain(default_analyzer: Analyzer) -> None:
     assert len(select_line.nodes) == 8
     assert select_line.nodes[0].token.type == TokenType.UNTERM_KEYWORD
     assert select_line.nodes[1].token.type == TokenType.NAME
+
+
+def test_handle_ddl_as_unquoted(create_function_analyzer: Analyzer) -> None:
+    source_string = """
+    create function foo
+    language sql
+    as select
+    """
+    create_function_analyzer.lex(source_string=source_string.lstrip())
+    assert len(create_function_analyzer.node_buffer) == 2
+    assert create_function_analyzer.node_buffer[0].is_unterm_keyword
+    # ensure we're lexing using the main ruleset (implying an empty rule stack)
+    assert create_function_analyzer.node_buffer[1].is_unterm_keyword
+    assert not create_function_analyzer.rule_stack
+
+
+def test_handle_ddl_as_quoted(create_function_analyzer: Analyzer) -> None:
+    source_string = """
+    create function foo
+    language sql
+    as $$select
+    1$$ security definer
+    """
+    create_function_analyzer.lex(source_string=source_string.lstrip())
+    assert len(create_function_analyzer.node_buffer) == 3
+    assert create_function_analyzer.node_buffer[0].is_unterm_keyword
+    # ensure we're lexing using the create_fn rules (implying an empty rule stack)
+    assert create_function_analyzer.node_buffer[1].token.type == TokenType.QUOTED_NAME
+    assert create_function_analyzer.rule_stack
+    # ensure security definer is being lexed with the create_function ruleset (as a kw)
+    assert create_function_analyzer.node_buffer[2].is_unterm_keyword
+
+
+def test_handle_closing_angle_bracket(default_analyzer: Analyzer) -> None:
+    source_string = """
+    table<a int, b int>,
+    array<struct<a int, b string>>,
+    x >> 2,
+    yr > 2022,
+    foo >>= 'bar',
+    """
+    query = default_analyzer.parse_query(source_string=source_string.lstrip())
+    assert all([line.depth == (0, 0) for line in query.lines])
+    table_line = query.lines[0]
+    assert table_line.nodes[0].is_opening_bracket
+    assert table_line.nodes[-3].is_closing_bracket
+    array_line = query.lines[1]
+    assert array_line.nodes[0].is_opening_bracket
+    assert array_line.nodes[-3].is_closing_bracket
+    assert array_line.nodes[-4].is_closing_bracket
+    assert all([line.nodes[1].is_operator for line in query.lines[2:]])

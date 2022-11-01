@@ -204,9 +204,9 @@ class Line:
             return False
 
     @property
-    def starts_with_square_bracket_operator(self) -> bool:
+    def starts_with_bracket_operator(self) -> bool:
         try:
-            return self.nodes[0].is_square_bracket_operator
+            return self.nodes[0].is_bracket_operator
         except IndexError:
             return False
 
@@ -237,7 +237,7 @@ class Line:
     @property
     def is_standalone_operator(self) -> bool:
         return self._is_standalone_if(
-            self.starts_with_operator and not self.starts_with_square_bracket_operator
+            self.starts_with_operator and not self.starts_with_bracket_operator
         )
 
     @property

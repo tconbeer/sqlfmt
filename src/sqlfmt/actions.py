@@ -33,7 +33,7 @@ def raise_sqlfmt_bracket_error(
     raw_token = source_string[spos:epos]
     raise SqlfmtBracketError(
         f"Encountered closing bracket '{raw_token}' at position"
-        f" {spos}, before matching opening bracket:"
+        f" {spos}, before matching opening bracket. Context:"
         f" {source_string[spos:spos+50]}"
     )
 
@@ -71,18 +71,9 @@ def safe_add_node_to_buffer(
     Then create a Node from that token and append it to the Analyzer's buffer
     """
     try:
-        token = Token.from_match(source_string, match, token_type)
-        node = analyzer.node_manager.create_node(
-            token=token, previous_node=analyzer.previous_node
-        )
+        add_node_to_buffer(analyzer, source_string, match, token_type)
     except SqlfmtBracketError:
-        token = Token.from_match(source_string, match, fallback_token_type)
-        node = analyzer.node_manager.create_node(
-            token=token, previous_node=analyzer.previous_node
-        )
-    finally:
-        analyzer.node_buffer.append(node)
-        analyzer.pos = token.epos
+        add_node_to_buffer(analyzer, source_string, match, fallback_token_type)
 
 
 def add_comment_to_buffer(
@@ -172,6 +163,80 @@ def handle_semicolon(
         match=match,
         token_type=TokenType.SEMICOLON,
     )
+
+
+def handle_ddl_as(
+    analyzer: "Analyzer",
+    source_string: str,
+    match: re.Match,
+) -> None:
+    """
+    When we hit "as" in a create function or table statement,
+    the following syntax should be parsed using the main (select) rules,
+    unless the next token is a quoted name.
+    """
+    add_node_to_buffer(
+        analyzer=analyzer,
+        source_string=source_string,
+        match=match,
+        token_type=TokenType.UNTERM_KEYWORD,
+    )
+
+    quoted_name_rule = analyzer.get_rule("quoted_name")
+    comment_rule = analyzer.get_rule("comment")
+
+    quoted_name_pattern = rf"({comment_rule.pattern}|\s)*" + quoted_name_rule.pattern
+    quoted_name_match = re.match(
+        quoted_name_pattern, source_string[analyzer.pos :], re.IGNORECASE | re.DOTALL
+    )
+
+    if not quoted_name_match:
+        assert analyzer.rule_stack, (
+            "Internal Error! Open an issue. Could not parse DDL 'as' "
+            f"at pos {analyzer.pos}. Context: "
+            f"{source_string[analyzer.pos :analyzer.pos+50]}"
+        )
+        analyzer.pop_rules()
+
+
+def handle_closing_angle_bracket(
+    analyzer: "Analyzer",
+    source_string: str,
+    match: re.Match,
+) -> None:
+    """
+    When we hit ">", it could be a closing bracket, the ">" operator,
+    or the first character of another operator, like ">>". We need
+    to first assume it's a closing bracket, but if that raises a lexing
+    error, we need to try to match the source again against the operator
+    rule, to get the whole operator token
+    """
+    try:
+        add_node_to_buffer(
+            analyzer=analyzer,
+            source_string=source_string,
+            match=match,
+            token_type=TokenType.BRACKET_CLOSE,
+        )
+    except SqlfmtBracketError:
+        operator_rule = analyzer.get_rule("operator")
+        operator_pattern = re.compile(
+            r"\s*" + operator_rule.pattern,
+            re.IGNORECASE | re.DOTALL,
+        )
+        operator_match = operator_pattern.match(source_string, analyzer.pos)
+
+        assert operator_match, (
+            "Internal Error! Open an issue. Could not parse closing bracket '>' "
+            f"at pos {analyzer.pos}. Context: "
+            f"{source_string[analyzer.pos :analyzer.pos+10]}"
+        )
+        add_node_to_buffer(
+            analyzer=analyzer,
+            source_string=source_string,
+            match=operator_match,
+            token_type=TokenType.OPERATOR,
+        )
 
 
 def handle_set_operator(
@@ -268,8 +333,7 @@ def lex_ruleset(
     """
     Makes a nested call to analyzer.lex, with the new ruleset activated.
     """
-    rules = sorted(new_ruleset, key=lambda rule: rule.priority)
-    analyzer.push_rules(rules)
+    analyzer.push_rules(new_ruleset)
     try:
         analyzer.lex(source_string)
     except stop_exception:
@@ -372,7 +436,12 @@ def handle_jinja_block(
         # using the ruleset that was active before jinja
         next_tag_pos = next_tag_match.span(0)[0]
         jinja_rules = analyzer.pop_rules()
-        analyzer.lex(source_string, eof_pos=next_tag_pos)
+        analyzer.stops.append(next_tag_pos)
+        try:
+            analyzer.lex(source_string)
+        except StopIteration:
+            analyzer.stops.pop()
+
         analyzer.push_rules(jinja_rules)
         # it is possible for the next_tag_match found above to have already been lexed.
         # but if it hasn't, we need to process it

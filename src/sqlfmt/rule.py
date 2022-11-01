@@ -48,7 +48,7 @@ SQL_QUOTED_EXP = group(
     r'(rb?|b|br|u&|@)?"([^"\\]*(\\.[^"\\]*|""[^"\\]*)*)"',
     # possibly escaped single quotes
     r"(rb?|b|br|u&|x)?'([^'\\]*(\\.[^'\\]*|''[^'\\]*)*)'",
-    r"\$\w*\$[^$]*?\$\w*\$",  # pg dollar-delimited strings
+    r"\$(?P<tag>\w*)\$.*?\$(?P=tag)\$",  # pg dollar-delimited strings
     # possibly escaped backtick
     r"`([^`\\]*(\\.[^`\\]*)*)`",
 )
@@ -325,6 +325,8 @@ CORE = [
             r"\[",
             r"\(",
             r"\{",
+            # bq usese angle brackets for type definitions for compound types
+            r"(array|table|struct)\s*<",
         ),
         action=partial(actions.add_node_to_buffer, token_type=TokenType.BRACKET_OPEN),
     ),
@@ -344,9 +346,18 @@ CORE = [
         pattern=group(
             r"@\w+",  # stages
             r"\$\d+",  # pg placeholders
+            r"\$\w+",  # variables
             r"%(\([^%()]+\))?s",  # psycopg placeholders
         ),
         action=partial(actions.add_node_to_buffer, token_type=TokenType.NAME),
+    ),
+    Rule(
+        name="angle_bracket_close",
+        priority=790,
+        pattern=group(
+            r">",
+        ),
+        action=actions.handle_closing_angle_bracket,
     ),
     Rule(
         name="operator",
@@ -384,15 +395,6 @@ CORE = [
         action=partial(actions.add_node_to_buffer, token_type=TokenType.OPERATOR),
     ),
     Rule(
-        name="bq_typed_array",
-        priority=900,
-        pattern=group(
-            r"array<\w+>",
-        )
-        + group(r"\[", r"$"),
-        action=partial(actions.add_node_to_buffer, token_type=TokenType.NAME),
-    ),
-    Rule(
         name="name",
         priority=5000,
         pattern=group(r"\w+"),
@@ -421,6 +423,71 @@ GRANT = [
             r"granted\s+by",
             r"cascade",
             r"restrict",
+        )
+        + group(r"\W", r"$"),
+        action=partial(actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD),
+    ),
+]
+
+CREATE_FUNCTION = [
+    *CORE,
+    Rule(
+        name="function_as",
+        priority=1100,
+        pattern=group(
+            r"as",
+        )
+        + group(r"\W", r"$"),
+        action=actions.handle_ddl_as,
+    ),
+    Rule(
+        name="word_operator",
+        priority=1100,
+        pattern=group(
+            r"to",
+            r"from",
+            # snowflake
+            r"runtime_version",
+        )
+        + group(r"\W", r"$"),
+        action=partial(actions.add_node_to_buffer, token_type=TokenType.WORD_OPERATOR),
+    ),
+    Rule(
+        name="unterm_keyword",
+        priority=1300,
+        pattern=group(
+            (
+                r"create(\s+or\s+replace)?(\s+temp(orary)?)?(\s+secure)?(\s+table)?"
+                r"\s+function(\s+if\s+not\s+exists)?"
+            ),
+            r"language",
+            r"transform",
+            r"immutable",
+            r"stable",
+            r"volatile",
+            r"(not\s+)?leakproof",
+            r"volatile",
+            r"called\s+on\s+null\s+input",
+            r"returns\s+null\s+on\s+null\s+input",
+            r"return(s)?(?!\s+null)",
+            r"strict",
+            r"(external\s+)?security\s+(invoker|definer)",
+            r"parallel\s+(unsafe|restricted|safe)",
+            r"cost",
+            r"rows",
+            r"support",
+            r"set",
+            r"as",
+            # snowflake
+            r"comment",
+            r"imports",
+            r"packages",
+            r"handler",
+            r"target_path",
+            r"(not\s+)?null",
+            # bq
+            r"options",
+            r"remote\s+with\s+connection",
         )
         + group(r"\W", r"$"),
         action=partial(actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD),
@@ -605,6 +672,25 @@ MAIN = [
             actions.handle_nonreserved_keyword,
             action=partial(
                 actions.lex_ruleset, new_ruleset=GRANT, stop_exception=StopRulesetLexing
+            ),
+        ),
+    ),
+    Rule(
+        name="create_function",
+        priority=2020,
+        pattern=group(
+            (
+                r"create(\s+or\s+replace)?(\s+temp(orary)?)?(\s+secure)?(\s+table)?"
+                r"\s+function(\s+if\s+not\s+exists)?"
+            ),
+        )
+        + group(r"\W", r"$"),
+        action=partial(
+            actions.handle_nonreserved_keyword,
+            action=partial(
+                actions.lex_ruleset,
+                new_ruleset=CREATE_FUNCTION,
+                stop_exception=StopRulesetLexing,
             ),
         ),
     ),

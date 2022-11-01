@@ -4,10 +4,7 @@
 # https://github.com/tconbeer/http_archive_almanac/blob/a57e75a9d37e150cb7963b821d9a33ad3d651571/LICENSE
 # standardSQL
 # 02_37: Distribution of unique z-index values per page
-create temporary function getzindexvalues(css string)
-returns array
-< string
-> language js
+create temporary function getzindexvalues(css string) returns array<string> language js
 as '''
 try {
   var reduceValues = (values, rule) => {
@@ -49,10 +46,10 @@ GROUP BY client
 # standardSQL
 # 02_37: Distribution of unique z-index values per page
 create temporary function getzindexvalues(css string)
-returns array
-< string
-> language js
-as '''
+returns array<string>
+language js
+as
+    '''
 try {
   var reduceValues = (values, rule) => {
     if ('rules' in rule) {

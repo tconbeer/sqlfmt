@@ -3,7 +3,7 @@ from typing import List
 
 import pytest
 
-from sqlfmt.rule import CORE, GRANT, JINJA, MAIN, Rule
+from sqlfmt.rule import CORE, CREATE_FUNCTION, GRANT, JINJA, MAIN, Rule
 
 
 def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
@@ -31,7 +31,8 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (CORE, "quoted_name", '"my_quoted_field_name"'),
         (CORE, "quoted_name", '"""triple " quotes!"""'),
         (CORE, "quoted_name", "'''triple '' singles!\\'''"),
-        (CORE, "quoted_name", "$$ dollar delimited'$$"),
+        (CORE, "quoted_name", "$$ dollar \ndelimited'$$"),
+        (CORE, "quoted_name", "$$ SELECT $1, CAST($1 AS text) || ' is text' $$"),
         (CORE, "quoted_name", "$label$ dollar delimited with label$label$"),
         (CORE, "quoted_name", "'single quote with '' doubled escape'"),
         (CORE, "quoted_name", "'single quote \\' c escape'"),
@@ -62,7 +63,10 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (CORE, "operator", "-"),
         (CORE, "operator", "/"),
         (CORE, "operator", "%"),
+        (CORE, "angle_bracket_close", ">"),
+        (CORE, "operator", ">"),
         (CORE, "operator", "%%"),
+        (CORE, "operator", ">="),
         (CORE, "operator", "<>"),
         (CORE, "operator", "||"),
         (CORE, "operator", "=>"),
@@ -163,7 +167,9 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (MAIN, "set_operator", "intersect"),
         (MAIN, "set_operator", "minus"),
         (MAIN, "set_operator", "except"),
-        (CORE, "bq_typed_array", "array<INT64>"),
+        (CORE, "bracket_open", "array<"),
+        (CORE, "bracket_open", "table\n<"),
+        (CORE, "bracket_open", "struct<"),
         (MAIN, "explain", "explain"),
         (MAIN, "explain", "explain analyze"),
         (MAIN, "explain", "explain using text"),
@@ -180,14 +186,15 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
             MAIN,
             "unsupported_ddl",
             (
-                "create function foo()\n"
-                "--fn comment; another comment;\n"
-                "returns int language javascript as $$foo;$$"
+                "create table my_table as\n"
+                "--table comment; another comment;\n"
+                "(select * from foo)"
             ),
         ),
         (MAIN, "name", "my_table_45"),
         (MAIN, "name", "replace"),
         (MAIN, "other_identifiers", "$2"),
+        (MAIN, "other_identifiers", "$email"),
         (MAIN, "other_identifiers", "@my_unquoted_stage"),
         (MAIN, "other_identifiers", "%s"),
         (MAIN, "other_identifiers", "%(name)s"),
@@ -235,6 +242,14 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (GRANT, "unterm_keyword", "to"),
         (GRANT, "unterm_keyword", "from"),
         (GRANT, "unterm_keyword", "with grant option"),
+        (CREATE_FUNCTION, "unterm_keyword", "create temp function"),
+        (CREATE_FUNCTION, "unterm_keyword", "CREATE OR REPLACE TABLE FUNCTION"),
+        (CREATE_FUNCTION, "unterm_keyword", "language"),
+        (CREATE_FUNCTION, "unterm_keyword", "called on null input"),
+        (CREATE_FUNCTION, "unterm_keyword", "returns\nnull on null input"),
+        (CREATE_FUNCTION, "unterm_keyword", "not null"),
+        (CREATE_FUNCTION, "unterm_keyword", "handler"),
+        (CREATE_FUNCTION, "unterm_keyword", "packages"),
     ],
 )
 def test_regex_exact_match(
@@ -258,6 +273,7 @@ def test_regex_exact_match(
         (CORE, "jinja_start", "{"),
         (CORE, "jinja_end", "}"),
         (CORE, "quoted_name", "my_unquoted_name"),
+        (CORE, "quoted_name", "$bar$foo$baz$"),
         (CORE, "double_colon", ":"),
         (CORE, "operator", "."),
         (MAIN, "word_operator", "using"),
@@ -268,11 +284,6 @@ def test_regex_exact_match(
         (MAIN, "unterm_keyword", "MAINion"),
         (MAIN, "unterm_keyword", "delete"),
         (MAIN, "unsupported_ddl", "insert('abc', 1, 2, 'Z')"),
-        (
-            CORE,
-            "bq_typed_array",
-            "array < something and int64 > something_else[0]",
-        ),
         (JINJA, "jinja_set_block_start", "{% set foo = 'baz' %}"),
         (GRANT, "unterm_keyword", "select"),
     ],

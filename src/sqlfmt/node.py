@@ -133,22 +133,33 @@ class Node:
         )
 
     @property
-    def is_square_bracket_operator(self) -> bool:
+    def is_bracket_operator(self) -> bool:
         """
         Node is an opening square bracket ("[")
-        that follows a token that could be a name
+        that follows a token that could be a name.
+
+        Alternatively, node is an open paren ("(")
+        that follow an closing angle bracket.
         """
-        if self.token.type != TokenType.BRACKET_OPEN or self.value != "[":
+        if self.token.type != TokenType.BRACKET_OPEN:
             return False
 
         prev_token, _ = get_previous_token(self.previous_node)
         if not prev_token:
             return False
-        else:
+        elif self.value == "[":
             return prev_token.type in (
                 TokenType.NAME,
                 TokenType.QUOTED_NAME,
                 TokenType.BRACKET_CLOSE,
+            )
+        # BQ struct literals have parens that follow closing angle
+        # brackets
+        else:
+            return (
+                self.value == "("
+                and prev_token.type == TokenType.BRACKET_CLOSE
+                and ">" in prev_token.token
             )
 
     @property
@@ -205,7 +216,7 @@ class Node:
                 TokenType.SEMICOLON,
             )
             or self.is_multiplication_star
-            or self.is_square_bracket_operator
+            or self.is_bracket_operator
         )
 
     @property
