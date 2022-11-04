@@ -11,6 +11,7 @@ authors = ["Ted Conbeer <ted@shandy.io>"]
 license = "Apache-2.0"
 homepage = "https://sqlfmt.com"
 repository = "https://github.com/tconbeer/sqlfmt"
+documentation = "https://docs.sqlfmt.com"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Operating System :: MacOS :: MacOS X",
@@ -22,12 +23,11 @@ classifiers = [
 ]
 packages = [
     { include = "sqlfmt", from = "src" },
-    { include = "sqlfmt_primer", from = "src" },
 ]
 
 [tool.poetry.extras]
-sqlfmt_primer = ["gitpython", "snakeviz"]
 jinjafmt = ["black"]
+sqlfmt_primer = ["gitpython"]
 
 [tool.poetry.dependencies]
 python = "^3.7"
@@ -35,22 +35,28 @@ click = "^8.0"
 tqdm = "^4.0"
 platformdirs = "^2.4.0"
 importlib_metadata = { version = "*", python = "<3.8" }
-gitpython = { version = "^3.1.24", optional = true }
-black = { version = "*", optional = true }
 tomli = { version = "^2.0.1", python = "<3.11" }
 
-[tool.poetry.dev-dependencies]
+black = { version = "*", optional = true }
+
+gitpython = { version = "^3.1.24", optional = true }
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^2.20.0"
+snakeviz = "^2.1.1"
+
+[tool.poetry.group.static.dependencies]
 flake8 = "^5.0.4"
 isort = "^5.9.3"
 mypy = "^0.982"
-pre-commit = "^2.20.0"
+
+[tool.poetry.group.test.dependencies]
 pytest = "^7.2.0"
 pytest-cov = "^4.0.0"
-snakeviz = { version = "^2.1.1", optional = true }
 
 [tool.poetry.scripts]
 sqlfmt = "sqlfmt.cli:sqlfmt"
-sqlfmt_primer = "sqlfmt_primer.primer:sqlfmt_primer"
+sqlfmt_primer = { callable = "sqlfmt_primer.primer:sqlfmt_primer", extras = ["sqlfmt_primer"] }
 
 [tool.black]
 line-length = 88

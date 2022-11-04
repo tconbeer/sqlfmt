@@ -34,7 +34,7 @@ jobs:
         # if: steps.cached-poetry-install.outputs.cache-hit != 'true'
         uses: snok/install-poetry@v1
         with:
-          version: 1.1.15
+          version: 1.2.2
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
@@ -46,7 +46,7 @@ jobs:
       #     key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
       - name: Install python dependencies
         # if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install -E jinjafmt --no-interaction
+        run: poetry install --sync --no-interaction -E jinjafmt --only main,test
       - name: Run unit tests and generate cov report
         run: |
           source .venv/bin/activate

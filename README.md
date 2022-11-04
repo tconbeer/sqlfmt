@@ -153,21 +153,19 @@ We'd love to hear from you! [Open an Issue](https://github.com/tconbeer/sqlfmt/i
 
 ### Setting up Your Dev Environment and Running Tests
 
-1. Install [Poetry](https://python-poetry.org/docs/#installation) if you don't have it already. You may also need or want pyenv, make, and gcc. A complete setup from a fresh install of Ubuntu can be found [here](https://github.com/tconbeer/linux_setup)
-1. Clone this repo into a directory (let's call it `sqlfmt`), then `cd sqlfmt`
-1. Use `poetry install -E jinjafmt` to install the project (editable) and its dependencies into a new virtual env. To run `sqlfmt_primer`, you will need to install it (and its dependencies) by specifying it as an extra: `poetry install -E jinjafmt -E sqlfmt_primer`
-1. Use `poetry shell` to spawn a subshell
+1. Install [Poetry](https://python-poetry.org/docs/#installation) v1.2 or higher if you don't have it already. You may also need or want pyenv, make, and gcc. A complete setup from a fresh install of Ubuntu can be found [here](https://github.com/tconbeer/linux_setup).
+1. Clone this repo into a directory (let's call it `sqlfmt`), then `cd sqlfmt`.
+1. Use `poetry install --all-extras --sync` to install the project (editable) and its dependencies (including the `jinjafmt` and `sqlfmt_primer` extras) into a new virtual env.
+1. Use `poetry shell` to spawn a subshell.
 1. Type `make` to run all tests and linters, or run `pytest`, `black`, `flake8`, `isort`, and `mypy` individually.
-
-Note: If encountering a JSONDecodeError during `poetry install`, you will want to clear the poetry cache with `poetry cache clear pypi --all`, or upgrade to poetry >= 1.12 with `poetry self upgrade`
 
 ### Updating primer repos to reflect formatting changes
 
-1. Make sure all changes are committed to sqlfmt
-1. Check out `main` in the repo and make sure you `pull` changes locally
-1. Check out the `unformatted` tag in the repo with `git checkout -b chore/apply-abc123 unformatted` where `abc123` is the hash of the most recent sqlfmt commit (from 1)
-1. Run sqlfmt against the working tree, then `git add .` and `git commit -m "chore: apply sqlfmt abc123"`
-1. We will have conflicts with main that we want to ignore, so merge main into this branch, ignoring anything on main: `git merge -s ours main`
-1. Push and open a PR; squash and merge. Grab the commit SHA
-1. Paste the commit SHA as a ref into `primer.py`
-1. Run `sqlfmt_primer -k` to clear the cache, then update the stats in `primer.py` to match the results
+1. Make sure all changes are committed to sqlfmt.
+1. Check out `main` in the repo and make sure you `pull` changes locally.
+1. Check out the `unformatted` tag in the repo with `git checkout -b chore/apply-abc123 unformatted` where `abc123` is the hash of the most recent sqlfmt commit (from 1).
+1. Run sqlfmt against the working tree, then `git add .` and `git commit -m "chore: apply sqlfmt abc123"`.
+1. We will have conflicts with main that we want to ignore, so merge main into this branch, ignoring anything on main: `git merge -s ours main`.
+1. Push and open a PR; squash and merge. Grab the commit SHA.
+1. Paste the commit SHA as a ref into `primer.py`.
+1. Run `sqlfmt_primer -k` to clear the cache, then update the stats in `primer.py` to match the results.
