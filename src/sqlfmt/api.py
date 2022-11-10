@@ -109,8 +109,8 @@ def initialize_progress_bar(
     else:
         # will be disabled on non-TTY envs, enabled otherwise
         disable = None
-    progress_bar = tqdm(
-        iterable=None, total=total, leave=False, disable=disable, delay=0.5, unit="file"
+    progress_bar: tqdm = tqdm(
+        total=total, leave=False, disable=disable, delay=0.5, unit="file"
     )
 
     def progress_callback(_: Awaitable[SqlFormatResult]) -> None:

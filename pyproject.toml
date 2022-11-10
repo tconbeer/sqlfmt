@@ -48,7 +48,7 @@ snakeviz = "^2.1.1"
 [tool.poetry.group.static.dependencies]
 flake8 = "^5.0.4"
 isort = "^5.9.3"
-mypy = "^0.982"
+mypy = "^0.990"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.2.0"

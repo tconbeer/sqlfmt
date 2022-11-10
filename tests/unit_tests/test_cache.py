@@ -19,7 +19,7 @@ from tests.util import BASE_DIR
 
 
 @pytest.fixture(autouse=True)
-def auto_clear_cache() -> Generator:
+def auto_clear_cache() -> Generator[None, None, None]:
     clear_cache()
     yield
     clear_cache()

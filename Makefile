@@ -4,7 +4,7 @@ check:
 	isort .
 	black .
 	flake8 .
-	mypy
+	mypy --disallow-any-unimported
 
 .PHONY: unit
 unit:
@@ -15,7 +15,7 @@ lint:
 	isort .
 	black .
 	flake8 .
-	mypy
+	mypy --disallow-any-unimported
 
 
 .PHONY: profiling

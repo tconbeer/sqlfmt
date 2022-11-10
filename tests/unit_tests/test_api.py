@@ -298,7 +298,7 @@ def test_initialize_progress_bar(default_mode: Mode) -> None:
     assert progress_bar.format_dict.get("n") == 0
     assert progress_bar.format_dict.get("total") == total
 
-    assert progress_callback
+    assert progress_callback is not None
     progress_callback("foo")  # type: ignore
     assert progress_bar.format_dict.get("n") == 1
 
@@ -316,6 +316,6 @@ def test_initialize_disabled_progress_bar(no_progressbar_mode: Mode) -> None:
     assert progress_bar.format_dict.get("total") == total
     assert progress_bar.format_dict.get("elapsed") == 0
 
-    assert progress_callback
+    assert progress_callback is not None
     progress_callback("foo")  # type: ignore
     assert progress_bar.format_dict.get("n") == 0

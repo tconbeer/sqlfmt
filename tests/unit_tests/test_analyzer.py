@@ -1,8 +1,8 @@
 import pytest
 
-from sqlfmt.analyzer import Analyzer, SqlfmtParsingError
+from sqlfmt.analyzer import Analyzer
 from sqlfmt.comment import Comment
-from sqlfmt.exception import SqlfmtBracketError
+from sqlfmt.exception import SqlfmtBracketError, SqlfmtParsingError
 from sqlfmt.mode import Mode
 from sqlfmt.token import Token, TokenType
 from tests.util import read_test_data
