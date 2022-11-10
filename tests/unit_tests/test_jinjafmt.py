@@ -3,6 +3,7 @@ from typing import Dict, Tuple
 
 import pytest
 
+from sqlfmt.analyzer import Analyzer
 from sqlfmt.jinjafmt import BlackWrapper, JinjaFormatter, JinjaTag
 from sqlfmt.line import Line
 from sqlfmt.mode import Mode
@@ -192,6 +193,25 @@ def test_format_line(
     assert n.value == "{{ expression }}"
 
 
+def test_format_line_single_to_multi(
+    default_analyzer: Analyzer, jinja_formatter: JinjaFormatter
+) -> None:
+    source_string = (
+        "from {{ source('fooooooooooooooooooooooooooooooooooooooooooooooooooo', "
+        "'barrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr') }}"
+    )
+    q = default_analyzer.parse_query(source_string=source_string)
+    assert len(q.lines) == 1
+    line = q.lines[0]
+    j_node = line.nodes[1]
+    assert j_node.is_jinja
+    assert not j_node.is_multiline
+
+    new_lines = jinja_formatter.format_line(line)
+    assert len(new_lines) == 2  # make sure the linesplitter did its thing
+    assert j_node.is_multiline  # jinjafmt mutated this node to be multiline
+
+
 @pytest.mark.parametrize(
     "source_string,expected_string",
     [
@@ -202,9 +222,8 @@ def test_format_line(
     ],
 )
 def test_black_wrapper_format_string(
-    source_string: str, expected_string: str, default_mode: Mode
+    source_string: str, expected_string: str, jinja_formatter: JinjaFormatter
 ) -> None:
-    jinja_formatter = JinjaFormatter(default_mode)
     result = jinja_formatter.code_formatter.format_string(
         source_string=source_string, max_length=88
     )
@@ -216,6 +235,23 @@ def test_black_wrapper_format_string_no_black(
 ) -> None:
     source_string = "1 +    1"
     jinja_formatter = JinjaFormatter(default_mode)
+    result = jinja_formatter.code_formatter.format_string(
+        source_string=source_string, max_length=88
+    )
+    assert result == (source_string, False)
+
+
+@pytest.mark.parametrize(
+    "source_string", [":::", ":::\n:::", "1,\n2" "return(return_())"]
+)
+def test_black_wrapper_format_string_invalid_input(
+    source_string: str,
+    jinja_formatter: JinjaFormatter,
+) -> None:
+    """
+    Our prepocessor will abort the keyword substitution because the sentinel return_
+    already exists in the source.
+    """
     result = jinja_formatter.code_formatter.format_string(
         source_string=source_string, max_length=88
     )
@@ -313,11 +349,6 @@ def test_jinja_tag_remove_trailing_comma(
             "if foo == 'bar'",
             {},
         ),
-        (
-            "from_ = 'already there'",
-            "from_ = 'already there'",
-            {},
-        ),
     ],
 )
 def test_replace_reserved_words(
@@ -328,6 +359,18 @@ def test_replace_reserved_words(
     )
     assert processed_string == expected_string
     assert actual_kw_replacements == expected_kw_replacements
+
+
+@pytest.mark.parametrize(
+    "source_string",
+    [
+        "from_ = 'already there'",
+        "return(return_())",
+    ],
+)
+def test_replace_reserved_words_preexisting_sentinels(source_string: str) -> None:
+    with pytest.raises(ValueError):
+        _, _ = BlackWrapper._replace_reserved_words(source_string=source_string)
 
 
 @pytest.mark.parametrize(
@@ -405,7 +448,6 @@ def test_postprocess_string(
         "return(adapter.dispatch('my_macro', 'my_package')(arg1, arg2))",
         "True = foo",
         "abc = True",
-        "from_ = 'already there'",
         "something if something_else",
         "foo ~ bar",
     ],

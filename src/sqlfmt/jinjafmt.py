@@ -40,12 +40,19 @@ class BlackWrapper:
         Return a tuple of the formatted string and a boolean that indicates whether
         black successfully ran on the string
         """
-        is_blackened = False
+        BLACKENED = True
+        NOT_BLACKENED = False
 
         if not self.black:
-            return source_string, is_blackened
+            return source_string, NOT_BLACKENED
 
-        preprocessed_string, string_properties = self._preprocess_string(source_string)
+        try:
+            preprocessed_string, string_properties = self._preprocess_string(
+                source_string
+            )
+        except ValueError:
+            return source_string, NOT_BLACKENED
+
         black_mode = self.black.Mode(line_length=max_length)
 
         try:
@@ -65,19 +72,19 @@ class BlackWrapper:
                 except ValueError:
                     # there is other jinja syntax that isn't valid python,
                     # so if this still fails, just stop trying
-                    pass
+                    return source_string, NOT_BLACKENED
                 else:
-                    is_blackened = True
-        else:
-            is_blackened = True
-        finally:
-            if is_blackened:
-                postprocessed_string = self._postprocess_string(
-                    formatted_string, string_properties
-                )
-                return postprocessed_string, is_blackened
+                    postprocessed_string = self._postprocess_string(
+                        formatted_string, string_properties
+                    )
+                    return postprocessed_string, BLACKENED
             else:
-                return source_string, is_blackened
+                return source_string, NOT_BLACKENED
+        else:
+            postprocessed_string = self._postprocess_string(
+                formatted_string, string_properties
+            )
+            return postprocessed_string, BLACKENED
 
     @classmethod
     def _preprocess_string(cls, source_string: str) -> Tuple[str, StringProperties]:
@@ -85,8 +92,10 @@ class BlackWrapper:
         Takes a jinja source_string and performs some small transformations on it to
         make it valid python that black can format:
         1. Detects newlines
+        2. substitutes python keywords like return for safe alternatives like return_
+        3. substitutes jinja tilde operators with another binary operator
 
-        Runs a tuple of the processed string and a NamedTuple of the stats from
+        Returns a tuple of the processed string and a NamedTuple of the stats from
         pre-processing
         """
         has_newline = True if "\n" in source_string else False
@@ -130,7 +139,7 @@ class BlackWrapper:
         )
         if preexisting_sentinels:
             # abort
-            return source_string, {}
+            raise ValueError("Cannot preprocess due to preexisting sentinels")
 
         # try to replace any instances of reserved words with a safe alternative
         processed_string = source_string
