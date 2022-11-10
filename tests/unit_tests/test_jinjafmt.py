@@ -349,6 +349,21 @@ def test_jinja_tag_remove_trailing_comma(
             "if foo == 'bar'",
             {},
         ),
+        (
+            "from_ = 'already there'",
+            "from_ = 'already there'",
+            {},
+        ),
+        (
+            "from_ = from()",
+            "from_ = from_()",
+            {r"from_\(": 1},
+        ),
+        (
+            "return(from_())",
+            "return_(from_())",
+            {r"return_\(": 1},
+        ),
     ],
 )
 def test_replace_reserved_words(
@@ -364,7 +379,7 @@ def test_replace_reserved_words(
 @pytest.mark.parametrize(
     "source_string",
     [
-        "from_ = 'already there'",
+        "from_ = (from == 1)",
         "return(return_())",
     ],
 )

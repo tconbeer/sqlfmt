@@ -134,7 +134,8 @@ class BlackWrapper:
         preexisting_sentinels = any(
             [
                 re.search(repl_patt, source_string)
-                for (repl_patt, _) in replacements.values()
+                and re.search(kw_patt, source_string)
+                for kw_patt, (repl_patt, _) in replacements.items()
             ]
         )
         if preexisting_sentinels:
