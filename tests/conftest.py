@@ -105,11 +105,11 @@ def default_analyzer(default_mode: Mode) -> Analyzer:
 @pytest.fixture
 def preformatted_dir(tmp_path: Path) -> Path:
     """
-    Copies the directory of preformatted sql files from the test/data
+    Copies the directory of preformatted sql files from the unit test
     directory into a temp directory (provided by pytest fixture tmp_path),
     and then returns the path to the temp directory.
     """
-    test_dir = copy_test_data_to_tmp(["preformatted"], tmp_path)
+    test_dir = copy_test_data_to_tmp(["fast/preformatted"], tmp_path)
     return test_dir
 
 
@@ -120,11 +120,11 @@ def unformatted_dir(tmp_path: Path) -> Path:
     directory into a temp directory (provided by pytest fixture tmp_path),
     and then returns the path to the temp directory.
     """
-    test_dir = copy_test_data_to_tmp(["unformatted"], tmp_path)
+    test_dir = copy_test_data_to_tmp(["fast/unformatted"], tmp_path)
     return test_dir
 
 
 @pytest.fixture
 def error_dir(tmp_path: Path) -> Path:
-    test_dir = copy_test_data_to_tmp(["errors"], tmp_path)
+    test_dir = copy_test_data_to_tmp(["fast/errors"], tmp_path)
     return test_dir

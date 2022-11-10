@@ -32,7 +32,7 @@ def disabled_jinja_formatter(no_jinjafmt_mode: Mode) -> JinjaFormatter:
 
 @pytest.fixture
 def uninstall_black(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setitem(sys.modules, "black", None)
+    monkeypatch.setitem(sys.modules, "black", None)  # type: ignore
 
 
 @pytest.mark.parametrize(
