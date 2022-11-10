@@ -3,6 +3,7 @@ from typing import List
 
 import pytest
 
+from sqlfmt.analyzer import Analyzer
 from sqlfmt.comment import Comment
 from sqlfmt.line import Line
 from sqlfmt.mode import Mode
@@ -121,6 +122,7 @@ def test_simple_line(
     assert not simple_line.is_standalone_comma
     assert not simple_line.is_too_long(88)
     assert not simple_line.opens_new_bracket
+    assert not simple_line.previous_line_has_open_jinja_blocks_not_keywords
 
     assert simple_line.nodes[5].token.type == TokenType.STAR
     assert not simple_line.nodes[5].is_multiplication_star
@@ -455,3 +457,48 @@ def test_semicolon_resets_depth(simple_line: Line, node_manager: NodeManager) ->
     assert simple_line.nodes[-1].depth[0] > 0
     simple_line.nodes.append(semicolon_node)
     assert simple_line.nodes[-1].depth[0] == 0
+
+
+def test_previous_line_has_open_jinja_blocks_not_keywords(
+    default_analyzer: Analyzer,
+) -> None:
+    source_string = """
+    {% set a = 1 %}
+    {% if a == 1 %}
+    select 'foo'
+    {% else %}
+    select 'bar'
+    {% endif %}
+    """
+    q = default_analyzer.parse_query(source_string=source_string)
+
+    expected = [
+        False,
+        False,
+        False,
+        True,
+        True,
+        False,
+        False,
+    ]
+    actual = [line.previous_line_has_open_jinja_blocks_not_keywords for line in q.lines]
+    assert actual == expected
+
+
+def test_closes_simple_jinja_block_from_previous_line(
+    default_analyzer: Analyzer,
+) -> None:
+    source_string = """
+    {% if a == 1 %}
+    select 'foo'
+    {% else %}
+    select 'bar'
+    {% endif %}
+    {% if b == 2 -%} select 'baz'
+    {% endif %}
+    """
+    q = default_analyzer.parse_query(source_string=source_string)
+
+    expected = [False] * (len(q.lines) - 1) + [True]
+    actual = [line.closes_simple_jinja_block_from_previous_line for line in q.lines]
+    assert actual == expected
