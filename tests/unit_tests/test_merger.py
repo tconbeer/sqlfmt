@@ -235,6 +235,20 @@ def test_merge_count_window_function(merger: LineMerger) -> None:
     assert result == expected
 
 
+def test_disallow_multiline(merger: LineMerger) -> None:
+    source_string = """
+        foo
+        {{
+            bar
+        }}
+    """.strip()
+    raw_query = merger.mode.dialect.initialize_analyzer(
+        merger.mode.line_length
+    ).parse_query(source_string)
+    with pytest.raises(CannotMergeException):
+        _ = merger.create_merged_line(raw_query.lines)
+
+
 def test_segment_continues_operator_sequence(merger: LineMerger) -> None:
     source_string, _ = read_test_data(
         "unit_tests/test_merger/test_segment_continues_operator_sequence.sql"
