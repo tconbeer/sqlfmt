@@ -341,3 +341,20 @@ def test_internal_whitespace(
     ).parse_query(source_string=source_string)
     parsed_string = "".join(str(line) for line in q.lines)
     assert parsed_string == expected_string
+
+
+def test_other_whitespace(default_mode: Mode) -> None:
+    source_string = "'hi'"
+    q = default_mode.dialect.initialize_analyzer(
+        line_length=default_mode.line_length
+    ).parse_query(source_string=source_string)
+    assert q.nodes[0].prefix == " "
+
+
+def test_jinja_whitespace(default_mode: Mode) -> None:
+    source_string = "{{ foo }}bar {{ foo }} bar{% if foo %} bar {% endif %}"
+    q = default_mode.dialect.initialize_analyzer(
+        line_length=default_mode.line_length
+    ).parse_query(source_string=source_string)
+
+    assert all([node.prefix == node.token.prefix for node in q.nodes])
