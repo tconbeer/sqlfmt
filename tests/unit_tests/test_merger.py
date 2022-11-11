@@ -2,8 +2,10 @@ import itertools
 
 import pytest
 
-from sqlfmt.merger import CannotMergeException, LineMerger, OperatorPrecedence
+from sqlfmt.exception import CannotMergeException
+from sqlfmt.merger import LineMerger
 from sqlfmt.mode import Mode
+from sqlfmt.operator_precedence import OperatorPrecedence
 from sqlfmt.segment import Segment, create_segments_from_lines
 from tests.util import read_test_data
 
@@ -233,6 +235,20 @@ def test_merge_count_window_function(merger: LineMerger) -> None:
     ]
 
     assert result == expected
+
+
+def test_disallow_multiline(merger: LineMerger) -> None:
+    source_string = """
+        foo
+        {{
+            bar
+        }}
+    """.strip()
+    raw_query = merger.mode.dialect.initialize_analyzer(
+        merger.mode.line_length
+    ).parse_query(source_string)
+    with pytest.raises(CannotMergeException):
+        _ = merger.create_merged_line(raw_query.lines)
 
 
 def test_segment_continues_operator_sequence(merger: LineMerger) -> None:

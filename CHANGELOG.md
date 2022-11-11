@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Formatting Changes + Bug Fixes
+
+-   fixed a bug where we could have unsafely run *black* against jinja that contained Python keywords and their safe alternatives (e.g., `return(return_())`).
+
 ## [0.13.0] - 2022-11-01
 
 ### Formatting Changes + Bug Fixes

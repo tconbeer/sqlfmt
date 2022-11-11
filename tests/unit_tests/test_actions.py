@@ -476,6 +476,20 @@ def test_handle_explain(default_analyzer: Analyzer) -> None:
     assert select_line.nodes[1].token.type == TokenType.NAME
 
 
+def test_handle_semicolon(default_analyzer: Analyzer) -> None:
+    source_string = """
+    select 1;
+    create function foo() as select 1;
+    select 1;
+    create function foo() as $$ select 1 $$;
+    select 1;
+    """
+    query = default_analyzer.parse_query(source_string=source_string.lstrip())
+    assert len(query.lines) == 5
+    for line in query.lines:
+        assert line.nodes[0].is_unterm_keyword
+
+
 def test_handle_ddl_as_unquoted(create_function_analyzer: Analyzer) -> None:
     source_string = """
     create function foo

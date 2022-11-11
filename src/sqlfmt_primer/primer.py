@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory
 from typing import List, Optional
 
 import click
-from git import Repo
+from git.repo import Repo
 from platformdirs import user_cache_dir
 
 from sqlfmt.api import get_matching_paths, initialize_progress_bar, run

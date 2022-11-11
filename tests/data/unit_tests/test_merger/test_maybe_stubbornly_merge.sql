@@ -82,6 +82,14 @@ func_that_returns_an_array(
         )
     )
 ]
+
+-- stubbornly merge an operator that opens a paren (but only one)
+fooooooooooooooooo 
++ barrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr(
+    bazzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz,
+    quxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+)
+
 )))))__SQLFMT_OUTPUT__(((((
 -- try to merge the first line of this segment with the previous segment
 count(*) over (
@@ -153,3 +161,9 @@ func_that_returns_an_array(
         )
     )
 ]
+
+-- stubbornly merge an operator that opens a paren (but only one)
+fooooooooooooooooo + barrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr(
+    bazzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz,
+    quxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+)

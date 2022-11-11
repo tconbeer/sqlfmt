@@ -73,6 +73,13 @@ def test_operator_precedence_second_node(
     assert precedence == expected_precedence
 
 
+def test_operator_precedence_between_and(default_analyzer: Analyzer) -> None:
+    source_string = "foo between 1 and 3"
+    q = default_analyzer.parse_query(source_string)
+    and_node = q.nodes[3]
+    assert OperatorPrecedence.from_node(and_node) == OperatorPrecedence.OTHER_TIGHT
+
+
 @pytest.mark.parametrize("source_string", ["select", "my_table"])
 def test_operator_precedence_raises(
     source_string: str, default_analyzer: Analyzer

@@ -3,9 +3,8 @@ from typing import List
 
 import pytest
 
-from sqlfmt.api import SqlFormatResult
 from sqlfmt.mode import Mode
-from sqlfmt.report import Report
+from sqlfmt.report import Report, SqlFormatResult
 
 
 @pytest.fixture
