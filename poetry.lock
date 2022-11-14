@@ -262,7 +262,7 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "platformdirs"
-version = "2.5.3"
+version = "2.5.4"
 description = "A small Python package for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
 category = "main"
 optional = false
@@ -688,8 +688,8 @@ pathspec = [
     {file = "pathspec-0.10.1.tar.gz", hash = "sha256:7ace6161b621d31e7902eb6b5ae148d12cfd23f4a249b9ffb6b9fee12084323d"},
 ]
 platformdirs = [
-    {file = "platformdirs-2.5.3-py3-none-any.whl", hash = "sha256:0cb405749187a194f444c25c82ef7225232f11564721eabffc6ec70df83b11cb"},
-    {file = "platformdirs-2.5.3.tar.gz", hash = "sha256:6e52c21afff35cb659c6e52d8b4d61b9bd544557180440538f255d9382c8cbe0"},
+    {file = "platformdirs-2.5.4-py3-none-any.whl", hash = "sha256:af0276409f9a02373d540bf8480021a048711d572745aef4b7842dad245eba10"},
+    {file = "platformdirs-2.5.4.tar.gz", hash = "sha256:1006647646d80f16130f052404c6b901e80ee4ed6bef6792e1f238a8969106f7"},
 ]
 pluggy = [
     {file = "pluggy-1.0.0-py2.py3-none-any.whl", hash = "sha256:74134bbf457f031a36d68416e1509f34bd5ccc019f0bcc952c7b909d06b37bd3"},
