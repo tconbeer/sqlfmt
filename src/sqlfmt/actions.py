@@ -386,6 +386,7 @@ def handle_jinja_block(
     start_name: str,
     end_name: str,
     other_names: List[str],
+    end_reset_sql_depth: bool = False,
 ) -> None:
     """
     An if block, like {% if cond %}code{% else %}other_code{% endif %}
@@ -469,6 +470,13 @@ def handle_jinja_block(
                     match=next_tag_match,
                     token_type=TokenType.JINJA_BLOCK_END,
                 )
+                if end_reset_sql_depth and analyzer.previous_node:
+                    if previous_node:
+                        analyzer.previous_node.open_brackets = (
+                            previous_node.open_brackets.copy()
+                        )
+                    else:
+                        analyzer.previous_node.open_brackets = []
                 break
             # otherwise, this is an elif or else statement; we add it to
             # the buffer, but with the previous node set to the node before

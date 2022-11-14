@@ -6,23 +6,24 @@ All notable changes to this project will be documented in this file.
 
 ### Formatting Changes + Bug Fixes
 
--   sqlfmt now supports `{% materialization ... %}` and `{% call statement(...) %}` blocks ([#309](https://github.com/tconbeer/sqlfmt/issues/309))
+-   sqlfmt now supports `{% materialization ... %}` and `{% call statement(...) %}` blocks ([#309](https://github.com/tconbeer/sqlfmt/issues/309)).
+-   sqlfmt now resets the SQL depth of a query after encountering an `{% endmacro %}`, `{% endtest %}`, `{% endcall %}`, or `{% endmaterialization %}` tag.
 -   fixed a bug where we could have unsafely run *black* against jinja that contained Python keywords and their safe alternatives (e.g., `return(return_())`).
 
 ## [0.13.0] - 2022-11-01
 
 ### Formatting Changes + Bug Fixes
 
--   sqlfmt now supports `delete` statements and the associated keywords `using` and `returning` ([#281](https://github.com/tconbeer/sqlfmt/issues/281))
--   sqlfmt now supports `grant` and `revoke` statements and all associated keywords ([#283](https://github.com/tconbeer/sqlfmt/issues/283))
--   sqlfmt now supports `create function` statements and all associated keywords ([#282](https://github.com/tconbeer/sqlfmt/issues/282))
--   sqlfmt now supports the `explain` keyword ([#280](https://github.com/tconbeer/sqlfmt/issues/280))
--   sqlfmt now supports BigQuery typed table and struct definitions and literals, like `table<a int64, b bytes(5), c string>`
--   sqlfmt now supports variables like `$foo` as ordinary identifiers
+-   sqlfmt now supports `delete` statements and the associated keywords `using` and `returning` ([#281](https://github.com/tconbeer/sqlfmt/issues/281)).
+-   sqlfmt now supports `grant` and `revoke` statements and all associated keywords ([#283](https://github.com/tconbeer/sqlfmt/issues/283)).
+-   sqlfmt now supports `create function` statements and all associated keywords ([#282](https://github.com/tconbeer/sqlfmt/issues/282)).
+-   sqlfmt now supports the `explain` keyword ([#280](https://github.com/tconbeer/sqlfmt/issues/280)).
+-   sqlfmt now supports BigQuery typed table and struct definitions and literals, like `table<a int64, b bytes(5), c string>`.
+-   sqlfmt now supports variables like `$foo` as ordinary identifiers.
 
 ### Features
 
--   sqlfmt is now tested against Python 3.11 ([#242](https://github.com/tconbeer/sqlfmt/issues/242)). Previous versions of sqlfmt are also compatible
+-   sqlfmt is now tested against Python 3.11 ([#242](https://github.com/tconbeer/sqlfmt/issues/242)). Previous versions of sqlfmt are also compatible.
     with Python 3.11. When installed in 3.11, sqlfmt no longer requires the `tomli` dependency.
 
 ## [0.12.0] - 2022-10-14
@@ -32,10 +33,10 @@ All notable changes to this project will be documented in this file.
 -   DDL and DML statements (`create`, `insert`, `grant`, etc.) will no longer be formatted ([#243](https://github.com/tconbeer/sqlfmt/issues/243)). 
     These statements were never supported by sqlfmt, and the existing algorithm produced bad formatting. Support for DDL and DML statements will be gradually added back in in future versions.
     For more information, see the [tracking issue for DDL support](https://github.com/tconbeer/sqlfmt/issues/262).
--   BigQuery typed array literals like `array<float64>[1, 2]` are now supported, and spaces will no longer be inserted around `<` and `>` ([#212](https://github.com/tconbeer/sqlfmt/issues/212))
--   SparkSQL-specific keywords `tablesample`, `cluster by`, `distribute by`, `sort by`, and `lateral view` are now supported by the polyglot dialect ([#264](https://github.com/tconbeer/sqlfmt/issues/264))
--   `pivot` and `unpivot` are now supported as word operators, and will have a space between the keyword and the following parentheses
--   `values` is now supported as an unterminated keyword; tuples of values will be indented from the `values` keyword if they span more than one line ([#263](https://github.com/tconbeer/sqlfmt/issues/263))
+-   BigQuery typed array literals like `array<float64>[1, 2]` are now supported, and spaces will no longer be inserted around `<` and `>` ([#212](https://github.com/tconbeer/sqlfmt/issues/212)).
+-   SparkSQL-specific keywords `tablesample`, `cluster by`, `distribute by`, `sort by`, and `lateral view` are now supported by the polyglot dialect ([#264](https://github.com/tconbeer/sqlfmt/issues/264)).
+-   `pivot` and `unpivot` are now supported as word operators, and will have a space between the keyword and the following parentheses.
+-   `values` is now supported as an unterminated keyword; tuples of values will be indented from the `values` keyword if they span more than one line ([#263](https://github.com/tconbeer/sqlfmt/issues/263)).
 
 ## [0.11.1] - 2022-09-17
 
@@ -51,49 +52,49 @@ All notable changes to this project will be documented in this file.
 
 ### Breaking API Changes
 
--   The `files` argument of `api.run` is now a `Collection[pathlib.Path]` that represents an exact collection of files to be formatted, instead of a list of paths to search for files. Use `api.get_matching_paths(paths, mode)` to return the set of exact paths expected by `api.run`
+-   The `files` argument of `api.run` is now a `Collection[pathlib.Path]` that represents an exact collection of files to be formatted, instead of a list of paths to search for files. Use `api.get_matching_paths(paths, mode)` to return the set of exact paths expected by `api.run`.
 
 ### Features
 
--   sqlfmt will now display a progress bar for long runs ([#231](https://github.com/tconbeer/sqlfmt/pull/231)). You can disable this with the `--no-progressbar` option
+-   sqlfmt will now display a progress bar for long runs ([#231](https://github.com/tconbeer/sqlfmt/pull/231)). You can disable this with the `--no-progressbar` option.
 -   `api.run` now accepts an optional `callback` argument, which must be a `Callable[[Awaitable[SqlFormatResult]], None]`. Unless the `--single-process` option is used, the callback is executed after each file is formatted.
--   sqlfmt can now be called as a python module, with `python -m sqlfmt`
+-   sqlfmt can now be called as a python module, with `python -m sqlfmt`.
 
 ### Formatting Changes + Bug Fixes
 
--   adds more granularity to operator precedence and will merge lines more aggressively that start with high-precedence operators ([#200](https://github.com/tconbeer/sqlfmt/issues/200))
--   improves the formatting of `between ... and ...`, especially in situations where the source includes a line break ([#207](https://github.com/tconbeer/sqlfmt/issues/207))
--   improves the consistency of formatting long chains of operators that include parentheses ([#214](https://github.com/tconbeer/sqlfmt/issues/214))
--   fixes a bug that caused unnecessary copying of the cache when using multiprocessing. Large projects should see dramatically faster (near-instant) runs once the cache is warm
--   fixes a bug that could cause lines with long jinja tags to be one character over the line length limit, and could result in unstable formatting ([#237](https://github.com/tconbeer/sqlfmt/issues/237) - thank you [@nfcampos](https://github.com/nfcampos)!)
--   fixes a bug that formatted array literals like they were indexing operations ([#235](https://github.com/tconbeer/sqlfmt/issues/235) - thank you [@nfcampos](https://github.com/nfcampos)!)
+-   adds more granularity to operator precedence and will merge lines more aggressively that start with high-precedence operators ([#200](https://github.com/tconbeer/sqlfmt/issues/200)).
+-   improves the formatting of `between ... and ...`, especially in situations where the source includes a line break ([#207](https://github.com/tconbeer/sqlfmt/issues/207)).
+-   improves the consistency of formatting long chains of operators that include parentheses ([#214](https://github.com/tconbeer/sqlfmt/issues/214)).
+-   fixes a bug that caused unnecessary copying of the cache when using multiprocessing. Large projects should see dramatically faster (near-instant) runs once the cache is warm.
+-   fixes a bug that could cause lines with long jinja tags to be one character over the line length limit, and could result in unstable formatting ([#237](https://github.com/tconbeer/sqlfmt/issues/237) - thank you [@nfcampos](https://github.com/nfcampos)!).
+-   fixes a bug that formatted array literals like they were indexing operations ([#235](https://github.com/tconbeer/sqlfmt/issues/235) - thank you [@nfcampos](https://github.com/nfcampos)!).
 
 ## [0.10.1] - 2022-08-05
 
 ### Features
 
--   sqlfmt now supports the psycopg placeholders `%s` and `%(name)s` ([#198](https://github.com/tconbeer/sqlfmt/issues/198) - thank you [@snorkysnark](https://github.com/snorkysnark)!)
+-   sqlfmt now supports the psycopg placeholders `%s` and `%(name)s` ([#198](https://github.com/tconbeer/sqlfmt/issues/198) - thank you [@snorkysnark](https://github.com/snorkysnark)!).
 
 ### Formatting Changes + Bug Fixes
 
--   sqlfmt now standardizes whitespace inside word tokens ([#201](https://github.com/tconbeer/sqlfmt/issues/201))
--   `using` is now treated as a word operator. It gets a space before its brackets and merging with surrounding lines is now much improved ([#218](https://github.com/tconbeer/sqlfmt/issues/218) - thank you [@nfcampos](https://github.com/nfcampos)!)
--   `within group` and `filter` are now treated like `over`, and the formatting of those aggregate clauses is improved ([#205](https://github.com/tconbeer/sqlfmt/issues/205))
+-   sqlfmt now standardizes whitespace inside word tokens ([#201](https://github.com/tconbeer/sqlfmt/issues/201)).
+-   `using` is now treated as a word operator. It gets a space before its brackets and merging with surrounding lines is now much improved ([#218](https://github.com/tconbeer/sqlfmt/issues/218) - thank you [@nfcampos](https://github.com/nfcampos)!).
+-   `within group` and `filter` are now treated like `over`, and the formatting of those aggregate clauses is improved ([#205](https://github.com/tconbeer/sqlfmt/issues/205)).
 
 ## [0.10.0] - 2022-08-02
 
 ### Features
 
--   sqlfmt now supports ClickHouse. When run with the `--dialect clickhouse` option, sqlfmt will not lowercase names that could be case-sensitive in ClickHouse, like function names, aliases, etc. ([#193](https://github.com/tconbeer/sqlfmt/issues/193) - thank you [@Shlomixg](https://github.com/Shlomixg)!)
+-   sqlfmt now supports ClickHouse. When run with the `--dialect clickhouse` option, sqlfmt will not lowercase names that could be case-sensitive in ClickHouse, like function names, aliases, etc. ([#193](https://github.com/tconbeer/sqlfmt/issues/193) - thank you [@Shlomixg](https://github.com/Shlomixg)!).
 
 ### Formatting Changes + Bug Fixes
 
--   formatting for chained boolean operators with complex expressions is now significantly improved ([#189](https://github.com/tconbeer/sqlfmt/issues/189) - thank you [@Rainymood](https://github.com/Rainymood)!)
--   formatting for array indexing is now significantly improved ([#209](https://github.com/tconbeer/sqlfmt/issues/209)) and sqlfmt no longer inserts spaces between the `offset()` function and its brackets
--   set operators (like `union`) are now formatted differently. They must be on their own line, and will not cause subsequent blocks to be indented ([#188](https://github.com/tconbeer/sqlfmt/issues/188) - thank you [@Rainymood](https://github.com/Rainymood)!)
--   `select * except (...)` syntax is now explicitly supported, and formatting is improved. Support added for BigQuery and DuckDB star options: `except`, `exclude`, `replace`
--   sqlfmt no longer inserts spaces between nested or repeated brackets, like `(())` or `()[]`
--   a bug causing unstable formatting with long/multiline jinja tags has been fixed ([#175](https://github.com/tconbeer/sqlfmt/issues/175))
+-   formatting for chained boolean operators with complex expressions is now significantly improved ([#189](https://github.com/tconbeer/sqlfmt/issues/189) - thank you [@Rainymood](https://github.com/Rainymood)!).
+-   formatting for array indexing is now significantly improved ([#209](https://github.com/tconbeer/sqlfmt/issues/209)) and sqlfmt no longer inserts spaces between the `offset()` function and its brackets.
+-   set operators (like `union`) are now formatted differently. They must be on their own line, and will not cause subsequent blocks to be indented ([#188](https://github.com/tconbeer/sqlfmt/issues/188) - thank you [@Rainymood](https://github.com/Rainymood)!).
+-   `select * except (...)` syntax is now explicitly supported, and formatting is improved. Support added for BigQuery and DuckDB star options: `except`, `exclude`, `replace`.
+-   sqlfmt no longer inserts spaces between nested or repeated brackets, like `(())` or `()[]`.
+-   a bug causing unstable formatting with long/multiline jinja tags has been fixed ([#175](https://github.com/tconbeer/sqlfmt/issues/175)).
 
 ## [0.9.0] - 2022-06-02
 

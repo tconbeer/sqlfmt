@@ -214,7 +214,7 @@ class JinjaTag:
     """
     A simple representation of a jinja tag.
 
-    "verb" is one of {set, do, for, if, elif, else, test, macro}
+    "verb" is one of {set, do, for, if, elif, else, test, macro, materialization, call}
 
     For example, "{%- set my_var=4 %}" is split into it parts:
     (opening_marker, verb, code, closing_marker) = ("{%-", "set", "my_var=4", "%}")
@@ -233,7 +233,7 @@ class JinjaTag:
             return self._multiline_str()
         elif self.is_indented_multiline_tag:
             return self.source_string
-        elif self.is_macro_or_test_def and self.is_blackened:
+        elif self.is_macro_like_def and self.is_blackened:
             return self._remove_trailing_comma(self._basic_str())
         else:
             return self._basic_str()
@@ -243,9 +243,9 @@ class JinjaTag:
         return self.code != "" and self.verb == "" and "\n" in self.code
 
     @property
-    def is_macro_or_test_def(self) -> bool:
-        return "%" in self.opening_marker and (
-            self.verb == "macro " or self.verb == "test "
+    def is_macro_like_def(self) -> bool:
+        return "%" in self.opening_marker and any(
+            [self.verb == f"{v} " for v in ["macro", "test", "materialization", "call"]]
         )
 
     def _multiline_str(self) -> str:
@@ -291,7 +291,9 @@ class JinjaTag:
         closing_marker_len = 3 if source_string[-3] == "-" else 2
         closing_marker = source_string[-closing_marker_len:]
 
-        verb_pattern = r"\s*(set|do|for|if|elif|else|test|macro)\s+"
+        verb_pattern = (
+            r"\s*(set|do|for|if|elif|else|test|macro|materialization|call)\s+"
+        )
         verb_program = re.compile(verb_pattern, re.DOTALL | re.IGNORECASE)
         verb_match = verb_program.match(source_string[opening_marker_len:])
         if verb_match:
