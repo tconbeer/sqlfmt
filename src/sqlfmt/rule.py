@@ -178,6 +178,40 @@ JINJA = [
         action=actions.raise_sqlfmt_bracket_error,
     ),
     Rule(
+        name="jinja_materialization_block_start",
+        priority=250,
+        pattern=group(r"\{%-?\s*materialization\s+\w+\s*,.*?-?%\}"),
+        action=partial(
+            actions.handle_jinja_block,
+            start_name="jinja_materialization_block_start",
+            end_name="jinja_materialization_block_end",
+            other_names=[],
+        ),
+    ),
+    Rule(
+        name="jinja_materialization_block_end",
+        priority=251,
+        pattern=group(r"\{%-?\s*endmaterialization\s*-?%\}"),
+        action=actions.raise_sqlfmt_bracket_error,
+    ),
+    Rule(
+        name="jinja_call_block_start",
+        priority=260,
+        pattern=group(r"\{%-?\s*call\s+statement\(.*?\)\s*-?%\}"),
+        action=partial(
+            actions.handle_jinja_block,
+            start_name="jinja_call_block_start",
+            end_name="jinja_call_block_end",
+            other_names=[],
+        ),
+    ),
+    Rule(
+        name="jinja_call_block_end",
+        priority=261,
+        pattern=group(r"\{%-?\s*endcall\s*-?%\}"),
+        action=actions.raise_sqlfmt_bracket_error,
+    ),
+    Rule(
         name="jinja_statement_start",
         priority=500,
         pattern=group(r"\{%-?"),

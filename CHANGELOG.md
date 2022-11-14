@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Formatting Changes + Bug Fixes
 
+-   sqlfmt now supports `{% materialization ... %}` and `{% call statement(...) %}` blocks ([#309](https://github.com/tconbeer/sqlfmt/issues/309))
 -   fixed a bug where we could have unsafely run *black* against jinja that contained Python keywords and their safe alternatives (e.g., `return(return_())`).
 
 ## [0.13.0] - 2022-11-01
