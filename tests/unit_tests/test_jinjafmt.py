@@ -307,6 +307,8 @@ def test_preprocess_string_properties(
         ("{% test my_test(foo, bar, baz=qux,) %}", 2, True),
         ("{% macro my_macro(\n    foo,\n    bar, \n    baz=qux,\n) %}", 2, True),
         ("{% test my_test(\n    foo,\n    bar, \n    baz=qux,\n) %}", 2, True),
+        ("{% materialization my_mat, default %}", 1, True),
+        ("{% call statement('foo', fetch_results=True, auto_begin=True) %}", 2, True),
         # do not remove from macro calls, only defs
         ("{{ my_macro(\n    foo,\n    bar, \n    baz=qux,\n) }}", 3, False),
     ],
@@ -315,7 +317,7 @@ def test_jinja_tag_remove_trailing_comma(
     source_string: str, expected_count: int, is_def: bool
 ) -> None:
     tag = JinjaTag.from_string(source_string=source_string, depth=0)
-    assert tag.is_macro_or_test_def == is_def
+    assert tag.is_macro_like_def == is_def
     tag.is_blackened = True
     result = str(tag)
     assert result.count(",") == expected_count

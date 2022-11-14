@@ -439,6 +439,25 @@ def test_handle_jinja_for_block(jinja_analyzer: Analyzer) -> None:
     assert jinja_analyzer.node_buffer[-1].token.type == TokenType.JINJA_BLOCK_END
 
 
+def test_handle_jinja_call_block(default_analyzer: Analyzer) -> None:
+    source_string = """
+    select 1,
+    {% call statement() %}
+    select 2 from foo
+    {% endcall %}
+    2
+    """.strip()
+    query = default_analyzer.parse_query(source_string=source_string.lstrip())
+
+    assert query.lines[1].nodes[0].token.type == TokenType.JINJA_BLOCK_START
+    assert query.lines[-2].nodes[0].token.type == TokenType.JINJA_BLOCK_END
+
+    # ensure endcall block resets sql depth
+    outer_select = query.nodes[0]
+    assert query.nodes[-1].depth == (1, 0)
+    assert query.nodes[-1].open_brackets == [outer_select]
+
+
 def test_handle_unsupported_ddl(default_analyzer: Analyzer) -> None:
     source_string = """
     create table foo (bar int);
