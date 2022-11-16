@@ -5,7 +5,7 @@ import pytest
 from sqlfmt import actions
 from sqlfmt.analyzer import Analyzer
 from sqlfmt.exception import SqlfmtBracketError, StopJinjaLexing
-from sqlfmt.rule import CREATE_FUNCTION, JINJA
+from sqlfmt.rules import CREATE_FUNCTION, JINJA
 from sqlfmt.token import Token, TokenType
 
 

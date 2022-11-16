@@ -4,7 +4,7 @@ from typing import Any
 import pytest
 
 from sqlfmt.dialect import ClickHouse, Dialect, Polyglot
-from sqlfmt.re_utils import group
+from sqlfmt.rules.common import group
 
 
 def test_group() -> None:

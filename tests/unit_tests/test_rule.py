@@ -3,7 +3,8 @@ from typing import List
 
 import pytest
 
-from sqlfmt.rule import CORE, CREATE_FUNCTION, GRANT, JINJA, MAIN, Rule
+from sqlfmt.rule import Rule
+from sqlfmt.rules import CORE, CREATE_FUNCTION, GRANT, JINJA, MAIN
 
 
 def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
