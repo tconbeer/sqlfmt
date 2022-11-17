@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 -   sqlfmt now supports `{% materialization ... %}` and `{% call statement(...) %}` blocks ([#309](https://github.com/tconbeer/sqlfmt/issues/309)).
 -   sqlfmt now resets the SQL depth of a query after encountering an `{% endmacro %}`, `{% endtest %}`, `{% endcall %}`, or `{% endmaterialization %}` tag.
 -   sqlfmt now supports `CREATE WAREHOUSE` and `ALTER WAREHOUSE` statements ([#312](https://github.com/tconbeer/sqlfmt/issues/312), [#299](https://github.com/tconbeer/sqlfmt/issues/312))
+-   sqlfmt now supports `ALTER FUNCTION` statements ([#310](https://github.com/tconbeer/sqlfmt/issues/310))
 -   fixed a bug where we could have unsafely run *black* against jinja that contained Python keywords and their safe alternatives (e.g., `return(return_())`).
 
 ## [0.13.0] - 2022-11-01

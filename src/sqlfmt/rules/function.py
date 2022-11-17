@@ -2,7 +2,7 @@ from functools import partial
 
 from sqlfmt import actions
 from sqlfmt.rule import Rule
-from sqlfmt.rules.common import CREATE_FUNCTION, group
+from sqlfmt.rules.common import ALTER_FUNCTION, CREATE_FUNCTION, group
 from sqlfmt.rules.core import CORE
 from sqlfmt.token import TokenType
 
@@ -34,6 +34,7 @@ FUNCTION = [
         priority=1300,
         pattern=group(
             CREATE_FUNCTION,
+            ALTER_FUNCTION,
             r"language",
             r"transform",
             r"immutable",
@@ -50,9 +51,8 @@ FUNCTION = [
             r"cost",
             r"rows",
             r"support",
-            r"set",
             # snowflake
-            r"comment",
+            r"((un)?set\s+)?comment",
             r"imports",
             r"packages",
             r"handler",
@@ -61,6 +61,15 @@ FUNCTION = [
             # bq
             r"options",
             r"remote\s+with\s+connection",
+            # ALTER
+            r"rename\s+to",
+            r"owner\s+to",
+            r"set\s+schema",
+            r"(no\s+)?depends\s+on\s+extension",
+            # alter snowflake
+            r"(un)?set\s+secure",
+            # pg catchall for set
+            r"(re)?set(\s+all)?",
         )
         + group(r"\W", r"$"),
         action=partial(actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD),
