@@ -58,6 +58,17 @@ FUNCTION = [
             r"handler",
             r"target_path",
             r"(not\s+)?null",
+            # snowflake external functions
+            r"((un)?set\s+)?"
+            + group(
+                r"api_integration",
+                r"headers",
+                r"context_headers",
+                r"max_batch_rows",
+                r"compression",
+                r"request_translator",
+                r"response_translator",
+            ),
             # bq
             r"options",
             r"remote\s+with\s+connection",

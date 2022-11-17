@@ -62,6 +62,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/406_create_function_bq_examples.sql",
         "unformatted/407_alter_function_pg_examples.sql",
         "unformatted/408_alter_function_snowflake_examples.sql",
+        "unformatted/409_create_external_function.sql",
         "unformatted/410_create_warehouse.sql",
     ],
 )
