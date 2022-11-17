@@ -4,7 +4,7 @@ from typing import List
 import pytest
 
 from sqlfmt.rule import Rule
-from sqlfmt.rules import CORE, FUNCTION, GRANT, JINJA, MAIN
+from sqlfmt.rules import CORE, FUNCTION, GRANT, JINJA, MAIN, WAREHOUSE
 
 
 def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
@@ -275,6 +275,22 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (FUNCTION, "unterm_keyword", "not null"),
         (FUNCTION, "unterm_keyword", "handler"),
         (FUNCTION, "unterm_keyword", "packages"),
+        (MAIN, "create_warehouse", "create warehouse if not exists"),
+        (MAIN, "create_warehouse", "alter warehouse if exists"),
+        (WAREHOUSE, "unterm_keyword", "create warehouse if not exists"),
+        (WAREHOUSE, "unterm_keyword", "create or replace warehouse"),
+        (WAREHOUSE, "unterm_keyword", "warehouse_type"),
+        (WAREHOUSE, "unterm_keyword", "with warehouse_size"),
+        (WAREHOUSE, "unterm_keyword", "set warehouse_size"),
+        (WAREHOUSE, "unterm_keyword", "max_cluster_count"),
+        (WAREHOUSE, "unterm_keyword", "min_cluster_count"),
+        (WAREHOUSE, "unterm_keyword", "auto_suspend"),
+        (WAREHOUSE, "unterm_keyword", "auto_resume"),
+        (WAREHOUSE, "unterm_keyword", "alter warehouse if exists"),
+        (WAREHOUSE, "unterm_keyword", "rename to"),
+        (WAREHOUSE, "unterm_keyword", "set tag"),
+        (WAREHOUSE, "unterm_keyword", "resume if suspended"),
+        (WAREHOUSE, "unterm_keyword", "unset scaling_policy"),
     ],
 )
 def test_regex_exact_match(

@@ -3,13 +3,20 @@ from functools import partial
 from sqlfmt import actions
 from sqlfmt.exception import StopRulesetLexing
 from sqlfmt.rule import Rule
-from sqlfmt.rules.common import NEWLINE, SQL_COMMENT, SQL_QUOTED_EXP, group
+from sqlfmt.rules.common import (
+    ALTER_WAREHOUSE,
+    CREATE_FUNCTION,
+    CREATE_WAREHOUSE,
+    NEWLINE,
+    SQL_COMMENT,
+    SQL_QUOTED_EXP,
+    group,
+)
 from sqlfmt.rules.core import CORE as CORE
 from sqlfmt.rules.function import FUNCTION as FUNCTION
 from sqlfmt.rules.grant import GRANT as GRANT
 from sqlfmt.rules.jinja import JINJA as JINJA  # noqa
-
-# from sqlfmt.rules.warehouse import WAREHOUSE as WAREHOUSE
+from sqlfmt.rules.warehouse import WAREHOUSE as WAREHOUSE
 from sqlfmt.token import TokenType
 
 MAIN = [
@@ -196,18 +203,29 @@ MAIN = [
     Rule(
         name="create_function",
         priority=2020,
-        pattern=group(
-            (
-                r"create(\s+or\s+replace)?(\s+temp(orary)?)?(\s+secure)?(\s+table)?"
-                r"\s+function(\s+if\s+not\s+exists)?"
+        pattern=group(CREATE_FUNCTION) + group(r"\W", r"$"),
+        action=partial(
+            actions.handle_nonreserved_keyword,
+            action=partial(
+                actions.lex_ruleset,
+                new_ruleset=FUNCTION,
+                stop_exception=StopRulesetLexing,
             ),
+        ),
+    ),
+    Rule(
+        name="create_warehouse",
+        priority=2030,
+        pattern=group(
+            CREATE_WAREHOUSE,
+            ALTER_WAREHOUSE,
         )
         + group(r"\W", r"$"),
         action=partial(
             actions.handle_nonreserved_keyword,
             action=partial(
                 actions.lex_ruleset,
-                new_ruleset=FUNCTION,
+                new_ruleset=WAREHOUSE,
                 stop_exception=StopRulesetLexing,
             ),
         ),

@@ -51,7 +51,6 @@ FUNCTION = [
             r"rows",
             r"support",
             r"set",
-            r"as",
             # snowflake
             r"comment",
             r"imports",
