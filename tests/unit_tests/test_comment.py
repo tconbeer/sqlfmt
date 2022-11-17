@@ -116,3 +116,9 @@ def test_render_standalone(short_comment: Comment, prefix: str) -> None:
 def test_split_before(text: str, expected_splits: List[str]) -> None:
     result = list(Comment._split_before(text, max_length=10))
     assert result == expected_splits
+
+
+def test_empty_comment() -> None:
+    t = Token(type=TokenType.COMMENT, prefix=" ", token="-- ", spos=0, epos=3)
+    comment = Comment(t, is_standalone=True)
+    assert str(comment) == "--\n"

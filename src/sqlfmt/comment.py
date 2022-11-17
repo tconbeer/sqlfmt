@@ -18,20 +18,19 @@ class Comment:
     comment_marker: ClassVar[re.Pattern] = re.compile(r"(--|#|/\*|\{#-?)([^\S\n]*)")
 
     def __str__(self) -> str:
-        return self._calc_str
-
-    @property
-    def _calc_str(self) -> str:
         """
         Returns the contents of the comment token plus a trailing newline,
         without preceding whitespace, with a single space between the marker
         and the comment text.
         """
         if self.is_multiline:
-            return self.token.token + "\n"
+            return f"{self.token.token}\n"
         else:
             marker, comment_text = self._comment_parts()
-            return marker + " " + comment_text + "\n"
+            if comment_text:
+                return f"{marker} {comment_text}\n"
+            else:
+                return f"{marker}\n"
 
     def __len__(self) -> int:
         return len(str(self))

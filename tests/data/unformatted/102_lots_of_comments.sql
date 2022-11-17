@@ -29,7 +29,14 @@ select -- not distinct
     another_thing_entirely,
     yet_another_field
     -- another standalone comment
-from a_really_long_table -- with a super long comment that won't fit here and needs to move up
+from a_really_long_table; -- with a super long comment that won't fit here and needs to move up
+
+-- sometimes we like really long comments
+-- that wrap to many lines. And may even
+-- be a paragraph!
+--
+-- some people like blank lines between paragraphs of comments.
+select 1
 )))))__SQLFMT_OUTPUT__(((((
 with
     one as (select 1),  -- short
@@ -56,3 +63,11 @@ select  -- not distinct
 -- another standalone comment
 -- with a super long comment that won't fit here and needs to move up
 from a_really_long_table
+;
+
+-- sometimes we like really long comments
+-- that wrap to many lines. And may even
+-- be a paragraph!
+--
+-- some people like blank lines between paragraphs of comments.
+select 1
