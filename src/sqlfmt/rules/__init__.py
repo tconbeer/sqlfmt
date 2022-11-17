@@ -4,6 +4,7 @@ from sqlfmt import actions
 from sqlfmt.exception import StopRulesetLexing
 from sqlfmt.rule import Rule
 from sqlfmt.rules.common import (
+    ALTER_DROP_FUNCTION,
     ALTER_WAREHOUSE,
     CREATE_FUNCTION,
     CREATE_WAREHOUSE,
@@ -203,7 +204,7 @@ MAIN = [
     Rule(
         name="create_function",
         priority=2020,
-        pattern=group(CREATE_FUNCTION) + group(r"\W", r"$"),
+        pattern=group(CREATE_FUNCTION, ALTER_DROP_FUNCTION) + group(r"\W", r"$"),
         action=partial(
             actions.handle_nonreserved_keyword,
             action=partial(

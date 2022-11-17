@@ -1,3 +1,4 @@
+import itertools
 from collections import Counter
 from typing import List
 
@@ -5,6 +6,8 @@ import pytest
 
 from sqlfmt.rule import Rule
 from sqlfmt.rules import CORE, FUNCTION, GRANT, JINJA, MAIN, WAREHOUSE
+
+ALL_RULESETS = [CORE, FUNCTION, GRANT, JINJA, MAIN, WAREHOUSE]
 
 
 def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
@@ -267,14 +270,32 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (GRANT, "unterm_keyword", "to"),
         (GRANT, "unterm_keyword", "from"),
         (GRANT, "unterm_keyword", "with grant option"),
+        (MAIN, "create_function", "CREATE OR REPLACE TABLE FUNCTION"),
+        (MAIN, "create_function", "CREATE secure external function"),
+        (MAIN, "create_function", "ALTER FUNCTION"),
+        (MAIN, "create_function", "DROP FUNCTION IF EXISTS"),
         (FUNCTION, "unterm_keyword", "create temp function"),
         (FUNCTION, "unterm_keyword", "CREATE OR REPLACE TABLE FUNCTION"),
+        (FUNCTION, "unterm_keyword", "CREATE OR REPLACE external FUNCTION"),
+        (FUNCTION, "unterm_keyword", "ALTER FUNCTION"),
+        (FUNCTION, "unterm_keyword", "ALTER FUNCTION IF EXISTS"),
+        (FUNCTION, "unterm_keyword", "drop function"),
         (FUNCTION, "unterm_keyword", "language"),
         (FUNCTION, "unterm_keyword", "called on null input"),
         (FUNCTION, "unterm_keyword", "returns\nnull on null input"),
         (FUNCTION, "unterm_keyword", "not null"),
         (FUNCTION, "unterm_keyword", "handler"),
         (FUNCTION, "unterm_keyword", "packages"),
+        (FUNCTION, "unterm_keyword", "set schema"),
+        (FUNCTION, "unterm_keyword", "set secure"),
+        (FUNCTION, "unterm_keyword", "set comment"),
+        (FUNCTION, "unterm_keyword", "unset comment"),
+        (FUNCTION, "unterm_keyword", "reset all"),
+        (FUNCTION, "unterm_keyword", "no DEPENDS ON EXTENSION"),
+        (FUNCTION, "unterm_keyword", "cascade"),
+        (FUNCTION, "unterm_keyword", "restrict"),
+        (FUNCTION, "unterm_keyword", "api_integration"),
+        (FUNCTION, "unterm_keyword", "set headers"),
         (MAIN, "create_warehouse", "create warehouse if not exists"),
         (MAIN, "create_warehouse", "alter warehouse if exists"),
         (WAREHOUSE, "unterm_keyword", "create warehouse if not exists"),
@@ -327,6 +348,7 @@ def test_regex_exact_match(
         (MAIN, "unsupported_ddl", "insert('abc', 1, 2, 'Z')"),
         (JINJA, "jinja_set_block_start", "{% set foo = 'baz' %}"),
         (GRANT, "unterm_keyword", "select"),
+        (FUNCTION, "unterm_keyword", "secure"),
     ],
 )
 def test_regex_anti_match(
@@ -341,7 +363,7 @@ def test_regex_anti_match(
 
 
 def test_regex_should_not_match_empty_string() -> None:
-    rules = [*CORE, *MAIN, *JINJA, *GRANT]
+    rules = itertools.chain.from_iterable(ALL_RULESETS)
     for rule in rules:
         match = rule.program.match("")
         assert match is None, f"{rule.name} rule matches empty string"
@@ -355,7 +377,7 @@ def test_core_priority_range() -> None:
         assert not (rule.priority > 1000 and rule.priority < 5000)
 
 
-@pytest.mark.parametrize("ruleset", [CORE, MAIN, JINJA, GRANT, FUNCTION])
+@pytest.mark.parametrize("ruleset", ALL_RULESETS)
 def test_rule_priorities_unique_within_ruleset(ruleset: List[Rule]) -> None:
     name_counts = Counter([rule.name for rule in ruleset])
     assert max(name_counts.values()) == 1
