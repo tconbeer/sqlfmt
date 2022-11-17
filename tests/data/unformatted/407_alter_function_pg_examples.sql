@@ -6,6 +6,10 @@ ALTER FUNCTION sqrt(integer) SET SCHEMA maths;
 ALTER FUNCTION sqrt(integer) DEPENDS ON EXTENSION mathlib;
 ALTER FUNCTION check_password(text) SET search_path = admin, pg_temp;
 ALTER FUNCTION check_password(text) RESET search_path;
+DROP FUNCTION sqrt(integer);
+DROP FUNCTION square_root(integer), square_root(bigint), square_root(float), square_root(numeric), square_root(money) cascade;
+DROP FUNCTION update_employee_salaries;
+DROP FUNCTION update_employee_salaries();
 )))))__SQLFMT_OUTPUT__(((((
 -- COPYRIGHT POSTGRESQL.ORG
 -- https://www.postgresql.org/docs/current/sql-alterfunction.html
@@ -26,4 +30,18 @@ set search_path = admin, pg_temp
 ;
 alter function check_password(text)
 reset search_path
+;
+drop function sqrt(integer)
+;
+drop function
+    square_root(integer),
+    square_root(bigint),
+    square_root(float),
+    square_root(numeric),
+    square_root(money)
+cascade
+;
+drop function update_employee_salaries
+;
+drop function update_employee_salaries()
 ;

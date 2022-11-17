@@ -32,7 +32,7 @@ CREATE_FUNCTION = (
     r"create(\s+or\s+replace)?(\s+temp(orary)?)?(\s+secure)?(\s+table)?"
     r"\s+function(\s+if\s+not\s+exists)?"
 )
-ALTER_FUNCTION = r"alter\s+function(\s+if\s+exists)?"
+ALTER_DROP_FUNCTION = r"(alter|drop)\s+function(\s+if\s+exists)?"
 
 CREATE_WAREHOUSE = r"create(\s+or\s+replace)?\s+warehouse(\s+if\s+not\s+exists)?"
 ALTER_WAREHOUSE = r"alter\s+warehouse(\s+if\s+exists)?"

@@ -2,7 +2,7 @@ from functools import partial
 
 from sqlfmt import actions
 from sqlfmt.rule import Rule
-from sqlfmt.rules.common import ALTER_FUNCTION, CREATE_FUNCTION, group
+from sqlfmt.rules.common import ALTER_DROP_FUNCTION, CREATE_FUNCTION, group
 from sqlfmt.rules.core import CORE
 from sqlfmt.token import TokenType
 
@@ -34,7 +34,7 @@ FUNCTION = [
         priority=1300,
         pattern=group(
             CREATE_FUNCTION,
-            ALTER_FUNCTION,
+            ALTER_DROP_FUNCTION,
             r"language",
             r"transform",
             r"immutable",
@@ -66,6 +66,8 @@ FUNCTION = [
             r"owner\s+to",
             r"set\s+schema",
             r"(no\s+)?depends\s+on\s+extension",
+            r"cascade",
+            r"restrict",
             # alter snowflake
             r"(un)?set\s+secure",
             # pg catchall for set
