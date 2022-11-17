@@ -9,11 +9,11 @@ from sqlfmt.exception import (
 )
 from sqlfmt.line import Line
 from sqlfmt.node import Node, get_previous_token
+from sqlfmt.rule import MAYBE_WHITESPACES, Rule
 from sqlfmt.token import Token, TokenType
 
 if TYPE_CHECKING:
     from sqlfmt.analyzer import Analyzer
-    from sqlfmt.rule import Rule
 
 
 def group(*choices: str) -> str:
@@ -21,9 +21,6 @@ def group(*choices: str) -> str:
     Convenience function for creating grouped alternatives in regex
     """
     return f"({'|'.join(choices)})"
-
-
-MAYBE_WHITESPACES: str = r"[^\S\n]*"  # any whitespace except newline
 
 
 def raise_sqlfmt_bracket_error(

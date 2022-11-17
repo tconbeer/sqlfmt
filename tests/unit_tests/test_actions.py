@@ -5,7 +5,7 @@ import pytest
 from sqlfmt import actions
 from sqlfmt.analyzer import Analyzer
 from sqlfmt.exception import SqlfmtBracketError, StopJinjaLexing
-from sqlfmt.rule import CREATE_FUNCTION, JINJA
+from sqlfmt.rules import FUNCTION, JINJA
 from sqlfmt.token import Token, TokenType
 
 
@@ -16,8 +16,8 @@ def jinja_analyzer(default_analyzer: Analyzer) -> Analyzer:
 
 
 @pytest.fixture
-def create_function_analyzer(default_analyzer: Analyzer) -> Analyzer:
-    default_analyzer.push_rules(CREATE_FUNCTION)
+def function_analyzer(default_analyzer: Analyzer) -> Analyzer:
+    default_analyzer.push_rules(FUNCTION)
     return default_analyzer
 
 
@@ -509,35 +509,35 @@ def test_handle_semicolon(default_analyzer: Analyzer) -> None:
         assert line.nodes[0].is_unterm_keyword
 
 
-def test_handle_ddl_as_unquoted(create_function_analyzer: Analyzer) -> None:
+def test_handle_ddl_as_unquoted(function_analyzer: Analyzer) -> None:
     source_string = """
     create function foo
     language sql
     as select
     """
-    create_function_analyzer.lex(source_string=source_string.lstrip())
-    assert len(create_function_analyzer.node_buffer) == 2
-    assert create_function_analyzer.node_buffer[0].is_unterm_keyword
+    function_analyzer.lex(source_string=source_string.lstrip())
+    assert len(function_analyzer.node_buffer) == 2
+    assert function_analyzer.node_buffer[0].is_unterm_keyword
     # ensure we're lexing using the main ruleset (implying an empty rule stack)
-    assert create_function_analyzer.node_buffer[1].is_unterm_keyword
-    assert not create_function_analyzer.rule_stack
+    assert function_analyzer.node_buffer[1].is_unterm_keyword
+    assert not function_analyzer.rule_stack
 
 
-def test_handle_ddl_as_quoted(create_function_analyzer: Analyzer) -> None:
+def test_handle_ddl_as_quoted(function_analyzer: Analyzer) -> None:
     source_string = """
     create function foo
     language sql
     as $$select
     1$$ security definer
     """
-    create_function_analyzer.lex(source_string=source_string.lstrip())
-    assert len(create_function_analyzer.node_buffer) == 3
-    assert create_function_analyzer.node_buffer[0].is_unterm_keyword
+    function_analyzer.lex(source_string=source_string.lstrip())
+    assert len(function_analyzer.node_buffer) == 3
+    assert function_analyzer.node_buffer[0].is_unterm_keyword
     # ensure we're lexing using the create_fn rules (implying an empty rule stack)
-    assert create_function_analyzer.node_buffer[1].token.type == TokenType.QUOTED_NAME
-    assert create_function_analyzer.rule_stack
+    assert function_analyzer.node_buffer[1].token.type == TokenType.QUOTED_NAME
+    assert function_analyzer.rule_stack
     # ensure security definer is being lexed with the create_function ruleset (as a kw)
-    assert create_function_analyzer.node_buffer[2].is_unterm_keyword
+    assert function_analyzer.node_buffer[2].is_unterm_keyword
 
 
 def test_handle_closing_angle_bracket(default_analyzer: Analyzer) -> None:

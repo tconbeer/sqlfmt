@@ -3,7 +3,8 @@ from typing import List
 
 import pytest
 
-from sqlfmt.rule import CORE, CREATE_FUNCTION, GRANT, JINJA, MAIN, Rule
+from sqlfmt.rule import Rule
+from sqlfmt.rules import CORE, FUNCTION, GRANT, JINJA, MAIN, WAREHOUSE
 
 
 def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
@@ -266,14 +267,30 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (GRANT, "unterm_keyword", "to"),
         (GRANT, "unterm_keyword", "from"),
         (GRANT, "unterm_keyword", "with grant option"),
-        (CREATE_FUNCTION, "unterm_keyword", "create temp function"),
-        (CREATE_FUNCTION, "unterm_keyword", "CREATE OR REPLACE TABLE FUNCTION"),
-        (CREATE_FUNCTION, "unterm_keyword", "language"),
-        (CREATE_FUNCTION, "unterm_keyword", "called on null input"),
-        (CREATE_FUNCTION, "unterm_keyword", "returns\nnull on null input"),
-        (CREATE_FUNCTION, "unterm_keyword", "not null"),
-        (CREATE_FUNCTION, "unterm_keyword", "handler"),
-        (CREATE_FUNCTION, "unterm_keyword", "packages"),
+        (FUNCTION, "unterm_keyword", "create temp function"),
+        (FUNCTION, "unterm_keyword", "CREATE OR REPLACE TABLE FUNCTION"),
+        (FUNCTION, "unterm_keyword", "language"),
+        (FUNCTION, "unterm_keyword", "called on null input"),
+        (FUNCTION, "unterm_keyword", "returns\nnull on null input"),
+        (FUNCTION, "unterm_keyword", "not null"),
+        (FUNCTION, "unterm_keyword", "handler"),
+        (FUNCTION, "unterm_keyword", "packages"),
+        (MAIN, "create_warehouse", "create warehouse if not exists"),
+        (MAIN, "create_warehouse", "alter warehouse if exists"),
+        (WAREHOUSE, "unterm_keyword", "create warehouse if not exists"),
+        (WAREHOUSE, "unterm_keyword", "create or replace warehouse"),
+        (WAREHOUSE, "unterm_keyword", "warehouse_type"),
+        (WAREHOUSE, "unterm_keyword", "with warehouse_size"),
+        (WAREHOUSE, "unterm_keyword", "set warehouse_size"),
+        (WAREHOUSE, "unterm_keyword", "max_cluster_count"),
+        (WAREHOUSE, "unterm_keyword", "min_cluster_count"),
+        (WAREHOUSE, "unterm_keyword", "auto_suspend"),
+        (WAREHOUSE, "unterm_keyword", "auto_resume"),
+        (WAREHOUSE, "unterm_keyword", "alter warehouse if exists"),
+        (WAREHOUSE, "unterm_keyword", "rename to"),
+        (WAREHOUSE, "unterm_keyword", "set tag"),
+        (WAREHOUSE, "unterm_keyword", "resume if suspended"),
+        (WAREHOUSE, "unterm_keyword", "unset scaling_policy"),
     ],
 )
 def test_regex_exact_match(
@@ -338,7 +355,7 @@ def test_core_priority_range() -> None:
         assert not (rule.priority > 1000 and rule.priority < 5000)
 
 
-@pytest.mark.parametrize("ruleset", [CORE, MAIN, JINJA, GRANT])
+@pytest.mark.parametrize("ruleset", [CORE, MAIN, JINJA, GRANT, FUNCTION])
 def test_rule_priorities_unique_within_ruleset(ruleset: List[Rule]) -> None:
     name_counts = Counter([rule.name for rule in ruleset])
     assert max(name_counts.values()) == 1

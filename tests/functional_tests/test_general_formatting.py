@@ -60,6 +60,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/404_create_function_pg_examples.sql",
         "unformatted/405_create_function_snowflake_examples.sql",
         "unformatted/406_create_function_bq_examples.sql",
+        "unformatted/410_create_warehouse.sql",
     ],
 )
 def test_formatting(p: str) -> None:

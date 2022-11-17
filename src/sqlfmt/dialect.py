@@ -3,7 +3,8 @@ from typing import List
 
 from sqlfmt.analyzer import Analyzer
 from sqlfmt.node_manager import NodeManager
-from sqlfmt.rule import MAIN, Rule
+from sqlfmt.rule import Rule
+from sqlfmt.rules import MAIN
 
 
 class Dialect(ABC):
