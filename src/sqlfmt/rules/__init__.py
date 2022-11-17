@@ -5,9 +5,11 @@ from sqlfmt.exception import StopRulesetLexing
 from sqlfmt.rule import Rule
 from sqlfmt.rules.common import NEWLINE, SQL_COMMENT, SQL_QUOTED_EXP, group
 from sqlfmt.rules.core import CORE as CORE
-from sqlfmt.rules.function import CREATE_FUNCTION as CREATE_FUNCTION
+from sqlfmt.rules.function import FUNCTION as FUNCTION
 from sqlfmt.rules.grant import GRANT as GRANT
 from sqlfmt.rules.jinja import JINJA as JINJA  # noqa
+
+# from sqlfmt.rules.warehouse import WAREHOUSE as WAREHOUSE
 from sqlfmt.token import TokenType
 
 MAIN = [
@@ -205,7 +207,7 @@ MAIN = [
             actions.handle_nonreserved_keyword,
             action=partial(
                 actions.lex_ruleset,
-                new_ruleset=CREATE_FUNCTION,
+                new_ruleset=FUNCTION,
                 stop_exception=StopRulesetLexing,
             ),
         ),

@@ -2,11 +2,11 @@ from functools import partial
 
 from sqlfmt import actions
 from sqlfmt.rule import Rule
-from sqlfmt.rules.common import group
+from sqlfmt.rules.common import CREATE_FUNCTION, group
 from sqlfmt.rules.core import CORE
 from sqlfmt.token import TokenType
 
-CREATE_FUNCTION = [
+FUNCTION = [
     *CORE,
     Rule(
         name="function_as",
@@ -19,7 +19,7 @@ CREATE_FUNCTION = [
     ),
     Rule(
         name="word_operator",
-        priority=1100,
+        priority=1200,
         pattern=group(
             r"to",
             r"from",
@@ -33,10 +33,7 @@ CREATE_FUNCTION = [
         name="unterm_keyword",
         priority=1300,
         pattern=group(
-            (
-                r"create(\s+or\s+replace)?(\s+temp(orary)?)?(\s+secure)?(\s+table)?"
-                r"\s+function(\s+if\s+not\s+exists)?"
-            ),
+            CREATE_FUNCTION,
             r"language",
             r"transform",
             r"immutable",

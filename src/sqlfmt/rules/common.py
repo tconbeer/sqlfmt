@@ -27,3 +27,9 @@ SQL_COMMENT = group(
     r"#[^\r\n]*",
     r"/\*[^*]*\*+(?:[^/*][^*]*\*+)*/",  # simple block comment
 )
+
+CREATE_FUNCTION = (
+    r"create(\s+or\s+replace)?(\s+temp(orary)?)?(\s+secure)?(\s+table)?"
+    r"\s+function(\s+if\s+not\s+exists)?"
+)
+CREATE_WAREHOUSE = r"create(\s+or\s+replace)?warehouse(\s+if\s+not\s+exists)?"
