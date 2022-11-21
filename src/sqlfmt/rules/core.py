@@ -71,10 +71,10 @@ CORE = [
         name="number",
         priority=350,
         pattern=group(
-            r"-?\d+\.?\d*",
-            r"-?\.\d+",
+            r"(\+|-)?\d+(\.\d*)?(e(\+|-)?\d+)?",
+            r"(\+|-)?\.\d+(e(\+|-)?\d+)?",
         ),
-        action=partial(actions.add_node_to_buffer, token_type=TokenType.NUMBER),
+        action=actions.handle_number,
     ),
     Rule(
         name="semicolon",

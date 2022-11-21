@@ -558,3 +558,30 @@ def test_handle_closing_angle_bracket(default_analyzer: Analyzer) -> None:
     assert array_line.nodes[-3].is_closing_bracket
     assert array_line.nodes[-4].is_closing_bracket
     assert all([line.nodes[1].is_operator for line in query.lines[2:]])
+
+
+def test_handle_number_unary(default_analyzer: Analyzer) -> None:
+    source_string = """
+    select
+        +1,
+        -2,
+        -1 + -2,
+    """
+    query = default_analyzer.parse_query(source_string=source_string.lstrip())
+    numbers = [str(n).strip() for n in query.nodes if n.token.type == TokenType.NUMBER]
+    assert numbers == ["+1", "-2", "-1", "-2"]
+
+
+def test_handle_number_binary(default_analyzer: Analyzer) -> None:
+    source_string = """
+    select
+        1 +1,
+        1 -1,
+        -1+2,
+        something-2,
+        (something)+2,
+        case when true then foo else bar end+2
+    """
+    query = default_analyzer.parse_query(source_string=source_string.lstrip())
+    numbers = [str(n).strip() for n in query.nodes if n.token.type == TokenType.NUMBER]
+    assert numbers == ["1", "1", "1", "1", "-1", "2", "2", "2", "2"]
