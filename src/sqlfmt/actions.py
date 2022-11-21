@@ -265,6 +265,47 @@ def handle_set_operator(
     analyzer.pos = token.epos
 
 
+def handle_number(analyzer: "Analyzer", source_string: str, match: re.Match) -> None:
+    """
+    We don't know if a token like "-3" or "+4" is properly a unary operator,
+    or a poorly-spaced binary operator, so we have to check the previous
+    node.
+    """
+    first_char = source_string[match.span(1)[0] : match.span(1)[0] + 1]
+    if first_char in ["+", "-"] and analyzer.previous_node:
+        prev_token, _ = get_previous_token(analyzer.previous_node)
+        if prev_token and prev_token.type in (
+            TokenType.NUMBER,
+            TokenType.NAME,
+            TokenType.QUOTED_NAME,
+            TokenType.STATEMENT_END,
+            TokenType.BRACKET_CLOSE,
+        ):
+            # This is a binary operator. Create a new match for only the
+            # operator token
+            op_prog = re.compile(r"\s*(\+|-)")
+            op_match = op_prog.match(source_string, pos=analyzer.pos)
+            assert op_match, "Internal error! Could not match symbol of binary operator"
+            add_node_to_buffer(
+                analyzer=analyzer,
+                source_string=source_string,
+                match=op_match,
+                token_type=TokenType.OPERATOR,
+            )
+            # we don't have to handle the rest of the number; this
+            # will get called again by analyzer.lex
+            return
+
+    # in all other cases, this is a number with/out a unary operator, and we lex it
+    # as a single token
+    add_node_to_buffer(
+        analyzer=analyzer,
+        source_string=source_string,
+        match=match,
+        token_type=TokenType.NUMBER,
+    )
+
+
 def handle_nonreserved_keyword(
     analyzer: "Analyzer",
     source_string: str,

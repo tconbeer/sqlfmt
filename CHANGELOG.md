@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 -   sqlfmt now resets the SQL depth of a query after encountering an `{% endmacro %}`, `{% endtest %}`, `{% endcall %}`, or `{% endmaterialization %}` tag.
 -   sqlfmt now supports `create warehouse` and `alter warehouse` statements ([#312](https://github.com/tconbeer/sqlfmt/issues/312), [#299](https://github.com/tconbeer/sqlfmt/issues/312)).
 -   sqlfmt now supports `alter function` and `drop function` statements ([#310](https://github.com/tconbeer/sqlfmt/issues/310), [#311](https://github.com/tconbeer/sqlfmt/issues/311)), and Snowflake's `create external function` statements ([#322](https://github.com/tconbeer/sqlfmt/issues/322)).
+-   sqlfmt better supports numeric constants (number literals), including those using scientific notation (e.g., `1.5e-9`) and the unary `+` or `-` operators (e.g., `+3`), and is now smarter about when the `-` symbol is the unary negative or binary subtraction operator. ([#321](https://github.com/tconbeer/sqlfmt/issues/321) - thank you [@liaopeiyuan](https://github.com/liaopeiyuan)!).
 -   fixed a bug where we added extra whitespace to the end of empty comment lines ([#319](https://github.com/tconbeer/sqlfmt/issues/319) - thank you [@eherde](https://github.com/eherde)!).
 -   fixed a bug where we could have unsafely run *black* against jinja that contained Python keywords and their safe alternatives (e.g., `return(return_())`).
 
