@@ -30,7 +30,7 @@ def get_projects() -> List[SQLProject]:
         SQLProject(
             name="gitlab",
             git_url="https://github.com/tconbeer/gitlab-analytics-sqlfmt.git",
-            git_ref="b53ed29",  # sqlfmt 6aa20a1
+            git_ref="52dc37d",  # sqlfmt a0e5254
             expected_changed=4,
             expected_unchanged=2413,
             expected_errored=0,
@@ -39,7 +39,7 @@ def get_projects() -> List[SQLProject]:
         SQLProject(
             name="rittman",
             git_url="https://github.com/tconbeer/rittman_ra_data_warehouse.git",
-            git_ref="5d838dd",  # sqlfmt b792a79
+            git_ref="dd47b23",  # sqlfmt a0e5254
             expected_changed=0,
             expected_unchanged=307,
             expected_errored=4,  # true mismatching brackets
