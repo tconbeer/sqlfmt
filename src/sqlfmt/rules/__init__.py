@@ -266,7 +266,7 @@ MAIN = [
                 # spark: "insert overwrite" without the trailing "into"
                 # redshift/pg: "insert into" only
                 # bigquery: bare "insert" is okay
-                r"insert(\s+overwrite)?(\s+into)?(?!\()",
+                r"insert(\s+overwrite)?(\s+into)?",
                 r"list",
                 r"lock",
                 r"merge",
@@ -286,7 +286,8 @@ MAIN = [
                 r"update",
                 r"validate",
             )
-            + rf"\b({SQL_COMMENT}|{SQL_QUOTED_EXP}|[^'`\"$;])*?"
+            + r"(?!\()"
+            + rf"\b({SQL_COMMENT}|{SQL_QUOTED_EXP}|[^'`\"$;w])*?"
         )
         + rf"{NEWLINE}*"
         + group(r";", r"$"),

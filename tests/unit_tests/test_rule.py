@@ -351,6 +351,7 @@ def test_regex_exact_match(
         (MAIN, "unterm_keyword", "MAINion"),
         (MAIN, "unterm_keyword", "delete"),
         (MAIN, "unsupported_ddl", "insert('abc', 1, 2, 'Z')"),
+        (MAIN, "unsupported_ddl", "get(foo, 'bar')"),
         (JINJA, "jinja_set_block_start", "{% set foo = 'baz' %}"),
         (GRANT, "unterm_keyword", "select"),
         (FUNCTION, "unterm_keyword", "secure"),
