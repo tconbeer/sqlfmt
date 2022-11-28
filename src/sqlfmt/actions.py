@@ -327,40 +327,6 @@ def handle_nonreserved_keyword(
         action(analyzer, source_string, match)
 
 
-def handle_possible_unsupported_ddl(
-    analyzer: "Analyzer", source_string: str, match: re.Match
-) -> None:
-    """
-    Checks to see if we're at depth 0; if so, then lex this token as DATA,
-    otherwise try to match the current position against the ordinary
-    name rule
-    """
-    token = Token.from_match(source_string, match, TokenType.DATA)
-    node = analyzer.node_manager.create_node(
-        token=token, previous_node=analyzer.previous_node
-    )
-    if node.depth[0] == 0:
-        analyzer.node_buffer.append(node)
-        analyzer.pos = token.epos
-    else:
-        # this looks like unsupported ddl/sql, but we're inside a query already, so
-        # it's probably just an ordinary name
-        name_rule = analyzer.get_rule(rule_name="name")
-        name_match = name_rule.program.match(source_string, pos=analyzer.pos)
-        assert name_match, (
-            "Internal Error! Please open an issue."
-            "An error occurred when lexing unsupported SQL"
-            f"at position {match.span(1)[0]}:\n"
-            f"{source_string[slice(*match.span(1))]}"
-        )
-        add_node_to_buffer(
-            analyzer=analyzer,
-            source_string=source_string,
-            match=name_match,
-            token_type=TokenType.NAME,
-        )
-
-
 def lex_ruleset(
     analyzer: "Analyzer",
     source_string: str,

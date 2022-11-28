@@ -17,7 +17,7 @@ class Line:
     previous_node: Optional[Node]  # last node of prior line, if any
     nodes: List[Node] = field(default_factory=list)
     comments: List[Comment] = field(default_factory=list)
-    formatting_disabled: bool = False
+    formatting_disabled: List[Token] = field(default_factory=list)
 
     def __str__(self) -> str:
         return self._calc_str
@@ -143,7 +143,7 @@ class Line:
                 nodes=nodes,
                 comments=comments,
                 formatting_disabled=nodes[0].formatting_disabled
-                or nodes[-1].formatting_disabled,
+                + nodes[-1].formatting_disabled,
             )
         else:
             line = Line(
@@ -152,7 +152,7 @@ class Line:
                 comments=comments,
                 formatting_disabled=previous_node.formatting_disabled
                 if previous_node
-                else False,
+                else [],
             )
 
         return line

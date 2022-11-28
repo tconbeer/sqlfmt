@@ -66,6 +66,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/408_alter_function_snowflake_examples.sql",
         "unformatted/409_create_external_function.sql",
         "unformatted/410_create_warehouse.sql",
+        "unformatted/999_unsupported_ddl.sql",
     ],
 )
 def test_formatting(p: str) -> None:

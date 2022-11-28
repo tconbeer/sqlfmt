@@ -43,8 +43,8 @@ class Node:
     refer to open brackets (keywords and parens) or jinja blocks (e.g., {% if foo %})
     that increase the syntax depth (and therefore printed indentation) of this Node
 
-    formatting_disabled: a boolean indicating that sqlfmt should print the raw token
-    instead of the formatted values for this Node
+    formatting_disabled: a list of FMT_OFF tokens that precede this node and prevent
+    it from being formatted
     """
 
     token: Token
@@ -53,7 +53,7 @@ class Node:
     value: str
     open_brackets: List["Node"] = field(default_factory=list)
     open_jinja_blocks: List["Node"] = field(default_factory=list)
-    formatting_disabled: bool = False
+    formatting_disabled: List[Token] = field(default_factory=list)
 
     def __str__(self) -> str:
         """

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from sqlfmt.exception import SqlfmtBracketError
 from sqlfmt.line import Line
@@ -25,11 +25,9 @@ class NodeManager:
         if previous_node is None:
             open_brackets = []
             open_jinja_blocks = []
-            formatting_disabled = False
         else:
             open_brackets = previous_node.open_brackets.copy()
             open_jinja_blocks = previous_node.open_jinja_blocks.copy()
-            formatting_disabled = previous_node.formatting_disabled
 
             # add the previous node to the list of open brackets or jinja blocks
             if previous_node.is_unterm_keyword or previous_node.is_opening_bracket:
@@ -70,11 +68,7 @@ class NodeManager:
         prev_token, extra_whitespace = get_previous_token(previous_node)
         prefix = self.whitespace(token, prev_token, extra_whitespace)
         value = self.standardize_value(token)
-
-        if token.type in (TokenType.FMT_OFF, TokenType.DATA):
-            formatting_disabled = True
-        elif prev_token and prev_token.type in (TokenType.FMT_ON, TokenType.DATA):
-            formatting_disabled = False
+        formatting_disabled = self.disable_formatting(token, previous_node)
 
         return Node(
             token=token,
@@ -244,6 +238,40 @@ class NodeManager:
             return token.token.lower()
         else:
             return token.token
+
+    def disable_formatting(
+        self, token: Token, previous_node: Optional[Node]
+    ) -> List[Token]:
+        """
+        Manage the formatting_disabled property for the node to be created from
+        the token and previous node.
+        """
+        formatting_disabled = (
+            previous_node.formatting_disabled.copy() if previous_node else []
+        )
+
+        if token.type in (TokenType.FMT_OFF, TokenType.DATA):
+            formatting_disabled.append(token)
+
+        if (
+            formatting_disabled
+            and previous_node
+            and previous_node.token.type
+            in (
+                TokenType.FMT_ON,
+                TokenType.DATA,
+            )
+        ):
+            formatting_disabled.pop()
+
+        if (
+            formatting_disabled
+            and token.type == TokenType.SEMICOLON
+            and "fmt: off" not in formatting_disabled[-1].token.lower()
+        ):
+            formatting_disabled.pop()
+
+        return formatting_disabled
 
     def append_newline(self, line: Line) -> None:
         """

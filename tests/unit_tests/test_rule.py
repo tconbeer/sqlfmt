@@ -184,22 +184,13 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (MAIN, "explain", "explain using text"),
         (MAIN, "grant", "grant"),
         (MAIN, "grant", "revoke"),
-        (MAIN, "unsupported_ddl", "create table"),
+        (MAIN, "unsupported_ddl", "create"),
         (MAIN, "unsupported_ddl", "select\ninto"),
         (MAIN, "unsupported_ddl", "insert"),
         (MAIN, "unsupported_ddl", "insert into"),
         (MAIN, "unsupported_ddl", "insert overwrite"),
         (MAIN, "unsupported_ddl", "insert overwrite into"),
         (MAIN, "unsupported_ddl", "update"),
-        (
-            MAIN,
-            "unsupported_ddl",
-            (
-                "create table my_table as\n"
-                "--table comment; another comment;\n"
-                "(select * from foo)"
-            ),
-        ),
         (MAIN, "name", "my_table_45"),
         (MAIN, "name", "replace"),
         (MAIN, "other_identifiers", "$2"),

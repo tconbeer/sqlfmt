@@ -105,7 +105,7 @@ def test_simple_line(
         "\tvalue='with',\n"
         "\topen_brackets=[],\n"
         "\topen_jinja_blocks=[],\n"
-        "\tformatting_disabled=False\n"
+        "\tformatting_disabled=[]\n"
         ")"
     )
     assert repr(simple_line.nodes[0]) == expected_node_repr
@@ -405,7 +405,7 @@ def test_formatting_disabled(default_mode: Mode) -> None:
         True,  # --fmt: on
         False,  # where format is true
     ]
-    actual = [line.formatting_disabled for line in q.lines]
+    actual = [bool(line.formatting_disabled) for line in q.lines]
     assert actual == expected
 
 
