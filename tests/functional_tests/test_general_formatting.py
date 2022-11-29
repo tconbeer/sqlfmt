@@ -54,6 +54,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/212_http_2019_cms_14_02.sql",
         "unformatted/213_gitlab_fct_sales_funnel_target.sql",
         "unformatted/214_get_unique_attributes.sql",
+        "unformatted/215_gitlab_get_backup_table_command.sql",
         "unformatted/300_jinjafmt.sql",
         "unformatted/400_create_fn_and_select.sql",
         "unformatted/401_explain_select.sql",

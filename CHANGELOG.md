@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 -   fixed a bug where we added extra whitespace to the end of empty comment lines ([#319](https://github.com/tconbeer/sqlfmt/issues/319) - thank you [@eherde](https://github.com/eherde)!).
 -   fixed an issue where wrapping unsupported DDL in jinja would cause a parsing error ([#326](https://github.com/tconbeer/sqlfmt/issues/326) - thank you [@ETG-msimons](https://github.com/ETG-msimons)!). Also improved parsing of unsupported DDL and made false positives less likely.
 -   fixed a bug where we could have unsafely run *black* against jinja that contained Python keywords and their safe alternatives (e.g., `return(return_())`).
+-   fixed a bug where we deleted some extra whitespace lines (and in very rare cases, nonblank lines)
 
 ## [0.13.0] - 2022-11-01
 

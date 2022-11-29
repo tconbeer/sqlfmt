@@ -74,8 +74,12 @@ class Segment(List[Line]):
         if len(self) <= 1:
             return False
 
-        head, i = self.head
-        tail, j = self.tail
+        try:
+            head, i = self.head
+            tail, j = self.tail
+        except SqlfmtSegmentError:
+            return False
+
         if head == tail:
             return False
 
