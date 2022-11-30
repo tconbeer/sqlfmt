@@ -29,6 +29,14 @@ def test_tail_closes_head(
     assert segment.tail_closes_head == expected_result
 
 
+def test_tail_closes_head_empty(default_analyzer: Analyzer) -> None:
+    q = default_analyzer.parse_query("a\n\n\n\n\n\n\n\nb\n")
+    blank_lines = q.lines[1:-1]
+    assert all(line.is_blank_line for line in blank_lines)
+    segment = Segment(blank_lines)
+    assert segment.tail_closes_head is False
+
+
 @pytest.mark.parametrize(
     "source_string,expected_idx",
     [

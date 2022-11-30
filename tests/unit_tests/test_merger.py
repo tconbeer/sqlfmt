@@ -53,7 +53,7 @@ def test_create_merged_line(merger: LineMerger) -> None:
 
     with pytest.raises(CannotMergeException):
         # can't merge whitespace
-        _ = merger.create_merged_line(raw_query.lines[-5:-2])
+        _ = merger.create_merged_line(raw_query.lines[-6:-3])
 
 
 def test_basic_merge(merger: LineMerger) -> None:
@@ -419,6 +419,31 @@ def test_respect_extra_blank_lines(merger: LineMerger) -> None:
     assert merged_lines[4].is_blank_line
     assert merged_lines[6].is_blank_line
     assert merged_lines[7].is_blank_line
+
+
+def test_maybe_merge_blank_lines(merger: LineMerger) -> None:
+    source_string = "select\n\n\n\n\n\n\n\n\n\n\n\n1\n"
+    raw_query = merger.mode.dialect.initialize_analyzer(
+        merger.mode.line_length
+    ).parse_query(source_string)
+    blank_lines = raw_query.lines[1:-1]
+    assert all(line.is_blank_line for line in blank_lines)
+    merged_lines = merger.maybe_merge_lines(blank_lines)
+    assert merged_lines == blank_lines
+
+
+def test_stubborn_merge_blank_lines(merger: LineMerger) -> None:
+    source_string = "a\n\n\n\n\n\n\n\n\n\n\n\nb\n"
+    raw_query = merger.mode.dialect.initialize_analyzer(
+        merger.mode.line_length
+    ).parse_query(source_string)
+    prev_segment = Segment(raw_query.lines[:1])
+    blank_segment = Segment(raw_query.lines[1:-1])
+    assert all(line.is_blank_line for line in blank_segment)
+    new_segments = merger._stubbornly_merge(
+        prev_segments=[prev_segment], segment=blank_segment
+    )
+    assert new_segments == [prev_segment, blank_segment]
 
 
 @pytest.mark.parametrize("sep", [";", "union", "union all", "intersect", "except"])

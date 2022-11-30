@@ -22,25 +22,14 @@ def create_segments_from_lines(lines: Sequence[Line]) -> List["Segment"]:
             return segments
 
         target_depth = lines[j].depth
-        head_is_singleton_operator = lines[j].is_standalone_operator
-        start_idx = j + 2 if head_is_singleton_operator else j + 1
+        start_idx = j + 2 if lines[j].is_standalone_operator else j + 1
         for i, line in enumerate(lines[start_idx:], start=start_idx):
             # scan through the lines until we get back to the
             # depth of the first line
-            if line.depth <= target_depth or line.depth[1] < target_depth[1]:
-                # if this line starts with a closing bracket,
-                # we want to include that closing bracket
-                # in the same segment as the first line.
-                if (
-                    line.closes_bracket_from_previous_line
-                    or line.closes_simple_jinja_block_from_previous_line
-                    or line.is_blank_line
-                ) and line.depth == target_depth:
-                    pass
-                else:
-                    segments.append(Segment(lines[j:i]))
-                    j = i
-                    break
+            if line.starts_new_segment(target_depth):
+                segments.append(Segment(lines[j:i]))
+                j = i
+                break
         else:
             # we've exhausted lines without finding any segments, so append a
             # single segment comprising the original list
