@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.14.0] - 2022-11-30
+
 ### Formatting Changes + Bug Fixes
 
 -   sqlfmt now supports `{% materialization ... %}` and `{% call statement(...) %}` blocks ([#309](https://github.com/tconbeer/sqlfmt/issues/309)).
@@ -13,7 +15,7 @@ All notable changes to this project will be documented in this file.
 -   sqlfmt better supports numeric constants (number literals), including those using scientific notation (e.g., `1.5e-9`) and the unary `+` or `-` operators (e.g., `+3`), and is now smarter about when the `-` symbol is the unary negative or binary subtraction operator. ([#321](https://github.com/tconbeer/sqlfmt/issues/321) - thank you [@liaopeiyuan](https://github.com/liaopeiyuan)!).
 -   fixed a bug where we added extra whitespace to the end of empty comment lines ([#319](https://github.com/tconbeer/sqlfmt/issues/319) - thank you [@eherde](https://github.com/eherde)!).
 -   fixed an bug where wrapping unsupported DDL in jinja would cause a parsing error ([#326](https://github.com/tconbeer/sqlfmt/issues/326) - thank you [@ETG-msimons](https://github.com/ETG-msimons)!). Also improved parsing of unsupported DDL and made false positives less likely.
--   fixed a bug where we could have unsafely run *black* against jinja that contained Python keywords and their safe alternatives (e.g., `return(return_())`).
+-   fixed a bug where we could have unsafely run _black_ against jinja that contained Python keywords and their safe alternatives (e.g., `return(return_())`).
 -   fixed a bug where we deleted some extra whitespace lines (and in very rare cases, nonblank lines)
 -   fixed a bug where Python recursion limits could cause incorrect formatting in rare cases
 
@@ -273,7 +275,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.13.0...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.14.0...HEAD
+
+[0.14.0]: https://github.com/tconbeer/sqlfmt/compare/0.13.0...0.14.0
 
 [0.13.0]: https://github.com/tconbeer/sqlfmt/compare/0.12.0...0.13.0
 
