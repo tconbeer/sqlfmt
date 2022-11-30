@@ -30,16 +30,16 @@ def get_projects() -> List[SQLProject]:
         SQLProject(
             name="gitlab",
             git_url="https://github.com/tconbeer/gitlab-analytics-sqlfmt.git",
-            git_ref="52dc37d",  # sqlfmt a0e5254
-            expected_changed=4,
-            expected_unchanged=2413,
+            git_ref="90ffb23",  # sqlfmt a7ed980
+            expected_changed=3,
+            expected_unchanged=2414,
             expected_errored=0,
             sub_directory=Path("transform/snowflake-dbt/"),
         ),
         SQLProject(
             name="rittman",
             git_url="https://github.com/tconbeer/rittman_ra_data_warehouse.git",
-            git_ref="dd47b23",  # sqlfmt a0e5254
+            git_ref="472d35a",  # sqlfmt a7ed980
             expected_changed=0,
             expected_unchanged=307,
             expected_errored=4,  # true mismatching brackets
@@ -48,7 +48,7 @@ def get_projects() -> List[SQLProject]:
         SQLProject(
             name="http_archive",
             git_url="https://github.com/tconbeer/http_archive_almanac.git",
-            git_ref="ec18b52",  # sqlfmt 6aa20a1
+            git_ref="73e483c",  # sqlfmt a7ed980
             expected_changed=0,
             expected_unchanged=1702,
             expected_errored=0,
@@ -57,7 +57,7 @@ def get_projects() -> List[SQLProject]:
         SQLProject(
             name="aqi",
             git_url="https://github.com/tconbeer/aqi_livibility_analysis.git",
-            git_ref="cab1292",  # sqlfmt 6d33371
+            git_ref="b088ed1",  # sqlfmt a7ed980
             expected_changed=0,
             expected_unchanged=7,
             expected_errored=0,
@@ -75,7 +75,7 @@ def get_projects() -> List[SQLProject]:
         SQLProject(
             name="dbt_utils",
             git_url="https://github.com/tconbeer/dbt-utils.git",
-            git_ref="a70e75d",  # sqlfmt b792a79
+            git_ref="749446c",  # sqlfmt a7ed980
             expected_changed=2,
             expected_unchanged=129,
             expected_errored=0,

@@ -53,6 +53,9 @@ from tests.util import check_formatting, read_test_data
         "unformatted/211_http_2019_cdn_17_20.sql",
         "unformatted/212_http_2019_cms_14_02.sql",
         "unformatted/213_gitlab_fct_sales_funnel_target.sql",
+        "unformatted/214_get_unique_attributes.sql",
+        "unformatted/215_gitlab_get_backup_table_command.sql",
+        "unformatted/216_gitlab_zuora_revenue_revenue_contract_line_source.sql",
         "unformatted/300_jinjafmt.sql",
         "unformatted/400_create_fn_and_select.sql",
         "unformatted/401_explain_select.sql",
@@ -65,6 +68,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/408_alter_function_snowflake_examples.sql",
         "unformatted/409_create_external_function.sql",
         "unformatted/410_create_warehouse.sql",
+        "unformatted/999_unsupported_ddl.sql",
     ],
 )
 def test_formatting(p: str) -> None:

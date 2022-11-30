@@ -17,7 +17,7 @@ class Line:
     previous_node: Optional[Node]  # last node of prior line, if any
     nodes: List[Node] = field(default_factory=list)
     comments: List[Comment] = field(default_factory=list)
-    formatting_disabled: bool = False
+    formatting_disabled: List[Token] = field(default_factory=list)
 
     def __str__(self) -> str:
         return self._calc_str
@@ -143,7 +143,7 @@ class Line:
                 nodes=nodes,
                 comments=comments,
                 formatting_disabled=nodes[0].formatting_disabled
-                or nodes[-1].formatting_disabled,
+                + nodes[-1].formatting_disabled,
             )
         else:
             line = Line(
@@ -152,7 +152,7 @@ class Line:
                 comments=comments,
                 formatting_disabled=previous_node.formatting_disabled
                 if previous_node
-                else False,
+                else [],
             )
 
         return line
@@ -349,3 +349,18 @@ class Line:
                 return True
             else:
                 return False
+
+    def starts_new_segment(self, prev_segment_depth: Tuple[int, int]) -> bool:
+        if self.depth <= prev_segment_depth or self.depth[1] < prev_segment_depth[1]:
+            # if this line starts with a closing bracket,
+            # we want to include that closing bracket
+            # in the same segment as the first line.
+            if (
+                self.closes_bracket_from_previous_line
+                or self.closes_simple_jinja_block_from_previous_line
+                or self.is_blank_line
+            ) and self.depth == prev_segment_depth:
+                return False
+            else:
+                return True
+        return False

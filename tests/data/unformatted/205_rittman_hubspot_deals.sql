@@ -104,6 +104,8 @@ select * from joined
 {% if var("marketing_warehouse_deal_sources") %}
 {% if "hubspot_crm" in var("marketing_warehouse_deal_sources") %}
 {% if var("stg_hubspot_crm_etl") == "fivetran" %}
+
+
 with
     source as (select * from {{ source("fivetran_hubspot_crm", "deals") }}),
     hubspot_deal_company as (

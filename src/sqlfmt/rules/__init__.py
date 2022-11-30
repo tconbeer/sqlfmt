@@ -8,9 +8,6 @@ from sqlfmt.rules.common import (
     ALTER_WAREHOUSE,
     CREATE_FUNCTION,
     CREATE_WAREHOUSE,
-    NEWLINE,
-    SQL_COMMENT,
-    SQL_QUOTED_EXP,
     group,
 )
 from sqlfmt.rules.core import CORE as CORE
@@ -235,61 +232,61 @@ MAIN = [
         name="unsupported_ddl",
         priority=2999,
         pattern=group(
-            group(
-                r"alter",
-                r"attach\s+rls\s+policy",
-                r"cache\s+table",
-                r"clear\s+cache",
-                r"cluster",
-                r"comment",
-                r"copy",
-                r"create",
-                r"deallocate",
-                r"declare",
-                r"describe",
-                r"desc\s+datashare",
-                r"desc\s+identity\s+provider",
-                r"delete",
-                r"detach\s+rls\s+policy",
-                r"discard",
-                r"do",
-                r"drop",
-                r"execute",
-                r"export",
-                r"fetch",
-                r"get",
-                r"handler",
-                r"import\s+foreign\s+schema",
-                r"import\s+table",
-                # snowflake: "insert into" or "insert overwrite into"
-                # snowflake: has insert() function
-                # spark: "insert overwrite" without the trailing "into"
-                # redshift/pg: "insert into" only
-                # bigquery: bare "insert" is okay
-                r"insert(\s+overwrite)?(\s+into)?(?!\()",
-                r"list",
-                r"lock",
-                r"merge",
-                r"move",
-                # prepare transaction statements are simple enough
-                # so we'll allow them
-                r"prepare(?!\s+transaction)",
-                r"put",
-                r"reassign\s+owned",
-                r"remove",
-                r"rename\s+table",
-                r"repair",
-                r"security\s+label",
-                r"select\s+into",
-                r"truncate",
-                r"unload",
-                r"update",
-                r"validate",
-            )
-            + rf"\b({SQL_COMMENT}|{SQL_QUOTED_EXP}|[^'`\"$;])*?"
+            r"alter",
+            r"attach\s+rls\s+policy",
+            r"cache\s+table",
+            r"clear\s+cache",
+            r"cluster",
+            r"comment",
+            r"copy",
+            r"create",
+            r"deallocate",
+            r"declare",
+            r"describe",
+            r"desc\s+datashare",
+            r"desc\s+identity\s+provider",
+            r"delete",
+            r"detach\s+rls\s+policy",
+            r"discard",
+            r"do",
+            r"drop",
+            r"execute",
+            r"export",
+            r"fetch",
+            r"get",
+            r"handler",
+            r"import\s+foreign\s+schema",
+            r"import\s+table",
+            # snowflake: "insert into" or "insert overwrite into"
+            # snowflake: has insert() function
+            # spark: "insert overwrite" without the trailing "into"
+            # redshift/pg: "insert into" only
+            # bigquery: bare "insert" is okay
+            r"insert(\s+overwrite)?(\s+into)?",
+            r"list",
+            r"lock",
+            r"merge",
+            r"move",
+            # prepare transaction statements are simple enough
+            # so we'll allow them
+            r"prepare(?!\s+transaction)",
+            r"put",
+            r"reassign\s+owned",
+            r"remove",
+            r"rename\s+table",
+            r"repair",
+            r"security\s+label",
+            r"select\s+into",
+            r"truncate",
+            r"unload",
+            r"update",
+            r"validate",
         )
-        + rf"{NEWLINE}*"
-        + group(r";", r"$"),
-        action=actions.handle_possible_unsupported_ddl,
+        + r"(?!\()"
+        + group(r"\W", r"$"),
+        action=partial(
+            actions.handle_nonreserved_keyword,
+            action=partial(actions.add_node_to_buffer, token_type=TokenType.FMT_OFF),
+        ),
     ),
 ]

@@ -67,7 +67,9 @@ def test_calculate_depth_exception(node_manager: NodeManager) -> None:
 
 
 def test_jinja_depth(default_mode: Mode) -> None:
-    source_string, _ = read_test_data("unit_tests/test_node/test_jinja_depth.sql")
+    source_string, _ = read_test_data(
+        "unit_tests/test_node_manager/test_jinja_depth.sql"
+    )
     q = default_mode.dialect.initialize_analyzer(
         line_length=default_mode.line_length
     ).parse_query(source_string=source_string)
@@ -164,7 +166,9 @@ def test_create_node_raises_bracket_error_on_jinja_block_end(
 
 
 def test_union_depth(default_mode: Mode) -> None:
-    source_string, _ = read_test_data("unit_tests/test_node/test_union_depth.sql")
+    source_string, _ = read_test_data(
+        "unit_tests/test_node_manager/test_union_depth.sql"
+    )
     q = default_mode.dialect.initialize_analyzer(
         line_length=default_mode.line_length
     ).parse_query(source_string=source_string)
@@ -358,3 +362,30 @@ def test_jinja_whitespace(default_mode: Mode) -> None:
     ).parse_query(source_string=source_string)
 
     assert all([node.prefix == node.token.prefix for node in q.nodes])
+
+
+def test_disabled_formatting(default_mode: Mode) -> None:
+    source_string, _ = read_test_data(
+        "unit_tests/test_node_manager/test_disabled_formatting.sql"
+    )
+    q = default_mode.dialect.initialize_analyzer(
+        line_length=default_mode.line_length
+    ).parse_query(source_string=source_string)
+
+    selects = [n for n in q.nodes if n.is_unterm_keyword]
+    assert not selects[0].formatting_disabled
+    assert selects[1].formatting_disabled
+    assert selects[2].formatting_disabled
+    assert len(selects[2].formatting_disabled) == 2
+    assert selects[3].formatting_disabled
+    assert not selects[4].formatting_disabled
+
+    create_publication_line = q.lines[5]
+    assert create_publication_line.formatting_disabled
+    assert create_publication_line.nodes
+    create_token = create_publication_line.nodes[0].token
+    assert create_token.type == TokenType.FMT_OFF
+    assert create_token in create_publication_line.nodes[0].formatting_disabled
+    assert len(create_publication_line.nodes[0].formatting_disabled) == 3
+    semicolon_node = create_publication_line.nodes[-2]
+    assert create_token not in semicolon_node.formatting_disabled

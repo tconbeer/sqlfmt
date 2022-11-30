@@ -167,12 +167,16 @@ class LineMerger:
             # indented lines
             else:
                 only_segment = segments[0]
-                _, i = only_segment.head
-                merged_lines.extend(only_segment[: i + 1])
-                for segment in only_segment.split_after(i):
-                    merged_lines.extend(self.maybe_merge_lines(segment))
-        finally:
-            return merged_lines
+                try:
+                    _, i = only_segment.head
+                except SqlfmtSegmentError:
+                    merged_lines.extend(only_segment)
+                else:
+                    merged_lines.extend(only_segment[: i + 1])
+                    for segment in only_segment.split_after(i):
+                        merged_lines.extend(self.maybe_merge_lines(segment))
+
+        return merged_lines
 
     def _fix_standalone_operators(self, segments: List[Segment]) -> List[Segment]:
         """
@@ -262,8 +266,8 @@ class LineMerger:
             ]
         except CannotMergeException:
             new_segments = self._maybe_merge_operators(segments, op_tiers)
-        finally:
-            return new_segments
+
+        return new_segments
 
     def _maybe_stubbornly_merge(self, segments: List[Segment]) -> List[Segment]:
         """
@@ -330,7 +334,11 @@ class LineMerger:
         """
         new_segments = prev_segments.copy()
         prev_segment = new_segments.pop()
-        head, i = segment.head
+        try:
+            head, i = segment.head
+        except SqlfmtSegmentError:
+            new_segments.extend([prev_segment, segment])
+            return new_segments
 
         # try to merge the first line of this segment with the previous segment
         try:
@@ -355,5 +363,5 @@ class LineMerger:
                 except CannotMergeException:
                     # give up and just return the original segments
                     new_segments.extend([prev_segment, segment])
-        finally:
-            return new_segments
+
+        return new_segments

@@ -184,22 +184,13 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (MAIN, "explain", "explain using text"),
         (MAIN, "grant", "grant"),
         (MAIN, "grant", "revoke"),
-        (MAIN, "unsupported_ddl", "create table"),
+        (MAIN, "unsupported_ddl", "create"),
         (MAIN, "unsupported_ddl", "select\ninto"),
         (MAIN, "unsupported_ddl", "insert"),
         (MAIN, "unsupported_ddl", "insert into"),
         (MAIN, "unsupported_ddl", "insert overwrite"),
         (MAIN, "unsupported_ddl", "insert overwrite into"),
         (MAIN, "unsupported_ddl", "update"),
-        (
-            MAIN,
-            "unsupported_ddl",
-            (
-                "create table my_table as\n"
-                "--table comment; another comment;\n"
-                "(select * from foo)"
-            ),
-        ),
         (MAIN, "name", "my_table_45"),
         (MAIN, "name", "replace"),
         (MAIN, "other_identifiers", "$2"),
@@ -351,6 +342,7 @@ def test_regex_exact_match(
         (MAIN, "unterm_keyword", "MAINion"),
         (MAIN, "unterm_keyword", "delete"),
         (MAIN, "unsupported_ddl", "insert('abc', 1, 2, 'Z')"),
+        (MAIN, "unsupported_ddl", "get(foo, 'bar')"),
         (JINJA, "jinja_set_block_start", "{% set foo = 'baz' %}"),
         (GRANT, "unterm_keyword", "select"),
         (FUNCTION, "unterm_keyword", "secure"),

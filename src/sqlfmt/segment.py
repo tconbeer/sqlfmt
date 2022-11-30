@@ -11,33 +11,32 @@ def create_segments_from_lines(lines: Sequence[Line]) -> List["Segment"]:
 
     This method takes a list of lines and returns a list of segments.
 
-    Is is basically an unfold/corecursion
+    Is is basically an unfold/corecursion, but due to recursion limits
+    we need to do it as a loop.
     """
-    if not lines:
-        return []
+    segments: List["Segment"] = []
+    j = 0
 
-    target_depth = lines[0].depth
-    head_is_singleton_operator = lines[0].is_standalone_operator
-    start_idx = 2 if head_is_singleton_operator else 1
-    for i, line in enumerate(lines[start_idx:], start=start_idx):
-        # scan through the lines until we get back to the
-        # depth of the first line
-        if line.depth <= target_depth or line.depth[1] < target_depth[1]:
-            # if this line starts with a closing bracket,
-            # we want to include that closing bracket
-            # in the same segment as the first line.
-            if (
-                line.closes_bracket_from_previous_line
-                or line.closes_simple_jinja_block_from_previous_line
-                or line.is_blank_line
-            ) and line.depth == target_depth:
-                continue
-            else:
-                return [Segment(lines[:i])] + create_segments_from_lines(lines[i:])
-    else:
-        # we've exhausted lines without finding any segments, so return a
-        # single segment comprising the original list
-        return [Segment(lines)]
+    while True:
+        if not lines[j:]:
+            return segments
+
+        target_depth = lines[j].depth
+        start_idx = j + 2 if lines[j].is_standalone_operator else j + 1
+        for i, line in enumerate(lines[start_idx:], start=start_idx):
+            # scan through the lines until we get back to the
+            # depth of the first line
+            if line.starts_new_segment(target_depth):
+                segments.append(Segment(lines[j:i]))
+                j = i
+                break
+        else:
+            # we've exhausted lines without finding any segments, so append a
+            # single segment comprising the original list
+            segments.append(Segment(lines[j:]))
+            break
+
+    return segments
 
 
 class Segment(List[Line]):
@@ -74,8 +73,12 @@ class Segment(List[Line]):
         if len(self) <= 1:
             return False
 
-        head, i = self.head
-        tail, j = self.tail
+        try:
+            head, i = self.head
+            tail, j = self.tail
+        except SqlfmtSegmentError:
+            return False
+
         if head == tail:
             return False
 

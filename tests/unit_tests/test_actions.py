@@ -467,9 +467,9 @@ def test_handle_unsupported_ddl(default_analyzer: Analyzer) -> None:
     query = default_analyzer.parse_query(source_string=source_string.lstrip())
     assert len(query.lines) == 3
     first_create_line = query.lines[0]
-    assert len(first_create_line.nodes) == 3
-    assert first_create_line.nodes[0].token.type == TokenType.DATA
-    assert first_create_line.nodes[1].token.type == TokenType.SEMICOLON
+    assert len(first_create_line.nodes) == 9
+    assert first_create_line.nodes[0].token.type == TokenType.FMT_OFF
+    assert first_create_line.nodes[-2].token.type == TokenType.SEMICOLON
 
     select_line = query.lines[1]
     assert len(select_line.nodes) == 8
