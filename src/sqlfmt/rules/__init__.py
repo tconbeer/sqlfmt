@@ -50,7 +50,7 @@ MAIN = [
             r"filter",
             r"grouping sets",
             r"(not\s+)?in",
-            r"is(\s+not)?",
+            r"is(\s+not)?(\s+distinct\s+from)?",
             r"isnull",
             r"(not\s+)?i?like(\s+any)?",
             r"over",

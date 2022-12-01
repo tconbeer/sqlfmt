@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Formatting Changes + Bug Fixes
+
+- sqlfmt now supports `is [not] distinct from` as a word operator ([#327](https://github.com/tconbeer/sqlfmt/issues/327) - thank you [@IgnorantWalking](https://github.com/IgnorantWalking), [@kadekillary](https://github.com/kadekillary)!)
+
 ## [0.14.0] - 2022-11-30
 
 ### Formatting Changes + Bug Fixes
