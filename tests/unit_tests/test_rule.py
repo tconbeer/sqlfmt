@@ -127,6 +127,8 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (CORE, "operator", "-|-"),  # range adjacency
         (MAIN, "word_operator", "is"),
         (MAIN, "word_operator", "is not"),
+        (MAIN, "word_operator", "is distinct from"),
+        (MAIN, "word_operator", "is not distinct from"),
         (MAIN, "word_operator", "in"),
         (MAIN, "word_operator", "not in"),
         (MAIN, "word_operator", "not\n\nin"),
