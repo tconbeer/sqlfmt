@@ -56,6 +56,20 @@ class TokenType(Enum):
         return self.is_jinja_statement or self is TokenType.JINJA_EXPRESSION
 
     @cached_property
+    def is_opening_bracket(self) -> bool:
+        return self in [
+            TokenType.BRACKET_OPEN,
+            TokenType.STATEMENT_START,
+        ]
+
+    @cached_property
+    def divides_queries(self) -> bool:
+        return self in [
+            TokenType.SEMICOLON,
+            TokenType.SET_OPERATOR,
+        ]
+
+    @cached_property
     def does_not_set_prev_sql_context(self) -> bool:
         return self.is_jinja_statement or self is TokenType.NEWLINE
 

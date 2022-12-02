@@ -108,23 +108,12 @@ class Node:
         return self.token.type is TokenType.COMMA
 
     @property
-    def is_semicolon(self) -> bool:
-        return self.token.type is TokenType.SEMICOLON
-
-    @property
-    def is_set_operator(self) -> bool:
-        return self.token.type is TokenType.SET_OPERATOR
-
-    @property
     def divides_queries(self) -> bool:
-        return self.is_semicolon or self.is_set_operator
+        return self.token.type.divides_queries
 
     @property
     def is_opening_bracket(self) -> bool:
-        return self.token.type in (
-            TokenType.BRACKET_OPEN,
-            TokenType.STATEMENT_START,
-        )
+        return self.token.type.is_opening_bracket
 
     @property
     def is_bracket_operator(self) -> bool:
