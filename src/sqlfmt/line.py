@@ -223,14 +223,6 @@ class Line:
         return any([n.is_jinja for n in self.nodes])
 
     @property
-    def contains_multiline_node(self) -> bool:
-        return any([n.is_multiline for n in self.nodes])
-
-    @property
-    def is_standalone_multiline_node(self) -> bool:
-        return self._is_standalone_if(self.contains_multiline_node)
-
-    @property
     def is_standalone_jinja_statement(self) -> bool:
         return self._is_standalone_if(self.starts_with_jinja_statement)
 

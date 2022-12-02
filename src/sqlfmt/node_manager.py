@@ -52,7 +52,7 @@ class NodeManager:
                 )
             else:
                 self.raise_on_mismatched_bracket(token, last_bracket)
-        elif token.type == TokenType.JINJA_BLOCK_END:
+        elif token.type is TokenType.JINJA_BLOCK_END:
             try:
                 _ = open_jinja_blocks.pop()
             except IndexError:
@@ -62,7 +62,7 @@ class NodeManager:
                 )
         # if we hit a semicolon, reset open_brackets, since we're
         # about to start a new query
-        elif token.type == TokenType.SEMICOLON:
+        elif token.type is TokenType.SEMICOLON:
             open_brackets = []
 
         prev_token, extra_whitespace = get_previous_token(previous_node)
@@ -123,40 +123,36 @@ class NodeManager:
         SPACE = " "
 
         # tokens that are never preceded by a space
-        if token.type in (
-            TokenType.BRACKET_CLOSE,
-            TokenType.COLON,
+        if token.type.is_never_preceded_by_space:
+            return NO_SPACE
+        # no spaces after an open bracket or a cast operator (::)
+        elif previous_token and previous_token.type in (
+            TokenType.BRACKET_OPEN,
             TokenType.DOUBLE_COLON,
-            TokenType.COMMA,
-            TokenType.DOT,
-            TokenType.NEWLINE,
         ):
             return NO_SPACE
+        # always a space before a keyword
+        elif token.type.is_preceded_by_space_except_after_open_bracket:
+            return SPACE
         # names preceded by dots or colons are namespaced identifiers. No space.
         elif (
-            token.type
-            in (
-                TokenType.QUOTED_NAME,
-                TokenType.NAME,
-                TokenType.STAR,
-                TokenType.JINJA_EXPRESSION,
-            )
+            token.type.is_possible_name
             and previous_token
             and previous_token.type in (TokenType.DOT, TokenType.COLON)
         ):
             return NO_SPACE
         # numbers preceded by colons are simple slices. No Space
         elif (
-            token.type == TokenType.NUMBER
+            token.type is TokenType.NUMBER
             and previous_token
-            and previous_token.type == TokenType.COLON
+            and previous_token.type is TokenType.COLON
         ):
             return NO_SPACE
         # open brackets that contain `<` are bq type definitions
         # like `array<` in `array<int64>` and require a space,
         # unless the preceding token is also an open bracket
-        elif token.type == TokenType.BRACKET_OPEN and "<" in token.token:
-            if previous_token and previous_token.type != TokenType.BRACKET_OPEN:
+        elif token.type is TokenType.BRACKET_OPEN and "<" in token.token:
+            if previous_token and previous_token.type is not TokenType.BRACKET_OPEN:
                 return SPACE
             else:
                 return NO_SPACE
@@ -165,7 +161,7 @@ class NodeManager:
         # open brackets that follow open brackets are just nested brackets.
         # No Space.
         elif (
-            token.type == TokenType.BRACKET_OPEN
+            token.type is TokenType.BRACKET_OPEN
             and previous_token
             and previous_token.type
             in (
@@ -177,39 +173,16 @@ class NodeManager:
         ):
             return NO_SPACE
         # need a space before any other open bracket
-        elif token.type == TokenType.BRACKET_OPEN:
-            return SPACE
-        # no spaces after an open bracket or a cast operator (::)
-        elif previous_token and previous_token.type in (
-            TokenType.BRACKET_OPEN,
-            TokenType.DOUBLE_COLON,
-        ):
-            return NO_SPACE
-        # always a space before a keyword
-        elif token.type in (
-            TokenType.UNTERM_KEYWORD,
-            TokenType.STATEMENT_START,
-            TokenType.STATEMENT_END,
-            TokenType.WORD_OPERATOR,
-            TokenType.BOOLEAN_OPERATOR,
-            TokenType.ON,
-            TokenType.SEMICOLON,
-        ):
+        elif token.type is TokenType.BRACKET_OPEN:
             return SPACE
         # we don't know what a jinja expression will evaluate to,
         # so we have to respect the original text
-        elif token.type in (
-            TokenType.JINJA_STATEMENT,
-            TokenType.JINJA_BLOCK_START,
-            TokenType.JINJA_BLOCK_END,
-            TokenType.JINJA_BLOCK_KEYWORD,
-            TokenType.JINJA_EXPRESSION,
-        ):
+        elif token.type.is_jinja:
             if token.prefix != "" or extra_whitespace:
                 return SPACE
             else:
                 return NO_SPACE
-        elif previous_token and previous_token.type == TokenType.JINJA_EXPRESSION:
+        elif previous_token and previous_token.type is TokenType.JINJA_EXPRESSION:
             if token.prefix != "" or extra_whitespace:
                 return SPACE
             else:
@@ -223,18 +196,9 @@ class NodeManager:
         or comments should be lowercased and have any internal
         whitespace replaced with a single space
         """
-        if token.type in (
-            TokenType.UNTERM_KEYWORD,
-            TokenType.BRACKET_OPEN,
-            TokenType.STATEMENT_START,
-            TokenType.STATEMENT_END,
-            TokenType.WORD_OPERATOR,
-            TokenType.ON,
-            TokenType.BOOLEAN_OPERATOR,
-            TokenType.SET_OPERATOR,
-        ):
+        if token.type.is_always_lowercased:
             return " ".join(token.token.lower().split())
-        elif token.type == TokenType.NAME and not self.case_sensitive_names:
+        elif token.type is TokenType.NAME and not self.case_sensitive_names:
             return token.token.lower()
         else:
             return token.token
@@ -268,7 +232,7 @@ class NodeManager:
         # ddl. When we hit a semicolon we need to pop
         # all of the formatting disabled tokens caused by ddl
         # off the stack
-        if token.type == TokenType.SEMICOLON:
+        if token.type is TokenType.SEMICOLON:
             while (
                 formatting_disabled
                 and "fmt:" not in formatting_disabled[-1].token.lower()

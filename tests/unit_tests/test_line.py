@@ -67,13 +67,11 @@ def test_bare_line(bare_line: Line) -> None:
 
     assert not bare_line.starts_with_unterm_keyword
     assert not bare_line.contains_unterm_keyword
-    assert not bare_line.contains_multiline_node
     assert not bare_line.contains_operator
     assert not bare_line.starts_with_comma
     assert not bare_line.starts_with_bracket_operator
     assert not bare_line.starts_with_operator
     assert not bare_line.is_blank_line
-    assert not bare_line.is_standalone_multiline_node
     assert not bare_line.is_too_long(88)
     assert not bare_line.opens_new_bracket
     assert bare_line.open_brackets == []
@@ -116,15 +114,13 @@ def test_simple_line(
     assert not simple_line.starts_with_comma
     assert not simple_line.starts_with_bracket_operator
     assert not simple_line.starts_with_operator
-    assert not simple_line.contains_multiline_node
     assert not simple_line.is_blank_line
-    assert not simple_line.is_standalone_multiline_node
     assert not simple_line.is_standalone_comma
     assert not simple_line.is_too_long(88)
     assert not simple_line.opens_new_bracket
     assert not simple_line.previous_line_has_open_jinja_blocks_not_keywords
 
-    assert simple_line.nodes[5].token.type == TokenType.STAR
+    assert simple_line.nodes[5].token.type is TokenType.STAR
     assert not simple_line.nodes[5].is_multiplication_star
 
 
@@ -137,7 +133,7 @@ def test_bare_append_newline(bare_line: Line, node_manager: NodeManager) -> None
     assert bare_line.nodes
     assert bare_line.is_blank_line
     new_last_node = bare_line.nodes[-1]
-    assert new_last_node.token.type == TokenType.NEWLINE
+    assert new_last_node.token.type is TokenType.NEWLINE
     assert (new_last_node.token.spos, new_last_node.token.epos) == (0, 0)
 
 
@@ -166,14 +162,14 @@ def test_simple_append_newline(simple_line: Line, node_manager: NodeManager) -> 
 
     # this line already ends with a newline
     last_node = simple_line.nodes[-1]
-    assert last_node.token.type == TokenType.NEWLINE
+    assert last_node.token.type is TokenType.NEWLINE
     assert last_node.previous_node
-    assert last_node.previous_node.token.type != TokenType.NEWLINE
+    assert last_node.previous_node.token.type is not TokenType.NEWLINE
 
     node_manager.append_newline(simple_line)
     new_last_node = simple_line.nodes[-1]
     assert new_last_node != last_node
-    assert new_last_node.token.type == TokenType.NEWLINE
+    assert new_last_node.token.type is TokenType.NEWLINE
     assert new_last_node.previous_node == last_node
     assert new_last_node.previous_node.token == last_node.token
 
@@ -288,36 +284,6 @@ def test_long_comments_that_are_not_wrapped(
     simple_line.comments = [comment]
     expected_render = raw_comment + "\n" "with abc as (select * from my_table)\n"
     assert simple_line.render_with_comments(88) == expected_render
-
-
-def test_is_standalone_multiline_node(
-    bare_line: Line, simple_line: Line, node_manager: NodeManager
-) -> None:
-
-    assert not bare_line.is_standalone_multiline_node
-    assert not simple_line.is_standalone_multiline_node
-
-    multiline_t = Token(
-        type=TokenType.JINJA_EXPRESSION,
-        prefix="",
-        token="{{\nmy JINJA\n}}",
-        spos=0,
-        epos=16,
-    )
-
-    bare_line.nodes.append(node_manager.create_node(multiline_t, None))
-    simple_line.nodes.append(
-        node_manager.create_node(multiline_t, simple_line.nodes[-1])
-    )
-
-    assert bare_line.is_standalone_multiline_node
-    assert not simple_line.is_standalone_multiline_node
-
-    node_manager.append_newline(bare_line)
-    node_manager.append_newline(simple_line)
-
-    assert bare_line.is_standalone_multiline_node
-    assert not simple_line.is_standalone_multiline_node
 
 
 def test_is_standalone_jinja_statement(

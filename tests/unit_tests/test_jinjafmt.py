@@ -205,11 +205,11 @@ def test_format_line_single_to_multi(
     line = q.lines[0]
     j_node = line.nodes[1]
     assert j_node.is_jinja
-    assert not j_node.is_multiline
+    assert not j_node.is_multiline_jinja
 
     new_lines = jinja_formatter.format_line(line)
     assert len(new_lines) == 2  # make sure the linesplitter did its thing
-    assert j_node.is_multiline  # jinjafmt mutated this node to be multiline
+    assert j_node.is_multiline_jinja  # jinjafmt mutated this node to be multiline
 
 
 @pytest.mark.parametrize(

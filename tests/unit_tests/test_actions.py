@@ -58,7 +58,7 @@ def test_add_node_to_buffer(default_analyzer: Analyzer) -> None:
     assert len(default_analyzer.node_buffer) == 2
 
     node = default_analyzer.node_buffer[1]
-    assert node.token.type == TokenType.NAME
+    assert node.token.type is TokenType.NAME
 
     assert default_analyzer.pos == 8
 
@@ -83,7 +83,7 @@ def test_safe_add_node_to_buffer(default_analyzer: Analyzer) -> None:
     assert len(default_analyzer.node_buffer) == 1
 
     node = default_analyzer.node_buffer[0]
-    assert node.token.type == TokenType.NAME
+    assert node.token.type is TokenType.NAME
 
     assert default_analyzer.pos == 3
 
@@ -292,7 +292,7 @@ def test_handle_jinja_set_block(jinja_analyzer: Analyzer, source_string: str) ->
     assert jinja_analyzer.line_buffer == []
     assert jinja_analyzer.comment_buffer == []
     assert len(jinja_analyzer.node_buffer) == 1
-    assert jinja_analyzer.node_buffer[0].token.type == TokenType.DATA
+    assert jinja_analyzer.node_buffer[0].token.type is TokenType.DATA
 
 
 def test_handle_jinja_set_block_unterminated(jinja_analyzer: Analyzer) -> None:
@@ -332,14 +332,14 @@ def test_handle_jinja_if_block(jinja_analyzer: Analyzer) -> None:
         )
     assert len(jinja_analyzer.line_buffer) == 4
     assert (
-        jinja_analyzer.line_buffer[0].nodes[0].token.type == TokenType.JINJA_BLOCK_START
+        jinja_analyzer.line_buffer[0].nodes[0].token.type is TokenType.JINJA_BLOCK_START
     )
     assert (
         jinja_analyzer.line_buffer[2].nodes[0].token.type
-        == TokenType.JINJA_BLOCK_KEYWORD
+        is TokenType.JINJA_BLOCK_KEYWORD
     )
     assert len(jinja_analyzer.node_buffer) == 1
-    assert jinja_analyzer.node_buffer[-1].token.type == TokenType.JINJA_BLOCK_END
+    assert jinja_analyzer.node_buffer[-1].token.type is TokenType.JINJA_BLOCK_END
 
 
 def test_handle_jinja_if_block_unterminated(jinja_analyzer: Analyzer) -> None:
@@ -390,24 +390,24 @@ def test_handle_jinja_if_block_nested(jinja_analyzer: Analyzer) -> None:
         )
     assert len(jinja_analyzer.line_buffer) == 8
     assert (
-        jinja_analyzer.line_buffer[0].nodes[0].token.type == TokenType.JINJA_BLOCK_START
+        jinja_analyzer.line_buffer[0].nodes[0].token.type is TokenType.JINJA_BLOCK_START
     )
     assert (
-        jinja_analyzer.line_buffer[1].nodes[0].token.type == TokenType.JINJA_BLOCK_START
+        jinja_analyzer.line_buffer[1].nodes[0].token.type is TokenType.JINJA_BLOCK_START
     )
     assert (
         jinja_analyzer.line_buffer[3].nodes[0].token.type
-        == TokenType.JINJA_BLOCK_KEYWORD
+        is TokenType.JINJA_BLOCK_KEYWORD
     )
     assert (
-        jinja_analyzer.line_buffer[5].nodes[0].token.type == TokenType.JINJA_BLOCK_END
+        jinja_analyzer.line_buffer[5].nodes[0].token.type is TokenType.JINJA_BLOCK_END
     )
     assert (
         jinja_analyzer.line_buffer[6].nodes[0].token.type
-        == TokenType.JINJA_BLOCK_KEYWORD
+        is TokenType.JINJA_BLOCK_KEYWORD
     )
     assert len(jinja_analyzer.node_buffer) == 1
-    assert jinja_analyzer.node_buffer[-1].token.type == TokenType.JINJA_BLOCK_END
+    assert jinja_analyzer.node_buffer[-1].token.type is TokenType.JINJA_BLOCK_END
 
 
 def test_handle_jinja_for_block(jinja_analyzer: Analyzer) -> None:
@@ -430,13 +430,13 @@ def test_handle_jinja_for_block(jinja_analyzer: Analyzer) -> None:
         start_rule.action(jinja_analyzer, source_string, match)
     assert len(jinja_analyzer.line_buffer) == 9
     assert (
-        jinja_analyzer.line_buffer[0].nodes[0].token.type == TokenType.JINJA_BLOCK_START
+        jinja_analyzer.line_buffer[0].nodes[0].token.type is TokenType.JINJA_BLOCK_START
     )
     assert (
-        jinja_analyzer.line_buffer[1].nodes[0].token.type == TokenType.JINJA_STATEMENT
+        jinja_analyzer.line_buffer[1].nodes[0].token.type is TokenType.JINJA_STATEMENT
     )
     assert len(jinja_analyzer.node_buffer) == 1
-    assert jinja_analyzer.node_buffer[-1].token.type == TokenType.JINJA_BLOCK_END
+    assert jinja_analyzer.node_buffer[-1].token.type is TokenType.JINJA_BLOCK_END
 
 
 def test_handle_jinja_call_block(default_analyzer: Analyzer) -> None:
@@ -449,8 +449,8 @@ def test_handle_jinja_call_block(default_analyzer: Analyzer) -> None:
     """.strip()
     query = default_analyzer.parse_query(source_string=source_string.lstrip())
 
-    assert query.lines[1].nodes[0].token.type == TokenType.JINJA_BLOCK_START
-    assert query.lines[-2].nodes[0].token.type == TokenType.JINJA_BLOCK_END
+    assert query.lines[1].nodes[0].token.type is TokenType.JINJA_BLOCK_START
+    assert query.lines[-2].nodes[0].token.type is TokenType.JINJA_BLOCK_END
 
     # ensure endcall block resets sql depth
     outer_select = query.nodes[0]
@@ -468,13 +468,13 @@ def test_handle_unsupported_ddl(default_analyzer: Analyzer) -> None:
     assert len(query.lines) == 3
     first_create_line = query.lines[0]
     assert len(first_create_line.nodes) == 9
-    assert first_create_line.nodes[0].token.type == TokenType.FMT_OFF
-    assert first_create_line.nodes[-2].token.type == TokenType.SEMICOLON
+    assert first_create_line.nodes[0].token.type is TokenType.FMT_OFF
+    assert first_create_line.nodes[-2].token.type is TokenType.SEMICOLON
 
     select_line = query.lines[1]
     assert len(select_line.nodes) == 8
-    assert select_line.nodes[1].token.type == TokenType.NAME
-    assert select_line.nodes[3].token.type == TokenType.NAME
+    assert select_line.nodes[1].token.type is TokenType.NAME
+    assert select_line.nodes[3].token.type is TokenType.NAME
 
 
 def test_handle_explain(default_analyzer: Analyzer) -> None:
@@ -486,13 +486,13 @@ def test_handle_explain(default_analyzer: Analyzer) -> None:
     assert len(query.lines) == 2
     explain_line = query.lines[0]
     assert len(explain_line.nodes) == 5
-    assert explain_line.nodes[0].token.type == TokenType.UNTERM_KEYWORD
-    assert explain_line.nodes[1].token.type == TokenType.UNTERM_KEYWORD
+    assert explain_line.nodes[0].token.type is TokenType.UNTERM_KEYWORD
+    assert explain_line.nodes[1].token.type is TokenType.UNTERM_KEYWORD
 
     select_line = query.lines[1]
     assert len(select_line.nodes) == 8
-    assert select_line.nodes[0].token.type == TokenType.UNTERM_KEYWORD
-    assert select_line.nodes[1].token.type == TokenType.NAME
+    assert select_line.nodes[0].token.type is TokenType.UNTERM_KEYWORD
+    assert select_line.nodes[1].token.type is TokenType.NAME
 
 
 def test_handle_semicolon(default_analyzer: Analyzer) -> None:
@@ -534,7 +534,7 @@ def test_handle_ddl_as_quoted(function_analyzer: Analyzer) -> None:
     assert len(function_analyzer.node_buffer) == 3
     assert function_analyzer.node_buffer[0].is_unterm_keyword
     # ensure we're lexing using the create_fn rules (implying an empty rule stack)
-    assert function_analyzer.node_buffer[1].token.type == TokenType.QUOTED_NAME
+    assert function_analyzer.node_buffer[1].token.type is TokenType.QUOTED_NAME
     assert function_analyzer.rule_stack
     # ensure security definer is being lexed with the create_function ruleset (as a kw)
     assert function_analyzer.node_buffer[2].is_unterm_keyword
@@ -568,7 +568,7 @@ def test_handle_number_unary(default_analyzer: Analyzer) -> None:
         -1 + -2,
     """
     query = default_analyzer.parse_query(source_string=source_string.lstrip())
-    numbers = [str(n).strip() for n in query.nodes if n.token.type == TokenType.NUMBER]
+    numbers = [str(n).strip() for n in query.nodes if n.token.type is TokenType.NUMBER]
     assert numbers == ["+1", "-2", "-1", "-2"]
 
 
@@ -583,5 +583,5 @@ def test_handle_number_binary(default_analyzer: Analyzer) -> None:
         case when true then foo else bar end+2
     """
     query = default_analyzer.parse_query(source_string=source_string.lstrip())
-    numbers = [str(n).strip() for n in query.nodes if n.token.type == TokenType.NUMBER]
+    numbers = [str(n).strip() for n in query.nodes if n.token.type is TokenType.NUMBER]
     assert numbers == ["1", "1", "1", "1", "-1", "2", "2", "2", "2"]

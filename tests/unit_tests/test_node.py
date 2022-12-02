@@ -83,10 +83,10 @@ def test_is_the_and_after_the_between_operator(default_mode: Mode) -> None:
     ).parse_query(source_string=source_string)
 
     and_nodes = [
-        node for node in q.nodes if node.token.type == TokenType.BOOLEAN_OPERATOR
+        node for node in q.nodes if node.token.type is TokenType.BOOLEAN_OPERATOR
     ]
     other_nodes = [
-        node for node in q.nodes if node.token.type != TokenType.BOOLEAN_OPERATOR
+        node for node in q.nodes if node.token.type is not TokenType.BOOLEAN_OPERATOR
     ]
     boolean_ands = and_nodes[::2]
     between_ands = and_nodes[1::2]

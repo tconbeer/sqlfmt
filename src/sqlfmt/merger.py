@@ -62,28 +62,28 @@ class LineMerger:
         nodes: List[Node] = []
         comments: List[Comment] = []
         final_newline: Optional[Node] = None
-        allow_multiline = True
+        allow_multiline_jinja = True
         for line in lines:
             # skip over newline nodes
             content_nodes = [
-                cls._raise_unmergeable(node, allow_multiline)
+                cls._raise_unmergeable(node, allow_multiline_jinja)
                 for node in line.nodes
                 if not node.is_newline
             ]
             if content_nodes:
                 final_newline = line.nodes[-1]
                 nodes.extend(content_nodes)
-                # we can merge lines containing multiline nodes iff:
+                # we can merge lines containing multiline jinja nodes iff:
                 # 1. the multiline node is on the first line (allow_multiline
                 #    is initialized to True)
                 # 2. the multiline node is on the second line and follows a
                 #    standalone operator
                 if not (
-                    allow_multiline
+                    allow_multiline_jinja
                     and len(content_nodes) == 1
                     and content_nodes[0].is_operator
                 ):
-                    allow_multiline = False
+                    allow_multiline_jinja = False
             comments.extend(line.comments)
 
         if not nodes or not final_newline:
@@ -94,7 +94,7 @@ class LineMerger:
         return nodes, comments
 
     @staticmethod
-    def _raise_unmergeable(node: Node, allow_multiline: bool) -> Node:
+    def _raise_unmergeable(node: Node, allow_multiline_jinja: bool) -> Node:
         """
         Raises a CannotMergeException if the node cannot be merged. Otherwise
         returns the node
@@ -107,7 +107,7 @@ class LineMerger:
             raise CannotMergeException(
                 "Can't merge multiple queries onto a single line"
             )
-        elif node.is_multiline and not allow_multiline:
+        elif node.is_multiline_jinja and not allow_multiline_jinja:
             raise CannotMergeException("Can't merge lines containing multiline nodes")
         else:
             return node

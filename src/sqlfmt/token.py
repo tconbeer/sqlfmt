@@ -1,5 +1,6 @@
 import re
 from enum import Enum, auto
+from functools import cached_property
 from typing import NamedTuple
 
 
@@ -40,6 +41,78 @@ class TokenType(Enum):
     UNTERM_KEYWORD = auto()  # Unterminated keyword
     SET_OPERATOR = auto()
     NAME = auto()
+
+    @cached_property
+    def is_jinja_statement(self) -> bool:
+        return self in (
+            TokenType.JINJA_STATEMENT,
+            TokenType.JINJA_BLOCK_START,
+            TokenType.JINJA_BLOCK_KEYWORD,
+            TokenType.JINJA_BLOCK_END,
+        )
+
+    @cached_property
+    def is_jinja(self) -> bool:
+        return self.is_jinja_statement or self is TokenType.JINJA_EXPRESSION
+
+    @cached_property
+    def does_not_set_prev_sql_context(self) -> bool:
+        return self.is_jinja_statement or self is TokenType.NEWLINE
+
+    @cached_property
+    def is_always_operator(self) -> bool:
+        return self in [
+            TokenType.OPERATOR,
+            TokenType.WORD_OPERATOR,
+            TokenType.ON,
+            TokenType.BOOLEAN_OPERATOR,
+            TokenType.DOUBLE_COLON,
+            TokenType.SEMICOLON,
+        ]
+
+    @cached_property
+    def is_never_preceded_by_space(self) -> bool:
+        return self in [
+            TokenType.BRACKET_CLOSE,
+            TokenType.COLON,
+            TokenType.DOUBLE_COLON,
+            TokenType.COMMA,
+            TokenType.DOT,
+            TokenType.NEWLINE,
+        ]
+
+    @cached_property
+    def is_preceded_by_space_except_after_open_bracket(self) -> bool:
+        return self in [
+            TokenType.UNTERM_KEYWORD,
+            TokenType.STATEMENT_START,
+            TokenType.STATEMENT_END,
+            TokenType.WORD_OPERATOR,
+            TokenType.BOOLEAN_OPERATOR,
+            TokenType.ON,
+        ]
+
+    @cached_property
+    def is_possible_name(self) -> bool:
+        return self in [
+            TokenType.QUOTED_NAME,
+            TokenType.NAME,
+            TokenType.STAR,
+            TokenType.JINJA_EXPRESSION,
+        ]
+
+    @cached_property
+    def is_always_lowercased(self) -> bool:
+        return self in [
+            TokenType.UNTERM_KEYWORD,
+            TokenType.BRACKET_OPEN,
+            TokenType.STATEMENT_START,
+            TokenType.STATEMENT_END,
+            TokenType.WORD_OPERATOR,
+            TokenType.ON,
+            TokenType.BOOLEAN_OPERATOR,
+            TokenType.SET_OPERATOR,
+        ]
 
 
 class Token(NamedTuple):
