@@ -20,10 +20,6 @@ class Line:
     formatting_disabled: List[Token] = field(default_factory=list)
 
     def __str__(self) -> str:
-        return self._calc_str
-
-    @property
-    def _calc_str(self) -> str:
         """
         A Line is printed in one of three ways:
         1. Blank lines are just bare newlines, with no other whitespace

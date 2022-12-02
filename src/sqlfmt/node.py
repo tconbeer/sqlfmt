@@ -53,7 +53,7 @@ class Node:
         """
         Returns the formatted text of this Node
         """
-        return self.prefix + self.value
+        return f"{self.prefix}{self.value}"
 
     def __repr__(self) -> str:
         """
