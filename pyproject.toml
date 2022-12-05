@@ -34,7 +34,7 @@ python = "^3.7"
 click = "^8.0"
 tqdm = "^4.0"
 platformdirs = "^2.4.0"
-backports.cached_property = { version = "^1.0.2", python = "<3.8" }
+"backports.cached_property" = { version = "^1.0.2", python = "<3.8" }
 importlib_metadata = { version = "*", python = "<3.8" }
 tomli = { version = "^2.0.1", python = "<3.11" }
 
