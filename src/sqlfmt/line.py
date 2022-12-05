@@ -20,10 +20,6 @@ class Line:
     formatting_disabled: List[Token] = field(default_factory=list)
 
     def __str__(self) -> str:
-        return self._calc_str
-
-    @property
-    def _calc_str(self) -> str:
         """
         A Line is printed in one of three ways:
         1. Blank lines are just bare newlines, with no other whitespace
@@ -221,14 +217,6 @@ class Line:
     @property
     def contains_jinja(self) -> bool:
         return any([n.is_jinja for n in self.nodes])
-
-    @property
-    def contains_multiline_node(self) -> bool:
-        return any([n.is_multiline for n in self.nodes])
-
-    @property
-    def is_standalone_multiline_node(self) -> bool:
-        return self._is_standalone_if(self.contains_multiline_node)
 
     @property
     def is_standalone_jinja_statement(self) -> bool:

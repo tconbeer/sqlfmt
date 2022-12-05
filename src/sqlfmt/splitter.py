@@ -39,7 +39,7 @@ class LineSplitter:
         if (
             # if there is a multiline node on this line and it isn't the
             # only thing on this line, then split before the multiline node
-            node.is_multiline
+            node.is_multiline_jinja
             # always split before any unterm kw
             or node.is_unterm_keyword
             # always split before any opening jinja block

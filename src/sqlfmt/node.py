@@ -12,13 +12,7 @@ def get_previous_token(prev_node: Optional["Node"]) -> Tuple[Optional[Token], bo
     if not prev_node:
         return None, False
     t = prev_node.token
-    if t.type in (
-        TokenType.NEWLINE,
-        TokenType.JINJA_STATEMENT,
-        TokenType.JINJA_BLOCK_START,
-        TokenType.JINJA_BLOCK_END,
-        TokenType.JINJA_BLOCK_KEYWORD,
-    ):
+    if t.type.does_not_set_prev_sql_context:
         prev, _ = get_previous_token(prev_node.previous_node)
         return prev, True
     else:
@@ -59,7 +53,7 @@ class Node:
         """
         Returns the formatted text of this Node
         """
-        return self.prefix + self.value
+        return f"{self.prefix}{self.value}"
 
     def __repr__(self) -> str:
         """
@@ -107,30 +101,19 @@ class Node:
         """
         True for Nodes representing unterminated SQL keywords, like select, from, where
         """
-        return self.token.type == TokenType.UNTERM_KEYWORD
+        return self.token.type is TokenType.UNTERM_KEYWORD
 
     @property
     def is_comma(self) -> bool:
-        return self.token.type == TokenType.COMMA
-
-    @property
-    def is_semicolon(self) -> bool:
-        return self.token.type == TokenType.SEMICOLON
-
-    @property
-    def is_set_operator(self) -> bool:
-        return self.token.type == TokenType.SET_OPERATOR
+        return self.token.type is TokenType.COMMA
 
     @property
     def divides_queries(self) -> bool:
-        return self.is_semicolon or self.is_set_operator
+        return self.token.type.divides_queries
 
     @property
     def is_opening_bracket(self) -> bool:
-        return self.token.type in (
-            TokenType.BRACKET_OPEN,
-            TokenType.STATEMENT_START,
-        )
+        return self.token.type.is_opening_bracket
 
     @property
     def is_bracket_operator(self) -> bool:
@@ -141,7 +124,7 @@ class Node:
         Alternatively, node is an open paren ("(")
         that follow an closing angle bracket.
         """
-        if self.token.type != TokenType.BRACKET_OPEN:
+        if self.token.type is not TokenType.BRACKET_OPEN:
             return False
 
         prev_token, _ = get_previous_token(self.previous_node)
@@ -158,7 +141,7 @@ class Node:
         else:
             return (
                 self.value == "("
-                and prev_token.type == TokenType.BRACKET_CLOSE
+                and prev_token.type is TokenType.BRACKET_CLOSE
                 and ">" in prev_token.token
             )
 
@@ -178,50 +161,31 @@ class Node:
 
     @property
     def is_jinja(self) -> bool:
-        return self.token.type in (
-            TokenType.JINJA_EXPRESSION,
-            TokenType.JINJA_STATEMENT,
-            TokenType.JINJA_BLOCK_START,
-            TokenType.JINJA_BLOCK_KEYWORD,
-            TokenType.JINJA_BLOCK_END,
-        )
+        return self.token.type.is_jinja
 
     @property
     def is_closing_jinja_block(self) -> bool:
-        return self.token.type == TokenType.JINJA_BLOCK_END
+        return self.token.type is TokenType.JINJA_BLOCK_END
 
     @property
     def is_jinja_block_keyword(self) -> bool:
-        return self.token.type == TokenType.JINJA_BLOCK_KEYWORD
+        return self.token.type is TokenType.JINJA_BLOCK_KEYWORD
 
     @property
     def is_jinja_statement(self) -> bool:
-        return self.token.type in (
-            TokenType.JINJA_STATEMENT,
-            TokenType.JINJA_BLOCK_START,
-            TokenType.JINJA_BLOCK_KEYWORD,
-            TokenType.JINJA_BLOCK_END,
-        )
+        return self.token.type.is_jinja_statement
 
     @property
     def is_operator(self) -> bool:
         return (
-            self.token.type
-            in (
-                TokenType.OPERATOR,
-                TokenType.WORD_OPERATOR,
-                TokenType.ON,
-                TokenType.BOOLEAN_OPERATOR,
-                TokenType.DOUBLE_COLON,
-                TokenType.SEMICOLON,
-            )
+            self.token.type.is_always_operator
             or self.is_multiplication_star
             or self.is_bracket_operator
         )
 
     @property
     def is_boolean_operator(self) -> bool:
-        return self.token.type == TokenType.BOOLEAN_OPERATOR
+        return self.token.type is TokenType.BOOLEAN_OPERATOR
 
     @property
     def is_multiplication_star(self) -> bool:
@@ -230,7 +194,7 @@ class Node:
         the multiplication operator. Returns true iff this Node is a multiplication
         operator
         """
-        if self.token.type != TokenType.STAR:
+        if self.token.type is not TokenType.STAR:
             return False
         prev_token, _ = get_previous_token(self.previous_node)
         if not prev_token:
@@ -246,7 +210,7 @@ class Node:
         """
         True if this node is a WORD_OPERATOR with the value "between"
         """
-        return self.token.type == TokenType.WORD_OPERATOR and self.value == "between"
+        return self.token.type is TokenType.WORD_OPERATOR and self.value == "between"
 
     @property
     def has_preceding_between_operator(self) -> bool:
@@ -276,22 +240,11 @@ class Node:
 
     @property
     def is_newline(self) -> bool:
-        return self.token.type == TokenType.NEWLINE
+        return self.token.type is TokenType.NEWLINE
 
     @property
-    def is_multiline(self) -> bool:
-        if (
-            self.token.type
-            in (
-                TokenType.DATA,
-                TokenType.JINJA_EXPRESSION,
-                TokenType.JINJA_STATEMENT,
-                TokenType.JINJA_BLOCK_START,
-                TokenType.JINJA_BLOCK_END,
-                TokenType.JINJA_BLOCK_KEYWORD,
-            )
-            and "\n" in self.value
-        ):
+    def is_multiline_jinja(self) -> bool:
+        if self.token.type.is_jinja and "\n" in self.value:
             return True
         else:
             return False

@@ -356,7 +356,7 @@ class JinjaFormatter:
                 is_blackened = self._format_jinja_node(
                     node, max_length=line_length - running_length
                 )
-                if i > 0 and is_blackened and node.is_multiline:
+                if i > 0 and is_blackened and node.is_multiline_jinja:
                     # if black turned a single-line jinja expression
                     # into a multiline one, we need to split before
                     # this node (since on the first pass the splitter

@@ -251,7 +251,7 @@ def handle_set_operator(
     if (
         token.token.lower() == "except"
         and prev_token
-        and prev_token.type == TokenType.STAR
+        and prev_token.type is TokenType.STAR
     ):
         token = Token(
             type=TokenType.WORD_OPERATOR,
