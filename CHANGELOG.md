@@ -4,14 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.14.1] - 2022-12-06
+
 ### Formatting Changes + Bug Fixes
 
-- sqlfmt now supports `is [not] distinct from` as a word operator ([#327](https://github.com/tconbeer/sqlfmt/issues/327) - thank you [@IgnorantWalking](https://github.com/IgnorantWalking), [@kadekillary](https://github.com/kadekillary)!).
-- fixed a bug where jinja `{% call %}` blocks that called a macro that wasn't `statement` caused a parsing error ([#335](https://github.com/tconbeer/sqlfmt/issues/327) - thank you [@AndrewLane](https://github.com/AndrewLane)!).
+-   sqlfmt now supports `is [not] distinct from` as a word operator ([#327](https://github.com/tconbeer/sqlfmt/issues/327) - thank you [@IgnorantWalking](https://github.com/IgnorantWalking), [@kadekillary](https://github.com/kadekillary)!).
+-   fixed a bug where jinja `{% call %}` blocks that called a macro that wasn't `statement` caused a parsing error ([#335](https://github.com/tconbeer/sqlfmt/issues/327) - thank you [@AndrewLane](https://github.com/AndrewLane)!).
 
 ### Performance
 
-- sqlfmt runs finish in 20% less time due to algorithmic improvements
+-   sqlfmt runs finish in 20% less time due to algorithmic improvements
 
 ## [0.14.0] - 2022-11-30
 
@@ -284,7 +286,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.14.0...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.14.1...HEAD
+
+[0.14.1]: https://github.com/tconbeer/sqlfmt/compare/0.14.0...0.14.1
 
 [0.14.0]: https://github.com/tconbeer/sqlfmt/compare/0.13.0...0.14.0
 
