@@ -16,7 +16,9 @@ JINJA = [
         name="jinja_set_block_start",
         priority=100,
         pattern=group(r"\{%-?\s*set\s+[^=]+?-?%\}"),
-        action=actions.handle_jinja_set_block,
+        action=partial(
+            actions.handle_jinja_data_block, end_rule_name="jinja_set_block_end"
+        ),
     ),
     Rule(
         name="jinja_set_block_end",
@@ -145,21 +147,35 @@ JINJA = [
         pattern=group(r"\{%-?\s*endmaterialization\s*-?%\}"),
         action=actions.raise_sqlfmt_bracket_error,
     ),
+    # call blocks that are used to call dbt's statement macro
+    # are guaranteed to contain SQL, so we can parse them
+    # like ordinary jinja blocks, and format the contents
     Rule(
-        name="jinja_call_block_start",
+        name="jinja_call_statement_block_start",
         priority=260,
         pattern=group(r"\{%-?\s*call\s+(noop_)?statement\(.*?\)\s*-?%\}"),
         action=partial(
             actions.handle_jinja_block,
-            start_name="jinja_call_block_start",
+            start_name="jinja_call_statement_block_start",
             end_name="jinja_call_block_end",
             other_names=[],
             end_reset_sql_depth=True,
         ),
     ),
+    # call blocks that call other macros may contain SQL or
+    # arbitrary text or data, so we need to parse the whole block
+    # as DATA so we don't format it
+    Rule(
+        name="jinja_call_block_start",
+        priority=261,
+        pattern=group(r"\{%-?\s*call\s+\w+.*?-?%\}"),
+        action=partial(
+            actions.handle_jinja_data_block, end_rule_name="jinja_call_block_end"
+        ),
+    ),
     Rule(
         name="jinja_call_block_end",
-        priority=261,
+        priority=265,
         pattern=group(r"\{%-?\s*endcall\s*-?%\}"),
         action=actions.raise_sqlfmt_bracket_error,
     ),
