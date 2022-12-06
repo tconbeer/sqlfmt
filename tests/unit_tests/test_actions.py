@@ -288,7 +288,9 @@ def test_handle_jinja_set_block(jinja_analyzer: Analyzer, source_string: str) ->
     match = start_rule.program.match(source_string)
     assert match is not None
     with pytest.raises(StopJinjaLexing):
-        actions.handle_jinja_set_block(jinja_analyzer, source_string, match)
+        actions.handle_jinja_data_block(
+            jinja_analyzer, source_string, match, end_rule_name="jinja_set_block_end"
+        )
     assert jinja_analyzer.line_buffer == []
     assert jinja_analyzer.comment_buffer == []
     assert len(jinja_analyzer.node_buffer) == 1
@@ -305,7 +307,9 @@ def test_handle_jinja_set_block_unterminated(jinja_analyzer: Analyzer) -> None:
     match = start_rule.program.match(source_string)
     assert match is not None
     with pytest.raises(SqlfmtBracketError) as excinfo:
-        actions.handle_jinja_set_block(jinja_analyzer, source_string, match)
+        actions.handle_jinja_data_block(
+            jinja_analyzer, source_string, match, end_rule_name="jinja_set_block_end"
+        )
 
     assert "{% endset %}" in str(excinfo.value)
 
@@ -439,7 +443,7 @@ def test_handle_jinja_for_block(jinja_analyzer: Analyzer) -> None:
     assert jinja_analyzer.node_buffer[-1].token.type is TokenType.JINJA_BLOCK_END
 
 
-def test_handle_jinja_call_block(default_analyzer: Analyzer) -> None:
+def test_handle_jinja_call_statement_block(default_analyzer: Analyzer) -> None:
     source_string = """
     select 1,
     {% call statement() %}
@@ -453,6 +457,26 @@ def test_handle_jinja_call_block(default_analyzer: Analyzer) -> None:
     assert query.lines[-2].nodes[0].token.type is TokenType.JINJA_BLOCK_END
 
     # ensure endcall block resets sql depth
+    outer_select = query.nodes[0]
+    assert query.nodes[-1].depth == (1, 0)
+    assert query.nodes[-1].open_brackets == [outer_select]
+
+
+def test_handle_jinja_call_block(default_analyzer: Analyzer) -> None:
+    source_string = """
+    select 1,
+    {% call dbt_unit_testing.mock_ref('foo') %}
+    a | b
+    11 | 12
+    {% endcall %}
+    2
+    """.strip()
+    query = default_analyzer.parse_query(source_string=source_string.lstrip())
+
+    assert query.lines[1].nodes[0].token.type is TokenType.DATA
+    assert query.lines[2].nodes[0].token.type is TokenType.NUMBER
+
+    # ensure call block does not change sql depth
     outer_select = query.nodes[0]
     assert query.nodes[-1].depth == (1, 0)
     assert query.nodes[-1].open_brackets == [outer_select]

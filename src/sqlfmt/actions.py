@@ -23,6 +23,19 @@ def group(*choices: str) -> str:
     return f"({'|'.join(choices)})"
 
 
+# return a human-readable token from a regex pattern
+def simplify_jinja_regex(pattern: str) -> str:
+    replacements = [
+        ("\\{", "{"),
+        ("\\}", "}"),
+        ("-?", ""),
+        ("\\s*", " "),
+    ]
+    for old, new in replacements:
+        pattern = pattern.replace(old, new)
+    return pattern
+
+
 def raise_sqlfmt_bracket_error(
     _: "Analyzer", source_string: str, match: re.Match
 ) -> None:
@@ -344,10 +357,11 @@ def lex_ruleset(
         analyzer.pop_rules()
 
 
-def handle_jinja_set_block(
+def handle_jinja_data_block(
     analyzer: "Analyzer",
     source_string: str,
     match: re.Match,
+    end_rule_name: str,
 ) -> None:
     """
     A set block, like {% set my_var %}data{% endset %} should be parsed
@@ -355,15 +369,15 @@ def handle_jinja_set_block(
     sql or python, and should not be formatted.
     """
     # find the ending tag
-    end_rule = analyzer.get_rule(rule_name="jinja_set_block_end")
+    end_rule = analyzer.get_rule(rule_name=end_rule_name)
     end_match = end_rule.program.search(source_string, pos=analyzer.pos)
     if end_match is None:
         spos, epos = match.span(1)
         raw_token = source_string[spos:epos]
         raise SqlfmtBracketError(
-            f"Encountered unterminated Jinja set block '{raw_token}' at position"
-            f" {spos}. Expected end tag: "
-            "{% endset %}"
+            f"Encountered unterminated Jinja set or call block '{raw_token}' at "
+            f"position {spos}. Expected end tag: "
+            f"{simplify_jinja_regex(end_rule.pattern)}"
         )
     # the data token is everything between the start and end tags, inclusive
     data_spos = match.span(1)[0]
@@ -420,22 +434,11 @@ def handle_jinja_block(
         # search ahead for the next matching control tag
         next_tag_match = program.search(source_string, analyzer.pos)
         if not next_tag_match:
-            # raise a helpful exception
-            def simplify_regex(pattern: str) -> str:
-                replacements = [
-                    ("\\{", "{"),
-                    ("\\}", "}"),
-                    ("-?", ""),
-                    ("\\s*", " "),
-                ]
-                for old, new in replacements:
-                    pattern = pattern.replace(old, new)
-                return pattern
 
             raise SqlfmtBracketError(
                 f"Encountered unterminated Jinja block at position"
                 f" {match.span(0)[0]}. Expected end tag: "
-                f"{simplify_regex(end_rule.pattern)}"
+                f"{simplify_jinja_regex(end_rule.pattern)}"
             )
         # otherwise, if the tag matches, lex everything up to that token
         # using the ruleset that was active before jinja
