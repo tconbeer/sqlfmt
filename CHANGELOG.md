@@ -4,12 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Formatting Changes + Bug Fixes
+
+-   fixed a bug where nested `{% set %}` and `{% call %}` blocks would cause a parsing error ([#338](https://github.com/tconbeer/sqlfmt/issues/338) - thank you [@AndrewLane](https://github.com/AndrewLane)!).
+
 ## [0.14.1] - 2022-12-06
 
 ### Formatting Changes + Bug Fixes
 
 -   sqlfmt now supports `is [not] distinct from` as a word operator ([#327](https://github.com/tconbeer/sqlfmt/issues/327) - thank you [@IgnorantWalking](https://github.com/IgnorantWalking), [@kadekillary](https://github.com/kadekillary)!).
--   fixed a bug where jinja `{% call %}` blocks that called a macro that wasn't `statement` caused a parsing error ([#335](https://github.com/tconbeer/sqlfmt/issues/327) - thank you [@AndrewLane](https://github.com/AndrewLane)!).
+-   fixed a bug where jinja `{% call %}` blocks that called a macro that wasn't `statement` caused a parsing error ([#335](https://github.com/tconbeer/sqlfmt/issues/335) - thank you [@AndrewLane](https://github.com/AndrewLane)!).
 
 ### Performance
 

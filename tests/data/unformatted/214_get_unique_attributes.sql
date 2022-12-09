@@ -28,7 +28,7 @@
 {# Source: https://github.com/tconbeer/sqlfmt/issues/326 #}
 {% macro get_unique_attributes(source_table, node_col) %}
 
-{% set attribute_query %} 
+{% set attribute_query %}
     select
         distinct x.key as attributes
     from {{ source_table }} x

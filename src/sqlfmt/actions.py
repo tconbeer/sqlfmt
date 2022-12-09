@@ -503,6 +503,84 @@ def handle_jinja_block(
     raise StopJinjaLexing
 
 
+def handle_jinja_block_start(
+    analyzer: "Analyzer",
+    source_string: str,
+    match: re.Match,
+) -> None:
+    """
+    Lex tags like {% if ... %} and {% for ... %} that open a jinja block
+    """
+    add_node_to_buffer(
+        analyzer=analyzer,
+        source_string=source_string,
+        match=match,
+        token_type=TokenType.JINJA_BLOCK_START,
+    )
+    raise StopJinjaLexing
+
+
+def handle_jinja_data_block_start(
+    analyzer: "Analyzer",
+    source_string: str,
+    match: re.Match,
+    new_ruleset: Optional[List[Rule]],
+    stop_exception: Type[SqlfmtControlFlowException],
+    raises: bool = True,
+) -> None:
+    """
+    Lex tags like {% set foo %} and {% call my_macro %} that open a jinja block
+    that can contain arbitrary data
+    """
+    add_node_to_buffer(
+        analyzer=analyzer,
+        source_string=source_string,
+        match=match,
+        token_type=TokenType.JINJA_BLOCK_START,
+    )
+    if new_ruleset is None:
+        new_ruleset = analyzer.rules
+    lex_ruleset(
+        analyzer,
+        source_string,
+        match,
+        new_ruleset=new_ruleset,
+        stop_exception=stop_exception,
+    )
+    if raises:
+        raise StopJinjaLexing
+
+
+def handle_jinja_block_end(
+    analyzer: "Analyzer",
+    source_string: str,
+    match: re.Match,
+    start_rule_name: str,
+    reset_sql_depth: bool = False,
+) -> None:
+    """
+    Lex tags like {% endif %} and {% endfor %} that close an open jinja block
+    """
+    if analyzer.previous_node and analyzer.previous_node.open_jinja_blocks:
+        start_tag = analyzer.previous_node.open_jinja_blocks[-1]
+        start_rule = analyzer.get_rule(start_rule_name)
+        if start_rule.program.match(start_tag.value):
+            add_node_to_buffer(
+                analyzer=analyzer,
+                source_string=source_string,
+                match=match,
+                token_type=TokenType.JINJA_BLOCK_END,
+            )
+
+            if reset_sql_depth:
+                analyzer.previous_node.open_brackets = start_tag.open_brackets.copy()
+
+            raise StopJinjaLexing
+
+    # No open jinja blocks or none that match this token
+    raise_sqlfmt_bracket_error(analyzer, source_string=source_string, match=match)
+
+
 def handle_jinja(
     analyzer: "Analyzer",
     source_string: str,
