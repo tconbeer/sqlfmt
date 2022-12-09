@@ -4,7 +4,7 @@ import pytest
 
 from sqlfmt import actions
 from sqlfmt.analyzer import Analyzer
-from sqlfmt.exception import SqlfmtBracketError, StopJinjaLexing
+from sqlfmt.exception import SqlfmtBracketError, StopRulesetLexing
 from sqlfmt.rules import FUNCTION, JINJA
 from sqlfmt.token import Token, TokenType
 
@@ -266,7 +266,7 @@ def test_handle_jinja(
     start_rule = jinja_analyzer.get_rule(start_name)
     match = start_rule.program.match(source_string)
     assert match, "Start Rule does not match start of test string"
-    with pytest.raises(StopJinjaLexing):
+    with pytest.raises(StopRulesetLexing):
         actions.handle_jinja(
             jinja_analyzer, source_string, match, start_name, end_name, token_type
         )
@@ -287,7 +287,7 @@ def test_handle_jinja_set_block(jinja_analyzer: Analyzer, source_string: str) ->
     start_rule = jinja_analyzer.get_rule("jinja_set_block_start")
     match = start_rule.program.match(source_string)
     assert match is not None
-    with pytest.raises(StopJinjaLexing):
+    with pytest.raises(StopRulesetLexing):
         actions.handle_jinja_data_block(
             jinja_analyzer, source_string, match, end_rule_name="jinja_set_block_end"
         )
@@ -353,7 +353,7 @@ def test_handle_jinja_if_block(jinja_analyzer: Analyzer) -> None:
     start_rule = jinja_analyzer.get_rule("jinja_if_block_start")
     match = start_rule.program.match(source_string)
     assert match is not None
-    with pytest.raises(StopJinjaLexing):
+    with pytest.raises(StopRulesetLexing):
         actions.handle_jinja_block(
             jinja_analyzer,
             source_string,
@@ -411,7 +411,7 @@ def test_handle_jinja_if_block_nested(jinja_analyzer: Analyzer) -> None:
     start_rule = jinja_analyzer.get_rule("jinja_if_block_start")
     match = start_rule.program.match(source_string)
     assert match is not None
-    with pytest.raises(StopJinjaLexing):
+    with pytest.raises(StopRulesetLexing):
         actions.handle_jinja_block(
             jinja_analyzer,
             source_string,

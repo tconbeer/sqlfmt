@@ -1,7 +1,6 @@
 from functools import partial
 
 from sqlfmt import actions
-from sqlfmt.exception import StopJinjaLexing
 from sqlfmt.rule import Rule
 from sqlfmt.rules.common import NEWLINE, group
 from sqlfmt.token import TokenType
@@ -21,7 +20,6 @@ JINJA_DATA = [
         action=partial(
             actions.handle_jinja_data_block_start,
             new_ruleset=None,
-            stop_exception=StopJinjaLexing,
             raises=False,
         ),
     ),
@@ -42,7 +40,6 @@ JINJA_DATA = [
         action=partial(
             actions.handle_jinja_data_block_start,
             new_ruleset=None,
-            stop_exception=StopJinjaLexing,
             raises=False,
         ),
     ),
@@ -84,7 +81,6 @@ JINJA = [
         action=partial(
             actions.handle_jinja_data_block_start,
             new_ruleset=JINJA_DATA,
-            stop_exception=StopJinjaLexing,
         ),
     ),
     Rule(
@@ -222,7 +218,6 @@ JINJA = [
         action=partial(
             actions.handle_jinja_data_block_start,
             new_ruleset=JINJA_DATA,
-            stop_exception=StopJinjaLexing,
         ),
     ),
     Rule(

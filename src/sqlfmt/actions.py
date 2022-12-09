@@ -1,12 +1,8 @@
 import re
-from typing import TYPE_CHECKING, Callable, List, Optional, Type
+from typing import TYPE_CHECKING, Callable, List, Optional
 
 from sqlfmt.comment import Comment
-from sqlfmt.exception import (
-    SqlfmtBracketError,
-    SqlfmtControlFlowException,
-    StopJinjaLexing,
-)
+from sqlfmt.exception import SqlfmtBracketError, StopRulesetLexing
 from sqlfmt.line import Line
 from sqlfmt.node import Node, get_previous_token
 from sqlfmt.rule import MAYBE_WHITESPACES, Rule
@@ -110,10 +106,10 @@ def add_jinja_comment_to_buffer(
     """
     Create a COMMENT token from the match, then create a Comment
     from that token and append it to the Analyzer's buffer; raise
-    StopJinjaLexing to revert to SQL lexing
+    StopRulesetLexing to revert to SQL lexing
     """
     add_comment_to_buffer(analyzer, source_string, match)
-    raise StopJinjaLexing
+    raise StopRulesetLexing
 
 
 def handle_newline(
@@ -345,7 +341,6 @@ def lex_ruleset(
     source_string: str,
     _: re.Match,
     new_ruleset: List["Rule"],
-    stop_exception: Type[SqlfmtControlFlowException],
 ) -> None:
     """
     Makes a nested call to analyzer.lex, with the new ruleset activated.
@@ -353,7 +348,7 @@ def lex_ruleset(
     analyzer.push_rules(new_ruleset)
     try:
         analyzer.lex(source_string)
-    except stop_exception:
+    except StopRulesetLexing:
         analyzer.pop_rules()
 
 
@@ -394,7 +389,7 @@ def handle_jinja_data_block(
     )
     analyzer.node_buffer.append(data_node)
     analyzer.pos = data_epos
-    raise StopJinjaLexing
+    raise StopRulesetLexing
 
 
 def handle_jinja_block(
@@ -466,7 +461,7 @@ def handle_jinja_block(
                         end_name=end_name,
                         other_names=other_names,
                     )
-                except StopJinjaLexing:
+                except StopRulesetLexing:
                     continue
             # if this the tag that ends the block, add it to the
             # buffer
@@ -500,7 +495,7 @@ def handle_jinja_block(
         else:
             continue
 
-    raise StopJinjaLexing
+    raise StopRulesetLexing
 
 
 def handle_jinja_block_start(
@@ -517,7 +512,7 @@ def handle_jinja_block_start(
         match=match,
         token_type=TokenType.JINJA_BLOCK_START,
     )
-    raise StopJinjaLexing
+    raise StopRulesetLexing
 
 
 def handle_jinja_data_block_start(
@@ -525,7 +520,6 @@ def handle_jinja_data_block_start(
     source_string: str,
     match: re.Match,
     new_ruleset: Optional[List[Rule]],
-    stop_exception: Type[SqlfmtControlFlowException],
     raises: bool = True,
 ) -> None:
     """
@@ -545,10 +539,9 @@ def handle_jinja_data_block_start(
         source_string,
         match,
         new_ruleset=new_ruleset,
-        stop_exception=stop_exception,
     )
     if raises:
-        raise StopJinjaLexing
+        raise StopRulesetLexing
 
 
 def handle_jinja_block_end(
@@ -575,7 +568,7 @@ def handle_jinja_block_end(
             if reset_sql_depth:
                 analyzer.previous_node.open_brackets = start_tag.open_brackets.copy()
 
-            raise StopJinjaLexing
+            raise StopRulesetLexing
 
     # No open jinja blocks or none that match this token
     raise_sqlfmt_bracket_error(analyzer, source_string=source_string, match=match)
@@ -601,7 +594,7 @@ def handle_jinja(
         end_name=end_name,
         token_type=token_type,
     )
-    raise StopJinjaLexing
+    raise StopRulesetLexing
 
 
 def handle_potentially_nested_tokens(
