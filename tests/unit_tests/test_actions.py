@@ -283,35 +283,12 @@ def test_handle_jinja(
         "{% set ns.my_var %}\n!\n{% endset %}",
     ],
 )
-def test_handle_jinja_set_block(jinja_analyzer: Analyzer, source_string: str) -> None:
-    start_rule = jinja_analyzer.get_rule("jinja_set_block_start")
-    match = start_rule.program.match(source_string)
-    assert match is not None
-    with pytest.raises(StopRulesetLexing):
-        actions.handle_jinja_data_block(
-            jinja_analyzer, source_string, match, end_rule_name="jinja_set_block_end"
-        )
-    assert jinja_analyzer.line_buffer == []
-    assert jinja_analyzer.comment_buffer == []
-    assert len(jinja_analyzer.node_buffer) == 1
-    assert jinja_analyzer.node_buffer[0].token.type is TokenType.DATA
-
-
-def test_handle_jinja_set_block_unterminated(jinja_analyzer: Analyzer) -> None:
-    source_string = """
-    {% set foo %}
-    !
-    something_else
-    """.strip()
-    start_rule = jinja_analyzer.get_rule("jinja_set_block_start")
-    match = start_rule.program.match(source_string)
-    assert match is not None
-    with pytest.raises(SqlfmtBracketError) as excinfo:
-        actions.handle_jinja_data_block(
-            jinja_analyzer, source_string, match, end_rule_name="jinja_set_block_end"
-        )
-
-    assert "{% endset %}" in str(excinfo.value)
+def test_handle_jinja_set_block(default_analyzer: Analyzer, source_string: str) -> None:
+    query = default_analyzer.parse_query(source_string=source_string)
+    assert len(query.lines) == 3
+    assert query.lines[0].nodes[0].token.type == TokenType.JINJA_BLOCK_START
+    assert query.lines[1].nodes[0].token.type == TokenType.DATA
+    assert query.lines[2].nodes[0].token.type == TokenType.JINJA_BLOCK_END
 
 
 def test_handle_jinja_set_block_nested(default_analyzer: Analyzer) -> None:
@@ -342,7 +319,7 @@ def test_handle_jinja_set_block_nested(default_analyzer: Analyzer) -> None:
     assert q.lines[8].nodes[0].token.type == TokenType.JINJA_BLOCK_END
 
 
-def test_handle_jinja_if_block(jinja_analyzer: Analyzer) -> None:
+def test_handle_jinja_if_block(default_analyzer: Analyzer) -> None:
     source_string = """
     {% if foo == bar %}
         column_a,
@@ -350,53 +327,14 @@ def test_handle_jinja_if_block(jinja_analyzer: Analyzer) -> None:
         column_b,
     {% endif %}
     """.strip()
-    start_rule = jinja_analyzer.get_rule("jinja_if_block_start")
-    match = start_rule.program.match(source_string)
-    assert match is not None
-    with pytest.raises(StopRulesetLexing):
-        actions.handle_jinja_block(
-            jinja_analyzer,
-            source_string,
-            match,
-            "jinja_if_block_start",
-            "jinja_if_block_end",
-            ["jinja_elif_block_start", "jinja_else_block_start"],
-        )
-    assert len(jinja_analyzer.line_buffer) == 4
-    assert (
-        jinja_analyzer.line_buffer[0].nodes[0].token.type is TokenType.JINJA_BLOCK_START
-    )
-    assert (
-        jinja_analyzer.line_buffer[2].nodes[0].token.type
-        is TokenType.JINJA_BLOCK_KEYWORD
-    )
-    assert len(jinja_analyzer.node_buffer) == 1
-    assert jinja_analyzer.node_buffer[-1].token.type is TokenType.JINJA_BLOCK_END
+    query = default_analyzer.parse_query(source_string=source_string)
+    assert len(query.lines) == 5
+    assert query.lines[0].nodes[0].token.type is TokenType.JINJA_BLOCK_START
+    assert query.lines[2].nodes[0].token.type is TokenType.JINJA_BLOCK_KEYWORD
+    assert query.lines[-1].nodes[0].token.type is TokenType.JINJA_BLOCK_END
 
 
-def test_handle_jinja_if_block_unterminated(jinja_analyzer: Analyzer) -> None:
-    source_string = """
-    {% if foo == bar %}
-        column_a,
-    {%- else -%}
-        1+1
-    """.strip()
-    start_rule = jinja_analyzer.get_rule("jinja_if_block_start")
-    match = start_rule.program.match(source_string)
-    assert match is not None
-    with pytest.raises(SqlfmtBracketError) as excinfo:
-        actions.handle_jinja_block(
-            jinja_analyzer,
-            source_string,
-            match,
-            "jinja_if_block_start",
-            "jinja_if_block_end",
-            ["jinja_elif_block_start", "jinja_else_block_start"],
-        )
-    assert "{% endif %}" in str(excinfo.value)
-
-
-def test_handle_jinja_if_block_nested(jinja_analyzer: Analyzer) -> None:
+def test_handle_jinja_if_block_nested(default_analyzer: Analyzer) -> None:
     source_string = """
     {% if foo == bar %}
         {%- if baz == qux %}
@@ -408,38 +346,16 @@ def test_handle_jinja_if_block_nested(jinja_analyzer: Analyzer) -> None:
         column_c
     {% endif -%}
     """.strip()
-    start_rule = jinja_analyzer.get_rule("jinja_if_block_start")
-    match = start_rule.program.match(source_string)
-    assert match is not None
-    with pytest.raises(StopRulesetLexing):
-        actions.handle_jinja_block(
-            jinja_analyzer,
-            source_string,
-            match,
-            "jinja_if_block_start",
-            "jinja_if_block_end",
-            ["jinja_elif_block_start", "jinja_else_block_start"],
-        )
-    assert len(jinja_analyzer.line_buffer) == 8
-    assert (
-        jinja_analyzer.line_buffer[0].nodes[0].token.type is TokenType.JINJA_BLOCK_START
-    )
-    assert (
-        jinja_analyzer.line_buffer[1].nodes[0].token.type is TokenType.JINJA_BLOCK_START
-    )
-    assert (
-        jinja_analyzer.line_buffer[3].nodes[0].token.type
-        is TokenType.JINJA_BLOCK_KEYWORD
-    )
-    assert (
-        jinja_analyzer.line_buffer[5].nodes[0].token.type is TokenType.JINJA_BLOCK_END
-    )
-    assert (
-        jinja_analyzer.line_buffer[6].nodes[0].token.type
-        is TokenType.JINJA_BLOCK_KEYWORD
-    )
-    assert len(jinja_analyzer.node_buffer) == 1
-    assert jinja_analyzer.node_buffer[-1].token.type is TokenType.JINJA_BLOCK_END
+    query = default_analyzer.parse_query(source_string=source_string)
+    assert len(query.lines) == 9
+    assert query.lines[0].nodes[0].token.type is TokenType.JINJA_BLOCK_START
+    assert query.lines[1].nodes[0].token.type is TokenType.JINJA_BLOCK_START
+    assert query.lines[3].nodes[0].token.type is TokenType.JINJA_BLOCK_KEYWORD
+    assert query.lines[3].nodes[0].previous_node == query.lines[0].nodes[-1]
+    assert query.lines[5].nodes[0].token.type is TokenType.JINJA_BLOCK_END
+    assert query.lines[6].nodes[0].token.type is TokenType.JINJA_BLOCK_KEYWORD
+    assert query.lines[6].nodes[0].previous_node is None
+    assert query.lines[-1].nodes[0].token.type is TokenType.JINJA_BLOCK_END
 
 
 def test_handle_jinja_for_block(default_analyzer: Analyzer) -> None:
@@ -465,7 +381,12 @@ def test_handle_jinja_for_block(default_analyzer: Analyzer) -> None:
 
 @pytest.mark.parametrize(
     "source_string",
-    ["{% endfor %}", "{% if foo %}{% endfor %}", "{% for foo in bar %}{% endif %}"],
+    [
+        "{% endfor %}",
+        "{% if foo %}{% endfor %}",
+        "{% for foo in bar %}{% endif %}",
+        "{% else %}",
+    ],
 )
 def test_handle_jinja_end_block_raises(
     default_analyzer: Analyzer, source_string: str

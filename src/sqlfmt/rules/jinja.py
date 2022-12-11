@@ -29,7 +29,7 @@ JINJA_DATA = [
         pattern=group(JINJA_SHARED_PATTERNS["endset"]),
         action=partial(
             actions.handle_jinja_block_end,
-            start_rule_name="jinja_set_block_start",
+            start_rule_names=["jinja_set_block_start"],
             reset_sql_depth=True,
         ),
     ),
@@ -49,7 +49,7 @@ JINJA_DATA = [
         pattern=group(JINJA_SHARED_PATTERNS["endcall"]),
         action=partial(
             actions.handle_jinja_block_end,
-            start_rule_name="jinja_call_block_start",
+            start_rule_names=["jinja_call_block_start"],
             reset_sql_depth=True,
         ),
     ),
@@ -93,33 +93,46 @@ JINJA = [
         name="jinja_if_block_start",
         priority=200,
         pattern=group(r"\{%-?\s*if.*?-?%\}"),
+        action=actions.handle_jinja_block_start,
+    ),
+    Rule(
+        name="jinja_elif_block_start",
+        priority=201,
+        pattern=group(r"\{%-?\s*elif\s+\w+.*?-?%\}"),
         action=partial(
-            actions.handle_jinja_block,
-            start_name="jinja_if_block_start",
-            end_name="jinja_if_block_end",
-            other_names=[
+            actions.handle_jinja_block_keyword,
+            start_rule_names=[
+                "jinja_if_block_start",
                 "jinja_elif_block_start",
                 "jinja_else_block_start",
             ],
         ),
     ),
     Rule(
-        name="jinja_elif_block_start",
-        priority=201,
-        pattern=group(r"\{%-?\s*elif\s+\w+.*?-?%\}"),
-        action=actions.raise_sqlfmt_bracket_error,
-    ),
-    Rule(
         name="jinja_else_block_start",
         priority=202,
         pattern=group(r"\{%-?\s*else\s*-?%\}"),
-        action=actions.raise_sqlfmt_bracket_error,
+        action=partial(
+            actions.handle_jinja_block_keyword,
+            start_rule_names=[
+                "jinja_if_block_start",
+                "jinja_elif_block_start",
+                "jinja_else_block_start",
+            ],
+        ),
     ),
     Rule(
         name="jinja_if_block_end",
         priority=203,
         pattern=group(r"\{%-?\s*endif\s*-?%\}"),
-        action=actions.raise_sqlfmt_bracket_error,
+        action=partial(
+            actions.handle_jinja_block_end,
+            start_rule_names=[
+                "jinja_if_block_start",
+                "jinja_elif_block_start",
+                "jinja_else_block_start",
+            ],
+        ),
     ),
     Rule(
         name="jinja_for_block_start",
@@ -132,7 +145,7 @@ JINJA = [
         priority=211,
         pattern=group(r"\{%-?\s*endfor\s*-?%\}"),
         action=partial(
-            actions.handle_jinja_block_end, start_rule_name="jinja_for_block_start"
+            actions.handle_jinja_block_end, start_rule_names=["jinja_for_block_start"]
         ),
     ),
     Rule(
@@ -147,7 +160,7 @@ JINJA = [
         pattern=group(r"\{%-?\s*endmacro\s*-?%\}"),
         action=partial(
             actions.handle_jinja_block_end,
-            start_rule_name="jinja_macro_block_start",
+            start_rule_names=["jinja_macro_block_start"],
             reset_sql_depth=True,
         ),
     ),
@@ -163,7 +176,7 @@ JINJA = [
         pattern=group(r"\{%-?\s*endtest\s*-?%\}"),
         action=partial(
             actions.handle_jinja_block_end,
-            start_rule_name="jinja_test_block_start",
+            start_rule_names=["jinja_test_block_start"],
             reset_sql_depth=True,
         ),
     ),
@@ -179,7 +192,7 @@ JINJA = [
         pattern=group(r"\{%-?\s*endsnapshot\s*-?%\}"),
         action=partial(
             actions.handle_jinja_block_end,
-            start_rule_name="jinja_snapshot_block_start",
+            start_rule_names=["jinja_snapshot_block_start"],
             reset_sql_depth=True,
         ),
     ),
@@ -195,7 +208,7 @@ JINJA = [
         pattern=group(r"\{%-?\s*endmaterialization\s*-?%\}"),
         action=partial(
             actions.handle_jinja_block_end,
-            start_rule_name="jinja_materialization_block_start",
+            start_rule_names=["jinja_materialization_block_start"],
             reset_sql_depth=True,
         ),
     ),
@@ -226,7 +239,7 @@ JINJA = [
         pattern=group(JINJA_SHARED_PATTERNS["endcall"]),
         action=partial(
             actions.handle_jinja_block_end,
-            start_rule_name="jinja_call_block_start",
+            start_rule_names=["jinja_call_statement_block_start"],
             reset_sql_depth=True,
         ),
     ),
