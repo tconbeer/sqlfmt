@@ -1,5 +1,5 @@
 import re
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from sqlfmt.exception import SqlfmtBracketError
 from sqlfmt.line import Line
@@ -21,6 +21,83 @@ class NodeManager:
         The Node's depth and whitespace are calculated when it is created
         (this does most of the formatting of the Node). Node values are
         lowercased if they are simple names, keywords, or statements.
+        """
+
+        open_brackets, open_jinja_blocks = self.open_brackets(token, previous_node)
+        formatting_disabled = self.disable_formatting(token, previous_node)
+        if formatting_disabled:
+            prefix = token.prefix
+            value = token.token
+        else:
+            prev_token, extra_whitespace = get_previous_token(previous_node)
+            prefix = self.whitespace(token, prev_token, extra_whitespace)
+            value = self.standardize_value(token)
+
+        return Node(
+            token=token,
+            previous_node=previous_node,
+            prefix=prefix,
+            value=value,
+            open_brackets=open_brackets,
+            open_jinja_blocks=open_jinja_blocks,
+            formatting_disabled=formatting_disabled,
+        )
+
+    def raise_on_mismatched_bracket(self, token: Token, last_bracket: Node) -> None:
+        """
+        Raise a SqlfmtBracketError if token is a closing bracket, but it
+        does not match the token in the last_bracket node
+        """
+        matches = {
+            "{": "}",
+            "(": ")",
+            "[": "]",
+            "case": "end",
+            "array<": ">",
+            "table<": ">",
+            "struct<": ">",
+        }
+        if (
+            last_bracket.token.type
+            not in (TokenType.BRACKET_OPEN, TokenType.STATEMENT_START)
+            or last_bracket.value not in matches
+            or matches[last_bracket.value] != token.token.lower()
+        ):
+            raise SqlfmtBracketError(
+                f"Closing bracket '{token.token}' found at {token.spos} does not "
+                f"match last opened bracket '{last_bracket.value}' found at "
+                f"{last_bracket.token.spos}."
+            )
+
+    def raise_on_mismatched_jinja_tags(self, token: Token, start_tag: Node) -> None:
+        """
+        Compare the value of token to the start_tag to determine whether token
+        closes start_tag
+        """
+        try:
+            if any(s in token.token.lower() for s in ["endif", "else", "elif"]):
+                if not any(s in start_tag.value for s in ["if", "else"]):
+                    raise ValueError
+            else:
+                end_text, _ = re.subn(r"[{}%\-\s]", "", token.token.lower())
+                start_value = end_text.replace("end", "")
+                if start_value not in start_tag.value:
+                    raise ValueError
+        except ValueError:
+            raise SqlfmtBracketError(
+                f"Closing jinja tag '{token.token}' found at pos {token.spos} does "
+                f"not match last opened tag '{start_tag.value}' found at pos "
+                f"{start_tag.token.spos}."
+            )
+
+    def open_brackets(
+        self, token: Token, previous_node: Optional[Node]
+    ) -> Tuple[List[Node], List[Node]]:
+        """
+        Uses the previous_node and the contents of the current token
+        to compute the depth of the new node.
+
+        Returns two lists, for open_brackets and open_jinja_blocks
         """
 
         if previous_node is None:
@@ -67,63 +144,7 @@ class NodeManager:
         elif token.type is TokenType.SEMICOLON:
             open_brackets = []
 
-        prev_token, extra_whitespace = get_previous_token(previous_node)
-        prefix = self.whitespace(token, prev_token, extra_whitespace)
-        value = self.standardize_value(token)
-        formatting_disabled = self.disable_formatting(token, previous_node)
-
-        return Node(
-            token=token,
-            previous_node=previous_node,
-            prefix=prefix,
-            value=value,
-            open_brackets=open_brackets,
-            open_jinja_blocks=open_jinja_blocks,
-            formatting_disabled=formatting_disabled,
-        )
-
-    def raise_on_mismatched_bracket(self, token: Token, last_bracket: Node) -> None:
-        """
-        Raise a SqlfmtBracketError if token is a closing bracket, but it
-        does not match the token in the last_bracket node
-        """
-        matches = {
-            "{": "}",
-            "(": ")",
-            "[": "]",
-            "case": "end",
-            "array<": ">",
-            "table<": ">",
-            "struct<": ">",
-        }
-        if (
-            last_bracket.token.type
-            not in (TokenType.BRACKET_OPEN, TokenType.STATEMENT_START)
-            or last_bracket.value not in matches
-            or matches[last_bracket.value] != token.token.lower()
-        ):
-            raise SqlfmtBracketError(
-                f"Closing bracket '{token.token}' found at {token.spos} does not "
-                f"match last opened bracket '{last_bracket.value}' found at "
-                f"{last_bracket.token.spos}."
-            )
-
-    def raise_on_mismatched_jinja_tags(self, token: Token, start_tag: Node) -> None:
-        try:
-            if any(s in token.token.lower() for s in ["endif", "else", "elif"]):
-                if not any(s in start_tag.value for s in ["if", "else"]):
-                    raise ValueError
-            else:
-                end_text, _ = re.subn(r"[{}%\-\s]", "", token.token.lower())
-                start_value = end_text.replace("end", "")
-                if start_value not in start_tag.value:
-                    raise ValueError
-        except ValueError:
-            raise SqlfmtBracketError(
-                f"Closing jinja tag '{token.token}' found at pos {token.spos} does "
-                f"not match last opened tag '{start_tag.value}' found at pos "
-                f"{start_tag.token.spos}."
-            )
+        return open_brackets, open_jinja_blocks
 
     def whitespace(
         self,
