@@ -1,3 +1,4 @@
+import re
 from typing import List, Optional
 
 from sqlfmt.exception import SqlfmtBracketError
@@ -54,7 +55,8 @@ class NodeManager:
                 self.raise_on_mismatched_bracket(token, last_bracket)
         elif token.type is TokenType.JINJA_BLOCK_END:
             try:
-                _ = open_jinja_blocks.pop()
+                start_tag = open_jinja_blocks.pop()
+                self.raise_on_mismatched_jinja_tags(token, start_tag)
             except IndexError:
                 raise SqlfmtBracketError(
                     f"Closing bracket '{token.token}' found at "
@@ -104,6 +106,23 @@ class NodeManager:
                 f"Closing bracket '{token.token}' found at {token.spos} does not "
                 f"match last opened bracket '{last_bracket.value}' found at "
                 f"{last_bracket.token.spos}."
+            )
+
+    def raise_on_mismatched_jinja_tags(self, token: Token, start_tag: Node) -> None:
+        try:
+            if any(s in token.token.lower() for s in ["endif", "else", "elif"]):
+                if not any(s in start_tag.value for s in ["if", "else"]):
+                    raise ValueError
+            else:
+                end_text, _ = re.subn(r"[{}%\-\s]", "", token.token.lower())
+                start_value = end_text.replace("end", "")
+                if start_value not in start_tag.value:
+                    raise ValueError
+        except ValueError:
+            raise SqlfmtBracketError(
+                f"Closing jinja tag '{token.token}' found at pos {token.spos} does "
+                f"not match last opened tag '{start_tag.value}' found at pos "
+                f"{start_tag.token.spos}."
             )
 
     def whitespace(

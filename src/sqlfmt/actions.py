@@ -365,23 +365,30 @@ def handle_jinja_block_keyword(
     """
     Lex tags like {% elif ... %} and {% else %} that continue an open jinja block
     """
-    if analyzer.previous_node and analyzer.previous_node.open_jinja_blocks:
-        start_tag = analyzer.previous_node.open_jinja_blocks[-1]
-        previous_node = start_tag.previous_node
-        start_rules = [analyzer.get_rule(name) for name in start_rule_names]
-        matches = [rule.program.match(start_tag.value) for rule in start_rules]
-        if any(matches):
-            add_node_to_buffer(
-                analyzer=analyzer,
-                source_string=source_string,
-                match=match,
-                token_type=TokenType.JINJA_BLOCK_KEYWORD,
-                previous_node=previous_node,
-                override_analyzer_prev_node=True,
-            )
-            raise StopRulesetLexing
+    if analyzer.previous_node:
+        try:
+            start_tag = analyzer.previous_node.open_jinja_blocks[-1]
+        except IndexError:
+            # {% if foo %}{% else %} is allowed, but then previous
+            # node won't have any open jinja blocks yet.
+            # when creating the node, we check to make sure these
+            # match
+            start_tag = analyzer.previous_node
 
-    raise_sqlfmt_bracket_error(analyzer, source_string, match)
+        previous_node = start_tag.previous_node
+
+        add_node_to_buffer(
+            analyzer=analyzer,
+            source_string=source_string,
+            match=match,
+            token_type=TokenType.JINJA_BLOCK_KEYWORD,
+            previous_node=previous_node,
+            override_analyzer_prev_node=True,
+        )
+        raise StopRulesetLexing
+
+    else:
+        raise_sqlfmt_bracket_error(analyzer, source_string, match)
 
 
 def handle_jinja_data_block_start(
@@ -423,25 +430,31 @@ def handle_jinja_block_end(
     """
     Lex tags like {% endif %} and {% endfor %} that close an open jinja block
     """
-    if analyzer.previous_node and analyzer.previous_node.open_jinja_blocks:
-        start_tag = analyzer.previous_node.open_jinja_blocks[-1]
-        start_rules = [analyzer.get_rule(name) for name in start_rule_names]
-        matches = [rule.program.match(start_tag.value) for rule in start_rules]
-        if any(matches):
-            add_node_to_buffer(
-                analyzer=analyzer,
-                source_string=source_string,
-                match=match,
-                token_type=TokenType.JINJA_BLOCK_END,
-            )
+    if analyzer.previous_node:
+        try:
+            start_tag = analyzer.previous_node.open_jinja_blocks[-1]
+        except IndexError:
+            # {% if foo %}{% else %} is allowed, but then previous
+            # node won't have any open jinja blocks yet.
+            # when creating the node, we check to make sure these
+            # match
+            start_tag = analyzer.previous_node
 
-            if reset_sql_depth:
-                analyzer.previous_node.open_brackets = start_tag.open_brackets.copy()
+        add_node_to_buffer(
+            analyzer=analyzer,
+            source_string=source_string,
+            match=match,
+            token_type=TokenType.JINJA_BLOCK_END,
+        )
 
-            raise StopRulesetLexing
+        if reset_sql_depth:
+            analyzer.previous_node.open_brackets = start_tag.open_brackets.copy()
 
-    # No open jinja blocks or none that match this token
-    raise_sqlfmt_bracket_error(analyzer, source_string=source_string, match=match)
+        raise StopRulesetLexing
+
+    else:
+        # No open jinja blocks or none that match this token
+        raise_sqlfmt_bracket_error(analyzer, source_string=source_string, match=match)
 
 
 def handle_jinja(

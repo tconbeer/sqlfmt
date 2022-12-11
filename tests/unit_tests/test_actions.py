@@ -395,6 +395,25 @@ def test_handle_jinja_end_block_raises(
         _ = default_analyzer.parse_query(source_string=source_string)
 
 
+@pytest.mark.parametrize(
+    "source_string",
+    [
+        "{% for foo in bar %} {% endfor %}",
+        "{% if foo %}{% endif %}",
+        "{% if foo %} {% else %}{% endif %}",
+        "{% set foo %}{% endset %}",
+        "{% call noop_statement('main', status_string) %}{% endcall %}",
+    ],
+)
+def test_handle_jinja_empty_blocks(
+    default_analyzer: Analyzer, source_string: str
+) -> None:
+    q = default_analyzer.parse_query(source_string=source_string)
+    assert len(q.lines) == 1
+    assert q.nodes[0].token.type is TokenType.JINJA_BLOCK_START
+    assert q.nodes[-2].token.type is TokenType.JINJA_BLOCK_END
+
+
 def test_handle_jinja_call_statement_block(default_analyzer: Analyzer) -> None:
     source_string = """
     select 1,
