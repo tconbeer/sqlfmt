@@ -1,4 +1,5 @@
-from typing import List, Optional
+import re
+from typing import List, Optional, Tuple
 
 from sqlfmt.exception import SqlfmtBracketError
 from sqlfmt.line import Line
@@ -22,53 +23,15 @@ class NodeManager:
         lowercased if they are simple names, keywords, or statements.
         """
 
-        if previous_node is None:
-            open_brackets = []
-            open_jinja_blocks = []
-        else:
-            open_brackets = previous_node.open_brackets.copy()
-            open_jinja_blocks = previous_node.open_jinja_blocks.copy()
-
-            # add the previous node to the list of open brackets or jinja blocks
-            if previous_node.is_unterm_keyword or previous_node.is_opening_bracket:
-                open_brackets.append(previous_node)
-            elif previous_node.is_opening_jinja_block:
-                open_jinja_blocks.append(previous_node)
-
-        # if the token should reduce the depth of the node, pop
-        # the last item(s) off open_brackets or open_jinja_blocks
-        if token.type in (TokenType.UNTERM_KEYWORD, TokenType.SET_OPERATOR):
-            if open_brackets and open_brackets[-1].is_unterm_keyword:
-                _ = open_brackets.pop()
-        elif token.type in (TokenType.BRACKET_CLOSE, TokenType.STATEMENT_END):
-            try:
-                last_bracket = open_brackets.pop()
-                if last_bracket.is_unterm_keyword:
-                    last_bracket = open_brackets.pop()
-            except IndexError:
-                raise SqlfmtBracketError(
-                    f"Closing bracket '{token.token}' found at "
-                    f"{token.spos} before bracket was opened."
-                )
-            else:
-                self.raise_on_mismatched_bracket(token, last_bracket)
-        elif token.type is TokenType.JINJA_BLOCK_END:
-            try:
-                _ = open_jinja_blocks.pop()
-            except IndexError:
-                raise SqlfmtBracketError(
-                    f"Closing bracket '{token.token}' found at "
-                    f"{token.spos} before bracket was opened."
-                )
-        # if we hit a semicolon, reset open_brackets, since we're
-        # about to start a new query
-        elif token.type is TokenType.SEMICOLON:
-            open_brackets = []
-
-        prev_token, extra_whitespace = get_previous_token(previous_node)
-        prefix = self.whitespace(token, prev_token, extra_whitespace)
-        value = self.standardize_value(token)
+        open_brackets, open_jinja_blocks = self.open_brackets(token, previous_node)
         formatting_disabled = self.disable_formatting(token, previous_node)
+        if formatting_disabled:
+            prefix = token.prefix
+            value = token.token
+        else:
+            prev_token, extra_whitespace = get_previous_token(previous_node)
+            prefix = self.whitespace(token, prev_token, extra_whitespace)
+            value = self.standardize_value(token)
 
         return Node(
             token=token,
@@ -105,6 +68,83 @@ class NodeManager:
                 f"match last opened bracket '{last_bracket.value}' found at "
                 f"{last_bracket.token.spos}."
             )
+
+    def raise_on_mismatched_jinja_tags(self, token: Token, start_tag: Node) -> None:
+        """
+        Compare the value of token to the start_tag to determine whether token
+        closes start_tag
+        """
+        try:
+            if any(s in token.token.lower() for s in ["endif", "else", "elif"]):
+                if not any(s in start_tag.value for s in ["if", "else"]):
+                    raise ValueError
+            else:
+                end_text, _ = re.subn(r"[{}%\-\s]", "", token.token.lower())
+                start_value = end_text.replace("end", "")
+                if start_value not in start_tag.value:
+                    raise ValueError
+        except ValueError:
+            raise SqlfmtBracketError(
+                f"Closing jinja tag '{token.token}' found at pos {token.spos} does "
+                f"not match last opened tag '{start_tag.value}' found at pos "
+                f"{start_tag.token.spos}."
+            )
+
+    def open_brackets(
+        self, token: Token, previous_node: Optional[Node]
+    ) -> Tuple[List[Node], List[Node]]:
+        """
+        Uses the previous_node and the contents of the current token
+        to compute the depth of the new node.
+
+        Returns two lists, for open_brackets and open_jinja_blocks
+        """
+
+        if previous_node is None:
+            open_brackets = []
+            open_jinja_blocks = []
+        else:
+            open_brackets = previous_node.open_brackets.copy()
+            open_jinja_blocks = previous_node.open_jinja_blocks.copy()
+
+            # add the previous node to the list of open brackets or jinja blocks
+            if previous_node.is_unterm_keyword or previous_node.is_opening_bracket:
+                open_brackets.append(previous_node)
+            elif previous_node.is_opening_jinja_block:
+                open_jinja_blocks.append(previous_node)
+
+        # if the token should reduce the depth of the node, pop
+        # the last item(s) off open_brackets or open_jinja_blocks
+        if token.type in (TokenType.UNTERM_KEYWORD, TokenType.SET_OPERATOR):
+            if open_brackets and open_brackets[-1].is_unterm_keyword:
+                _ = open_brackets.pop()
+        elif token.type in (TokenType.BRACKET_CLOSE, TokenType.STATEMENT_END):
+            try:
+                last_bracket = open_brackets.pop()
+                if last_bracket.is_unterm_keyword:
+                    last_bracket = open_brackets.pop()
+            except IndexError:
+                raise SqlfmtBracketError(
+                    f"Closing bracket '{token.token}' found at "
+                    f"{token.spos} before bracket was opened."
+                )
+            else:
+                self.raise_on_mismatched_bracket(token, last_bracket)
+        elif token.type is TokenType.JINJA_BLOCK_END:
+            try:
+                start_tag = open_jinja_blocks.pop()
+                self.raise_on_mismatched_jinja_tags(token, start_tag)
+            except IndexError:
+                raise SqlfmtBracketError(
+                    f"Closing bracket '{token.token}' found at "
+                    f"{token.spos} before bracket was opened."
+                )
+        # if we hit a semicolon, reset open_brackets, since we're
+        # about to start a new query
+        elif token.type is TokenType.SEMICOLON:
+            open_brackets = []
+
+        return open_brackets, open_jinja_blocks
 
     def whitespace(
         self,

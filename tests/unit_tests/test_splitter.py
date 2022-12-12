@@ -325,3 +325,15 @@ def test_split_between_brackets(
         "    )\n",
     ]
     assert actual_result == expected_result
+
+
+def test_split_around_data(splitter: LineSplitter, default_analyzer: Analyzer) -> None:
+    source_string = "{% set foo %}//my one-line //data{% endset %}\n"
+    raw_query = default_analyzer.parse_query(source_string)
+
+    split_lines: List[Line] = []
+    for raw_line in raw_query.lines:
+        split_lines.extend(splitter.maybe_split(raw_line))
+
+    actual_result = [str(line) for line in split_lines]
+    assert actual_result == [source_string]

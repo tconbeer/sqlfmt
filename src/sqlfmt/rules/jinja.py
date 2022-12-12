@@ -2,8 +2,68 @@ from functools import partial
 
 from sqlfmt import actions
 from sqlfmt.rule import Rule
-from sqlfmt.rules.common import group
+from sqlfmt.rules.common import NEWLINE, group
 from sqlfmt.token import TokenType
+
+JINJA_SHARED_PATTERNS = {
+    "set": r"\{%-?\s*set\s+[^=]+?-?%\}",
+    "endset": r"\{%-?\s*endset\s*-?%\}",
+    "call": r"\{%-?\s*call\s+\w+.*?-?%\}",
+    "endcall": r"\{%-?\s*endcall\s*-?%\}",
+}
+
+JINJA_DATA = [
+    Rule(
+        name="jinja_set_block_start",
+        priority=100,
+        pattern=group(JINJA_SHARED_PATTERNS["set"]),
+        action=partial(
+            actions.handle_jinja_data_block_start,
+            new_ruleset=None,
+            raises=False,
+        ),
+    ),
+    Rule(
+        name="jinja_set_block_end",
+        priority=101,
+        pattern=group(JINJA_SHARED_PATTERNS["endset"]),
+        action=partial(
+            actions.handle_jinja_block_end,
+            reset_sql_depth=True,
+        ),
+    ),
+    Rule(
+        name="jinja_call_block_start",
+        priority=261,
+        pattern=group(JINJA_SHARED_PATTERNS["call"]),
+        action=partial(
+            actions.handle_jinja_data_block_start,
+            new_ruleset=None,
+            raises=False,
+        ),
+    ),
+    Rule(
+        name="jinja_call_block_end",
+        priority=265,
+        pattern=group(JINJA_SHARED_PATTERNS["endcall"]),
+        action=partial(
+            actions.handle_jinja_block_end,
+            reset_sql_depth=True,
+        ),
+    ),
+    Rule(
+        name="jinja_newline",
+        priority=500,
+        pattern=group(NEWLINE),
+        action=actions.handle_newline,
+    ),
+    Rule(
+        name="jinja_data",
+        priority=600,
+        pattern=group(r".*?") + r"\s*" + group(*JINJA_SHARED_PATTERNS.values(), r"$"),
+        action=partial(actions.add_node_to_buffer, token_type=TokenType.DATA),
+    ),
+]
 
 JINJA = [
     Rule(
@@ -15,137 +75,113 @@ JINJA = [
     Rule(
         name="jinja_set_block_start",
         priority=100,
-        pattern=group(r"\{%-?\s*set\s+[^=]+?-?%\}"),
+        pattern=group(JINJA_SHARED_PATTERNS["set"]),
         action=partial(
-            actions.handle_jinja_data_block, end_rule_name="jinja_set_block_end"
+            actions.handle_jinja_data_block_start,
+            new_ruleset=JINJA_DATA,
         ),
     ),
     Rule(
         name="jinja_set_block_end",
         priority=101,
-        pattern=group(r"\{%-?\s*endset\s*-?%\}"),
+        pattern=group(JINJA_SHARED_PATTERNS["endset"]),
         action=actions.raise_sqlfmt_bracket_error,
     ),
     Rule(
         name="jinja_if_block_start",
         priority=200,
         pattern=group(r"\{%-?\s*if.*?-?%\}"),
-        action=partial(
-            actions.handle_jinja_block,
-            start_name="jinja_if_block_start",
-            end_name="jinja_if_block_end",
-            other_names=[
-                "jinja_elif_block_start",
-                "jinja_else_block_start",
-            ],
-        ),
+        action=actions.handle_jinja_block_start,
     ),
     Rule(
         name="jinja_elif_block_start",
         priority=201,
         pattern=group(r"\{%-?\s*elif\s+\w+.*?-?%\}"),
-        action=actions.raise_sqlfmt_bracket_error,
+        action=actions.handle_jinja_block_keyword,
     ),
     Rule(
         name="jinja_else_block_start",
         priority=202,
         pattern=group(r"\{%-?\s*else\s*-?%\}"),
-        action=actions.raise_sqlfmt_bracket_error,
+        action=actions.handle_jinja_block_keyword,
     ),
     Rule(
         name="jinja_if_block_end",
         priority=203,
         pattern=group(r"\{%-?\s*endif\s*-?%\}"),
-        action=actions.raise_sqlfmt_bracket_error,
+        action=actions.handle_jinja_block_end,
     ),
     Rule(
         name="jinja_for_block_start",
         priority=210,
         pattern=group(r"\{%-?\s*for\s+.*?-?%\}"),
-        action=partial(
-            actions.handle_jinja_block,
-            start_name="jinja_for_block_start",
-            end_name="jinja_for_block_end",
-            other_names=[],
-        ),
+        action=actions.handle_jinja_block_start,
     ),
     Rule(
         name="jinja_for_block_end",
         priority=211,
         pattern=group(r"\{%-?\s*endfor\s*-?%\}"),
-        action=actions.raise_sqlfmt_bracket_error,
+        action=actions.handle_jinja_block_end,
     ),
     Rule(
         name="jinja_macro_block_start",
         priority=220,
         pattern=group(r"\{%-?\s*macro\s+\w+.*?-?%\}"),
-        action=partial(
-            actions.handle_jinja_block,
-            start_name="jinja_macro_block_start",
-            end_name="jinja_macro_block_end",
-            other_names=[],
-            end_reset_sql_depth=True,
-        ),
+        action=actions.handle_jinja_block_start,
     ),
     Rule(
         name="jinja_macro_block_end",
         priority=221,
         pattern=group(r"\{%-?\s*endmacro\s*-?%\}"),
-        action=actions.raise_sqlfmt_bracket_error,
+        action=partial(
+            actions.handle_jinja_block_end,
+            reset_sql_depth=True,
+        ),
     ),
     Rule(
         name="jinja_test_block_start",
         priority=230,
         pattern=group(r"\{%-?\s*test\s+\w+.*?-?%\}"),
-        action=partial(
-            actions.handle_jinja_block,
-            start_name="jinja_test_block_start",
-            end_name="jinja_test_block_end",
-            other_names=[],
-            end_reset_sql_depth=True,
-        ),
+        action=actions.handle_jinja_block_start,
     ),
     Rule(
         name="jinja_test_block_end",
         priority=231,
         pattern=group(r"\{%-?\s*endtest\s*-?%\}"),
-        action=actions.raise_sqlfmt_bracket_error,
+        action=partial(
+            actions.handle_jinja_block_end,
+            reset_sql_depth=True,
+        ),
     ),
     Rule(
         name="jinja_snapshot_block_start",
         priority=240,
         pattern=group(r"\{%-?\s*snapshot\s+\w+.*?-?%\}"),
-        action=partial(
-            actions.handle_jinja_block,
-            start_name="jinja_snapshot_block_start",
-            end_name="jinja_snapshot_block_end",
-            other_names=[],
-            end_reset_sql_depth=True,
-        ),
+        action=actions.handle_jinja_block_start,
     ),
     Rule(
         name="jinja_snapshot_block_end",
         priority=241,
         pattern=group(r"\{%-?\s*endsnapshot\s*-?%\}"),
-        action=actions.raise_sqlfmt_bracket_error,
+        action=partial(
+            actions.handle_jinja_block_end,
+            reset_sql_depth=True,
+        ),
     ),
     Rule(
         name="jinja_materialization_block_start",
         priority=250,
         pattern=group(r"\{%-?\s*materialization\s+\w+\s*,.*?-?%\}"),
-        action=partial(
-            actions.handle_jinja_block,
-            start_name="jinja_materialization_block_start",
-            end_name="jinja_materialization_block_end",
-            other_names=[],
-            end_reset_sql_depth=True,
-        ),
+        action=actions.handle_jinja_block_start,
     ),
     Rule(
         name="jinja_materialization_block_end",
         priority=251,
         pattern=group(r"\{%-?\s*endmaterialization\s*-?%\}"),
-        action=actions.raise_sqlfmt_bracket_error,
+        action=partial(
+            actions.handle_jinja_block_end,
+            reset_sql_depth=True,
+        ),
     ),
     # call blocks that are used to call dbt's statement macro
     # are guaranteed to contain SQL, so we can parse them
@@ -154,13 +190,7 @@ JINJA = [
         name="jinja_call_statement_block_start",
         priority=260,
         pattern=group(r"\{%-?\s*call\s+(noop_)?statement\(.*?\)\s*-?%\}"),
-        action=partial(
-            actions.handle_jinja_block,
-            start_name="jinja_call_statement_block_start",
-            end_name="jinja_call_block_end",
-            other_names=[],
-            end_reset_sql_depth=True,
-        ),
+        action=actions.handle_jinja_block_start,
     ),
     # call blocks that call other macros may contain SQL or
     # arbitrary text or data, so we need to parse the whole block
@@ -168,16 +198,20 @@ JINJA = [
     Rule(
         name="jinja_call_block_start",
         priority=261,
-        pattern=group(r"\{%-?\s*call\s+\w+.*?-?%\}"),
+        pattern=group(JINJA_SHARED_PATTERNS["call"]),
         action=partial(
-            actions.handle_jinja_data_block, end_rule_name="jinja_call_block_end"
+            actions.handle_jinja_data_block_start,
+            new_ruleset=JINJA_DATA,
         ),
     ),
     Rule(
         name="jinja_call_block_end",
         priority=265,
-        pattern=group(r"\{%-?\s*endcall\s*-?%\}"),
-        action=actions.raise_sqlfmt_bracket_error,
+        pattern=group(JINJA_SHARED_PATTERNS["endcall"]),
+        action=partial(
+            actions.handle_jinja_block_end,
+            reset_sql_depth=True,
+        ),
     ),
     Rule(
         name="jinja_statement_start",

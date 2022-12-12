@@ -1,7 +1,6 @@
 from functools import partial
 
 from sqlfmt import actions
-from sqlfmt.exception import StopJinjaLexing
 from sqlfmt.rule import Rule
 from sqlfmt.rules.common import EOL, NEWLINE, SQL_COMMENT, SQL_QUOTED_EXP, group
 from sqlfmt.rules.jinja import JINJA
@@ -27,9 +26,7 @@ CORE = [
         name="jinja_start",
         priority=120,
         pattern=group(r"\{[{%#]"),
-        action=partial(
-            actions.lex_ruleset, new_ruleset=JINJA, stop_exception=StopJinjaLexing
-        ),
+        action=partial(actions.lex_ruleset, new_ruleset=JINJA),
     ),
     # we should never match the end of a jinja tag by itself
     Rule(

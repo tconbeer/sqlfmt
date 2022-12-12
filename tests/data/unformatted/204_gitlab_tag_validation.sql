@@ -94,10 +94,10 @@
 
 {% do log("Tags in Project: " ~ project_tags, info=true) %}
 
-        {% set query %}
+{% set query %}
             SELECT tag
             FROM {{ref('valid_tags')}}
-        {% endset %}
+{% endset %}
 
 {% set results = run_query(query) %}
 

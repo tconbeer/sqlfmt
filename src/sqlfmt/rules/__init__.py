@@ -1,7 +1,6 @@
 from functools import partial
 
 from sqlfmt import actions
-from sqlfmt.exception import StopRulesetLexing
 from sqlfmt.rule import Rule
 from sqlfmt.rules.common import (
     ALTER_DROP_FUNCTION,
@@ -193,9 +192,7 @@ MAIN = [
         pattern=group(r"grant", r"revoke") + group(r"\W", r"$"),
         action=partial(
             actions.handle_nonreserved_keyword,
-            action=partial(
-                actions.lex_ruleset, new_ruleset=GRANT, stop_exception=StopRulesetLexing
-            ),
+            action=partial(actions.lex_ruleset, new_ruleset=GRANT),
         ),
     ),
     Rule(
@@ -207,7 +204,6 @@ MAIN = [
             action=partial(
                 actions.lex_ruleset,
                 new_ruleset=FUNCTION,
-                stop_exception=StopRulesetLexing,
             ),
         ),
     ),
@@ -224,7 +220,6 @@ MAIN = [
             action=partial(
                 actions.lex_ruleset,
                 new_ruleset=WAREHOUSE,
-                stop_exception=StopRulesetLexing,
             ),
         ),
     ),

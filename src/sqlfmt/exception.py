@@ -64,19 +64,10 @@ class InlineCommentException(SqlfmtControlFlowException):
     pass
 
 
-class StopJinjaLexing(SqlfmtControlFlowException):
-    """
-    Raised by the Analyzer or one of its actions to indicate
-    that further lexing should use the main ruleset
-    """
-
-    pass
-
-
 class StopRulesetLexing(SqlfmtControlFlowException):
     """
     Raised by the Analyzer or one of its actions to indicate
-    that further lexing should use the main ruleset
+    that further lexing should use the previous ruleset
     """
 
     pass

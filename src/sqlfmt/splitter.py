@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Iterator
+from typing import Iterator, Tuple
 
 from sqlfmt.line import Line
 from sqlfmt.node import Node
@@ -20,17 +20,22 @@ class LineSplitter:
             yield line
             return
 
-        split_after = False
+        always_split_after = never_split_after = False
         for i, node in enumerate(line.nodes):
             if node.is_newline:
                 # can't split just before a newline
                 yield line
                 break
-            elif i > 0 and (split_after or self.maybe_split_before(node)):
+            elif (
+                i > 0
+                and not never_split_after
+                and not node.formatting_disabled
+                and (always_split_after or self.maybe_split_before(node))
+            ):
                 yield from self.split_at_index(line, i)
                 break
 
-            split_after = self.maybe_split_after(node)
+            always_split_after, never_split_after = self.maybe_split_after(node)
 
     def maybe_split_before(self, node: Node) -> bool:
         """
@@ -73,9 +78,12 @@ class LineSplitter:
             and node.previous_node.is_closing_bracket
         )
 
-    def maybe_split_after(self, node: Node) -> bool:
+    def maybe_split_after(self, node: Node) -> Tuple[bool, bool]:
         """
-        Return True if we should split after node
+        Return True, False if we should always split after node
+        Retrun False, True if we should never split after node
+        Return False, False if splitting after should depend on the
+        contents of the next node
         """
         if (
             # always split after any comma that doesn't end a line
@@ -87,9 +95,11 @@ class LineSplitter:
             # always split after a token that divides queries
             or node.divides_queries
         ):
-            return True
+            return True, False
+        elif node.formatting_disabled:
+            return False, True
         else:
-            return False
+            return False, False
 
     def split_at_index(self, line: Line, index: int) -> Iterator[Line]:
         """
