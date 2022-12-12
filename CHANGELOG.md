@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.14.2] - 2022-12-12
+
 ### Formatting Changes + Bug Fixes
 
 -   fixed a bug where nested `{% set %}` and `{% call %}` blocks would cause a parsing error ([#338](https://github.com/tconbeer/sqlfmt/issues/338) - thank you [@AndrewLane](https://github.com/AndrewLane)!).
@@ -290,7 +292,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.14.1...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.14.2...HEAD
+
+[0.14.2]: https://github.com/tconbeer/sqlfmt/compare/0.14.1...0.14.2
 
 [0.14.1]: https://github.com/tconbeer/sqlfmt/compare/0.14.0...0.14.1
 
