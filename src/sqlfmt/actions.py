@@ -360,7 +360,6 @@ def handle_jinja_block_keyword(
     analyzer: "Analyzer",
     source_string: str,
     match: re.Match,
-    start_rule_names: List[str],
 ) -> None:
     """
     Lex tags like {% elif ... %} and {% else %} that continue an open jinja block
@@ -400,7 +399,11 @@ def handle_jinja_data_block_start(
 ) -> None:
     """
     Lex tags like {% set foo %} and {% call my_macro %} that open a jinja block
-    that can contain arbitrary data
+    that can contain arbitrary data.
+
+    This can get called from the JINJA ruleset, in which case we need to
+    raise an additional StopRulesetLexing after the JINJA_DATA segment
+    is fully lexed.
     """
     add_node_to_buffer(
         analyzer=analyzer,
@@ -424,7 +427,6 @@ def handle_jinja_block_end(
     analyzer: "Analyzer",
     source_string: str,
     match: re.Match,
-    start_rule_names: List[str],
     reset_sql_depth: bool = False,
 ) -> None:
     """
