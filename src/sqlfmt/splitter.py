@@ -123,13 +123,18 @@ class LineSplitter:
         """
         Return a new line comprised of the nodes line[head:index], plus a newline node
         """
-        assert index == -1 or index > head, "Cannot split at start of line!"
-        new_nodes = line.nodes[head:index]
+        if index == -1:
+            new_nodes = line.nodes[head:]
+        else:
+            assert index > head, "Cannot split at start of line!"
+            new_nodes = line.nodes[head:index]
 
         new_line = Line.from_nodes(
             previous_node=new_nodes[0].previous_node,
             nodes=new_nodes,
             comments=comments,
         )
-        self.node_manager.append_newline(new_line)
+        if not new_line.nodes[-1].is_newline:
+            self.node_manager.append_newline(new_line)
+
         return new_line
