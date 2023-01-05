@@ -133,6 +133,34 @@ def test_split_count_window_function(
     assert actual_result == expected_result
 
 
+def test_split_function_no_args(
+    splitter: LineSplitter, default_analyzer: Analyzer
+) -> None:
+    source_string = "sum(a) over () as a,\nrow_number() over () as b,\n"
+    expected_result = [
+        "sum(\n",
+        "    a\n",
+        ")\n",
+        "over (\n",
+        ")\n",
+        "as a,\n",
+        "row_number(\n",
+        ")\n",
+        "over (\n",
+        ")\n",
+        "as b,\n",
+    ]
+    raw_query = default_analyzer.parse_query(source_string)
+
+    split_lines: List[Line] = []
+    for raw_line in raw_query.lines:
+        split_lines.extend(splitter.maybe_split(raw_line))
+
+    actual_result = [str(line) for line in split_lines]
+
+    assert actual_result == expected_result
+
+
 def test_comment_split_impact_on_open_brackets(
     splitter: LineSplitter, default_analyzer: Analyzer
 ) -> None:
@@ -337,3 +365,18 @@ def test_split_around_data(splitter: LineSplitter, default_analyzer: Analyzer) -
 
     actual_result = [str(line) for line in split_lines]
     assert actual_result == [source_string]
+
+
+def test_can_split_very_long_lines(
+    splitter: LineSplitter, default_analyzer: Analyzer
+) -> None:
+    source_string, _ = read_test_data(
+        "unit_tests/test_splitter/test_very_long_single_line.sql"
+    )
+    raw_query = default_analyzer.parse_query(source_string)
+
+    split_lines: List[Line] = []
+
+    # just make sure this doesn't raise a maximum recursion depth error
+    for raw_line in raw_query.lines:
+        split_lines.extend(splitter.maybe_split(raw_line))
