@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.14.3] - 2023-01-05
+
 -   fixed a bug where very long lines could raise `RecursionError` ([#343](https://github.com/tconbeer/sqlfmt/issues/343) - thank you [@kcem-flyr](https://github.com/kcem-flyr)!).
 
 ## [0.14.2] - 2022-12-12
@@ -294,7 +296,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.14.2...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.14.3...HEAD
+
+[0.14.3]: https://github.com/tconbeer/sqlfmt/compare/0.14.2...0.14.3
 
 [0.14.2]: https://github.com/tconbeer/sqlfmt/compare/0.14.1...0.14.2
 
