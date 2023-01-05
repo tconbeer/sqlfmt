@@ -251,7 +251,9 @@ class NodeManager:
         the token and previous node.
         """
         formatting_disabled = (
-            previous_node.formatting_disabled.copy() if previous_node else []
+            previous_node.formatting_disabled.copy()
+            if previous_node is not None
+            else []
         )
 
         if token.type in (TokenType.FMT_OFF, TokenType.DATA):
@@ -259,7 +261,7 @@ class NodeManager:
 
         if (
             formatting_disabled
-            and previous_node
+            and previous_node is not None
             and previous_node.token.type
             in (
                 TokenType.FMT_ON,
@@ -290,7 +292,7 @@ class NodeManager:
         if line.nodes:
             previous_node = line.nodes[-1]
             previous_token = line.nodes[-1].token
-        elif line.previous_node:
+        elif line.previous_node is not None:
             previous_node = line.previous_node
             previous_token = line.previous_node.token
 

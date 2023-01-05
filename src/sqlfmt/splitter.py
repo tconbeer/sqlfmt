@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from typing import Iterator, Tuple
+from typing import List, Tuple
 
+from sqlfmt.comment import Comment
 from sqlfmt.line import Line
 from sqlfmt.node import Node
 from sqlfmt.node_manager import NodeManager
@@ -10,32 +11,47 @@ from sqlfmt.node_manager import NodeManager
 class LineSplitter:
     node_manager: NodeManager
 
-    def maybe_split(self, line: Line) -> Iterator[Line]:
+    def maybe_split(self, line: Line) -> List[Line]:
         """
         Evaluates a line for splitting. If line matches criteria for splitting,
-        yields new lines; otherwise yields original line
+        returns a list of new lines; otherwise returns a list of only the original line.
+
+        We used to do this recursively, but very long lines (with >500 splits) would
+        raise RecursionError.
         """
 
         if line.formatting_disabled:
-            yield line
-            return
+            return [line]
 
+        new_lines: List[Line] = []
+        comments = line.comments
+        head = 0
         always_split_after = never_split_after = False
         for i, node in enumerate(line.nodes):
             if node.is_newline:
-                # can't split just before a newline
-                yield line
-                break
+                if head == 0:
+                    new_lines.append(line)
+                else:
+                    new_lines.append(self.split_at_index(line, head, i, comments))
+                return new_lines
             elif (
-                i > 0
+                i > head
                 and not never_split_after
                 and not node.formatting_disabled
                 and (always_split_after or self.maybe_split_before(node))
             ):
-                yield from self.split_at_index(line, i)
-                break
+                new_line = self.split_at_index(line, head, i, comments)
+                new_lines.append(new_line)
+                comments = []  # only first split gets original comments
+                head = i
+                # node now follows a new newline node, so we need to update
+                # its previous node (this can impact its depth)
+                node.previous_node = new_line.nodes[-1]
 
             always_split_after, never_split_after = self.maybe_split_after(node)
+
+        new_lines.append(self.split_at_index(line, head, -1, comments))
+        return new_lines
 
     def maybe_split_before(self, node: Node) -> bool:
         """
@@ -101,26 +117,24 @@ class LineSplitter:
         else:
             return False, False
 
-    def split_at_index(self, line: Line, index: int) -> Iterator[Line]:
+    def split_at_index(
+        self, line: Line, head: int, index: int, comments: List[Comment]
+    ) -> Line:
         """
-        Split a line before nodes[index]. Recursively maybe_split
-        resulting lines. Yields new lines
+        Return a new line comprised of the nodes line[head:index], plus a newline node
         """
-        assert index > 0, "Cannot split at start of line!"
-        head, tail = line.nodes[:index], line.nodes[index:]
-        assert head[0] is not None, "Cannot split at start of line!"
+        if index == -1:
+            new_nodes = line.nodes[head:]
+        else:
+            assert index > head, "Cannot split at start of line!"
+            new_nodes = line.nodes[head:index]
 
-        head_line = Line.from_nodes(
-            previous_node=line.previous_node,
-            nodes=head,
-            comments=line.comments,
+        new_line = Line.from_nodes(
+            previous_node=new_nodes[0].previous_node,
+            nodes=new_nodes,
+            comments=comments,
         )
-        self.node_manager.append_newline(head_line)
-        yield head_line
+        if not new_line.nodes[-1].is_newline:
+            self.node_manager.append_newline(new_line)
 
-        tail_line = Line.from_nodes(
-            previous_node=head_line.nodes[-1],
-            nodes=tail,
-            comments=[],
-        )
-        yield from self.maybe_split(tail_line)
+        return new_line

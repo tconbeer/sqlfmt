@@ -163,7 +163,7 @@ def test_simple_append_newline(simple_line: Line, node_manager: NodeManager) -> 
     # this line already ends with a newline
     last_node = simple_line.nodes[-1]
     assert last_node.token.type is TokenType.NEWLINE
-    assert last_node.previous_node
+    assert last_node.previous_node is not None
     assert last_node.previous_node.token.type is not TokenType.NEWLINE
 
     node_manager.append_newline(simple_line)

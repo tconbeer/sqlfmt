@@ -217,7 +217,9 @@ class Node:
         """
         True if this node has a preceding "between" operator at the same depth
         """
-        prev = self.previous_node.previous_node if self.previous_node else None
+        prev = (
+            self.previous_node.previous_node if self.previous_node is not None else None
+        )
         while prev and prev.depth >= self.depth:
             if prev.depth == self.depth and prev.is_the_between_operator:
                 return True

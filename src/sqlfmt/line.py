@@ -51,7 +51,7 @@ class Line:
         """
         if self.nodes:
             return self.nodes[0].open_brackets
-        elif self.previous_node:
+        elif self.previous_node is not None:
             return self.previous_node.open_brackets
         else:
             return []
@@ -63,7 +63,7 @@ class Line:
         """
         if self.nodes:
             return self.nodes[0].open_jinja_blocks
-        elif self.previous_node:
+        elif self.previous_node is not None:
             return self.previous_node.open_jinja_blocks
         else:
             return []
@@ -147,7 +147,7 @@ class Line:
                 nodes=nodes,
                 comments=comments,
                 formatting_disabled=previous_node.formatting_disabled
-                if previous_node
+                if previous_node is not None
                 else [],
             )
 
@@ -258,7 +258,11 @@ class Line:
         that matches a bracket on a preceding line. False for unterminated
         keywords or any lines with matched brackets
         """
-        if self.previous_node and self.previous_node.open_brackets and self.nodes:
+        if (
+            self.previous_node is not None
+            and self.previous_node.open_brackets
+            and self.nodes
+        ):
             explicit_brackets = [
                 b for b in self.previous_node.open_brackets if b.is_opening_bracket
             ]
@@ -276,7 +280,7 @@ class Line:
         after a jinja block keyword, like {% else %}/{% elif %}
         """
         if (
-            self.previous_node
+            self.previous_node is not None
             and self.previous_node.open_jinja_blocks
             and not self.previous_node.open_jinja_blocks[-1].is_jinja_block_keyword
         ):
@@ -292,7 +296,7 @@ class Line:
         """
         if (
             self.nodes
-            and self.previous_node
+            and self.previous_node is not None
             and self.previous_node.open_jinja_blocks
             and (
                 self.previous_node.open_jinja_blocks[-1]
