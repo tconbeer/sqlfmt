@@ -268,7 +268,7 @@ def handle_number(analyzer: "Analyzer", source_string: str, match: re.Match) -> 
     node.
     """
     first_char = source_string[match.span(1)[0] : match.span(1)[0] + 1]
-    if first_char in ["+", "-"] and analyzer.previous_node:
+    if first_char in ["+", "-"] and analyzer.previous_node is not None:
         prev_token, _ = get_previous_token(analyzer.previous_node)
         if prev_token and prev_token.type in (
             TokenType.NUMBER,
@@ -364,7 +364,7 @@ def handle_jinja_block_keyword(
     """
     Lex tags like {% elif ... %} and {% else %} that continue an open jinja block
     """
-    if analyzer.previous_node:
+    if analyzer.previous_node is not None:
         try:
             start_tag = analyzer.previous_node.open_jinja_blocks[-1]
         except IndexError:
@@ -432,7 +432,7 @@ def handle_jinja_block_end(
     """
     Lex tags like {% endif %} and {% endfor %} that close an open jinja block
     """
-    if analyzer.previous_node:
+    if analyzer.previous_node is not None:
         try:
             start_tag = analyzer.previous_node.open_jinja_blocks[-1]
         except IndexError:
