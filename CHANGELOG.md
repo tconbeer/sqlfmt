@@ -4,7 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Features
+
+-   by default, sqlfmt now runs an additional safety check that parses the formatted output to ensure it contains all of the same content as the raw input. This incurs a slight (~20%) performance penalty. To bypass this safety check, you can use the command line option `--fast`, the corresponding TOML or environment variable config, or pass `Mode(fast=True)` to any API method. The safety check is automatically bypassed if sqlfmt is run with the `--check` or `--diff` options. If the safety check fails, the CLI will include an error in the report, and the `format_string` API will raise a `SqlfmtEquivalenceError`, which is a subclass of `SqlfmtError`.
+
 ## [0.14.3] - 2023-01-05
+
+### Formatting Changes + Bug Fixes
 
 -   fixed a bug where very long lines could raise `RecursionError` ([#343](https://github.com/tconbeer/sqlfmt/issues/343) - thank you [@kcem-flyr](https://github.com/kcem-flyr)!).
 

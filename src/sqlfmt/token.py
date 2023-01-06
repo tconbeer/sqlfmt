@@ -133,6 +133,13 @@ class TokenType(Enum):
             TokenType.SET_OPERATOR,
         ]
 
+    @cached_property
+    def is_equivalent_in_output(self) -> bool:
+        return self not in [
+            TokenType.NEWLINE,
+            TokenType.COMMENT,
+        ]
+
 
 class Token(NamedTuple):
     """
