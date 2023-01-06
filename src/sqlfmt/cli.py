@@ -40,6 +40,19 @@ from sqlfmt.mode import Mode
     ),
 )
 @click.option(
+    "--fast/--safe",
+    envvar="SQLFMT_FAST",
+    default=False,
+    help=(
+        "By default, sqlfmt re-processes the output it produces in "
+        "order to run a safety check and ensure that all tokens from "
+        "the input are present in the output. This can add 15-20% to "
+        "the processing time for new files. To disable this safety "
+        "check, use the --fast option. To force the safety check, "
+        "use --safe."
+    ),
+)
+@click.option(
     "--single-process",
     envvar="SQLFMT_SINGLE_PROCESS",
     is_flag=True,

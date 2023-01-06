@@ -10,7 +10,7 @@ from sqlfmt.exception import SqlfmtConfigError
 class Mode:
     """
     A Mode is a container for all sqlfmt config, including formatting config and
-    report config
+    report config. For more info on each option, see cli.py
     """
 
     SQL_EXTENSIONS: List[str] = field(default_factory=lambda: [".sql", ".sql.jinja"])
@@ -19,6 +19,7 @@ class Mode:
     check: bool = False
     diff: bool = False
     exclude: List[str] = field(default_factory=list)
+    fast: bool = False
     single_process: bool = False
     no_jinjafmt: bool = False
     reset_cache: bool = False

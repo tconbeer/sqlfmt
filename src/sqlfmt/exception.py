@@ -45,6 +45,15 @@ class SqlfmtSegmentError(SqlfmtError):
     pass
 
 
+class SqlfmtEquivalenceError(SqlfmtError):
+    """
+    Raised during the safety check if the result query does
+    not lex to the same tokens as the raw query
+    """
+
+    pass
+
+
 class SqlfmtControlFlowException(Exception):
     """
     Generic exception for exceptions used to manage control

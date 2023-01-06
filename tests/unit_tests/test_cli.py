@@ -175,3 +175,12 @@ def test_preformatted_no_progressbar(
     args = f"{preformatted_dir.as_posix()} --check --no-progressbar"
     results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
     assert results.exit_code == 0
+
+
+@pytest.mark.parametrize("option", ["--fast", "--safe"])
+def test_preformatted_fast_safe(
+    sqlfmt_runner: CliRunner, preformatted_dir: Path, option: str
+) -> None:
+    args = f"{preformatted_dir.as_posix()} --check {option}"
+    results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
+    assert results.exit_code == 0

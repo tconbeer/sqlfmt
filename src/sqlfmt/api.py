@@ -3,6 +3,7 @@ import concurrent.futures
 import sys
 from functools import partial
 from glob import glob
+from itertools import zip_longest
 from pathlib import Path
 from typing import (
     Awaitable,
@@ -18,10 +19,12 @@ from typing import (
 
 from tqdm import tqdm
 
+from sqlfmt.analyzer import Analyzer
 from sqlfmt.cache import Cache, check_cache, clear_cache, load_cache, write_cache
-from sqlfmt.exception import SqlfmtError
+from sqlfmt.exception import SqlfmtEquivalenceError, SqlfmtError
 from sqlfmt.formatter import QueryFormatter
-from sqlfmt.mode import Mode
+from sqlfmt.mode import Mode as Mode
+from sqlfmt.query import Query
 from sqlfmt.report import STDIN_PATH, Report, SqlFormatResult
 
 T = TypeVar("T")
@@ -31,13 +34,21 @@ R = TypeVar("R")
 def format_string(source_string: str, mode: Mode) -> str:
     """
     Takes a raw query string and a mode as input, returns the formatted query
-    as a string, or raises a SqlfmtError if the string cannot be formatted
+    as a string, or raises a SqlfmtError if the string cannot be formatted.
+
+    If mode.fast is False, also performs a safety check to ensure no tokens
+    are dropped from the original input.
     """
     analyzer = mode.dialect.initialize_analyzer(line_length=mode.line_length)
     raw_query = analyzer.parse_query(source_string=source_string)
     formatter = QueryFormatter(mode)
     formatted_query = formatter.format(raw_query)
-    return str(formatted_query)
+    result = str(formatted_query)
+
+    if not mode.fast and not mode.check and not mode.diff:
+        _perform_safety_check(analyzer, raw_query, result)
+
+    return result
 
 
 def run(
@@ -246,3 +257,47 @@ def _read_path_or_stdin(path: Path) -> str:
         with open(path, "r") as f:
             source = f.read()
     return source
+
+
+def _perform_safety_check(analyzer: Analyzer, raw_query: Query, result: str) -> None:
+    """
+    Raises a SqlfmtEquivalenceError if re-lexing
+    the result produces a different set of tokens than
+    the original.
+    """
+    result_query = analyzer.parse_query(source_string=result)
+    filtered_raw_tokens = [
+        token.type for token in raw_query.tokens if token.type.is_equivalent_in_output
+    ]
+    filtered_result_tokens = [
+        token.type
+        for token in result_query.tokens
+        if token.type.is_equivalent_in_output
+    ]
+
+    try:
+        assert filtered_raw_tokens == filtered_result_tokens
+    except AssertionError:
+        raw_len = len(filtered_raw_tokens)
+        result_len = len(filtered_result_tokens)
+        mismatch_pos = 0
+        mismatch_raw = ""
+        mismatch_res = ""
+
+        for i, (raw, res) in enumerate(
+            zip_longest(filtered_raw_tokens, filtered_result_tokens)
+        ):
+            if raw is not res:
+                mismatch_pos = i
+                mismatch_raw = str(raw)
+                mismatch_res = str(res)
+                break
+
+        raise SqlfmtEquivalenceError(
+            "There was a problem formatting your query that "
+            "caused the safety check to fail. Please open an "
+            f"issue. Raw query was {raw_len} tokens; formatted "
+            f"query was {result_len} tokens. First mismatching "
+            f"token at position {mismatch_pos}: raw: {mismatch_raw}; "
+            f"result: {mismatch_res}."
+        )

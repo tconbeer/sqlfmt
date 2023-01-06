@@ -8,13 +8,14 @@ from tqdm import tqdm
 
 from sqlfmt.api import (
     _format_many,
+    _perform_safety_check,
     _update_source_files,
     format_string,
     get_matching_paths,
     initialize_progress_bar,
     run,
 )
-from sqlfmt.exception import SqlfmtBracketError, SqlfmtError
+from sqlfmt.exception import SqlfmtBracketError, SqlfmtEquivalenceError, SqlfmtError
 from sqlfmt.mode import Mode
 
 
@@ -319,3 +320,31 @@ def test_initialize_disabled_progress_bar(no_progressbar_mode: Mode) -> None:
     assert progress_callback is not None
     progress_callback("foo")  # type: ignore
     assert progress_bar.format_dict.get("n") == 0
+
+
+def test_perform_safety_check(default_mode: Mode) -> None:
+    source_string = "select 1, 2, 3\n"
+
+    analyzer = default_mode.dialect.initialize_analyzer(
+        line_length=default_mode.line_length
+    )
+    raw_query = analyzer.parse_query(source_string)
+
+    with pytest.raises(SqlfmtEquivalenceError) as excinfo:
+        # drops last token
+        _perform_safety_check(analyzer, raw_query, "select 1, 2, \n")
+
+    assert "Raw query was 6 tokens; formatted query was 5 tokens." in str(excinfo.value)
+
+    with pytest.raises(SqlfmtEquivalenceError) as excinfo:
+        # changes a token
+        _perform_safety_check(analyzer, raw_query, "select a, 2, 3\n")
+
+    assert (
+        "First mismatching token at position 1: raw: TokenType.NUMBER; "
+        "result: TokenType.NAME." in str(excinfo.value)
+    )
+
+    # does not raise
+    _perform_safety_check(analyzer, raw_query, "select\n    1, 2, 3\n")
+    _perform_safety_check(analyzer, raw_query, "select\n-- new comment\n    1, 2, 3\n")
