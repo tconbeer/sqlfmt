@@ -5,9 +5,9 @@ from typing import List
 import pytest
 
 from sqlfmt.rule import Rule
-from sqlfmt.rules import CORE, FUNCTION, GRANT, JINJA, MAIN, WAREHOUSE
+from sqlfmt.rules import CLONE, CORE, FUNCTION, GRANT, JINJA, MAIN, WAREHOUSE
 
-ALL_RULESETS = [CORE, FUNCTION, GRANT, JINJA, MAIN, WAREHOUSE]
+ALL_RULESETS = [CLONE, CORE, FUNCTION, GRANT, JINJA, MAIN, WAREHOUSE]
 
 
 def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
@@ -311,6 +311,18 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (WAREHOUSE, "unterm_keyword", "set tag"),
         (WAREHOUSE, "unterm_keyword", "resume if suspended"),
         (WAREHOUSE, "unterm_keyword", "unset scaling_policy"),
+        (MAIN, "create_clone", "create table foo clone"),
+        (MAIN, "create_clone", "create table db.sch.foo clone"),
+        (MAIN, "create_clone", "create or replace database foo clone"),
+        (MAIN, "create_clone", "create stage if not exists foo clone"),
+        (CLONE, "unterm_keyword", "create table"),
+        (CLONE, "unterm_keyword", "create database"),
+        (CLONE, "unterm_keyword", "create schema"),
+        (CLONE, "unterm_keyword", "create\nfile\nformat"),
+        (CLONE, "unterm_keyword", "clone"),
+        (CLONE, "name", "foo"),
+        (CLONE, "word_operator", "at"),
+        (CLONE, "word_operator", "before"),
     ],
 )
 def test_regex_exact_match(
@@ -346,6 +358,7 @@ def test_regex_exact_match(
         (MAIN, "unterm_keyword", "delete"),
         (MAIN, "unsupported_ddl", "insert('abc', 1, 2, 'Z')"),
         (MAIN, "unsupported_ddl", "get(foo, 'bar')"),
+        (MAIN, "create_clone", "create table"),
         (JINJA, "jinja_set_block_start", "{% set foo = 'baz' %}"),
         (GRANT, "unterm_keyword", "select"),
         (FUNCTION, "unterm_keyword", "secure"),
