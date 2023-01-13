@@ -200,7 +200,7 @@ MAIN = [
     Rule(
         name="create_clone",
         priority=2015,
-        pattern=group(CREATE_CLONABLE + r"\s+\w+\s+clone") + group(r"\W", r"$"),
+        pattern=group(CREATE_CLONABLE + r"\s+.+?\s+clone") + group(r"\W", r"$"),
         action=partial(
             actions.handle_nonreserved_keyword,
             action=partial(

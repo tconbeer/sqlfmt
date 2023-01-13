@@ -312,6 +312,7 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (WAREHOUSE, "unterm_keyword", "resume if suspended"),
         (WAREHOUSE, "unterm_keyword", "unset scaling_policy"),
         (MAIN, "create_clone", "create table foo clone"),
+        (MAIN, "create_clone", "create table db.sch.foo clone"),
         (MAIN, "create_clone", "create or replace database foo clone"),
         (MAIN, "create_clone", "create stage if not exists foo clone"),
         (CLONE, "unterm_keyword", "create table"),
