@@ -2,9 +2,11 @@ from functools import partial
 
 from sqlfmt import actions
 from sqlfmt.rule import Rule
+from sqlfmt.rules.clone import CLONE as CLONE
 from sqlfmt.rules.common import (
     ALTER_DROP_FUNCTION,
     ALTER_WAREHOUSE,
+    CREATE_CLONABLE,
     CREATE_FUNCTION,
     CREATE_WAREHOUSE,
     group,
@@ -193,6 +195,18 @@ MAIN = [
         action=partial(
             actions.handle_nonreserved_keyword,
             action=partial(actions.lex_ruleset, new_ruleset=GRANT),
+        ),
+    ),
+    Rule(
+        name="create_clone",
+        priority=2015,
+        pattern=group(CREATE_CLONABLE + r"\s+\w+\s+clone") + group(r"\W", r"$"),
+        action=partial(
+            actions.handle_nonreserved_keyword,
+            action=partial(
+                actions.lex_ruleset,
+                new_ruleset=CLONE,
+            ),
         ),
     ),
     Rule(
