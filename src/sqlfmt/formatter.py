@@ -78,7 +78,9 @@ class QueryFormatter:
         for motivation and details.
         """
         new_lines: List[Line] = []
-        cnt = 0
+        # initialize cnt high so we remove any extra lines at the beginning
+        # of files.
+        cnt = 2
         for line in lines:
             if line.is_blank_line:
                 max_cnt = 2 if line.depth == (0, 0) else 1

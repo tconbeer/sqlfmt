@@ -51,6 +51,7 @@ def test_dedent_jinja_blocks(default_mode: Mode) -> None:
 def test_remove_extra_blank_lines(default_mode: Mode) -> None:
     formatter = QueryFormatter(default_mode)
     source_string = (
+        "\n\n\n\n"
         "select 1\n;\n\n\n\n"
         "select\n    1,\n\n\n    2\n;\n"
         "{% macro foo() %}\n\n\n\n\nfoo\n{% endmacro %}\n\n\n\n\n\n\n"
