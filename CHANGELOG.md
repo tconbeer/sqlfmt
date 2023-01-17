@@ -1,4 +1,4 @@
-# sqlfmt CHANGELOG
+8# sqlfmt CHANGELOG
 
 All notable changes to this project will be documented in this file.
 
@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 -   sqlfmt now supports `create <object> ... clone` statements ([#313](https://github.com/tconbeer/sqlfmt/issues/313)).
 -   sqlfmt will now format all files that end with `*.sql` and `*.sql.jinja`, even those with other dots in their filenames ([#354](https://github.com/tconbeer/sqlfmt/issues/354) - thank you [@ysmilda](https://github.com/ysmilda)!).
 -   fixed a bug where `{% call %}` blocks with arguments like `{% call(foo) bar(baz) %}` would cause a parsing error ([#353](https://github.com/tconbeer/sqlfmt/issues/353) - thank you [@IgnorantWalking](https://github.com/IgnorantWalking)!).
+-   sqlfmt now supports [bun placeholders](https://bun.uptrace.dev/guide/placeholders.html) ([#356](https://github.com/tconbeer/sqlfmt/issues/356))
 
 ### Features
 
