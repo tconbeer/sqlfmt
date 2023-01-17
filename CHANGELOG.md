@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Formatting Changes + Bug Fixes
 
 -   sqlfmt now supports `create <object> ... clone` statements ([#313](https://github.com/tconbeer/sqlfmt/issues/313)).
+-   sqlfmt now supports all files that end with `*.sql` and `*.sql.jinja`.
 
 ### Features
 
