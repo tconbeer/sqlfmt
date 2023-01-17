@@ -139,7 +139,7 @@ CORE = [
             r"\$\d+",  # pg placeholders
             r"\$\w+",  # variables
             r"%(\([^%()]+\))?s",  # psycopg placeholders
-            r"\?\d*",  # bun placeholders
+            r"\?\d+",  # bun placeholders
         ),
         action=partial(actions.add_node_to_buffer, token_type=TokenType.NAME),
     ),
