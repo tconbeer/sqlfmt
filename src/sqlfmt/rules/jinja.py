@@ -8,7 +8,7 @@ from sqlfmt.token import TokenType
 JINJA_SHARED_PATTERNS = {
     "set": r"\{%-?\s*set\s+[^=]+?-?%\}",
     "endset": r"\{%-?\s*endset\s*-?%\}",
-    "call": r"\{%-?\s*call\s+\w+.*?-?%\}",
+    "call": r"\{%-?\s*call(\(.*?\))?\s+\w+.*?-?%\}",
     "endcall": r"\{%-?\s*endcall\s*-?%\}",
 }
 
