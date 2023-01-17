@@ -35,6 +35,7 @@ def test_file_discovery(default_mode: Mode) -> None:
 
     expected = (
         p / "top_level_file.sql",
+        p / "top_level_file.two.sql",
         p / "a_directory/one_file.sql",
         p / "a_directory/nested_directory/another_file.sql",
         p / "a_directory/nested_directory/j2_extension.sql.jinja",
