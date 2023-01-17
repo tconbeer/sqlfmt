@@ -1,6 +1,6 @@
 import os
 from dataclasses import dataclass, field
-from typing import List, Tuple
+from typing import List
 
 from sqlfmt.dialect import ClickHouse, Polyglot
 from sqlfmt.exception import SqlfmtConfigError
@@ -13,7 +13,7 @@ class Mode:
     report config. For more info on each option, see cli.py
     """
 
-    SQL_EXTENSIONS: Tuple = (".sql", ".sql.jinja")
+    SQL_EXTENSIONS: List[str] = field(default_factory=lambda: [".sql", ".sql.jinja"])
     dialect_name: str = "polyglot"
     line_length: int = 88
     check: bool = False
