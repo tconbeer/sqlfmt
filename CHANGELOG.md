@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Formatting Changes + Bug Fixes
 
+-   sqlfmt now removes extra blank lines ([#249](https://github.com/tconbeer/sqlfmt/issues/313) - thank you, [@nfcampos](https://github.com/nfcampos)!). Basically, no more than 1 blank line inside queries or blocks; no more than 2 between queries or blocks.
 -   sqlfmt now supports `create <object> ... clone` statements ([#313](https://github.com/tconbeer/sqlfmt/issues/313)).
 -   sqlfmt will now format all files that end with `*.sql` and `*.sql.jinja`, even those with other dots in their filenames ([#354](https://github.com/tconbeer/sqlfmt/issues/354) - thank you [@ysmilda](https://github.com/ysmilda)!).
 -   fixed a bug where `{% call %}` blocks with arguments like `{% call(foo) bar(baz) %}` would cause a parsing error ([#353](https://github.com/tconbeer/sqlfmt/issues/353) - thank you [@IgnorantWalking](https://github.com/IgnorantWalking)!).
