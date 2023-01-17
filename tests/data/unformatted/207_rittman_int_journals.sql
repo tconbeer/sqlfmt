@@ -32,7 +32,6 @@ select * from journal_merge_list
 # https://github.com/rittmananalytics/ra_data_warehouse/blob/d8dc7bd1c008ca79f9d09c909734e28a66ef6366/LICENSE.txt
 {% if var("finance_warehouse_journal_sources") %}
 
-
 with
     journal_merge_list as (
         {% for source in var("finance_warehouse_journal_sources") %}

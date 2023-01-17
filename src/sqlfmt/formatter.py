@@ -71,6 +71,25 @@ class QueryFormatter:
 
         return lines
 
+    def _remove_extra_blank_lines(self, lines: List[Line]) -> List[Line]:
+        """
+        A query can have at most 2 consecutive blank lines at depth (0,0)
+        and 1 consecutive blank line at any other depth. See issue #249
+        for motivation and details.
+        """
+        new_lines: List[Line] = []
+        cnt = 0
+        for line in lines:
+            if line.is_blank_line:
+                max_cnt = 2 if line.depth == (0, 0) else 1
+                if cnt < max_cnt:
+                    new_lines.append(line)
+                cnt += 1
+            else:
+                new_lines.append(line)
+                cnt = 0
+        return new_lines
+
     def format(self, raw_query: Query) -> Query:
         """
         Applies 4 transformations to a Query:
@@ -86,6 +105,7 @@ class QueryFormatter:
             self._format_jinja,
             self._dedent_jinja_blocks,
             self._merge_lines,
+            self._remove_extra_blank_lines,
         ]
 
         for transform in pipeline:
