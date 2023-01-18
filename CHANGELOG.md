@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.15.0] - 2023-01-18
+
 ### Formatting Changes + Bug Fixes
 
 -   sqlfmt now removes extra blank lines ([#249](https://github.com/tconbeer/sqlfmt/issues/313) - thank you, [@nfcampos](https://github.com/nfcampos)!). Basically, no more than 1 blank line inside queries or blocks; no more than 2 between queries or blocks.
@@ -310,7 +312,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.14.3...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.15.0...HEAD
+
+[0.15.0]: https://github.com/tconbeer/sqlfmt/compare/0.14.3...0.15.0
 
 [0.14.3]: https://github.com/tconbeer/sqlfmt/compare/0.14.2...0.14.3
 
