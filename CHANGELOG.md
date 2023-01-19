@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Features
+
+ -  Now available via a Docker container 
+
 ## [0.15.0] - 2023-01-18
 
 ### Formatting Changes + Bug Fixes
