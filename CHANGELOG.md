@@ -4,9 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.15.1] - 2023-01-20
+
 ### Features
 
- -  added a Dockerfile for running sqlfmt in a container. New versions of sqlfmt will include Docker builds pushed to the GitHub Container Registry (thank you [@ysmilda](https://github.com/ysmilda)!).
+-   added a Dockerfile for running sqlfmt in a container. New versions of sqlfmt will include Docker builds pushed to the GitHub Container Registry (thank you [@ysmilda](https://github.com/ysmilda)!).
 
 ## [0.15.0] - 2023-01-18
 
@@ -316,7 +318,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.15.0...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.15.1...HEAD
+
+[0.15.1]: https://github.com/tconbeer/sqlfmt/compare/0.15.0...0.15.1
 
 [0.15.0]: https://github.com/tconbeer/sqlfmt/compare/0.14.3...0.15.0
 
