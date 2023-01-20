@@ -1,7 +1,10 @@
 FROM python:3-slim
 
 COPY dist/*.whl .
-RUN pip install $(find . -name "*.whl")
-RUN mkdir format
+RUN pip install $(find . -name "*.whl")[jinjafmt]
+RUN rm *.whl
 
-CMD sqlfmt ./format
+RUN mkdir /src
+WORKDIR /src
+
+CMD ["sqlfmt", "."]
