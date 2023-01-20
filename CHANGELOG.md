@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Features
+
+ -  added a Dockerfile for running sqlfmt in a container. New versions of sqlfmt will include Docker builds pushed to the GitHub Container Registry (thank you [@ysmilda](https://github.com/ysmilda)!).
+
 ## [0.15.0] - 2023-01-18
 
 ### Formatting Changes + Bug Fixes

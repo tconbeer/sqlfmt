@@ -45,3 +45,19 @@ jobs:
             LICENSE
             dist/*sqlfmt*.whl
             dist/*sqlfmt*.tar.gz
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:v${{ steps.sqlfmt_version.outputs.sqlfmt_version }}
