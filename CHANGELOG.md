@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.15.2] - 2023-01-23
+
+-   adds support for ARM-based platforms using Docker.
+
 ## [0.15.1] - 2023-01-20
 
 ### Features
@@ -318,7 +322,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.15.1...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.15.2...HEAD
+
+[0.15.2]: https://github.com/tconbeer/sqlfmt/compare/0.15.1...0.15.2
 
 [0.15.1]: https://github.com/tconbeer/sqlfmt/compare/0.15.0...0.15.1
 
