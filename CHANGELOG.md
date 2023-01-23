@@ -4,7 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Formatting Changes + Bug Fixes
+
+-   sqlfmt no longer merges together lines containing multiline jinja blocks unless those lines start with an operator or comma ([#365](https://github.com/tconbeer/sqlfmt/issues/365) - thank you, [@gavlt](https://github.com/gavlt)!).
+
 ## [0.15.2] - 2023-01-23
+
+### Features
 
 -   adds support for ARM-based platforms using Docker.
 
