@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ## [0.15.2] - 2023-01-23
 
+-   adds support for ARM-based platforms using Docker.
+
 ## [0.15.1] - 2023-01-20
 
 ### Features
