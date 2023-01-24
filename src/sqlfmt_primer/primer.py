@@ -76,8 +76,8 @@ def get_projects() -> List[SQLProject]:
             name="dbt_utils",
             git_url="https://github.com/tconbeer/dbt-utils.git",
             git_ref="8d81899",  # sqlfmt d97af4e
-            expected_changed=2,
-            expected_unchanged=129,
+            expected_changed=0,
+            expected_unchanged=131,
             expected_errored=0,
             sub_directory=Path(""),
         ),
