@@ -79,7 +79,10 @@ class Analyzer:
         # indented too far -- they should be formatted as if they
         # have no open_brackets
         for line in reversed(self.line_buffer):
-            if line.closes_jinja_block_from_previous_line:
+            if (
+                line.is_standalone_jinja_statement
+                and line.closes_jinja_block_from_previous_line
+            ):
                 for node in line.nodes:
                     node.open_brackets = []
             else:
