@@ -2,7 +2,6 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
 
 from sqlfmt.comment import Comment
-from sqlfmt.exception import InlineCommentException
 from sqlfmt.node import Node
 from sqlfmt.token import Token
 
@@ -88,39 +87,49 @@ class Line:
         prefix = INDENT * self.depth[0]
         return prefix
 
+    def has_inline_comment(self, max_length: int) -> bool:
+        """
+        Returns true if the line has an attached comment that was parsed
+        as an inline comment, and if the line and comment are short
+        enough to be rendered inline. Returns false otherwise
+        """
+        content = str(self).rstrip()
+        if self.comments and self.comments[-1].was_parsed_inline:
+            inline_render = self.comments[-1].render_inline()
+            if len(content) + len(inline_render) <= max_length:
+                return True
+        return False
+
     def render_with_comments(self, max_length: int) -> str:
         """
         Returns a string that represents the properly-formatted Line,
         including associated comments
         """
-        content = str(self)
-        rendered = content
-        if len(self.comments) == 1:
-            # standalone or multiline comment
-            if self.nodes[0].is_newline:
-                rendered = f"{self.prefix}{self.comments[0]}"
-            # inline comment
+        content = str(self).rstrip()
+        rendered_lines: List[str] = []
+        for comment in self.comments:
+            if comment.is_multiline or comment.is_standalone:
+                rendered_lines.append(
+                    comment.render_standalone(max_length=max_length, prefix=self.prefix)
+                )
             else:
-                try:
-                    comment = self.comments[0].render_inline(
-                        max_length=max_length, content_length=len(content.rstrip())
-                    )
-                    rendered = f"{content.rstrip()}{comment}"
-                except InlineCommentException:
-                    comment = self.comments[0].render_standalone(
-                        max_length=max_length, prefix=self.prefix
-                    )
-                    rendered = f"{comment}{content}"
-        # wrap comments above; note that str(comment) is newline-terminated
-        elif len(self.comments) > 1:
-            comment = "".join(
-                [
-                    c.render_standalone(max_length=max_length, prefix=self.prefix)
-                    for c in self.comments
-                ]
+                # comment is potentially an inline comment, and we'll handle
+                # that below. Inline comments must be the last comment
+                pass
+
+        if self.has_inline_comment(max_length=max_length):
+            rendered_lines.append(f"{content}{self.comments[-1].render_inline()}")
+        elif self.comments and self.comments[-1].was_parsed_inline:
+            # comment was parsed inline but needs to be written standalone
+            rendered_lines.append(
+                self.comments[-1].render_standalone(
+                    max_length=max_length, prefix=self.prefix
+                )
             )
-            rendered = f"{comment}{content}"
-        return rendered
+            rendered_lines.append(f"{self}")
+        else:
+            rendered_lines.append(f"{self}")
+        return "".join(rendered_lines)
 
     @classmethod
     def from_nodes(

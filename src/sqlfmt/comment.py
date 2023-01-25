@@ -2,7 +2,6 @@ import re
 from dataclasses import dataclass
 from typing import ClassVar, Iterator, Tuple
 
-from sqlfmt.exception import InlineCommentException
 from sqlfmt.token import Token
 
 
@@ -68,20 +67,16 @@ class Comment:
         """
         return "\n" in self.token.token
 
-    def render_inline(self, max_length: int, content_length: int) -> str:
+    @property
+    def was_parsed_inline(self) -> bool:
+        return not self.is_standalone and not self.is_multiline
+
+    def render_inline(self) -> str:
         """
-        For a Comment, returns the string for properly formatting this Comment
-        inline, after content_length characters of non-comment Nodes
+        Renders a comment as an inline comment, assuming it'll fit.
         """
-        if self.is_standalone:
-            raise InlineCommentException("Can't inline standalone comment")
-        else:
-            inline_prefix = " " * 2
-            rendered = inline_prefix + str(self)
-            if content_length + len(rendered) > max_length:
-                raise InlineCommentException("Comment too long to be inlined")
-            else:
-                return inline_prefix + str(self)
+        inline_prefix = " " * 2
+        return f"{inline_prefix}{self}"
 
     def render_standalone(self, max_length: int, prefix: str) -> str:
         """

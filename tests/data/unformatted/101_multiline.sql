@@ -66,7 +66,7 @@ with
  # And this is a nice multiline jinja comment
  # that we will also handle.
 #}
-/* what!?! */
 select *
 from renamed
-where true
+where
+    true  /* what!?! */

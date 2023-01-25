@@ -61,8 +61,10 @@ with
                         then nullif(full_name, '')
                         when regexp_count(nullif(full_name, ''), ' ') = 1
                         then split_part(nullif(full_name, ''), ' ', 1)
-                        -- let's explain what is going on here
-                        else regexp_substr(nullif(full_name, ''), '.* .* ')
+                        else
+                            regexp_substr(
+                                nullif(full_name, ''), '.* .* '
+                            )  -- let's explain what is going on here
                     end
                 ),
                 'TEST_USER'
@@ -78,9 +80,13 @@ with
 
         from source
 
-        -- a very long comment about why we would exclude this user from this table
-        -- that we will wrap
-        where nvl(is_deleted, false) is false and id <> 123456
+        where
+
+            nvl(is_deleted, false) is false
+            and id
+            -- a very long comment about why we would exclude this user from this
+            -- table that we will wrap
+            <> 123456
 
     )
 select *

@@ -210,11 +210,6 @@ def test_comment_rendering(
     )
 
     inline_comment = Comment(token=comment_token, is_standalone=False)
-    node_manager.append_newline(bare_line)
-    bare_line.comments = [inline_comment]
-    expected_bare_render = normalized_comment + "\n"
-    assert bare_line.render_with_comments(88) == expected_bare_render
-
     simple_line.comments = [inline_comment]
     expected_inline_render = (
         str(simple_line).rstrip() + "  " + normalized_comment + "\n"
@@ -227,18 +222,6 @@ def test_comment_rendering(
         simple_line.prefix + normalized_comment + "\n" + str(simple_line)
     )
     assert simple_line.render_with_comments(88) == expected_standalone_render
-
-    simple_line.comments = [standalone_comment, inline_comment]
-    expected_multiple_render = (
-        simple_line.prefix
-        + normalized_comment
-        + "\n"
-        + simple_line.prefix
-        + normalized_comment
-        + "\n"
-        + str(simple_line)
-    )
-    assert simple_line.render_with_comments(88) == expected_multiple_render
 
 
 def test_long_comment_wrapping(simple_line: Line) -> None:

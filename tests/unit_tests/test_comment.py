@@ -3,7 +3,6 @@ from typing import List
 import pytest
 
 from sqlfmt.comment import Comment
-from sqlfmt.exception import InlineCommentException
 from sqlfmt.token import Token, TokenType
 
 
@@ -75,15 +74,8 @@ def test_render_inline(
     short_comment: Comment, nospace_comment: Comment, standalone_comment: Comment
 ) -> None:
     expected = "  -- short comment\n"
-    assert short_comment.render_inline(max_length=88, content_length=20) == expected
-    assert nospace_comment.render_inline(max_length=88, content_length=20) == expected
-    with pytest.raises(InlineCommentException):
-        # can't inline a standalone comment
-        assert standalone_comment.render_inline(max_length=88, content_length=20)
-
-    with pytest.raises(InlineCommentException):
-        # can't inline if the content is too long
-        assert short_comment.render_inline(max_length=88, content_length=80)
+    assert short_comment.render_inline() == expected
+    assert nospace_comment.render_inline() == expected
 
 
 @pytest.mark.parametrize(

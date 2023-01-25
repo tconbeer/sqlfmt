@@ -50,9 +50,8 @@ class LineMerger:
         except CannotMergeException:
             return lines
 
-    @classmethod
     def _extract_components(
-        cls, lines: Iterable[Line]
+        self, lines: Iterable[Line]
     ) -> Tuple[List[Node], List[Comment]]:
         """
         Given a list of lines, return 2 components:
@@ -67,7 +66,27 @@ class LineMerger:
         final_newline: Optional[Node] = None
         allow_multiline_jinja = True
         has_multiline_jinja = False
+        has_inline_comment_above = False
         for line in lines:
+            # only merge lines with comments if it's a standalone comment
+            # above the first line
+            if line.comments:
+                if nodes or has_inline_comment_above:
+                    raise CannotMergeException(
+                        "Can't merge lines with comments unless the comments "
+                        "are above the first line"
+                    )
+                elif line.has_inline_comment(self.mode.line_length):
+                    has_inline_comment_above = True
+            # make an exception for inline comments followed by
+            # a lonely comma (e.g., leading commas with inline comments)
+            elif has_inline_comment_above:
+                if not line.is_standalone_comma:
+                    raise CannotMergeException(
+                        "Can't merge lines with inline comments unless "
+                        "the following line is a single standalone comma"
+                    )
+
             if has_multiline_jinja and not (
                 line.starts_with_operator or line.starts_with_comma
             ):
@@ -76,7 +95,7 @@ class LineMerger:
                 )
             # skip over newline nodes
             content_nodes = [
-                cls._raise_unmergeable(node, allow_multiline_jinja)
+                self._raise_unmergeable(node, allow_multiline_jinja)
                 for node in line.nodes
                 if not node.is_newline
             ]

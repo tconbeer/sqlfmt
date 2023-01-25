@@ -21,10 +21,6 @@ def test_create_merged_line(merger: LineMerger) -> None:
     select
         able,
         baker,
-        /*  a
-            multiline
-            comment
-        */
 
 
 
@@ -54,6 +50,26 @@ def test_create_merged_line(merger: LineMerger) -> None:
     with pytest.raises(CannotMergeException):
         # can't merge whitespace
         _ = merger.create_merged_line(raw_query.lines[-6:-3])
+
+
+def test_create_merged_line_comments(merger: LineMerger) -> None:
+
+    source_string = """
+    select
+        able,
+        baker,
+        -- a comment
+        charlie,
+    """
+    raw_query = merger.mode.dialect.initialize_analyzer(
+        merger.mode.line_length
+    ).parse_query(source_string)
+
+    with pytest.raises(CannotMergeException) as exc_info:
+        # can't merge whitespace
+        _ = merger.create_merged_line(raw_query.lines)
+
+    assert "comment" in str(exc_info.value)
 
 
 def test_basic_merge(merger: LineMerger) -> None:
