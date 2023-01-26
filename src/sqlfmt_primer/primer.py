@@ -48,7 +48,7 @@ def get_projects() -> List[SQLProject]:
         SQLProject(
             name="http_archive",
             git_url="https://github.com/tconbeer/http_archive_almanac.git",
-            git_ref="2aad62b",  # sqlfmt d620ac8
+            git_ref="edc817f",  # sqlfmt 124890d
             expected_changed=0,
             expected_unchanged=1729,
             expected_errored=0,
@@ -66,7 +66,7 @@ def get_projects() -> List[SQLProject]:
         SQLProject(
             name="jaffle_shop",
             git_url="https://github.com/tconbeer/jaffle_shop.git",
-            git_ref="1466afa",  # sqlfmt d620ac8
+            git_ref="894e5d4",  # sqlfmt 124890d
             expected_changed=0,
             expected_unchanged=5,
             expected_errored=0,
@@ -75,7 +75,7 @@ def get_projects() -> List[SQLProject]:
         SQLProject(
             name="dbt_utils",
             git_url="https://github.com/tconbeer/dbt-utils.git",
-            git_ref="8d81899",  # sqlfmt d97af4e
+            git_ref="ab55e10",  # sqlfmt 124890d
             expected_changed=0,
             expected_unchanged=131,
             expected_errored=0,
