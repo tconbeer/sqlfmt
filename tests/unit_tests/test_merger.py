@@ -514,3 +514,39 @@ def test_fix_standalone_operators(merger: LineMerger) -> None:
 
     result_string = "".join([str(line) for line in itertools.chain(*fixed_segments)])
     assert result_string == expected_string
+
+
+def test_merge_inline_comments(merger: LineMerger) -> None:
+    source_string, expected_string = read_test_data(
+        "unit_tests/test_merger/test_merge_inline_comments.sql"
+    )
+    raw_query = merger.mode.dialect.initialize_analyzer(
+        merger.mode.line_length
+    ).parse_query(source_string)
+    merged_lines = merger.maybe_merge_lines(raw_query.lines)
+    result_string = "".join([line.render_with_comments(88) for line in merged_lines])
+    assert result_string == expected_string
+
+
+def test_no_merge_short_multiline_nodes(merger: LineMerger) -> None:
+    source_string, expected_string = read_test_data(
+        "unit_tests/test_merger/test_no_merge_short_multiline_nodes.sql"
+    )
+    raw_query = merger.mode.dialect.initialize_analyzer(
+        merger.mode.line_length
+    ).parse_query(source_string)
+    merged_lines = merger.maybe_merge_lines(raw_query.lines)
+    result_string = "".join([line.render_with_comments(88) for line in merged_lines])
+    assert result_string == expected_string
+
+
+def test_no_merge_formatting_disabled(merger: LineMerger) -> None:
+    source_string, expected_string = read_test_data(
+        "unit_tests/test_merger/test_no_merge_formatting_disabled.sql"
+    )
+    raw_query = merger.mode.dialect.initialize_analyzer(
+        merger.mode.line_length
+    ).parse_query(source_string)
+    merged_lines = merger.maybe_merge_lines(raw_query.lines)
+    result_string = "".join([str(line) for line in merged_lines])
+    assert result_string == expected_string

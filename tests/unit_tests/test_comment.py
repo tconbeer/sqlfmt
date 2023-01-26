@@ -42,6 +42,15 @@ def standalone_comment() -> Comment:
     return comment
 
 
+@pytest.fixture
+def multiline_comment() -> Comment:
+    t = Token(
+        type=TokenType.COMMENT, prefix=" ", token="/*\ncomment\n*/", spos=0, epos=15
+    )
+    comment = Comment(t, is_standalone=True)
+    return comment
+
+
 def test_get_marker(
     short_comment: Comment, short_mysql_comment: Comment, nospace_comment: Comment
 ) -> None:
@@ -95,6 +104,13 @@ def test_render_standalone(short_comment: Comment, prefix: str) -> None:
     assert lines[1] == prefix + "-- comment\n"
 
 
+def test_render_multiline(multiline_comment: Comment) -> None:
+    assert multiline_comment.render_standalone(max_length=88, prefix="") == str(
+        multiline_comment
+    )
+    assert str(multiline_comment) == "/*\ncomment\n*/\n"
+
+
 @pytest.mark.parametrize(
     "text,expected_splits",
     [
@@ -114,3 +130,26 @@ def test_empty_comment() -> None:
     t = Token(type=TokenType.COMMENT, prefix=" ", token="-- ", spos=0, epos=3)
     comment = Comment(t, is_standalone=True)
     assert str(comment) == "--\n"
+
+
+def test_was_parsed_inline(
+    short_comment: Comment, standalone_comment: Comment, multiline_comment: Comment
+) -> None:
+    assert short_comment.was_parsed_inline
+    assert not (standalone_comment.was_parsed_inline)
+    assert not (multiline_comment.was_parsed_inline)
+
+
+def test_no_wrap_long_jinja_comments() -> None:
+    comment_str = "{# " + ("comment " * 20) + "#}"
+    t = Token(
+        type=TokenType.COMMENT,
+        prefix=" ",
+        token=comment_str,
+        spos=0,
+        epos=len(comment_str),
+    )
+    comment = Comment(t, is_standalone=True)
+    rendered = comment.render_standalone(88, "")
+
+    assert rendered == comment_str + "\n"

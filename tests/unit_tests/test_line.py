@@ -74,6 +74,7 @@ def test_bare_line(bare_line: Line) -> None:
     assert not bare_line.is_blank_line
     assert not bare_line.is_too_long(88)
     assert not bare_line.opens_new_bracket
+    assert not bare_line.contains_jinja
     assert bare_line.open_brackets == []
     assert bare_line.open_jinja_blocks == []
 
@@ -119,6 +120,7 @@ def test_simple_line(
     assert not simple_line.is_too_long(88)
     assert not simple_line.opens_new_bracket
     assert not simple_line.previous_line_has_open_jinja_blocks_not_keywords
+    assert not simple_line.contains_jinja
 
     assert simple_line.nodes[5].token.type is TokenType.STAR
     assert not simple_line.nodes[5].is_multiplication_star
@@ -132,6 +134,7 @@ def test_bare_append_newline(bare_line: Line, node_manager: NodeManager) -> None
     node_manager.append_newline(bare_line)
     assert bare_line.nodes
     assert bare_line.is_blank_line
+    assert str(bare_line) == "\n"
     new_last_node = bare_line.nodes[-1]
     assert new_last_node.token.type is TokenType.NEWLINE
     assert (new_last_node.token.spos, new_last_node.token.epos) == (0, 0)
@@ -451,3 +454,25 @@ def test_closes_simple_jinja_block_from_previous_line(
     expected = [False] * (len(q.lines) - 1) + [True]
     actual = [line.closes_simple_jinja_block_from_previous_line for line in q.lines]
     assert actual == expected
+
+
+def test_formatting_disabled_to_str(
+    default_analyzer: Analyzer,
+) -> None:
+    source_string = "SELECT      FOO   ,   BAR"
+    q = default_analyzer.parse_query(source_string=source_string)
+    assert len(q.lines) == 1
+    q.lines[0].formatting_disabled = [q.nodes[0].token]
+
+    assert str(q.lines[0]) == source_string + "\n"
+
+
+def test_line_is_too_long(
+    default_analyzer: Analyzer,
+) -> None:
+    max_length = 88
+    source_string = "a" * max_length + "\n" + "b" * (max_length + 1) + "\n"
+    q = default_analyzer.parse_query(source_string=source_string)
+    assert len(q.lines) == 2
+    assert not q.lines[0].is_too_long(max_length=max_length)
+    assert q.lines[1].is_too_long(max_length=max_length)

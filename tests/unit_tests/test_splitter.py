@@ -437,3 +437,25 @@ def test_split_leading_comma_comment(
         "    -- three\n" "    3  -- three inline\n",
     ]
     assert actual_result == expected_result
+
+
+def test_split_formatting_disabled(
+    splitter: LineSplitter, default_analyzer: Analyzer
+) -> None:
+    source_string = """
+    -- fmt: off
+    select 1, 2, 3
+    """.strip()
+
+    raw_query = default_analyzer.parse_query(source_string)
+    assert len(raw_query.lines) == 2
+    select_line = raw_query.lines[1]
+    assert select_line.formatting_disabled
+    assert select_line.nodes[0].is_unterm_keyword
+    assert select_line.nodes[0].formatting_disabled
+
+    split_lines: List[Line] = []
+    for raw_line in raw_query.lines:
+        split_lines.extend(splitter.maybe_split(raw_line))
+
+    assert split_lines == raw_query.lines
