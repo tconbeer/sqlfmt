@@ -68,5 +68,4 @@ with
 #}
 select *
 from renamed
-where
-    true  /* what!?! */
+where true  /* what!?! */

@@ -47,9 +47,7 @@ with
         -- too long to be one-lined with the comment inside so it'll have to go above
         select a_long_enough_field, another_long_enough_field
     ),
-    three as (
-        select 1
-    ),  -- short enough
+    three as (select 1),  -- short enough
     four as (
         -- too long to be one-lined with the comment inside so it'll have to go above
         -- and be split and wrapped

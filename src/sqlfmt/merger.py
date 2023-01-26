@@ -69,15 +69,20 @@ class LineMerger:
         has_inline_comment_above = False
         for line in lines:
             # only merge lines with comments if it's a standalone comment
-            # above the first line
+            # above the first line or an inline comment after the last
+            # line
             if line.comments:
-                if nodes or has_inline_comment_above:
+                if has_inline_comment_above:
                     raise CannotMergeException(
-                        "Can't merge lines with comments unless the comments "
-                        "are above the first line"
+                        "Can't merge lines with inline comments and " "other comments"
                     )
                 elif line.has_inline_comment(self.mode.line_length):
                     has_inline_comment_above = True
+                elif nodes:
+                    raise CannotMergeException(
+                        "Can't merge lines with standalone comments unless the "
+                        "comments are above the first line"
+                    )
             # make an exception for inline comments followed by
             # a lonely comma (e.g., leading commas with inline comments)
             elif has_inline_comment_above:
