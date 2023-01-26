@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Formatting Changes + Bug Fixes
 
--   sqlfmt no longer merges lines that contain comments, unless the position of those comments can be preserved ([#348](https://github.com/tconbeer/sqlfmt/issues/348) - thank you, [@rileyschack](https://github.com/rileyschack) and [@IanEdington](https://github.com/IanEdington)!).
+-   sqlfmt no longer merges lines that contain comments, unless the position of those comments can be preserved ([#348](https://github.com/tconbeer/sqlfmt/issues/348) - thank you, [@rileyschack](https://github.com/rileyschack) and [@IanEdington](https://github.com/IanEdington)!). Accordingly, comments that are inline will stay inline, even if they are too long to fit.
 -   sqlfmt no longer merges together lines containing multiline jinja blocks unless those lines start with an operator or comma ([#365](https://github.com/tconbeer/sqlfmt/issues/365) - thank you, [@gavlt](https://github.com/gavlt)!).
 -   fixed a bug where adding a jinja end tag (e.g., `{% endif %}`) to a line could cause bad formatting of everything on that line
 

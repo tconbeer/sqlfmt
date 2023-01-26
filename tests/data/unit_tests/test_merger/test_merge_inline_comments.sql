@@ -53,5 +53,4 @@ from
     tbl,  -- tbl
     second,
     third
--- this is a comment that is too long to be inline here. foobar
-where a + b > fooooooooobarrrrrrrr
+where a + b > fooooooooobarrrrrrrr  -- this is a comment that is too long to be inline here. foobar

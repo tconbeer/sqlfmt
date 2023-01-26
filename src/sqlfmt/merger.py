@@ -76,24 +76,10 @@ class LineMerger:
                     raise CannotMergeException(
                         "Can't merge lines with inline comments and other comments"
                     )
-                elif len(line.comments) == 1 and line.has_inline_comment(
-                    self.mode.line_length
-                ):
-                    # this is a comment that can be rendered inline,
+                elif len(line.comments) == 1 and line.has_inline_comment:
+                    # this is a comment that must be rendered inline,
                     # so it'll probably block merging unless the
                     # next line is just a comma
-                    has_inline_comment_above = True
-                elif (
-                    nodes
-                    and len(line.comments) == 1
-                    and line.comments[-1].was_parsed_inline
-                ):
-                    # this is a comment that was parsed inline,
-                    # but is too long to fit inline, so it'll
-                    # wrap above. It should be treated like
-                    # a standalone comment and block merging unless this is
-                    # the last line to be merged, in which case
-                    # we'll allow it
                     has_inline_comment_above = True
                 elif nodes:
                     raise CannotMergeException(

@@ -236,7 +236,7 @@ def test_long_comment_wrapping(simple_line: Line) -> None:
         spos=last_node.token.epos,
         epos=last_node.token.epos + 13,
     )
-    comment = Comment(token=comment_token, is_standalone=False)
+    comment = Comment(token=comment_token, is_standalone=True)
     simple_line.comments = [comment]
     expected_render = (
         "-- asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf "
@@ -266,9 +266,9 @@ def test_long_comments_that_are_not_wrapped(
         spos=last_node.token.epos,
         epos=last_node.token.epos + 13,
     )
-    comment = Comment(token=comment_token, is_standalone=False)
+    comment = Comment(token=comment_token, is_standalone=True)
     simple_line.comments = [comment]
-    expected_render = raw_comment + "\n" "with abc as (select * from my_table)\n"
+    expected_render = raw_comment + "\nwith abc as (select * from my_table)\n"
     assert simple_line.render_with_comments(88) == expected_render
 
 

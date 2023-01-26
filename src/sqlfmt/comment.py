@@ -68,7 +68,7 @@ class Comment:
         return "\n" in self.token.token
 
     @property
-    def was_parsed_inline(self) -> bool:
+    def is_inline(self) -> bool:
         return not self.is_standalone and not self.is_multiline
 
     def render_inline(self) -> str:

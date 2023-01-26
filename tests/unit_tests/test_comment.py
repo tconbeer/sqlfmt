@@ -132,12 +132,12 @@ def test_empty_comment() -> None:
     assert str(comment) == "--\n"
 
 
-def test_was_parsed_inline(
+def test_is_inline(
     short_comment: Comment, standalone_comment: Comment, multiline_comment: Comment
 ) -> None:
-    assert short_comment.was_parsed_inline
-    assert not (standalone_comment.was_parsed_inline)
-    assert not (multiline_comment.was_parsed_inline)
+    assert short_comment.is_inline
+    assert not (standalone_comment.is_inline)
+    assert not (multiline_comment.is_inline)
 
 
 def test_no_wrap_long_jinja_comments() -> None:

@@ -87,18 +87,16 @@ class Line:
         prefix = INDENT * self.depth[0]
         return prefix
 
-    def has_inline_comment(self, max_length: int) -> bool:
+    @property
+    def has_inline_comment(self) -> bool:
         """
         Returns true if the line has an attached comment that was parsed
-        as an inline comment, and if the line and comment are short
-        enough to be rendered inline. Returns false otherwise
+        as an inline comment.
         """
-        content = str(self).rstrip()
-        if self.comments and self.comments[-1].was_parsed_inline:
-            inline_render = self.comments[-1].render_inline()
-            if len(content) + len(inline_render) <= max_length:
-                return True
-        return False
+        if self.comments and self.comments[-1].is_inline:
+            return True
+        else:
+            return False
 
     def render_with_comments(self, max_length: int) -> str:
         """
@@ -117,18 +115,11 @@ class Line:
                 # that below. Inline comments must be the last comment
                 pass
 
-        if self.has_inline_comment(max_length=max_length):
+        if self.has_inline_comment:
             rendered_lines.append(f"{content}{self.comments[-1].render_inline()}")
-        elif self.comments and self.comments[-1].was_parsed_inline:
-            # comment was parsed inline but needs to be written standalone
-            rendered_lines.append(
-                self.comments[-1].render_standalone(
-                    max_length=max_length, prefix=self.prefix
-                )
-            )
-            rendered_lines.append(f"{self}")
         else:
             rendered_lines.append(f"{self}")
+
         return "".join(rendered_lines)
 
     @classmethod
