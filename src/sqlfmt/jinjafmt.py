@@ -370,7 +370,7 @@ class JinjaFormatter:
                                 for new_line, _ in [
                                     splitter.split_at_index(line, 0, i, line.comments),
                                     splitter.split_at_index(
-                                        line, i, -1, [], is_tail=True
+                                        line, i, -1, [], no_tail=True
                                     ),
                                 ]
                             ]

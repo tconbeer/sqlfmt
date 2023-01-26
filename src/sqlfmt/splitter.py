@@ -33,7 +33,7 @@ class LineSplitter:
                     new_lines.append(line)
                 else:
                     new_line, comments = self.split_at_index(
-                        line, head, i, comments, is_tail=True
+                        line, head, i, comments, no_tail=True
                     )
                     assert (
                         not comments
@@ -55,7 +55,7 @@ class LineSplitter:
 
             always_split_after, never_split_after = self.maybe_split_after(node)
 
-        new_line, comments = self.split_at_index(line, head, -1, comments, is_tail=True)
+        new_line, comments = self.split_at_index(line, head, -1, comments, no_tail=True)
         assert not comments, "Comments must be empty here or we'll drop them"
         new_lines.append(new_line)
         return new_lines
@@ -130,7 +130,7 @@ class LineSplitter:
         head: int,
         index: int,
         comments: List[Comment],
-        is_tail: bool = False,
+        no_tail: bool = False,
     ) -> Tuple[Line, List[Comment]]:
         """
         Return a new line comprised of the nodes line[head:index], plus a newline node.
@@ -147,7 +147,7 @@ class LineSplitter:
 
         assert new_nodes, "Cannot split a line without nodes!"
 
-        if is_tail:
+        if no_tail:
             head_comments, tail_comments = comments, []
         elif comments:
             if new_nodes[0].is_comma:
