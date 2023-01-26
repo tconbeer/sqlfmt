@@ -74,17 +74,26 @@ class LineMerger:
             if line.comments:
                 if has_inline_comment_above:
                     raise CannotMergeException(
-                        "Can't merge lines with inline comments and " "other comments"
+                        "Can't merge lines with inline comments and other comments"
                     )
                 elif len(line.comments) == 1 and line.has_inline_comment(
                     self.mode.line_length
                 ):
+                    # this is a comment that can be rendered inline,
+                    # so it'll probably block merging unless the
+                    # next line is just a comma
                     has_inline_comment_above = True
                 elif (
                     nodes
                     and len(line.comments) == 1
                     and line.comments[-1].was_parsed_inline
                 ):
+                    # this is a comment that was parsed inline,
+                    # but is too long to fit inline, so it'll
+                    # wrap above. It should be treated like
+                    # a standalone comment and block merging unless this is
+                    # the last line to be merged, in which case
+                    # we'll allow it
                     has_inline_comment_above = True
                 elif nodes:
                     raise CannotMergeException(
@@ -94,10 +103,11 @@ class LineMerger:
             # make an exception for inline comments followed by
             # a lonely comma (e.g., leading commas with inline comments)
             elif has_inline_comment_above:
-                if not line.is_standalone_comma:
+                if not (line.is_standalone_comma or line.is_blank_line):
                     raise CannotMergeException(
                         "Can't merge lines with inline comments unless "
-                        "the following line is a single standalone comma"
+                        "the following line is a single standalone comma "
+                        "or a blank line"
                     )
 
             if has_multiline_jinja and not (

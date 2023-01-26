@@ -34,6 +34,7 @@ where
     a
     + b
     > fooooooooobarrrrrrrr -- this is a comment that is too long to be inline here. foobar
+
 )))))__SQLFMT_OUTPUT__(((((
 with  -- with
     tbl  -- tbl
