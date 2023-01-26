@@ -16,12 +16,24 @@ with -- with
         select
             1
     )
+    ,
+    third
+    as (
+        select
+            2
+    ) -- third
 select
     *
 from
     tbl -- tbl
     ,
     second
+    ,
+    third
+where
+    a
+    + b
+    > fooooooooobarrrrrrrr -- this is a comment that is too long to be inline here. foobar
 )))))__SQLFMT_OUTPUT__(((((
 with  -- with
     tbl  -- tbl
@@ -33,8 +45,12 @@ with  -- with
             4  -- four inline
     ),  -- close
     second  -- second
-    as (select 1)
+    as (select 1),
+    third as (select 2)  -- third
 select *
 from
     tbl,  -- tbl
-    second
+    second,
+    third
+-- this is a comment that is too long to be inline here. foobar
+where a + b > fooooooooobarrrrrrrr

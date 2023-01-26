@@ -76,7 +76,15 @@ class LineMerger:
                     raise CannotMergeException(
                         "Can't merge lines with inline comments and " "other comments"
                     )
-                elif line.has_inline_comment(self.mode.line_length):
+                elif len(line.comments) == 1 and line.has_inline_comment(
+                    self.mode.line_length
+                ):
+                    has_inline_comment_above = True
+                elif (
+                    nodes
+                    and len(line.comments) == 1
+                    and line.comments[-1].was_parsed_inline
+                ):
                     has_inline_comment_above = True
                 elif nodes:
                     raise CannotMergeException(
