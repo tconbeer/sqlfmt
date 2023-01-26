@@ -34,6 +34,11 @@ where
     a
     + b
     > fooooooooobarrrrrrrr -- this is a comment that is too long to be inline here. foobar
+    and
+    -- some other condition
+    c
+    + d
+    < e
 
 )))))__SQLFMT_OUTPUT__(((((
 with  -- with
@@ -53,4 +58,7 @@ from
     tbl,  -- tbl
     second,
     third
-where a + b > fooooooooobarrrrrrrr  -- this is a comment that is too long to be inline here. foobar
+where
+    a + b > fooooooooobarrrrrrrr  -- this is a comment that is too long to be inline here. foobar
+    -- some other condition
+    and c + d < e

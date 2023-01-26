@@ -81,6 +81,11 @@ class LineMerger:
                     # so it'll probably block merging unless the
                     # next line is just a comma
                     has_inline_comment_above = True
+                elif len(nodes) == 1 and nodes[0].is_operator:
+                    # if source has standalone operators, we can merge
+                    # the operator into the contents, even if there is
+                    # a comment in the way
+                    pass
                 elif nodes:
                     raise CannotMergeException(
                         "Can't merge lines with standalone comments unless the "
