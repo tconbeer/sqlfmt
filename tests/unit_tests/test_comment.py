@@ -104,6 +104,13 @@ def test_render_standalone(short_comment: Comment, prefix: str) -> None:
     assert lines[1] == prefix + "-- comment\n"
 
 
+def test_render_standalone_wrap_strip_whitespace() -> None:
+    txt = "-- foo" + " " * 100 + "bar"
+    t = Token(type=TokenType.COMMENT, prefix="", token=txt, spos=0, epos=len(txt))
+    comment = Comment(t, is_standalone=True)
+    assert comment.render_standalone(max_length=88, prefix="") == "-- foo\n-- bar\n"
+
+
 def test_render_multiline(multiline_comment: Comment) -> None:
     assert multiline_comment.render_standalone(max_length=88, prefix="") == str(
         multiline_comment

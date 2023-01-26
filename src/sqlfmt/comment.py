@@ -95,7 +95,7 @@ class Comment:
                     available_length = max_length - len(prefix) - len(marker) - 2
                     line_gen = self._split_before(comment_text, available_length)
                     return "".join(
-                        [prefix + marker + " " + txt + "\n" for txt in line_gen]
+                        [prefix + marker + " " + txt.strip() + "\n" for txt in line_gen]
                     )
                 else:  # block-style or jinja comment. Don't wrap long lines for now
                     return prefix + str(self)
