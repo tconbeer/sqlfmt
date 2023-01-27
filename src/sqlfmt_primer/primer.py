@@ -48,7 +48,7 @@ def get_projects() -> List[SQLProject]:
         SQLProject(
             name="http_archive",
             git_url="https://github.com/tconbeer/http_archive_almanac.git",
-            git_ref="edc817f",  # sqlfmt 124890d
+            git_ref="414b535",  # sqlfmt faaf71b
             expected_changed=0,
             expected_unchanged=1729,
             expected_errored=0,
