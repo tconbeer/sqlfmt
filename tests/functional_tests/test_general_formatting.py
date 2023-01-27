@@ -40,6 +40,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/124_bq_compound_types.sql",
         "unformatted/125_numeric_constants.sql",
         "unformatted/126_blank_lines.sql",
+        "unformatted/127_more_comments.sql",
         "unformatted/200_base_model.sql",
         "unformatted/201_basic_snapshot.sql",
         "unformatted/202_unpivot_macro.sql",

@@ -3,7 +3,6 @@ from typing import List
 import pytest
 
 from sqlfmt.comment import Comment
-from sqlfmt.exception import InlineCommentException
 from sqlfmt.token import Token, TokenType
 
 
@@ -43,6 +42,15 @@ def standalone_comment() -> Comment:
     return comment
 
 
+@pytest.fixture
+def multiline_comment() -> Comment:
+    t = Token(
+        type=TokenType.COMMENT, prefix=" ", token="/*\ncomment\n*/", spos=0, epos=15
+    )
+    comment = Comment(t, is_standalone=True)
+    return comment
+
+
 def test_get_marker(
     short_comment: Comment, short_mysql_comment: Comment, nospace_comment: Comment
 ) -> None:
@@ -75,15 +83,8 @@ def test_render_inline(
     short_comment: Comment, nospace_comment: Comment, standalone_comment: Comment
 ) -> None:
     expected = "  -- short comment\n"
-    assert short_comment.render_inline(max_length=88, content_length=20) == expected
-    assert nospace_comment.render_inline(max_length=88, content_length=20) == expected
-    with pytest.raises(InlineCommentException):
-        # can't inline a standalone comment
-        assert standalone_comment.render_inline(max_length=88, content_length=20)
-
-    with pytest.raises(InlineCommentException):
-        # can't inline if the content is too long
-        assert short_comment.render_inline(max_length=88, content_length=80)
+    assert short_comment.render_inline() == expected
+    assert nospace_comment.render_inline() == expected
 
 
 @pytest.mark.parametrize(
@@ -101,6 +102,20 @@ def test_render_standalone(short_comment: Comment, prefix: str) -> None:
     lines = wrapped_comment.splitlines(keepends=True)
     assert lines[0] == prefix + "-- short\n"
     assert lines[1] == prefix + "-- comment\n"
+
+
+def test_render_standalone_wrap_strip_whitespace() -> None:
+    txt = "-- foo" + " " * 100 + "bar"
+    t = Token(type=TokenType.COMMENT, prefix="", token=txt, spos=0, epos=len(txt))
+    comment = Comment(t, is_standalone=True)
+    assert comment.render_standalone(max_length=88, prefix="") == "-- foo\n-- bar\n"
+
+
+def test_render_multiline(multiline_comment: Comment) -> None:
+    assert multiline_comment.render_standalone(max_length=88, prefix="") == str(
+        multiline_comment
+    )
+    assert str(multiline_comment) == "/*\ncomment\n*/\n"
 
 
 @pytest.mark.parametrize(
@@ -122,3 +137,26 @@ def test_empty_comment() -> None:
     t = Token(type=TokenType.COMMENT, prefix=" ", token="-- ", spos=0, epos=3)
     comment = Comment(t, is_standalone=True)
     assert str(comment) == "--\n"
+
+
+def test_is_inline(
+    short_comment: Comment, standalone_comment: Comment, multiline_comment: Comment
+) -> None:
+    assert short_comment.is_inline
+    assert not (standalone_comment.is_inline)
+    assert not (multiline_comment.is_inline)
+
+
+def test_no_wrap_long_jinja_comments() -> None:
+    comment_str = "{# " + ("comment " * 20) + "#}"
+    t = Token(
+        type=TokenType.COMMENT,
+        prefix=" ",
+        token=comment_str,
+        spos=0,
+        epos=len(comment_str),
+    )
+    comment = Comment(t, is_standalone=True)
+    rendered = comment.render_standalone(88, "")
+
+    assert rendered == comment_str + "\n"

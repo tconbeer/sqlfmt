@@ -32,7 +32,13 @@ class LineSplitter:
                 if head == 0:
                     new_lines.append(line)
                 else:
-                    new_lines.append(self.split_at_index(line, head, i, comments))
+                    new_line, comments = self.split_at_index(
+                        line, head, i, comments, no_tail=True
+                    )
+                    assert (
+                        not comments
+                    ), "Comments must be empty here or we'll drop them"
+                    new_lines.append(new_line)
                 return new_lines
             elif (
                 i > head
@@ -40,9 +46,8 @@ class LineSplitter:
                 and not node.formatting_disabled
                 and (always_split_after or self.maybe_split_before(node))
             ):
-                new_line = self.split_at_index(line, head, i, comments)
+                new_line, comments = self.split_at_index(line, head, i, comments)
                 new_lines.append(new_line)
-                comments = []  # only first split gets original comments
                 head = i
                 # node now follows a new newline node, so we need to update
                 # its previous node (this can impact its depth)
@@ -50,7 +55,9 @@ class LineSplitter:
 
             always_split_after, never_split_after = self.maybe_split_after(node)
 
-        new_lines.append(self.split_at_index(line, head, -1, comments))
+        new_line, comments = self.split_at_index(line, head, -1, comments, no_tail=True)
+        assert not comments, "Comments must be empty here or we'll drop them"
+        new_lines.append(new_line)
         return new_lines
 
     def maybe_split_before(self, node: Node) -> bool:
@@ -118,10 +125,19 @@ class LineSplitter:
             return False, False
 
     def split_at_index(
-        self, line: Line, head: int, index: int, comments: List[Comment]
-    ) -> Line:
+        self,
+        line: Line,
+        head: int,
+        index: int,
+        comments: List[Comment],
+        no_tail: bool = False,
+    ) -> Tuple[Line, List[Comment]]:
         """
-        Return a new line comprised of the nodes line[head:index], plus a newline node
+        Return a new line comprised of the nodes line[head:index], plus a newline node.
+
+        Also return a list of comments that need to be included in the tail
+        of the split line. This includes inline comments and if the head
+        is just a comma, all comments.
         """
         if index == -1:
             new_nodes = line.nodes[head:]
@@ -129,12 +145,32 @@ class LineSplitter:
             assert index > head, "Cannot split at start of line!"
             new_nodes = line.nodes[head:index]
 
+        assert new_nodes, "Cannot split a line without nodes!"
+
+        if no_tail:
+            head_comments, tail_comments = comments, []
+
+        elif comments:
+            if new_nodes[0].is_comma:
+                head_comments, tail_comments = [], comments
+            elif index == len(line.nodes) - 2 and line.nodes[index].is_operator:
+                # the only thing after the split is an operator + \n, so keep the
+                # comments with the stuff before the operator
+                head_comments, tail_comments = comments, []
+            elif comments[-1].is_inline:
+                head_comments, tail_comments = comments[:-1], [comments[-1]]
+            else:
+                head_comments, tail_comments = comments, []
+
+        else:  # no comments
+            head_comments, tail_comments = [], []
+
         new_line = Line.from_nodes(
             previous_node=new_nodes[0].previous_node,
             nodes=new_nodes,
-            comments=comments,
+            comments=head_comments,
         )
         if not new_line.nodes[-1].is_newline:
             self.node_manager.append_newline(new_line)
 
-        return new_line
+        return new_line, tail_comments

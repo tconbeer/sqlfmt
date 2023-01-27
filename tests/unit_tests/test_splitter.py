@@ -78,13 +78,13 @@ def test_simple_comment_split(
             "-- not distinct, just an ordinary select here,"
             " no big deal at all, it's okay really\n"
         ),
-        "-- here is a long comment to be wrapped above this line\n",
         "",
+        "-- here is a long comment to be wrapped above this line\n",
         "-- a short comment\n",
+        "-- standalone for third\n",
         "-- here is another long comment to be wrapped but not indented\n",
         "",
         "-- another comment that is a little bit too long to stay here\n",
-        "",
         "-- this should stay\n",
         "",
         "-- one last comment\n",
@@ -407,3 +407,85 @@ def test_maybe_split_no_terminating_newline(
     ]
 
     assert actual_result == expected_result
+
+
+def test_split_leading_comma_comment(
+    splitter: LineSplitter, default_analyzer: Analyzer
+) -> None:
+    source_string = """
+    select 1
+        -- two
+        , 2  -- two inline
+        -- three
+        , 3  -- three inline
+    """.strip()
+
+    raw_query = default_analyzer.parse_query(source_string)
+    assert len(raw_query.lines) == 3
+
+    split_lines: List[Line] = []
+    for raw_line in raw_query.lines:
+        split_lines.extend(splitter.maybe_split(raw_line))
+
+    actual_result = [line.render_with_comments(88) for line in split_lines]
+    expected_result = [
+        "select\n",
+        "    1\n",
+        "    ,\n",
+        "    -- two\n" "    2  -- two inline\n",
+        "    ,\n",
+        "    -- three\n" "    3  -- three inline\n",
+    ]
+    assert actual_result == expected_result
+
+
+def test_split_trailing_operator_comment(
+    splitter: LineSplitter, default_analyzer: Analyzer
+) -> None:
+    source_string = """
+    select
+        1 + -- one
+        2 + -- two
+        3 + 4 -- four
+    """.strip()
+
+    raw_query = default_analyzer.parse_query(source_string)
+    assert len(raw_query.lines) == 4
+
+    split_lines: List[Line] = []
+    for raw_line in raw_query.lines:
+        split_lines.extend(splitter.maybe_split(raw_line))
+
+    actual_result = [line.render_with_comments(88) for line in split_lines]
+    expected_result = [
+        "select\n",
+        "    1  -- one\n",
+        "    +\n",
+        "    2  -- two\n",
+        "    +\n",
+        "    3\n",
+        "    + 4  -- four\n",
+    ]
+    assert actual_result == expected_result
+
+
+def test_split_formatting_disabled(
+    splitter: LineSplitter, default_analyzer: Analyzer
+) -> None:
+    source_string = """
+    -- fmt: off
+    select 1, 2, 3
+    """.strip()
+
+    raw_query = default_analyzer.parse_query(source_string)
+    assert len(raw_query.lines) == 2
+    select_line = raw_query.lines[1]
+    assert select_line.formatting_disabled
+    assert select_line.nodes[0].is_unterm_keyword
+    assert select_line.nodes[0].formatting_disabled
+
+    split_lines: List[Line] = []
+    for raw_line in raw_query.lines:
+        split_lines.extend(splitter.maybe_split(raw_line))
+
+    assert split_lines == raw_query.lines

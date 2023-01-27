@@ -74,6 +74,7 @@ def test_bare_line(bare_line: Line) -> None:
     assert not bare_line.is_blank_line
     assert not bare_line.is_too_long(88)
     assert not bare_line.opens_new_bracket
+    assert not bare_line.contains_jinja
     assert bare_line.open_brackets == []
     assert bare_line.open_jinja_blocks == []
 
@@ -119,6 +120,7 @@ def test_simple_line(
     assert not simple_line.is_too_long(88)
     assert not simple_line.opens_new_bracket
     assert not simple_line.previous_line_has_open_jinja_blocks_not_keywords
+    assert not simple_line.contains_jinja
 
     assert simple_line.nodes[5].token.type is TokenType.STAR
     assert not simple_line.nodes[5].is_multiplication_star
@@ -132,6 +134,7 @@ def test_bare_append_newline(bare_line: Line, node_manager: NodeManager) -> None
     node_manager.append_newline(bare_line)
     assert bare_line.nodes
     assert bare_line.is_blank_line
+    assert str(bare_line) == "\n"
     new_last_node = bare_line.nodes[-1]
     assert new_last_node.token.type is TokenType.NEWLINE
     assert (new_last_node.token.spos, new_last_node.token.epos) == (0, 0)
@@ -210,11 +213,6 @@ def test_comment_rendering(
     )
 
     inline_comment = Comment(token=comment_token, is_standalone=False)
-    node_manager.append_newline(bare_line)
-    bare_line.comments = [inline_comment]
-    expected_bare_render = normalized_comment + "\n"
-    assert bare_line.render_with_comments(88) == expected_bare_render
-
     simple_line.comments = [inline_comment]
     expected_inline_render = (
         str(simple_line).rstrip() + "  " + normalized_comment + "\n"
@@ -228,18 +226,6 @@ def test_comment_rendering(
     )
     assert simple_line.render_with_comments(88) == expected_standalone_render
 
-    simple_line.comments = [standalone_comment, inline_comment]
-    expected_multiple_render = (
-        simple_line.prefix
-        + normalized_comment
-        + "\n"
-        + simple_line.prefix
-        + normalized_comment
-        + "\n"
-        + str(simple_line)
-    )
-    assert simple_line.render_with_comments(88) == expected_multiple_render
-
 
 def test_long_comment_wrapping(simple_line: Line) -> None:
     last_node = simple_line.nodes[-1]
@@ -250,7 +236,7 @@ def test_long_comment_wrapping(simple_line: Line) -> None:
         spos=last_node.token.epos,
         epos=last_node.token.epos + 13,
     )
-    comment = Comment(token=comment_token, is_standalone=False)
+    comment = Comment(token=comment_token, is_standalone=True)
     simple_line.comments = [comment]
     expected_render = (
         "-- asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf "
@@ -280,9 +266,9 @@ def test_long_comments_that_are_not_wrapped(
         spos=last_node.token.epos,
         epos=last_node.token.epos + 13,
     )
-    comment = Comment(token=comment_token, is_standalone=False)
+    comment = Comment(token=comment_token, is_standalone=True)
     simple_line.comments = [comment]
-    expected_render = raw_comment + "\n" "with abc as (select * from my_table)\n"
+    expected_render = raw_comment + "\nwith abc as (select * from my_table)\n"
     assert simple_line.render_with_comments(88) == expected_render
 
 
@@ -468,3 +454,25 @@ def test_closes_simple_jinja_block_from_previous_line(
     expected = [False] * (len(q.lines) - 1) + [True]
     actual = [line.closes_simple_jinja_block_from_previous_line for line in q.lines]
     assert actual == expected
+
+
+def test_formatting_disabled_to_str(
+    default_analyzer: Analyzer,
+) -> None:
+    source_string = "SELECT      FOO   ,   BAR"
+    q = default_analyzer.parse_query(source_string=source_string)
+    assert len(q.lines) == 1
+    q.lines[0].formatting_disabled = [q.nodes[0].token]
+
+    assert str(q.lines[0]) == source_string + "\n"
+
+
+def test_line_is_too_long(
+    default_analyzer: Analyzer,
+) -> None:
+    max_length = 88
+    source_string = "a" * max_length + "\n" + "b" * (max_length + 1) + "\n"
+    q = default_analyzer.parse_query(source_string=source_string)
+    assert len(q.lines) == 2
+    assert not q.lines[0].is_too_long(max_length=max_length)
+    assert q.lines[1].is_too_long(max_length=max_length)

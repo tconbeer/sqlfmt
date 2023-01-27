@@ -64,15 +64,6 @@ class SqlfmtControlFlowException(Exception):
     pass
 
 
-class InlineCommentException(SqlfmtControlFlowException):
-    """
-    Raised by the Line class if we try to render a comment
-    inline that is too long
-    """
-
-    pass
-
-
 class StopRulesetLexing(SqlfmtControlFlowException):
     """
     Raised by the Analyzer or one of its actions to indicate

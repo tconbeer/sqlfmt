@@ -67,7 +67,41 @@ class LineMerger:
         final_newline: Optional[Node] = None
         allow_multiline_jinja = True
         has_multiline_jinja = False
+        has_inline_comment_above = False
         for line in lines:
+            # only merge lines with comments if it's a standalone comment
+            # above the first line or an inline comment after the last
+            # line
+            if line.comments:
+                if has_inline_comment_above:
+                    raise CannotMergeException(
+                        "Can't merge lines with inline comments and other comments"
+                    )
+                elif len(line.comments) == 1 and line.has_inline_comment:
+                    # this is a comment that must be rendered inline,
+                    # so it'll probably block merging unless the
+                    # next line is just a comma
+                    has_inline_comment_above = True
+                elif len(nodes) == 1 and nodes[0].is_operator:
+                    # if source has standalone operators, we can merge
+                    # the operator into the contents, even if there is
+                    # a comment in the way
+                    pass
+                elif nodes:
+                    raise CannotMergeException(
+                        "Can't merge lines with standalone comments unless the "
+                        "comments are above the first line"
+                    )
+            # make an exception for inline comments followed by
+            # a lonely comma (e.g., leading commas with inline comments)
+            elif has_inline_comment_above:
+                if not (line.is_standalone_comma or line.is_blank_line):
+                    raise CannotMergeException(
+                        "Can't merge lines with inline comments unless "
+                        "the following line is a single standalone comma "
+                        "or a blank line"
+                    )
+
             if has_multiline_jinja and not (
                 line.starts_with_operator or line.starts_with_comma
             ):

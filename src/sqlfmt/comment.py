@@ -2,7 +2,6 @@ import re
 from dataclasses import dataclass
 from typing import ClassVar, Iterator, Tuple
 
-from sqlfmt.exception import InlineCommentException
 from sqlfmt.token import Token
 
 
@@ -68,20 +67,16 @@ class Comment:
         """
         return "\n" in self.token.token
 
-    def render_inline(self, max_length: int, content_length: int) -> str:
+    @property
+    def is_inline(self) -> bool:
+        return not self.is_standalone and not self.is_multiline
+
+    def render_inline(self) -> str:
         """
-        For a Comment, returns the string for properly formatting this Comment
-        inline, after content_length characters of non-comment Nodes
+        Renders a comment as an inline comment, assuming it'll fit.
         """
-        if self.is_standalone:
-            raise InlineCommentException("Can't inline standalone comment")
-        else:
-            inline_prefix = " " * 2
-            rendered = inline_prefix + str(self)
-            if content_length + len(rendered) > max_length:
-                raise InlineCommentException("Comment too long to be inlined")
-            else:
-                return inline_prefix + str(self)
+        inline_prefix = " " * 2
+        return f"{inline_prefix}{self}"
 
     def render_standalone(self, max_length: int, prefix: str) -> str:
         """
@@ -100,7 +95,7 @@ class Comment:
                     available_length = max_length - len(prefix) - len(marker) - 2
                     line_gen = self._split_before(comment_text, available_length)
                     return "".join(
-                        [prefix + marker + " " + txt + "\n" for txt in line_gen]
+                        [prefix + marker + " " + txt.strip() + "\n" for txt in line_gen]
                     )
                 else:  # block-style or jinja comment. Don't wrap long lines for now
                     return prefix + str(self)
