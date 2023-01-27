@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.16.0] - 2023-01-27
+
 ### Formatting Changes + Bug Fixes
 
 -   sqlfmt no longer merges lines that contain comments, unless the position of those comments can be preserved ([#348](https://github.com/tconbeer/sqlfmt/issues/348) - thank you, [@rileyschack](https://github.com/rileyschack) and [@IanEdington](https://github.com/IanEdington)!). Accordingly, comments that are inline will stay inline, even if they are too long to fit.
@@ -330,7 +332,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.15.2...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.16.0...HEAD
+
+[0.16.0]: https://github.com/tconbeer/sqlfmt/compare/0.15.2...0.16.0
 
 [0.15.2]: https://github.com/tconbeer/sqlfmt/compare/0.15.1...0.15.2
 
