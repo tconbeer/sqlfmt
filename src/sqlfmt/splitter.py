@@ -149,14 +149,20 @@ class LineSplitter:
 
         if no_tail:
             head_comments, tail_comments = comments, []
+
         elif comments:
             if new_nodes[0].is_comma:
                 head_comments, tail_comments = [], comments
-            elif not comments[-1].is_standalone:
+            elif index == len(line.nodes) - 2 and line.nodes[index].is_operator:
+                # the only thing after the split is an operator + \n, so keep the
+                # comments with the stuff before the operator
+                head_comments, tail_comments = comments, []
+            elif comments[-1].is_inline:
                 head_comments, tail_comments = comments[:-1], [comments[-1]]
             else:
                 head_comments, tail_comments = comments, []
-        else:
+
+        else:  # no comments
             head_comments, tail_comments = [], []
 
         new_line = Line.from_nodes(

@@ -63,8 +63,8 @@ select  -- not distinct
     another_thing_entirely,
     yet_another_field
 -- another standalone comment
-from a_really_long_table
-;  -- an inline comment on a semicolon
+from a_really_long_table  -- an inline comment on a semicolon
+;
 
 -- sometimes we like really long comments that wrap to many lines. And may even be a
 -- paragraph! This should wrap to a few lines (we can take that liberty because it's a

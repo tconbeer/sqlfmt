@@ -50,8 +50,9 @@ class LineMerger:
         except CannotMergeException:
             return lines
 
+    @classmethod
     def _extract_components(
-        self, lines: Iterable[Line]
+        cls, lines: Iterable[Line]
     ) -> Tuple[List[Node], List[Comment]]:
         """
         Given a list of lines, return 2 components:
@@ -109,7 +110,7 @@ class LineMerger:
                 )
             # skip over newline nodes
             content_nodes = [
-                self._raise_unmergeable(node, allow_multiline_jinja)
+                cls._raise_unmergeable(node, allow_multiline_jinja)
                 for node in line.nodes
                 if not node.is_newline
             ]

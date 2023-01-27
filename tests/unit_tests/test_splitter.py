@@ -439,6 +439,36 @@ def test_split_leading_comma_comment(
     assert actual_result == expected_result
 
 
+def test_split_trailing_operator_comment(
+    splitter: LineSplitter, default_analyzer: Analyzer
+) -> None:
+    source_string = """
+    select
+        1 + -- one
+        2 + -- two
+        3 + 4 -- four
+    """.strip()
+
+    raw_query = default_analyzer.parse_query(source_string)
+    assert len(raw_query.lines) == 4
+
+    split_lines: List[Line] = []
+    for raw_line in raw_query.lines:
+        split_lines.extend(splitter.maybe_split(raw_line))
+
+    actual_result = [line.render_with_comments(88) for line in split_lines]
+    expected_result = [
+        "select\n",
+        "    1  -- one\n",
+        "    +\n",
+        "    2  -- two\n",
+        "    +\n",
+        "    3\n",
+        "    + 4  -- four\n",
+    ]
+    assert actual_result == expected_result
+
+
 def test_split_formatting_disabled(
     splitter: LineSplitter, default_analyzer: Analyzer
 ) -> None:
