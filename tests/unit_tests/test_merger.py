@@ -16,7 +16,6 @@ def merger(default_mode: Mode) -> LineMerger:
 
 
 def test_create_merged_line(merger: LineMerger) -> None:
-
     source_string = """
     select
         able,
@@ -53,7 +52,6 @@ def test_create_merged_line(merger: LineMerger) -> None:
 
 
 def test_create_merged_line_comments(merger: LineMerger) -> None:
-
     source_string = """
     select
         able,

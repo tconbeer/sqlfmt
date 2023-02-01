@@ -48,7 +48,6 @@ def delete_results_dir() -> None:
 
 
 def check_formatting(expected: str, actual: str, ctx: str = "") -> None:
-
     try:
         assert (
             expected == actual

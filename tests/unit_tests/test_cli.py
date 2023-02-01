@@ -36,7 +36,6 @@ def run_cli_command(commands: List[str]) -> subprocess.CompletedProcess:
 def test_click_cli_runner_is_equivalent_to_py_subprocess(
     sqlfmt_runner: CliRunner, cmd: str
 ) -> None:
-
     builtin_results = run_cli_command([cmd])
     click_results = sqlfmt_runner.invoke(sqlfmt_main)
 

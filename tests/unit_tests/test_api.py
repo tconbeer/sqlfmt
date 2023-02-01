@@ -267,7 +267,6 @@ def test_run_on_nothing(all_output_modes: Mode) -> None:
 def test_run_single_process_does_not_use_multiprocessing(
     unformatted_dir: Path, single_process_mode: Mode, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-
     # confirm that we do not call _multiprocess_map; if we do,
     # this will raise
     files = get_matching_paths([unformatted_dir], single_process_mode)

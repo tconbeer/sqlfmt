@@ -9,7 +9,6 @@ from tests.util import read_test_data
 
 
 def test_simple_query_parsing(all_output_modes: Mode) -> None:
-
     source_string, _ = read_test_data(
         "unit_tests/test_analyzer/test_simple_query_parsing.sql"
     )
@@ -94,7 +93,6 @@ def test_parsing_error(default_analyzer: Analyzer) -> None:
 
 
 def test_case_statement_parsing(default_analyzer: Analyzer) -> None:
-
     source_string, _ = read_test_data(
         "unit_tests/test_analyzer/test_case_statement_parsing.sql"
     )

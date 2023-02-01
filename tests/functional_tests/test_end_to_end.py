@@ -32,7 +32,6 @@ from sqlfmt.cli import sqlfmt as sqlfmt_main
 def test_end_to_end_preformatted(
     sqlfmt_runner: CliRunner, preformatted_dir: Path, options: str
 ) -> None:
-
     # CliRunner removes backslashes from strings passed in as args,
     # which makes this test fail when running on windows. We need
     # to format the path as a posix path (with forward slashes)
@@ -75,7 +74,6 @@ def test_end_to_end_preformatted(
 def test_end_to_end_check_unformatted(
     sqlfmt_runner: CliRunner, unformatted_dir: Path, options: str
 ) -> None:
-
     # CliRunner removes backslashes from strings passed in as args,
     # which makes this test fail when running on windows. We need
     # to format the path as a posix path (with forward slashes)
