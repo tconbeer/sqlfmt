@@ -144,7 +144,6 @@ def sqlfmt_primer(
 
     with TemporaryDirectory() as working_dir:
         for project in projects:
-
             target_dir = get_project_source_tree(project, reset_cache, working_dir)
 
             click.echo(f"Running sqlfmt on {project.name}", err=True)

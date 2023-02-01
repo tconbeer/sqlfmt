@@ -24,7 +24,6 @@ def test_color_mode(
     result: bool,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-
     if env_no_color:
         monkeypatch.setenv("NO_COLOR", "1")
     else:

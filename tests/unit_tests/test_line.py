@@ -162,7 +162,6 @@ def test_bare_with_previous_append_newline(
 
 
 def test_simple_append_newline(simple_line: Line, node_manager: NodeManager) -> None:
-
     # this line already ends with a newline
     last_node = simple_line.nodes[-1]
     assert last_node.token.type is TokenType.NEWLINE
@@ -198,7 +197,6 @@ def test_comment_rendering(
     normalized_comment: str,
     node_manager: NodeManager,
 ) -> None:
-
     assert simple_line.render_with_comments(88) == str(simple_line)
     assert bare_line.render_with_comments(88) == str(bare_line)
 
@@ -275,7 +273,6 @@ def test_long_comments_that_are_not_wrapped(
 def test_is_standalone_jinja_statement(
     bare_line: Line, simple_line: Line, node_manager: NodeManager
 ) -> None:
-
     assert not bare_line.is_standalone_jinja_statement
     assert not simple_line.is_standalone_jinja_statement
 
