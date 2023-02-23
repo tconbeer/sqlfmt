@@ -193,9 +193,9 @@ def test_preformatted_utf_8_sig_encoding(
     assert results.exit_code == 0
 
 
-def test_preformatted_none_encoding(
+def test_preformatted_inherit_encoding(
     sqlfmt_runner: CliRunner, preformatted_dir: Path
 ) -> None:
-    args = f"{preformatted_dir.as_posix()} --check --encoding none"
+    args = f"{preformatted_dir.as_posix()} --check --encoding inherit"
     results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
     assert results.exit_code == 0

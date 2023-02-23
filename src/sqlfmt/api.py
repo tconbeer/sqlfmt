@@ -267,7 +267,7 @@ def _read_path_or_stdin(path: Path, mode: Mode) -> Tuple[str, str, str]:
     """
     encoding = (
         locale.getpreferredencoding()
-        if mode.encoding.lower() == "none"
+        if mode.encoding.lower() == "inherit"
         else mode.encoding
     ).lower()
     bom_map: Dict[str, List[bytes]] = {
@@ -305,7 +305,6 @@ def _read_path_or_stdin(path: Path, mode: Mode) -> Tuple[str, str, str]:
                 "use the system default encoding. We suggest always using "
                 "utf-8 for all files."
             )
-
     return source, encoding, detected_bom
 
 

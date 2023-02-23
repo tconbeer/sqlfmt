@@ -44,8 +44,8 @@ from sqlfmt.mode import Mode
     envvar="SQLFMT_ENCODING",
     help=(
         "The encoding to use when reading and writing .sql files. Defaults "
-        "to utf-8. Set to 'none' to read the system default encoding. utf-8 "
-        "encoding will detect and preserve the BOM if one is present."
+        "to utf-8. Set to 'inherit' to read the system default encoding. utf "
+        "encodings will detect and preserve the BOM if one is present."
     ),
 )
 @click.option(
