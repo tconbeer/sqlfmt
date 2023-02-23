@@ -40,6 +40,15 @@ from sqlfmt.mode import Mode
     ),
 )
 @click.option(
+    "--encoding",
+    envvar="SQLFMT_ENCODING",
+    help=(
+        "The encoding to use when reading and writing .sql files. Defaults "
+        "to utf-8. Set to 'none' to read the system default encoding. utf-8 "
+        "encoding will detect and preserve the BOM if one is present."
+    ),
+)
+@click.option(
     "--fast/--safe",
     envvar="SQLFMT_FAST",
     default=False,

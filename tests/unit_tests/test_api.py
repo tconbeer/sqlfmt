@@ -1,3 +1,4 @@
+import codecs
 import io
 import os
 from pathlib import Path
@@ -9,13 +10,19 @@ from tqdm import tqdm
 from sqlfmt.api import (
     _format_many,
     _perform_safety_check,
+    _read_path_or_stdin,
     _update_source_files,
     format_string,
     get_matching_paths,
     initialize_progress_bar,
     run,
 )
-from sqlfmt.exception import SqlfmtBracketError, SqlfmtEquivalenceError, SqlfmtError
+from sqlfmt.exception import (
+    SqlfmtBracketError,
+    SqlfmtEquivalenceError,
+    SqlfmtError,
+    SqlfmtUnicodeError,
+)
 from sqlfmt.mode import Mode
 
 
@@ -348,3 +355,50 @@ def test_perform_safety_check(default_mode: Mode) -> None:
     # does not raise
     _perform_safety_check(analyzer, raw_query, "select\n    1, 2, 3\n")
     _perform_safety_check(analyzer, raw_query, "select\n-- new comment\n    1, 2, 3\n")
+
+
+@pytest.mark.parametrize(
+    "encoding,bom",
+    [
+        ("utf-8", b""),
+        ("utf-8", codecs.BOM_UTF8),
+        ("utf-8-sig", b""),  # encoding with utf-8-sig will add a bom
+        ("utf-16", b""),
+        ("utf-16", codecs.BOM_UTF16_BE),
+        ("utf-16", codecs.BOM_UTF16_LE),
+        ("utf-32", b""),
+        ("utf-32", codecs.BOM_UTF32_BE),
+        ("utf-32", codecs.BOM_UTF32_LE),
+        ("cp1250", b""),
+        ("cp1252", b""),
+        ("latin-1", b""),
+        ("ascii", b""),
+    ],
+)
+def test_read_path_or_stdin_many_encodings(
+    encoding: str, bom: bytes, tmp_path: Path
+) -> None:
+    p = tmp_path / "q.sql"
+    # create a new file with the specified encoding and BOM
+    raw_query = "select\n\n\n1\n"
+    file_contents = bom + raw_query.encode(encoding)
+    with open(p, "wb") as f:
+        f.write(file_contents)
+
+    mode = Mode(encoding=encoding)
+    actual_source, actual_encoding, actual_bom = _read_path_or_stdin(p, mode)
+    assert actual_source == raw_query
+    assert actual_encoding == encoding
+    assert actual_bom == bom.decode(encoding)
+
+
+def test_read_path_or_stdin_error(tmp_path: Path) -> None:
+    p = tmp_path / "q.sql"
+    with open(p, "w", encoding="utf-8") as f:
+        f.write("select 'ň' as ch")
+
+    mode = Mode(encoding="cp1250")
+    with pytest.raises(SqlfmtUnicodeError) as exc_info:
+        _, _, _ = _read_path_or_stdin(p, mode)
+
+    assert "cp1250" in str(exc_info.value)

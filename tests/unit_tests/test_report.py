@@ -14,11 +14,15 @@ def no_change_results() -> List[SqlFormatResult]:
             source_path=Path("~/path/to/file.sql"),
             source_string="select * from my_table\n",
             formatted_string="select * from my_table\n",
+            encoding="utf-8",
+            utf_bom="",
         ),
         SqlFormatResult(
             source_path=Path("~/path/to/another_file.sql"),
             source_string="select * from my_table where true\n",
             formatted_string="select * from my_table where true\n",
+            encoding="utf-8",
+            utf_bom="",
         ),
     ]
     return results
@@ -31,16 +35,22 @@ def changed_results() -> List[SqlFormatResult]:
             source_path=Path("~/path/to/file.sql"),
             source_string="select * from my_table\n",
             formatted_string="select * from my_table\n",
+            encoding="utf-8",
+            utf_bom="",
         ),
         SqlFormatResult(
             source_path=Path("~/path/to/another_file.sql"),
             source_string="SELECT * from my_table where true",
             formatted_string="select * from my_table where true\n",
+            encoding="utf-8",
+            utf_bom="",
         ),
         SqlFormatResult(
             source_path=Path("~/path/to/yet_another_file.sql"),
             source_string="select a,\n b\n * from my_table where \n a = b\n",
             formatted_string="select a, b from my_table where a = b\n",
+            encoding="utf-8",
+            utf_bom="",
         ),
     ]
     return results

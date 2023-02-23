@@ -19,6 +19,7 @@ class Mode:
     check: bool = False
     diff: bool = False
     exclude: List[str] = field(default_factory=list)
+    encoding: str = "utf-8"
     fast: bool = False
     single_process: bool = False
     no_jinjafmt: bool = False

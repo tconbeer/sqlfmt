@@ -4,6 +4,7 @@
 .tox
 .venv
 .vscode
+build
 dist
 tests/.coverage
 tests/.results

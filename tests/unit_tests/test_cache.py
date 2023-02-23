@@ -52,10 +52,36 @@ def small_cache(sample_paths: Dict[str, Path], sample_stat: Tuple[float, int]) -
 @pytest.fixture
 def results_for_caching(sample_paths: Dict[str, Path]) -> List[SqlFormatResult]:
     results = [
-        SqlFormatResult(sample_paths["001"], "select 1\n", "select 1\n"),
-        SqlFormatResult(sample_paths["002"], "select 1\n", "", from_cache=True),
-        SqlFormatResult(sample_paths["003"], "select 'abc'\n", "select\n    'abc'\n"),
-        SqlFormatResult(sample_paths["900"], "!\n", "", SqlfmtError("oops")),
+        SqlFormatResult(
+            sample_paths["001"],
+            "select 1\n",
+            "select 1\n",
+            encoding="utf-8",
+            utf_bom="",
+        ),
+        SqlFormatResult(
+            sample_paths["002"],
+            "select 1\n",
+            "",
+            encoding="utf-8",
+            utf_bom="",
+            from_cache=True,
+        ),
+        SqlFormatResult(
+            sample_paths["003"],
+            "select 'abc'\n",
+            "select\n    'abc'\n",
+            encoding="utf-8",
+            utf_bom="",
+        ),
+        SqlFormatResult(
+            sample_paths["900"],
+            "!\n",
+            "",
+            encoding="utf-8",
+            utf_bom="",
+            exception=SqlfmtError("oops"),
+        ),
     ]
     return results
 
