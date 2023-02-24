@@ -1,5 +1,7 @@
 import asyncio
+import codecs
 import concurrent.futures
+import locale
 import sys
 from functools import partial
 from glob import glob
@@ -9,6 +11,7 @@ from typing import (
     Awaitable,
     Callable,
     Collection,
+    Dict,
     Iterable,
     List,
     Optional,
@@ -21,7 +24,7 @@ from tqdm import tqdm
 
 from sqlfmt.analyzer import Analyzer
 from sqlfmt.cache import Cache, check_cache, clear_cache, load_cache, write_cache
-from sqlfmt.exception import SqlfmtEquivalenceError, SqlfmtError
+from sqlfmt.exception import SqlfmtEquivalenceError, SqlfmtError, SqlfmtUnicodeError
 from sqlfmt.formatter import QueryFormatter
 from sqlfmt.mode import Mode as Mode
 from sqlfmt.query import Query
@@ -172,6 +175,8 @@ def _format_many(
                     source_path=path,
                     source_string="",
                     formatted_string="",
+                    encoding="",
+                    utf_bom="",
                     from_cache=True,
                 )
             )
@@ -218,17 +223,23 @@ def _format_one(path: Path, mode: Mode) -> SqlFormatResult:
     Runs format_string on the contents of a single file (found at path). Handles
     potential user errors in formatted code, and returns a SqlfmtResult
     """
-    source = _read_path_or_stdin(path)
+    source, encoding, utf_bom = _read_path_or_stdin(path, mode)
     try:
         formatted = format_string(source, mode)
         return SqlFormatResult(
-            source_path=path, source_string=source, formatted_string=formatted
+            source_path=path,
+            source_string=source,
+            formatted_string=formatted,
+            encoding=encoding,
+            utf_bom=utf_bom,
         )
     except SqlfmtError as e:
         return SqlFormatResult(
             source_path=path,
             source_string=source,
             formatted_string="",
+            encoding=encoding,
+            utf_bom=utf_bom,
             exception=e,
         )
 
@@ -241,22 +252,71 @@ def _update_source_files(results: Iterable[SqlFormatResult]) -> None:
     """
     for res in results:
         if res.has_changed and res.source_path != STDIN_PATH and res.formatted_string:
-            with open(res.source_path, "w") as f:
+            with open(res.source_path, "w", encoding=res.encoding) as f:
                 f.write(res.formatted_string)
 
 
-def _read_path_or_stdin(path: Path) -> str:
+def _read_path_or_stdin(path: Path, mode: Mode) -> Tuple[str, str, str]:
     """
-    If passed a Path, calls open() and read() and returns contents as a string.
+    If passed a Path, calls open() and read() and returns contents as
+    a tuple of strings. The first element is the contents of the file; the
+    second element is the encoding used to read the file; the third
+    element is either the utf BOM or an empty string.
 
     If passed Path("-"), calls sys.stdin.read()
     """
+    encoding = (
+        (
+            locale.getpreferredencoding()
+            if mode.encoding.lower() == "inherit"
+            else mode.encoding
+        )
+        .lower()
+        .replace("-", "_")
+    )
+    bom_map: Dict[str, List[bytes]] = {
+        "utf": [codecs.BOM_UTF8],
+        "utf8": [codecs.BOM_UTF8],
+        "u8": [codecs.BOM_UTF8],
+        "utf16": [codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE],
+        "u16": [codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE],
+        "utf16le": [codecs.BOM_UTF16_LE],
+        "utf16be": [codecs.BOM_UTF16_BE],
+        "utf32": [codecs.BOM_UTF32_LE, codecs.BOM_UTF32_BE],
+        "u32": [codecs.BOM_UTF32_LE, codecs.BOM_UTF32_BE],
+        "utf32le": [codecs.BOM_UTF32_LE],
+        "utf32be": [codecs.BOM_UTF32_BE],
+    }
+    detected_bom = ""
     if path == STDIN_PATH:
+        # todo: customize encoding of stdin
         source = sys.stdin.read()
     else:
-        with open(path, "r") as f:
-            source = f.read()
-    return source
+        try:
+            with open(path, "r", encoding=encoding) as f:
+                source = f.read()
+            if encoding.startswith("utf") and encoding != "utf_8_sig":
+                for b in [
+                    bom.decode(encoding)
+                    for bom in bom_map.get(encoding.replace("_", ""), [])
+                ]:
+                    if source.startswith(b):
+                        detected_bom = b
+                        source = source[len(b) :]
+                        break
+
+        except UnicodeDecodeError as e:
+            raise SqlfmtUnicodeError(
+                f"Error reading file {path}\n"
+                f"File could not be decoded using {encoding}. "
+                f"Specifically, {repr(e.object)} at position {e.start} failed "
+                f"with: {e.reason}.\n"
+                "You can specify a different encoding by running sqlfmt "
+                "with the --encoding option. Or set --encoding to 'none' to "
+                "use the system default encoding. We suggest always using "
+                "utf-8 for all files."
+            )
+    return source, encoding, detected_bom
 
 
 def _perform_safety_check(analyzer: Analyzer, raw_query: Query, result: str) -> None:

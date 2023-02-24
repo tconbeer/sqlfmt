@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+-   sqlfmt now defaults to reading and writing files using the `utf-8` encoding. Previously, we used Python's default behavior of using the encoding from the host machine's locale. However, as `utf-8` becomes a de-facto standard, this was causing issues for some Windows users, whose locale was set to use older encodings. You can use the `--encoding` option to specify a different encoding. Setting encoding to `inherit`, e.g., `sqlfmt --encoding inherit foo.sql` will revert to the old behavior of using the host's locale. sqlfmt will detect and preserve a UTF BOM if it is present. If you specify `--encoding utf-8-sig`, sqlfmt will always write a UTF-8 BOM in the formatted file. ([#350](https://github.com/tconbeer/sqlfmt/issues/350), [#381]((https://github.com/tconbeer/sqlfmt/issues/381)), [#383]((https://github.com/tconbeer/sqlfmt/issues/383)) - thank you [@profesia-company](https://github.com/profesia-company), [@cmcnicoll](https://github.com/cmcnicoll), [@aersam](https://github.com/aersam), and [@ryanmeekins](https://github.com/ryanmeekins)!)
+
 ## [0.16.0] - 2023-01-27
 
 ### Formatting Changes + Bug Fixes

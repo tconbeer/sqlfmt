@@ -1,3 +1,4 @@
+import locale
 import re
 import subprocess
 import sys
@@ -95,7 +96,7 @@ def test_preformatted_short_lines_env(
     )
     assert results.exit_code == 0
     print(results.stderr)
-    assert "4 files formatted" in results.stderr
+    assert "5 files formatted" in results.stderr
 
     # test that CLI flag overrides ENV VAR
     args = f"{preformatted_dir.as_posix()} -l 88 --check"
@@ -104,7 +105,7 @@ def test_preformatted_short_lines_env(
     )
     assert results.exit_code == 0
     print(results.stderr)
-    assert "5 files passed formatting check" in results.stderr
+    assert "6 files passed formatting check" in results.stderr
 
 
 def test_unformatted_check(sqlfmt_runner: CliRunner, unformatted_dir: Path) -> None:
@@ -183,3 +184,28 @@ def test_preformatted_fast_safe(
     args = f"{preformatted_dir.as_posix()} --check {option}"
     results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
     assert results.exit_code == 0
+
+
+def test_preformatted_utf_8_sig_encoding(
+    sqlfmt_runner: CliRunner, preformatted_dir: Path
+) -> None:
+    args = f"{preformatted_dir.as_posix()} --check --encoding utf-8-sig"
+    results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
+    assert results.exit_code == 0
+
+
+def test_preformatted_inherit_encoding(
+    sqlfmt_runner: CliRunner, preformatted_dir: Path
+) -> None:
+    args = f"{preformatted_dir.as_posix()} --check --encoding inherit"
+    results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
+    if locale.getpreferredencoding().lower().replace("-", "_") == "utf_8":
+        assert results.exit_code == 0
+    else:
+        # this directory includes a file that starts with a BOM. We'll
+        # get a weird symbol if decoded with anything other than utf-8,
+        # like cp-1252, which is the default on many Windows machines
+        assert results.exit_code == 2
+        assert results.stderr.startswith("1 file had errors")
+        assert "006_has_bom.sql" in results.stderr
+        assert "Could not parse SQL at position 1" in results.stderr

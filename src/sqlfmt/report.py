@@ -47,6 +47,8 @@ class SqlFormatResult:
     source_path: Path
     source_string: str
     formatted_string: str
+    encoding: str
+    utf_bom: str
     exception: Optional[SqlfmtError] = None
     from_cache: bool = False
 

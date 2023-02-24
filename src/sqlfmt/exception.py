@@ -19,6 +19,15 @@ class SqlfmtConfigError(SqlfmtError):
     pass
 
 
+class SqlfmtUnicodeError(SqlfmtError):
+    """
+    Raised while reading input if the input cannot be
+    decoded into a Python string
+    """
+
+    pass
+
+
 class SqlfmtParsingError(SqlfmtError):
     """
     Raised during lexing if sqlfmt encounters a token that does
