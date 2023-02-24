@@ -292,7 +292,7 @@ def _read_path_or_stdin(path: Path, mode: Mode) -> Tuple[str, str, str]:
             with open(path, "r", encoding=encoding) as f:
                 source = f.read()
             if encoding.startswith("utf") and encoding != "utf_8_sig":
-                for b in [bom.decode(encoding) for bom in bom_map[encoding]]:
+                for b in [bom.decode(encoding) for bom in bom_map.get(encoding, [])]:
                     if source.startswith(b):
                         detected_bom = b
                         source = source[len(b) :]
