@@ -266,14 +266,22 @@ def _read_path_or_stdin(path: Path, mode: Mode) -> Tuple[str, str, str]:
     If passed Path("-"), calls sys.stdin.read()
     """
     encoding = (
-        locale.getpreferredencoding()
-        if mode.encoding.lower() == "inherit"
-        else mode.encoding
-    ).lower()
+        (
+            locale.getpreferredencoding()
+            if mode.encoding.lower() == "inherit"
+            else mode.encoding
+        )
+        .lower()
+        .replace("-", "_")
+    )
     bom_map: Dict[str, List[bytes]] = {
-        "utf-8": [codecs.BOM_UTF8],
-        "utf-16": [codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE],
-        "utf-32": [codecs.BOM_UTF32_LE, codecs.BOM_UTF32_BE],
+        "utf_8": [codecs.BOM_UTF8],
+        "utf_16": [codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE],
+        "utf_16_le": [codecs.BOM_UTF16_LE],
+        "utf_16_be": [codecs.BOM_UTF16_BE],
+        "utf_32": [codecs.BOM_UTF32_LE, codecs.BOM_UTF32_BE],
+        "utf_32_le": [codecs.BOM_UTF32_LE],
+        "utf_32_be": [codecs.BOM_UTF32_BE],
     }
     detected_bom = ""
     if path == STDIN_PATH:
@@ -281,19 +289,15 @@ def _read_path_or_stdin(path: Path, mode: Mode) -> Tuple[str, str, str]:
         source = sys.stdin.read()
     else:
         try:
-            if encoding.startswith("utf") and encoding != "utf-8-sig":
-                with open(path, "rb") as f:
-                    source_bytes = f.read()
-                for bom in bom_map[encoding]:
-                    if source_bytes.startswith(bom):
-                        detected_bom = bom.decode(encoding)
-                        source = source_bytes[len(bom) :].decode(encoding)
+            with open(path, "r", encoding=encoding) as f:
+                source = f.read()
+            if encoding.startswith("utf") and encoding != "utf_8_sig":
+                for b in [bom.decode(encoding) for bom in bom_map[encoding]]:
+                    if source.startswith(b):
+                        detected_bom = b
+                        source = source[len(b) :]
                         break
-                else:
-                    source = source_bytes.decode(encoding)
-            else:
-                with open(path, "r", encoding=encoding) as f:
-                    source = f.read()
+
         except UnicodeDecodeError as e:
             raise SqlfmtUnicodeError(
                 f"Error reading file {path}\n"

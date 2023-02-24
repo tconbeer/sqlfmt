@@ -364,11 +364,11 @@ def test_perform_safety_check(default_mode: Mode) -> None:
         ("utf-8", codecs.BOM_UTF8),
         ("utf-8-sig", b""),  # encoding with utf-8-sig will add a bom
         ("utf-16", b""),
-        ("utf-16", codecs.BOM_UTF16_BE),
-        ("utf-16", codecs.BOM_UTF16_LE),
+        ("utf_16_be", codecs.BOM_UTF16_BE),
+        ("utf_16_le", codecs.BOM_UTF16_LE),
         ("utf-32", b""),
-        ("utf-32", codecs.BOM_UTF32_BE),
-        ("utf-32", codecs.BOM_UTF32_LE),
+        ("utf_32_be", codecs.BOM_UTF32_BE),
+        ("utf_32_le", codecs.BOM_UTF32_LE),
         ("cp1250", b""),
         ("cp1252", b""),
         ("latin-1", b""),
@@ -388,7 +388,7 @@ def test_read_path_or_stdin_many_encodings(
     mode = Mode(encoding=encoding)
     actual_source, actual_encoding, actual_bom = _read_path_or_stdin(p, mode)
     assert actual_source == raw_query
-    assert actual_encoding == encoding
+    assert actual_encoding == encoding.lower().replace("-", "_")
     assert actual_bom == bom.decode(encoding)
 
 
