@@ -275,13 +275,17 @@ def _read_path_or_stdin(path: Path, mode: Mode) -> Tuple[str, str, str]:
         .replace("-", "_")
     )
     bom_map: Dict[str, List[bytes]] = {
-        "utf_8": [codecs.BOM_UTF8],
-        "utf_16": [codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE],
-        "utf_16_le": [codecs.BOM_UTF16_LE],
-        "utf_16_be": [codecs.BOM_UTF16_BE],
-        "utf_32": [codecs.BOM_UTF32_LE, codecs.BOM_UTF32_BE],
-        "utf_32_le": [codecs.BOM_UTF32_LE],
-        "utf_32_be": [codecs.BOM_UTF32_BE],
+        "utf": [codecs.BOM_UTF8],
+        "utf8": [codecs.BOM_UTF8],
+        "u8": [codecs.BOM_UTF8],
+        "utf16": [codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE],
+        "u16": [codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE],
+        "utf16le": [codecs.BOM_UTF16_LE],
+        "utf16be": [codecs.BOM_UTF16_BE],
+        "utf32": [codecs.BOM_UTF32_LE, codecs.BOM_UTF32_BE],
+        "u32": [codecs.BOM_UTF32_LE, codecs.BOM_UTF32_BE],
+        "utf32le": [codecs.BOM_UTF32_LE],
+        "utf32be": [codecs.BOM_UTF32_BE],
     }
     detected_bom = ""
     if path == STDIN_PATH:
@@ -292,7 +296,10 @@ def _read_path_or_stdin(path: Path, mode: Mode) -> Tuple[str, str, str]:
             with open(path, "r", encoding=encoding) as f:
                 source = f.read()
             if encoding.startswith("utf") and encoding != "utf_8_sig":
-                for b in [bom.decode(encoding) for bom in bom_map.get(encoding, [])]:
+                for b in [
+                    bom.decode(encoding)
+                    for bom in bom_map.get(encoding.replace("_", ""), [])
+                ]:
                     if source.startswith(b):
                         detected_bom = b
                         source = source[len(b) :]
