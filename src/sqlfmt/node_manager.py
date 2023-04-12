@@ -57,11 +57,12 @@ class NodeManager:
             "table<": ">",
             "struct<": ">",
         }
+        last_bracket_value = last_bracket.value.lower()
         if (
             last_bracket.token.type
             not in (TokenType.BRACKET_OPEN, TokenType.STATEMENT_START)
-            or last_bracket.value not in matches
-            or matches[last_bracket.value] != token.token.lower()
+            or last_bracket_value not in matches
+            or matches[last_bracket_value] != token.token.lower()
         ):
             raise SqlfmtBracketError(
                 f"Closing bracket '{token.token}' found at {token.spos} does not "

@@ -413,6 +413,12 @@ def test_unmatched_bracket_error(default_analyzer: Analyzer) -> None:
     assert "Closing bracket ')'" in str(excinfo.value)
 
 
+def test_case_insensitive_bracket_matching(default_analyzer: Analyzer) -> None:
+    source_string = "--fmt: off\n select CASE when true then 1 end\n"
+    q = default_analyzer.parse_query(source_string=source_string)
+    assert q.nodes[-2].token.type is TokenType.STATEMENT_END
+
+
 @pytest.mark.parametrize(
     "source_string",
     [
