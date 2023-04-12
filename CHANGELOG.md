@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.17.1] - 2023-04-12
+
 -   fixed a bug where format-off tokens could cause sqlfmt to raise a bracket mismatch error ([#395](https://github.com/tconbeer/sqlfmt/issues/395) - thank you, [@AndrewLaneAtPowerSchool](https://github.com/AndrewLaneAtPowerSchool)!).
 
 ## [0.17.0] - 2023-02-24
@@ -338,7 +340,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.17.0...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.17.1...HEAD
+
+[0.17.1]: https://github.com/tconbeer/sqlfmt/compare/0.17.0...0.17.1
 
 [0.17.0]: https://github.com/tconbeer/sqlfmt/compare/0.16.0...0.17.0
 
