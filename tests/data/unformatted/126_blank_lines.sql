@@ -71,7 +71,7 @@ where
     quxxxxxxxxxxx = 1
     {% if is_incremental() %}
 
-    and barrrrrrrrrr = 1 and bazzzzzzzzzzz = 2 and quxxxxxxxxxxx = 3
+        and barrrrrrrrrr = 1 and bazzzzzzzzzzz = 2 and quxxxxxxxxxxx = 3
 
     {% endif %}
 ;
