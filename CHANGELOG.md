@@ -27,7 +27,9 @@ All notable changes to this project will be documented in this file.
         {%- endif %}
     {%- endfor %}
     ```
-    See also [this discussion](https://github.com/tconbeer/sqlfmt/discussions/317).
+    See also [this discussion](https://github.com/tconbeer/sqlfmt/discussions/317). Thank you 
+    [@dave-connors-3](https://github.com/dave-connors-3) and 
+    [@alrocar](https://github.com/alrocar)!
 
 ## [0.17.1] - 2023-04-12
 
