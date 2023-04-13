@@ -4,12 +4,39 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Formatting Changes
+-   the contents of jinja blocks are now indented if the block wraps onto multiple rows ([#403](https://github.com/tconbeer/sqlfmt/issues/403)). This is now the proper sqlfmt style:
+    ```sql
+    select
+        some_field,
+        {% for some_item in some_sequence %}
+            some_function({{ some_item }}){% if not loop.last %}, {% endif %}
+        {% endfor %}
+    ```
+    While in this simple example the new style makes it less clear 
+    that `some_field` and `some_function` are at the
+    same SQL depth, the formatting of complex files with nested jinja blocks is much improved.
+    For example:
+
+    ```sql
+    {%- for col in cols -%}
+        {%- if col.column.lower() not in remove | map(
+            "lower"
+        ) and col.column.lower() not in exclude | map("lower") -%}
+            {% do include_cols.append(col) %}
+        {%- endif %}
+    {%- endfor %}
+    ```
+    See also [this discussion](https://github.com/tconbeer/sqlfmt/discussions/317).
+
 ## [0.17.1] - 2023-04-12
 
+### Bug Fixes
 -   fixed a bug where format-off tokens could cause sqlfmt to raise a bracket mismatch error ([#395](https://github.com/tconbeer/sqlfmt/issues/395) - thank you, [@AndrewLaneAtPowerSchool](https://github.com/AndrewLaneAtPowerSchool)!).
 
 ## [0.17.0] - 2023-02-24
 
+### Features
 -   sqlfmt now defaults to reading and writing files using the `utf-8` encoding. Previously, we used Python's default behavior of using the encoding from the host machine's locale. However, as `utf-8` becomes a de-facto standard, this was causing issues for some Windows users, whose locale was set to use older encodings. You can use the `--encoding` option to specify a different encoding. Setting encoding to `inherit`, e.g., `sqlfmt --encoding inherit foo.sql` will revert to the old behavior of using the host's locale. sqlfmt will detect and preserve a UTF BOM if it is present. If you specify `--encoding utf-8-sig`, sqlfmt will always write a UTF-8 BOM in the formatted file. ([#350](https://github.com/tconbeer/sqlfmt/issues/350), [#381]((https://github.com/tconbeer/sqlfmt/issues/381)), [#383]((https://github.com/tconbeer/sqlfmt/issues/383)) - thank you [@profesia-company](https://github.com/profesia-company), [@cmcnicoll](https://github.com/cmcnicoll), [@aersam](https://github.com/aersam), and [@ryanmeekins](https://github.com/ryanmeekins)!)
 
 ## [0.16.0] - 2023-01-27
