@@ -30,6 +30,7 @@ All notable changes to this project will be documented in this file.
     See also [this discussion](https://github.com/tconbeer/sqlfmt/discussions/317). Thank you 
     [@dave-connors-3](https://github.com/dave-connors-3) and 
     [@alrocar](https://github.com/alrocar)!
+-   sqlfmt now supports all [Postgres frame clauses](https://www.postgresql.org/docs/current/sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS), not just those that start with `rows between`. ([#404](https://github.com/tconbeer/sqlfmt/issues/404))
 
 ## [0.17.1] - 2023-04-12
 

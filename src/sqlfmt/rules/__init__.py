@@ -148,12 +148,19 @@ MAIN = [
             r"then",
             r"else",
             r"partition\s+by",
-            r"rows\s+between",
             r"values",
             # in pg, RETURNING can be the last clause of
             # a DELETE statement
             r"returning",
         )
+        + group(r"\W", r"$"),
+        action=partial(actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD),
+    ),
+    Rule(
+        name="frame_clause",
+        priority=1305,
+        pattern=group(r"(range|rows|groups)\s+")
+        + group(r"(between\s+)?((unbounded|\d+)\s+(preceding|following)|current\s+row)")
         + group(r"\W", r"$"),
         action=partial(actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD),
     ),

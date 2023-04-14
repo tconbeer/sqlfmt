@@ -39,7 +39,7 @@ def get_projects() -> List[SQLProject]:
         SQLProject(
             name="rittman",
             git_url="https://github.com/tconbeer/rittman_ra_data_warehouse.git",
-            git_ref="f44544f",  # sqlfmt 54b8edd
+            git_ref="418af64",  # sqlfmt cd38a6c
             expected_changed=0,
             expected_unchanged=307,
             expected_errored=4,  # true mismatching brackets

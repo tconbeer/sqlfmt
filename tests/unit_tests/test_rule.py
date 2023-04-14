@@ -384,6 +384,31 @@ def test_regex_anti_match(
     assert match is None, f"{rule_name} regex should not match {value}"
 
 
+@pytest.mark.parametrize(
+    "ruleset,rule_name,value,matched_value",
+    [
+        (MAIN, "frame_clause", "rows between unbounded preceding", "rows "),
+        (MAIN, "frame_clause", "rows unbounded preceding", "rows "),
+        (MAIN, "frame_clause", "rows 1 preceding", "rows "),
+        (MAIN, "frame_clause", "range between current row", "range "),
+        (MAIN, "frame_clause", "range 1 following", "range "),
+        (MAIN, "frame_clause", "range current row", "range "),
+        (MAIN, "frame_clause", "groups between 1 preceding", "groups "),
+    ],
+)
+def test_regex_partial_match(
+    ruleset: List[Rule], rule_name: str, value: str, matched_value: str
+) -> None:
+    rule = get_rule(ruleset, rule_name)
+    match = rule.program.match(value)
+    assert match is not None, f"{rule_name} regex doesn't match {value}"
+    start, end = match.span(1)
+
+    assert (
+        value[start:end] == matched_value
+    ), f"{rule_name} regex doesn't exactly match {matched_value}"
+
+
 def test_regex_should_not_match_empty_string() -> None:
     rules = itertools.chain.from_iterable(ALL_RULESETS)
     for rule in rules:
