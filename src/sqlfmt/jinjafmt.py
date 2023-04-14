@@ -225,63 +225,77 @@ class JinjaTag:
     verb: str
     code: str
     closing_marker: str
-    depth: int
+    depth: Tuple[int, int]
     is_blackened: bool = False
 
     def __str__(self) -> str:
-        if self.is_indented_multiline_tag and self.is_blackened:
+        if self.is_macro_like_def and self.is_blackened:
+            self._remove_trailing_comma()
+
+        if self.is_multiline_tag and self.is_blackened:
             return self._multiline_str()
-        elif self.is_indented_multiline_tag:
+        elif self.is_multiline_tag:
             return self.source_string
-        elif self.is_macro_like_def and self.is_blackened:
-            return self._remove_trailing_comma(self._basic_str())
         else:
             return self._basic_str()
 
     @property
-    def is_indented_multiline_tag(self) -> bool:
-        return self.code != "" and self.verb == "" and "\n" in self.code
+    def is_multiline_tag(self) -> bool:
+        return "\n" in self.code
 
     @property
     def is_macro_like_def(self) -> bool:
         return "%" in self.opening_marker and any(
-            [self.verb == f"{v} " for v in ["macro", "test", "materialization", "call"]]
+            [
+                self.verb.strip() == v
+                for v in ["macro", "test", "materialization", "call"]
+            ]
         )
 
     def _multiline_str(self) -> str:
         """
-        if the formatted code is on multiple lines, and does not use a verb,
-        we want the code indented four spaces past the opening and
-        closing markers. The opening marker will already be indented to the
-        proper depth
+        if the formatted code is on multiple lines, we want the code indented
+        four spaces past the opening and closing markers. The opening marker
+        will already be indented to the proper depth (because of the Line).
         """
-        indent = " " * (4 * self.depth)
-        lines = [f"{self.opening_marker}"]
-        for code_line in self.code.splitlines(keepends=False):
-            lines.append(f"{indent}    {code_line}")
-        lines.append(f"{indent}{self.closing_marker}")
+        indent = " " * 4 * (self.depth[0] + self.depth[1])
+        code_lines = iter(self.code.splitlines(keepends=False))
+
+        if self.verb:
+            lines = [f"{self.opening_marker} {self.verb}{next(code_lines)}"]
+            extra_indent = ""
+        else:
+            lines = [f"{self.opening_marker}"]
+            extra_indent = " " * 4
+
+        for code_line in code_lines:
+            lines.append(f"{indent}{extra_indent}{code_line}")
+
+        if self.verb:
+            lines[-1] = f"{indent}{lines[-1].lstrip()} {self.closing_marker}"
+        else:
+            lines.append(f"{indent}{self.closing_marker}")
+
         return "\n".join(lines)
 
     def _basic_str(self) -> str:
         return f"{self.opening_marker} {self.verb}{self.code} {self.closing_marker}"
 
-    @staticmethod
-    def _remove_trailing_comma(source_string: str) -> str:
+    def _remove_trailing_comma(self) -> None:
         """
-        dbt Jinja doesn't allow trailing commas in macro definitions. Returns a string
-        without a trailing comma inside parentheses
+        dbt Jinja doesn't allow trailing commas in macro definitions. Mutates
+        self.code so that it doesn't contain a trailing comma inside parentheses.
         """
         trailing_comma_prog = re.compile(r",\s*\)")
+        source_string = self.code
         trailing_comma_match = trailing_comma_prog.search(source_string)
         if trailing_comma_match:
             idx = trailing_comma_match.span()[0]
             processed_string = f"{source_string[:idx]}{source_string[idx+1:]}"
-            return processed_string
-        else:
-            return source_string
+            self.code = processed_string
 
     @classmethod
-    def from_string(cls, source_string: str, depth: int) -> "JinjaTag":
+    def from_string(cls, source_string: str, depth: Tuple[int, int]) -> "JinjaTag":
         """
         Takes a jinja statement or expression as a string and returns
         a JinjaTag object (basically a tuple of its parts).
@@ -389,7 +403,7 @@ class JinjaFormatter:
         are not jinja. Returns True if the node was blackened
         """
         if node.is_jinja:
-            tag = JinjaTag.from_string(node.value, node.depth[0])
+            tag = JinjaTag.from_string(node.value, node.depth)
 
             if tag.code and self.use_black:
                 tag.code, tag.is_blackened = self.code_formatter.format_string(

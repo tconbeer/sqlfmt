@@ -84,7 +84,7 @@ class Line:
         proper indentation.
         """
         INDENT = " " * 4
-        prefix = INDENT * self.depth[0]
+        prefix = INDENT * (self.depth[0] + self.depth[1])
         return prefix
 
     @property

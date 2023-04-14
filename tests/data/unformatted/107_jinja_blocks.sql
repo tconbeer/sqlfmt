@@ -36,7 +36,7 @@ Hello! I'm data, not code.
 
 with
     {%- for model in list_o_models %}
-    {{ model }} as (select * from {{ ref(model) }}),
+        {{ model }} as (select * from {{ ref(model) }}),
     {% endfor -%}
     base as (
         select *
@@ -48,12 +48,12 @@ with
     joined as (
         select
             {% for model in list_o_models %}
-            {{ model }}.column_a as {{ model }}_field
-            {%- if not loop.last -%},{%- endif %}
+                {{ model }}.column_a as {{ model }}_field
+                {%- if not loop.last -%},{%- endif %}
             {% endfor %}
         from base
         {% for model in list_o_models %}
-        join {{ model }} on base.{{ model }}_id = {{ model }}.id
+            join {{ model }} on base.{{ model }}_id = {{ model }}.id
         {% endfor %}
     )
 select *

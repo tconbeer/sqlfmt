@@ -67,7 +67,7 @@ def uninstall_black(monkeypatch: pytest.MonkeyPatch) -> None:
     ],
 )
 def test_jinja_tag_from_string(tag: str, result: Tuple[str, str, str, str]) -> None:
-    assert JinjaTag.from_string(tag, 0) == JinjaTag(tag, *result, 0)
+    assert JinjaTag.from_string(tag, (0, 0)) == JinjaTag(tag, *result, (0, 0))
 
 
 @pytest.mark.parametrize(
@@ -261,8 +261,11 @@ def test_black_wrapper_format_string_invalid_input(
 @pytest.mark.parametrize(
     "tag,expected",
     [
-        (JinjaTag("{{ any code! }}", "{{", "", "any code!", "}}", 0), 88 - 2 - 2 - 2),
-        (JinjaTag("{%- set _ %}", "{%-", "set", "_", "%}", 0), 88 - 3 - 3 - 2 - 2),
+        (
+            JinjaTag("{{ any code! }}", "{{", "", "any code!", "}}", (0, 0)),
+            88 - 2 - 2 - 2,
+        ),
+        (JinjaTag("{%- set _ %}", "{%-", "set", "_", "%}", (0, 0)), 88 - 3 - 3 - 2 - 2),
     ],
 )
 def test_max_code_length(tag: JinjaTag, expected: int) -> None:
@@ -316,7 +319,7 @@ def test_preprocess_string_properties(
 def test_jinja_tag_remove_trailing_comma(
     source_string: str, expected_count: int, is_def: bool
 ) -> None:
-    tag = JinjaTag.from_string(source_string=source_string, depth=0)
+    tag = JinjaTag.from_string(source_string=source_string, depth=(0, 0))
     assert tag.is_macro_like_def == is_def
     tag.is_blackened = True
     result = str(tag)

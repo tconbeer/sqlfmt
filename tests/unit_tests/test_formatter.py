@@ -59,7 +59,7 @@ def test_remove_extra_blank_lines(default_mode: Mode) -> None:
     expected_string = (
         "select 1\n;\n\n\n"
         "select\n    1,\n\n    2\n;\n"
-        "{% macro foo() %}\n\nfoo\n{% endmacro %}\n"
+        "{% macro foo() %}\n\n    foo\n{% endmacro %}\n"
     )
     raw_query = formatter.mode.dialect.initialize_analyzer(
         formatter.mode.line_length

@@ -20,9 +20,9 @@
 # https://github.com/tconbeer/gitlab-analytics-sqlfmt/blob/9360d2f1986c37615926b0416e8d0fb23cae3e6e/LICENSE
 {% macro get_backup_table_command(table, day_of_month) %}
 
-{% set backup_key -%}
+    {% set backup_key -%}
         day_{{ day_of_month }}/{{ table.database.lower() }}/{{ table.schema.lower() }}/{{ table.name.lower() }}/data_
-{%- endset %}
+    {%- endset %}
 
     copy into @raw.public.backup_stage/{{ backup_key }}
     from {{ table.database }}.{{ table.schema }}."{{ table.name.upper() }}"
