@@ -668,14 +668,14 @@ files = [
 
 [[package]]
 name = "snakeviz"
-version = "2.1.2"
+version = "2.2.0"
 description = "A web-based viewer for Python profiler output"
 category = "dev"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+python-versions = ">=3.7"
 files = [
-    {file = "snakeviz-2.1.2-py2.py3-none-any.whl", hash = "sha256:56c2c97dc2651dcc4c24689d3ead29b8031a4d4b655537e03375e545bbd0fa69"},
-    {file = "snakeviz-2.1.2.tar.gz", hash = "sha256:2b8a919abb5e7e92afe35127860b8c276b2a797beffce2dac8614f98cff86f21"},
+    {file = "snakeviz-2.2.0-py2.py3-none-any.whl", hash = "sha256:569e2d71c47f80a886aa6e70d6405cb6d30aa3520969ad956b06f824c5f02b8e"},
+    {file = "snakeviz-2.2.0.tar.gz", hash = "sha256:7bfd00be7ae147eb4a170a471578e1cd3f41f803238958b6b8efcf2c698a6aa9"},
 ]
 
 [package.dependencies]
