@@ -3,6 +3,7 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+-   fixes a bug when lexing `union distinct` tokens ([#417](https://github.com/tconbeer/sqlfmt/issues/417) - thank you, [@paschmaria](https://github.com/paschmaria)!)
 
 ## [0.18.0] - 2023-04-19
 

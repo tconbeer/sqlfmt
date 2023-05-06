@@ -176,6 +176,7 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (MAIN, "unterm_keyword", "delete from"),
         (MAIN, "set_operator", "union"),
         (MAIN, "set_operator", "union all"),
+        (MAIN, "set_operator", "union distinct"),
         (MAIN, "set_operator", "intersect"),
         (MAIN, "set_operator", "minus"),
         (MAIN, "set_operator", "except"),

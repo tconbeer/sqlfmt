@@ -43,6 +43,9 @@ SELECT *, 'mr' AS geo_code, 'Mauritania' AS geo, 'Africa' AS region, 'Western Af
 SELECT *, 'mu' AS geo_code, 'Mauritius' AS geo, 'Africa' AS region, 'Eastern Africa' AS subregion FROM `chrome-ux-report.country_mu.201907` UNION ALL
 SELECT *, 'yt' AS geo_code, 'Mayotte' AS geo, 'Africa' AS region, 'Eastern Africa' AS subregion FROM `chrome-ux-report.country_yt.201907`
 ) select geo from geos
+union distinct
+select *
+from foo
 )))))__SQLFMT_OUTPUT__(((((
 (
     select *
@@ -113,3 +116,6 @@ with
     )
 select geo
 from geos
+union distinct
+select *
+from foo
