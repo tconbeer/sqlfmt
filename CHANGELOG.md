@@ -3,6 +3,9 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+
+## [0.18.1] - 2023-05-10
+
 -   fixes a bug when lexing `union distinct` tokens ([#417](https://github.com/tconbeer/sqlfmt/issues/417) - thank you, [@paschmaria](https://github.com/paschmaria)!)
 
 ## [0.18.0] - 2023-04-19
@@ -379,7 +382,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.18.0...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.18.1...HEAD
+
+[0.18.1]: https://github.com/tconbeer/sqlfmt/compare/0.18.0...0.18.1
 
 [0.18.0]: https://github.com/tconbeer/sqlfmt/compare/0.17.1...0.18.0
 
