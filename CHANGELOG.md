@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+-   fixes a bug where specifying both relative and absolute paths would cause sqlfmt to crash ([#426](https://github.com/tconbeer/sqlfmt/issues/426) - thank you for the issue and fix, [@smcgivern](https://github.com/smcgivern)!)
+
 ## [0.18.1] - 2023-05-10
 
 -   fixes a bug when lexing `union distinct` tokens ([#417](https://github.com/tconbeer/sqlfmt/issues/417) - thank you, [@paschmaria](https://github.com/paschmaria)!)
