@@ -67,5 +67,5 @@ with
  # that we will also handle.
 #}
 select *
-from renamed
-where true  /* what!?! */
+from renamed  /* what!?! */
+where true

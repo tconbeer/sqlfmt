@@ -105,18 +105,17 @@ class Line:
         """
         content = str(self).rstrip()
         rendered_lines: List[str] = []
+        inline_comments: List[str] = []
         for comment in self.comments:
             if comment.is_multiline or comment.is_standalone:
                 rendered_lines.append(
                     comment.render_standalone(max_length=max_length, prefix=self.prefix)
                 )
             else:
-                # comment is potentially an inline comment, and we'll handle
-                # that below. Inline comments must be the last comment
-                pass
+                inline_comments.append(comment.render_inline())
 
-        if self.has_inline_comment:
-            rendered_lines.append(f"{content}{self.comments[-1].render_inline()}")
+        if inline_comments:
+            rendered_lines.append(f"{content}  {' '.join(inline_comments)}")
         else:
             rendered_lines.append(f"{self}")
 

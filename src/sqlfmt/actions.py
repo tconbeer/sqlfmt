@@ -80,7 +80,11 @@ def add_comment_to_buffer(
     """
     token = Token.from_match(source_string, match, TokenType.COMMENT)
     is_standalone = (not bool(analyzer.node_buffer)) or "\n" in token.token
-    comment = Comment(token=token, is_standalone=is_standalone)
+    comment = Comment(
+        token=token,
+        is_standalone=is_standalone,
+        previous_node=analyzer.previous_node,
+    )
     analyzer.comment_buffer.append(comment)
     analyzer.pos = token.epos
 

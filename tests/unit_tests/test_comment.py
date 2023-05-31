@@ -11,7 +11,7 @@ def short_comment() -> Comment:
     t = Token(
         type=TokenType.COMMENT, prefix=" ", token="-- short comment", spos=0, epos=16
     )
-    comment = Comment(t, is_standalone=False)
+    comment = Comment(t, is_standalone=False, previous_node=None)
     return comment
 
 
@@ -20,7 +20,7 @@ def short_mysql_comment() -> Comment:
     t = Token(
         type=TokenType.COMMENT, prefix=" ", token="# short comment", spos=0, epos=15
     )
-    comment = Comment(t, is_standalone=False)
+    comment = Comment(t, is_standalone=False, previous_node=None)
     return comment
 
 
@@ -29,7 +29,7 @@ def nospace_comment() -> Comment:
     t = Token(
         type=TokenType.COMMENT, prefix=" ", token="--short comment", spos=0, epos=15
     )
-    comment = Comment(t, is_standalone=False)
+    comment = Comment(t, is_standalone=False, previous_node=None)
     return comment
 
 
@@ -38,7 +38,7 @@ def standalone_comment() -> Comment:
     t = Token(
         type=TokenType.COMMENT, prefix=" ", token="-- short comment", spos=0, epos=16
     )
-    comment = Comment(t, is_standalone=True)
+    comment = Comment(t, is_standalone=True, previous_node=None)
     return comment
 
 
@@ -47,7 +47,7 @@ def multiline_comment() -> Comment:
     t = Token(
         type=TokenType.COMMENT, prefix=" ", token="/*\ncomment\n*/", spos=0, epos=15
     )
-    comment = Comment(t, is_standalone=True)
+    comment = Comment(t, is_standalone=True, previous_node=None)
     return comment
 
 
@@ -82,7 +82,7 @@ def test_str_len(
 def test_render_inline(
     short_comment: Comment, nospace_comment: Comment, standalone_comment: Comment
 ) -> None:
-    expected = "  -- short comment\n"
+    expected = "-- short comment\n"
     assert short_comment.render_inline() == expected
     assert nospace_comment.render_inline() == expected
 
@@ -107,7 +107,7 @@ def test_render_standalone(short_comment: Comment, prefix: str) -> None:
 def test_render_standalone_wrap_strip_whitespace() -> None:
     txt = "-- foo" + " " * 100 + "bar"
     t = Token(type=TokenType.COMMENT, prefix="", token=txt, spos=0, epos=len(txt))
-    comment = Comment(t, is_standalone=True)
+    comment = Comment(t, is_standalone=True, previous_node=None)
     assert comment.render_standalone(max_length=88, prefix="") == "-- foo\n-- bar\n"
 
 
@@ -135,7 +135,7 @@ def test_split_before(text: str, expected_splits: List[str]) -> None:
 
 def test_empty_comment() -> None:
     t = Token(type=TokenType.COMMENT, prefix=" ", token="-- ", spos=0, epos=3)
-    comment = Comment(t, is_standalone=True)
+    comment = Comment(t, is_standalone=True, previous_node=None)
     assert str(comment) == "--\n"
 
 
@@ -156,7 +156,7 @@ def test_no_wrap_long_jinja_comments() -> None:
         spos=0,
         epos=len(comment_str),
     )
-    comment = Comment(t, is_standalone=True)
+    comment = Comment(t, is_standalone=True, previous_node=None)
     rendered = comment.render_standalone(88, "")
 
     assert rendered == comment_str + "\n"
