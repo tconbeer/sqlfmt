@@ -87,17 +87,6 @@ class Line:
         prefix = INDENT * (self.depth[0] + self.depth[1])
         return prefix
 
-    @property
-    def has_inline_comment(self) -> bool:
-        """
-        Returns true if the line has an attached comment that was parsed
-        as an inline comment.
-        """
-        if self.comments and self.comments[-1].is_inline:
-            return True
-        else:
-            return False
-
     def render_with_comments(self, max_length: int) -> str:
         """
         Returns a string that represents the properly-formatted Line,
