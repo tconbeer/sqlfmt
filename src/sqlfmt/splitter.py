@@ -157,10 +157,21 @@ class LineSplitter:
                 # the only thing after the split is an operator + \n, so keep the
                 # comments with the stuff before the operator
                 head_comments, tail_comments = comments, []
-            elif comments[-1].is_inline:
-                head_comments, tail_comments = comments[:-1], [comments[-1]]
             else:
-                head_comments, tail_comments = comments, []
+                head_comments, tail_comments = [], []
+                for comment in comments:
+                    if (
+                        comment.is_standalone
+                        or comment.is_multiline
+                        or comment.previous_node is None
+                    ):
+                        head_comments.append(comment)
+                    elif comment.is_inline:
+                        tail_comments.append(comment)
+                    elif comment.is_c_style and comment.previous_node in new_nodes:
+                        head_comments.append(comment)
+                    else:
+                        tail_comments.append(comment)
 
         else:  # no comments
             head_comments, tail_comments = [], []

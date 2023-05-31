@@ -210,14 +210,18 @@ def test_comment_rendering(
         epos=last_node.token.epos + 13,
     )
 
-    inline_comment = Comment(token=comment_token, is_standalone=False)
+    inline_comment = Comment(
+        token=comment_token, is_standalone=False, previous_node=last_node
+    )
     simple_line.comments = [inline_comment]
     expected_inline_render = (
         str(simple_line).rstrip() + "  " + normalized_comment + "\n"
     )
     assert simple_line.render_with_comments(88) == expected_inline_render
 
-    standalone_comment = Comment(token=comment_token, is_standalone=True)
+    standalone_comment = Comment(
+        token=comment_token, is_standalone=True, previous_node=None
+    )
     simple_line.comments = [standalone_comment]
     expected_standalone_render = (
         simple_line.prefix + normalized_comment + "\n" + str(simple_line)
@@ -234,7 +238,7 @@ def test_long_comment_wrapping(simple_line: Line) -> None:
         spos=last_node.token.epos,
         epos=last_node.token.epos + 13,
     )
-    comment = Comment(token=comment_token, is_standalone=True)
+    comment = Comment(token=comment_token, is_standalone=True, previous_node=None)
     simple_line.comments = [comment]
     expected_render = (
         "-- asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf "
@@ -264,7 +268,7 @@ def test_long_comments_that_are_not_wrapped(
         spos=last_node.token.epos,
         epos=last_node.token.epos + 13,
     )
-    comment = Comment(token=comment_token, is_standalone=True)
+    comment = Comment(token=comment_token, is_standalone=True, previous_node=None)
     simple_line.comments = [comment]
     expected_render = raw_comment + "\nwith abc as (select * from my_table)\n"
     assert simple_line.render_with_comments(88) == expected_render

@@ -352,9 +352,19 @@ def test_perform_safety_check(default_mode: Mode) -> None:
         "result: TokenType.NAME." in str(excinfo.value)
     )
 
+    with pytest.raises(SqlfmtEquivalenceError) as excinfo:
+        # adds a comment
+        _perform_safety_check(
+            analyzer, raw_query, "select\n-- new comment\n    1, 2, 3\n"
+        )
+
+    assert (
+        "Raw query had 0 comment characters; formatted query had 10 comment characters"
+        in str(excinfo.value)
+    )
+
     # does not raise
     _perform_safety_check(analyzer, raw_query, "select\n    1, 2, 3\n")
-    _perform_safety_check(analyzer, raw_query, "select\n-- new comment\n    1, 2, 3\n")
 
 
 @pytest.mark.parametrize(

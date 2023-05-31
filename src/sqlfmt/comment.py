@@ -1,7 +1,8 @@
 import re
 from dataclasses import dataclass
-from typing import ClassVar, Iterator, Tuple
+from typing import ClassVar, Iterator, Optional, Tuple
 
+from sqlfmt.node import Node
 from sqlfmt.token import Token
 
 
@@ -14,6 +15,7 @@ class Comment:
 
     token: Token
     is_standalone: bool
+    previous_node: Optional[Node]
     comment_marker: ClassVar[re.Pattern] = re.compile(r"(--|#|/\*|\{#-?)([^\S\n]*)")
 
     def __str__(self) -> str:
@@ -68,15 +70,18 @@ class Comment:
         return "\n" in self.token.token
 
     @property
+    def is_c_style(self) -> bool:
+        return self.token.token.startswith("/*")
+
+    @property
     def is_inline(self) -> bool:
-        return not self.is_standalone and not self.is_multiline
+        return not self.is_standalone and not self.is_multiline and not self.is_c_style
 
     def render_inline(self) -> str:
         """
         Renders a comment as an inline comment, assuming it'll fit.
         """
-        inline_prefix = " " * 2
-        return f"{inline_prefix}{self}"
+        return f"{self}"
 
     def render_standalone(self, max_length: int, prefix: str) -> str:
         """

@@ -361,3 +361,40 @@ def _perform_safety_check(analyzer: Analyzer, raw_query: Query, result: str) -> 
             f"token at position {mismatch_pos}: raw: {mismatch_raw}; "
             f"result: {mismatch_res}."
         )
+
+    raw_comments = [
+        comment.token.token for line in raw_query.lines for comment in line.comments
+    ]
+    result_comments = [
+        comment.token.token for line in result_query.lines for comment in line.comments
+    ]
+    stripped_raw = "".join(
+        ["".join(c.replace("--", "").replace("#", "").split()) for c in raw_comments]
+    )
+    stripped_res = "".join(
+        ["".join(c.replace("--", "").replace("#", "").split()) for c in result_comments]
+    )
+    try:
+        assert stripped_raw == stripped_res
+    except AssertionError:
+        raw_len = len(stripped_raw)
+        result_len = len(stripped_res)
+        mismatch_pos = 0
+        mismatch_raw = ""
+        mismatch_res = ""
+
+        for i, (raw, res) in enumerate(zip_longest(stripped_raw, stripped_res)):
+            if raw is not res:
+                mismatch_pos = i
+                mismatch_raw = stripped_raw[i : i + 25]
+                mismatch_res = stripped_res[i : i + 25]
+                break
+
+        raise SqlfmtEquivalenceError(
+            "There was a problem formatting your query that "
+            "caused the safety check to fail. Please open an "
+            f"issue. Raw query had {raw_len} comment characters; formatted "
+            f"query had {result_len} comment characters. First mismatching "
+            f"character at position {mismatch_pos}: raw: {mismatch_raw}; "
+            f"result: {mismatch_res}."
+        )

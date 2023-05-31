@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+-   fixes a bug where multiple c-style comments (e.g., `/* comment */`) on a single line would cause sqlfmt
+    to not include all comments in formatted output ([#419](https://github.com/tconbeer/sqlfmt/issues/419) - thank you [@aersam](https://github.com/aersam)!)
+-   adds a safety check to ensure comments are preserved in formatted output
+
 ## [0.18.2] - 2023-05-31
 
 -   fixes a bug where specifying both relative and absolute paths would cause sqlfmt to crash ([#426](https://github.com/tconbeer/sqlfmt/issues/426) - thank you for the issue and fix, [@smcgivern](https://github.com/smcgivern)!)

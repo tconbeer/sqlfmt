@@ -77,7 +77,14 @@ class LineMerger:
                     raise CannotMergeException(
                         "Can't merge lines with inline comments and other comments"
                     )
-                elif len(line.comments) == 1 and line.has_inline_comment:
+                elif (
+                    len(line.comments) == 1
+                    and len(line.nodes) > 1
+                    and (
+                        line.comments[0].is_inline
+                        or line.comments[0].previous_node == line.nodes[-2]
+                    )
+                ):
                     # this is a comment that must be rendered inline,
                     # so it'll probably block merging unless the
                     # next line is just a comma

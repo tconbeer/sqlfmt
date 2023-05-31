@@ -185,6 +185,7 @@ def test_multiline_parsing(default_analyzer: Analyzer) -> None:
                 epos=310,
             ),
             is_standalone=True,
+            previous_node=q.nodes[2],
         ),
         Comment(
             token=Token(
@@ -198,6 +199,7 @@ def test_multiline_parsing(default_analyzer: Analyzer) -> None:
                 epos=499,
             ),
             is_standalone=True,
+            previous_node=q.nodes[17],
         ),
         Comment(
             token=Token(
@@ -211,6 +213,7 @@ def test_multiline_parsing(default_analyzer: Analyzer) -> None:
                 epos=837,
             ),
             is_standalone=True,
+            previous_node=q.nodes[38],
         ),
         Comment(
             token=Token(
@@ -221,6 +224,7 @@ def test_multiline_parsing(default_analyzer: Analyzer) -> None:
                 epos=874,
             ),
             is_standalone=False,
+            previous_node=q.nodes[42],
         ),
     ]
 
