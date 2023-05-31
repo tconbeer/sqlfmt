@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.18.2] - 2023-05-31
+
 -   fixes a bug where specifying both relative and absolute paths would cause sqlfmt to crash ([#426](https://github.com/tconbeer/sqlfmt/issues/426) - thank you for the issue and fix, [@smcgivern](https://github.com/smcgivern)!)
 
 ## [0.18.1] - 2023-05-10
@@ -384,7 +386,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.18.1...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.18.2...HEAD
+
+[0.18.2]: https://github.com/tconbeer/sqlfmt/compare/0.18.1...0.18.2
 
 [0.18.1]: https://github.com/tconbeer/sqlfmt/compare/0.18.0...0.18.1
 
