@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.18.3] - 2023-05-31
+
 -   fixes a bug where multiple c-style comments (e.g., `/* comment */`) on a single line would cause sqlfmt
     to not include all comments in formatted output ([#419](https://github.com/tconbeer/sqlfmt/issues/419) - thank you [@aersam](https://github.com/aersam)!)
 -   adds a safety check to ensure comments are preserved in formatted output
@@ -390,7 +392,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.18.2...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.18.3...HEAD
+
+[0.18.3]: https://github.com/tconbeer/sqlfmt/compare/0.18.2...0.18.3
 
 [0.18.2]: https://github.com/tconbeer/sqlfmt/compare/0.18.1...0.18.2
 
