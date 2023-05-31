@@ -34,7 +34,7 @@ def _get_common_parents(files: List[Path]) -> List[Path]:
     assert files, "Must provide a list of paths"
     common_parents: Set[Path] = set()
     for p in files:
-        parents = set(p.parents)
+        parents = set(p.absolute().parents)
         if p.is_dir():
             parents.add(p)
         if not common_parents:
