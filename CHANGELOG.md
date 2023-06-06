@@ -9,6 +9,10 @@ All notable changes to this project will be documented in this file.
 -   Relative `exclude` paths defined in `pyproject.toml` files are now evaluated relative to the location of the file, not the current working directory.
     Relative paths provided to the `--exclude` option (or env var) are evaluated relative to the current working directory. Files and exclude paths
     are now compared as resolved, absolute paths. (Fixes [#431](https://github.com/tconbeer/sqlfmt/issues/431) - thank you [@cmcnicoll](https://github.com/cmcnicoll)!)
+-   Fixes a bug where a comment like `{#-- comment --#}` would cause a false positive for the
+    comment safety check. ([#434](https://github.com/tconbeer/sqlfmt/issues/434))
+
+### Formatting Changes
 -   sqlfmt now supports the `<=>` operator ([#432](https://github.com/tconbeer/sqlfmt/issues/432) - thank you [@kathykwon](https://github.com/kathykwon)!)
 
 ## [0.18.3] - 2023-05-31

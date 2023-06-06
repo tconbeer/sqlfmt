@@ -371,10 +371,10 @@ def _perform_safety_check(analyzer: Analyzer, raw_query: Query, result: str) -> 
         comment.token.token for line in result_query.lines for comment in line.comments
     ]
     stripped_raw = "".join(
-        ["".join(c.replace("--", "").replace("#", "").split()) for c in raw_comments]
+        ["".join(c.split()).replace("--", "").replace("#", "") for c in raw_comments]
     )
     stripped_res = "".join(
-        ["".join(c.replace("--", "").replace("#", "").split()) for c in result_comments]
+        ["".join(c.split()).replace("--", "").replace("#", "") for c in result_comments]
     )
     try:
         assert stripped_raw == stripped_res
