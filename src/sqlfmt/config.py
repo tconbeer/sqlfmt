@@ -53,7 +53,7 @@ def _get_common_parents(files: List[Path]) -> List[Path]:
         root_dir = max(common_parents, key=lambda p: p.parts)
     except ValueError:
         # if there are no common parents (e.g., stdin), just use the cwd
-        root_dir = Path(".").resolve()
+        root_dir = Path.cwd()
     search_paths = [root_dir, *root_dir.parents]
     return search_paths
 

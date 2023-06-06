@@ -53,9 +53,8 @@ class SqlFormatResult:
     from_cache: bool = False
 
     def __post_init__(self) -> None:
-        cwd = Path(".").resolve()
         try:
-            self.display_path = self.source_path.relative_to(cwd)
+            self.display_path = self.source_path.relative_to(Path.cwd())
         except ValueError:
             self.display_path = self.source_path
 

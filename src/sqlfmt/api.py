@@ -6,7 +6,7 @@ import sys
 from functools import partial
 from glob import glob
 from itertools import zip_longest
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import (
     Awaitable,
     Callable,
@@ -94,19 +94,16 @@ def get_matching_paths(paths: Iterable[Path], mode: Mode) -> Set[Path]:
     its directories) and are not excluded by the mode's exclude glob
     """
     include_set = _get_included_paths(paths, mode)
+    exclude_set = set()
 
     if mode.exclude:
-        globs = []
-        for p in [Path(s) for s in mode.exclude]:
-            if not p.is_absolute() and mode.exclude_root is not None:
-                p = mode.exclude_root / p
-                p = p.resolve()
-            elif not p.is_absolute():
-                p = p.resolve()
-            globs.extend(glob(str(p), recursive=True))
-        exclude_set = {Path(s) for s in globs}
-    else:
-        exclude_set = set()
+        for s in mode.exclude:
+            if PurePath(s).is_absolute():
+                exclude_set.update([Path(g) for g in glob(s, recursive=True)])
+            elif mode.exclude_root is not None:
+                exclude_set.update(mode.exclude_root.glob(s))
+            else:
+                exclude_set.update(Path.cwd().glob(s))
 
     return include_set - exclude_set
 

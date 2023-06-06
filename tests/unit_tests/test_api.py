@@ -85,6 +85,15 @@ def test_file_discovery_with_excludes(
     assert res == sql_jinja_files
 
 
+def test_file_discovery_with_abs_excludes(
+    file_discovery_dir: Path, sql_jinja_files: Set[Path]
+) -> None:
+    exclude = [str(file_discovery_dir / "**/*.sql")]
+    mode = Mode(exclude=exclude, exclude_root=None)
+    res = get_matching_paths(file_discovery_dir.iterdir(), mode)
+    assert res == sql_jinja_files
+
+
 def test_file_discovery_with_excludes_no_root(
     file_discovery_dir: Path, all_files: Set[Path], sql_jinja_files: Set[Path]
 ) -> None:
