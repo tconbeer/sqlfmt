@@ -101,9 +101,17 @@ def get_matching_paths(paths: Iterable[Path], mode: Mode) -> Set[Path]:
             if PurePath(s).is_absolute():
                 exclude_set.update([Path(g) for g in glob(s, recursive=True)])
             elif mode.exclude_root is not None:
-                exclude_set.update(mode.exclude_root.glob(s))
+                try:
+                    exclude_set.update(mode.exclude_root.glob(s))
+                except IndexError:
+                    # for some reason Path.glob(".") raises an index error,
+                    # although glob.glob(".") returns ["."]
+                    pass
             else:
-                exclude_set.update(Path.cwd().glob(s))
+                try:
+                    exclude_set.update(Path.cwd().glob(s))
+                except IndexError:
+                    pass
 
     return include_set - exclude_set
 
