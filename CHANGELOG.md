@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+-   sqlfmt now supports the `<=>` operator ([#432](https://github.com/tconbeer/sqlfmt/issues/432) - thank you [@kathykwon](https://github.com/kathykwon)!)
+
 ## [0.18.3] - 2023-05-31
 
 -   fixes a bug where multiple c-style comments (e.g., `/* comment */`) on a single line would cause sqlfmt
