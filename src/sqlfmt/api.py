@@ -97,8 +97,13 @@ def get_matching_paths(paths: Iterable[Path], mode: Mode) -> Set[Path]:
 
     if mode.exclude:
         globs = []
-        for pn in mode.exclude:
-            globs.extend(glob(pn, recursive=True))
+        for p in [Path(s) for s in mode.exclude]:
+            if not p.is_absolute() and mode.exclude_root is not None:
+                p = mode.exclude_root / p
+                p = p.resolve()
+            elif not p.is_absolute():
+                p = p.resolve()
+            globs.extend(glob(str(p), recursive=True))
         exclude_set = {Path(s) for s in globs}
     else:
         exclude_set = set()
@@ -135,7 +140,7 @@ def initialize_progress_bar(
 
 def _get_included_paths(paths: Iterable[Path], mode: Mode) -> Set[Path]:
     """
-    Takes a list of paths (files or directories) and a mode as an input, and
+    Takes a list of absolute paths (files or directories) and a mode as an input, and
     yields paths to individual files that match the input paths (or are contained in
     its directories)
     """

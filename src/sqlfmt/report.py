@@ -52,6 +52,13 @@ class SqlFormatResult:
     exception: Optional[SqlfmtError] = None
     from_cache: bool = False
 
+    def __post_init__(self) -> None:
+        cwd = Path(".").resolve()
+        try:
+            self.display_path = self.source_path.relative_to(cwd)
+        except ValueError:
+            self.display_path = self.source_path
+
     def maybe_print_to_stdout(self) -> None:
         """
         If sqlfmt received a query via stdin, print the formatted string to stdout
@@ -105,15 +112,15 @@ class Report:
         report.append(f"{self._pluralize_file(self.number_unchanged)} {unchanged}.")
         for res in self.errored_results[0:50]:
             err = style_output(str(res.exception), fg="red")
-            report.append(f"{res.source_path}\n    {err}")
+            report.append(f"{res.display_path}\n    {err}")
         if not self.mode.quiet or self.mode.diff:
             for res in self.changed_results:
-                report.append(f"{res.source_path} {formatted}.")
+                report.append(f"{res.display_path} {formatted}.")
                 if self.mode.diff:
                     report.append(self._generate_diff(res))
         if self.mode.verbose:
             for res in self.unchanged_results:
-                report.append(f"{res.source_path} {unchanged}.")
+                report.append(f"{res.display_path} {unchanged}.")
 
         msg = "\n".join(report)
         if self.mode.color is False:

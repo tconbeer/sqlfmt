@@ -2,7 +2,7 @@ import codecs
 import io
 import os
 from pathlib import Path
-from typing import Any, List, Type
+from typing import Any, List, Set, Type
 
 import pytest
 from tqdm import tqdm
@@ -36,20 +36,37 @@ def unformatted_files(unformatted_dir: Path) -> List[Path]:
     return list(unformatted_dir.iterdir())
 
 
-def test_file_discovery(default_mode: Mode) -> None:
-    p = Path("tests/data/unit_tests/test_api/test_file_discovery")
-    res = list(get_matching_paths(p.iterdir(), default_mode))
+@pytest.fixture
+def file_discovery_dir() -> Path:
+    return Path("tests/data/unit_tests/test_api/test_file_discovery").resolve()
 
-    expected = (
+
+@pytest.fixture
+def all_files(file_discovery_dir: Path) -> Set[Path]:
+    p = file_discovery_dir
+    files = {
         p / "top_level_file.sql",
         p / "top_level_file.two.sql",
         p / "a_directory/one_file.sql",
         p / "a_directory/nested_directory/another_file.sql",
         p / "a_directory/nested_directory/j2_extension.sql.jinja",
-    )
+    }
+    return files
 
-    for p in expected:
-        assert p in res
+
+@pytest.fixture
+def sql_jinja_files(file_discovery_dir: Path) -> Set[Path]:
+    p = file_discovery_dir
+    files = {p / "a_directory/nested_directory/j2_extension.sql.jinja"}
+    return files
+
+
+def test_file_discovery(
+    default_mode: Mode, file_discovery_dir: Path, all_files: Set[Path]
+) -> None:
+    res = get_matching_paths(file_discovery_dir.iterdir(), default_mode)
+
+    assert res == all_files
 
 
 @pytest.mark.parametrize(
@@ -60,20 +77,37 @@ def test_file_discovery(default_mode: Mode) -> None:
         ["**/top*", "**/a_directory/*", "**/a_directory/**/another_file.sql"],
     ],
 )
-def test_file_discovery_with_excludes(exclude: List[str]) -> None:
-    mode = Mode(exclude=exclude)
-    p = Path("tests/data/unit_tests/test_api/test_file_discovery")
-    res = get_matching_paths(p.iterdir(), mode)
+def test_file_discovery_with_excludes(
+    exclude: List[str], file_discovery_dir: Path, sql_jinja_files: Set[Path]
+) -> None:
+    mode = Mode(exclude=exclude, exclude_root=file_discovery_dir)
+    res = get_matching_paths(file_discovery_dir.iterdir(), mode)
+    assert res == sql_jinja_files
 
-    expected = {
-        # p / "top_level_file.sql",
-        # p / "a_directory/one_file.sql",
-        # p / "a_directory/nested_directory/another_file.sql",
-        p
-        / "a_directory/nested_directory/j2_extension.sql.jinja",
-    }
 
-    assert res & expected == expected
+def test_file_discovery_with_excludes_no_root(
+    file_discovery_dir: Path, all_files: Set[Path], sql_jinja_files: Set[Path]
+) -> None:
+    mode = Mode(exclude=["**/*.sql"], exclude_root=None)
+
+    # relative to here, excludes shouldn't do anything.
+    cwd = os.getcwd()
+    try:
+        os.chdir(Path(__file__).parent)
+        res = get_matching_paths(file_discovery_dir.iterdir(), mode)
+    finally:
+        os.chdir(cwd)
+
+    assert res == all_files
+
+    # relative to file_discovery_dir, excludes should knock out most files
+    try:
+        os.chdir(file_discovery_dir)
+        res = get_matching_paths(file_discovery_dir.iterdir(), mode)
+    finally:
+        os.chdir(cwd)
+
+    assert res == sql_jinja_files
 
 
 def test_format_empty_string(all_output_modes: Mode) -> None:

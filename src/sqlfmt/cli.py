@@ -155,7 +155,7 @@ from sqlfmt.mode import Mode
 @click.argument(
     "files",
     nargs=-1,
-    type=click.Path(exists=True, allow_dash=True, path_type=Path),
+    type=click.Path(exists=True, allow_dash=True, resolve_path=True, path_type=Path),
 )
 @click.pass_context
 def sqlfmt(
