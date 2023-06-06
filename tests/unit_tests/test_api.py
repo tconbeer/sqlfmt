@@ -94,6 +94,16 @@ def test_file_discovery_with_abs_excludes(
     assert res == sql_jinja_files
 
 
+def test_file_discovery_with_invalid_excludes(
+    file_discovery_dir: Path, all_files: Set[Path]
+) -> None:
+    exclude = ["."]
+    for root in [file_discovery_dir, None]:
+        mode = Mode(exclude=exclude, exclude_root=root)
+        res = get_matching_paths(file_discovery_dir.iterdir(), mode)
+        assert res == all_files
+
+
 def test_file_discovery_with_excludes_no_root(
     file_discovery_dir: Path, all_files: Set[Path], sql_jinja_files: Set[Path]
 ) -> None:
