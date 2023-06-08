@@ -1,6 +1,7 @@
 import os
 from dataclasses import dataclass, field
-from typing import List
+from pathlib import Path
+from typing import List, Optional
 
 from sqlfmt.dialect import ClickHouse, Polyglot
 from sqlfmt.exception import SqlfmtConfigError
@@ -19,6 +20,7 @@ class Mode:
     check: bool = False
     diff: bool = False
     exclude: List[str] = field(default_factory=list)
+    exclude_root: Optional[Path] = None
     encoding: str = "utf-8"
     fast: bool = False
     single_process: bool = False
@@ -31,12 +33,13 @@ class Mode:
     force_color: bool = False
 
     def __post_init__(self) -> None:
-        options = {
-            "polyglot": Polyglot(),
-            "clickhouse": ClickHouse(),
+        # get the dialect from its name.
+        dialects = {
+            "polyglot": Polyglot,
+            "clickhouse": ClickHouse,
         }
         try:
-            self.dialect = options[self.dialect_name.lower()]
+            self.dialect = dialects[self.dialect_name.lower()]()
         except KeyError:
             raise SqlfmtConfigError(
                 f"Mode was created with dialect_name={self.dialect_name}, "

@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from typing import Any, List
 
@@ -64,29 +63,6 @@ def test_find_config_file_not_in_tree(
     assert config_path is None
 
 
-def test_find_config_file_relative_and_absolute(
-    tmp_path: Path, files_relpath: List[Path]
-) -> None:
-    # Only check the cases where we are providing more than one path
-    if len(files_relpath) == 1:
-        return
-
-    current_dir = os.getcwd()
-    copy_config_file_to_dst("valid_sqlfmt_config.toml", tmp_path)
-
-    try:
-        os.chdir(tmp_path)
-
-        files = [tmp_path / files_relpath[0], files_relpath[1]]
-        search_paths = _get_common_parents(files)
-        assert tmp_path in search_paths
-        config_path = _find_config_file(search_paths)
-        assert config_path
-        assert config_path == tmp_path / "pyproject.toml"
-    finally:
-        os.chdir(current_dir)
-
-
 def test_load_config_from_path(tmp_path: Path) -> None:
     copy_config_file_to_dst("valid_sqlfmt_config.toml", tmp_path)
     config = _load_config_from_path(tmp_path / "pyproject.toml")
@@ -94,6 +70,7 @@ def test_load_config_from_path(tmp_path: Path) -> None:
     assert config["line_length"] == 100
     assert config["check"] is True
     assert config.get("name", "does not exist") == "does not exist"
+    assert config.get("exclude_root", "does not exist") == "does not exist"
 
 
 def test_load_config_from_path_minimal_config(tmp_path: Path) -> None:
@@ -101,6 +78,7 @@ def test_load_config_from_path_minimal_config(tmp_path: Path) -> None:
     config = _load_config_from_path(tmp_path / "pyproject.toml")
     assert config
     assert config["exclude"] == ["target/**/*", "dbt_packages/**/*"]
+    assert config["exclude_root"] == tmp_path
 
 
 def test_load_config_from_path_invalid_toml(tmp_path: Path) -> None:

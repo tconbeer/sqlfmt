@@ -4,6 +4,7 @@ from typing import Dict, List, Optional, Set, Union
 
 from sqlfmt.exception import SqlfmtConfigError
 from sqlfmt.mode import Mode
+from sqlfmt.report import STDIN_PATH
 
 if sys.version_info >= (3, 11):
     import tomllib
@@ -11,7 +12,7 @@ else:
     import tomli as tomllib
 
 
-Config = Dict[str, Union[bool, int, List[str], str]]
+Config = Dict[str, Union[bool, int, List[str], str, Path]]
 
 
 def load_config_file(files: List[Path]) -> Config:
@@ -28,23 +29,31 @@ def load_config_file(files: List[Path]) -> Config:
 
 def _get_common_parents(files: List[Path]) -> List[Path]:
     """
-    For a list of files, returns a Set of paths for all
+    For a list of absolute paths, returns a Set of paths for all
     of the common parents of files
     """
     assert files, "Must provide a list of paths"
     common_parents: Set[Path] = set()
     for p in files:
-        parents = set(p.absolute().parents)
-        if p.is_dir():
-            parents.add(p)
-        if not common_parents:
-            common_parents = parents
+        if p == STDIN_PATH:
+            break
         else:
-            common_parents &= parents
+            assert p.is_absolute()
+            parents = set(p.parents)
+            if p.is_dir():
+                parents.add(p)
+            if not common_parents:
+                common_parents = parents
+            else:
+                common_parents &= parents
 
     # the root directory is the lowest (i.e. most specific)
     # common parent among all of the files passed to sqlfmt
-    root_dir = max(common_parents, key=lambda p: p.parts)
+    try:
+        root_dir = max(common_parents, key=lambda p: p.parts)
+    except ValueError:
+        # if there are no common parents (e.g., stdin), just use the cwd
+        root_dir = Path.cwd()
     search_paths = [root_dir, *root_dir.parents]
     return search_paths
 
@@ -85,6 +94,8 @@ def _load_config_from_path(config_path: Optional[Path]) -> Config:
                 f"Check for invalid TOML. {e}"
             )
         raw_config: Config = pyproject_dict.get("tool", {}).get("sqlfmt", {})
+        if "exclude" in raw_config and "exclude_root" not in raw_config:
+            raw_config["exclude_root"] = config_path.parent
         return _validate_config(raw_config)
 
 

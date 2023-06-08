@@ -6,7 +6,7 @@ import sys
 from functools import partial
 from glob import glob
 from itertools import zip_longest
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import (
     Awaitable,
     Callable,
@@ -94,14 +94,16 @@ def get_matching_paths(paths: Iterable[Path], mode: Mode) -> Set[Path]:
     its directories) and are not excluded by the mode's exclude glob
     """
     include_set = _get_included_paths(paths, mode)
+    exclude_set = set()
 
     if mode.exclude:
-        globs = []
-        for pn in mode.exclude:
-            globs.extend(glob(pn, recursive=True))
-        exclude_set = {Path(s) for s in globs}
-    else:
-        exclude_set = set()
+        for s in mode.exclude:
+            if PurePath(s).is_absolute():
+                exclude_set.update([Path(g) for g in glob(s, recursive=True)])
+            elif mode.exclude_root is not None:
+                exclude_set.update(mode.exclude_root.glob(s))
+            else:
+                exclude_set.update(Path.cwd().glob(s))
 
     return include_set - exclude_set
 
@@ -135,7 +137,7 @@ def initialize_progress_bar(
 
 def _get_included_paths(paths: Iterable[Path], mode: Mode) -> Set[Path]:
     """
-    Takes a list of paths (files or directories) and a mode as an input, and
+    Takes a list of absolute paths (files or directories) and a mode as an input, and
     yields paths to individual files that match the input paths (or are contained in
     its directories)
     """

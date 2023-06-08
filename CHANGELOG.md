@@ -4,12 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Bug Fixes
+
+-   Relative `exclude` paths defined in `pyproject.toml` files are now evaluated relative to the location of the file, not the current working directory.
+    Relative paths provided to the `--exclude` option (or env var) are evaluated relative to the current working directory. Files and exclude paths
+    are now compared as resolved, absolute paths. (Fixes [#431](https://github.com/tconbeer/sqlfmt/issues/431) - thank you [@cmcnicoll](https://github.com/cmcnicoll)!)
 -   sqlfmt now supports the `<=>` operator ([#432](https://github.com/tconbeer/sqlfmt/issues/432) - thank you [@kathykwon](https://github.com/kathykwon)!)
 
 ## [0.18.3] - 2023-05-31
 
+### Bug Fixes
+
 -   fixes a bug where multiple c-style comments (e.g., `/* comment */`) on a single line would cause sqlfmt
     to not include all comments in formatted output ([#419](https://github.com/tconbeer/sqlfmt/issues/419) - thank you [@aersam](https://github.com/aersam)!)
+
+### Features
+
 -   adds a safety check to ensure comments are preserved in formatted output
 
 ## [0.18.2] - 2023-05-31
