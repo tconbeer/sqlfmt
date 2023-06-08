@@ -164,6 +164,7 @@ CORE = [
             r"@@@?",  # center point operator; also text match
             r"##",  # closest point
             r"<->",  # distance operator
+            r"<=>",  # null-safe equals (mysql)
             r"@>",  # contains
             r"<@",  # contained by
             r"<>",

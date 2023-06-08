@@ -79,6 +79,7 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (CORE, "operator", "<>"),
         (CORE, "operator", "||"),
         (CORE, "operator", "=>"),
+        (CORE, "operator", "<=>"),
         (CORE, "operator", "||/"),
         (CORE, "operator", "|/"),
         (CORE, "operator", "#"),
