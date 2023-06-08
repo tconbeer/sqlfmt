@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.19.0] - 2023-06-08
+
 ### Bug Fixes
 
 -   Relative `exclude` paths defined in `pyproject.toml` files are now evaluated relative to the location of the file, not the current working directory.
@@ -13,6 +15,7 @@ All notable changes to this project will be documented in this file.
     comment safety check. ([#434](https://github.com/tconbeer/sqlfmt/issues/434))
 
 ### Formatting Changes
+
 -   sqlfmt now supports the `<=>` operator ([#432](https://github.com/tconbeer/sqlfmt/issues/432) - thank you [@kathykwon](https://github.com/kathykwon)!)
 
 ## [0.18.3] - 2023-05-31
@@ -408,7 +411,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.18.3...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.19.0...HEAD
+
+[0.19.0]: https://github.com/tconbeer/sqlfmt/compare/0.18.3...0.19.0
 
 [0.18.3]: https://github.com/tconbeer/sqlfmt/compare/0.18.2...0.18.3
 
