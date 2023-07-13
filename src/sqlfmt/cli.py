@@ -8,7 +8,7 @@ from sqlfmt.config import load_config_file
 from sqlfmt.mode import Mode
 
 
-@click.command()
+@click.command()  # type: ignore
 @click.version_option(package_name="shandy-sqlfmt")
 @click.option(
     "--check",
