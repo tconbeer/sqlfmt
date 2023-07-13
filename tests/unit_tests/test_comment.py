@@ -3,6 +3,7 @@ from typing import List
 import pytest
 
 from sqlfmt.comment import Comment
+from sqlfmt.node_manager import NodeManager
 from sqlfmt.token import Token, TokenType
 
 
@@ -51,6 +52,22 @@ def multiline_comment() -> Comment:
     return comment
 
 
+@pytest.fixture
+def fmt_disabled_comment() -> Comment:
+    t = Token(type=TokenType.FMT_OFF, prefix="", token="--fmt: off", spos=0, epos=10)
+    mgr = NodeManager(case_sensitive_names=False)
+    node = mgr.create_node(t, None)
+    ct = Token(
+        type=TokenType.COMMENT,
+        prefix="          ",
+        token="--   comment",
+        spos=11,
+        epos=33,
+    )
+    comment = Comment(ct, is_standalone=True, previous_node=node)
+    return comment
+
+
 def test_get_marker(
     short_comment: Comment, short_mysql_comment: Comment, nospace_comment: Comment
 ) -> None:
@@ -70,19 +87,19 @@ def test_comment_parts(
 def test_str_len(
     short_comment: Comment, short_mysql_comment: Comment, nospace_comment: Comment
 ) -> None:
-    assert str(short_comment) == short_comment.token.token + "\n"
-    assert str(short_mysql_comment) == short_mysql_comment.token.token + "\n"
+    assert str(short_comment) == short_comment.token.token
+    assert str(short_mysql_comment) == short_mysql_comment.token.token
     assert str(nospace_comment) == str(short_comment)
 
-    assert len(short_comment) == 17
-    assert len(short_mysql_comment) == 16
-    assert len(nospace_comment) == 17
+    assert len(short_comment) == 16
+    assert len(short_mysql_comment) == 15
+    assert len(nospace_comment) == 16
 
 
 def test_render_inline(
     short_comment: Comment, nospace_comment: Comment, standalone_comment: Comment
 ) -> None:
-    expected = "-- short comment\n"
+    expected = "  -- short comment"
     assert short_comment.render_inline() == expected
     assert nospace_comment.render_inline() == expected
 
@@ -95,13 +112,21 @@ def test_render_inline(
     ],
 )
 def test_render_standalone(short_comment: Comment, prefix: str) -> None:
-    assert short_comment.render_standalone(
-        max_length=88, prefix=prefix
-    ) == prefix + str(short_comment)
+    assert (
+        short_comment.render_standalone(max_length=88, prefix=prefix)
+        == prefix + str(short_comment) + "\n"
+    )
     wrapped_comment = short_comment.render_standalone(max_length=14, prefix=prefix)
     lines = wrapped_comment.splitlines(keepends=True)
     assert lines[0] == prefix + "-- short\n"
     assert lines[1] == prefix + "-- comment\n"
+
+
+def test_render_standalone_formatting_disabled(fmt_disabled_comment: Comment) -> None:
+    assert (
+        fmt_disabled_comment.render_standalone(max_length=88, prefix="")
+        == f"{fmt_disabled_comment.token.prefix}{fmt_disabled_comment.token.token}\n"
+    )
 
 
 def test_render_standalone_wrap_strip_whitespace() -> None:
@@ -112,10 +137,11 @@ def test_render_standalone_wrap_strip_whitespace() -> None:
 
 
 def test_render_multiline(multiline_comment: Comment) -> None:
-    assert multiline_comment.render_standalone(max_length=88, prefix="") == str(
-        multiline_comment
+    assert str(multiline_comment) == "/*\ncomment\n*/"
+    assert (
+        multiline_comment.render_standalone(max_length=88, prefix="")
+        == f"{multiline_comment}\n"
     )
-    assert str(multiline_comment) == "/*\ncomment\n*/\n"
 
 
 @pytest.mark.parametrize(
@@ -136,7 +162,7 @@ def test_split_before(text: str, expected_splits: List[str]) -> None:
 def test_empty_comment() -> None:
     t = Token(type=TokenType.COMMENT, prefix=" ", token="-- ", spos=0, epos=3)
     comment = Comment(t, is_standalone=True, previous_node=None)
-    assert str(comment) == "--\n"
+    assert str(comment) == "--"
 
 
 def test_is_inline(

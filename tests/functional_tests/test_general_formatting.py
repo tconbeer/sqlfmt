@@ -13,6 +13,8 @@ from tests.util import check_formatting, read_test_data
         "preformatted/003_literals.sql",
         "preformatted/004_with_select.sql",
         "preformatted/005_fmt_off.sql",
+        "preformatted/006_fmt_off_447.sql",
+        "preformatted/007_fmt_off_comments.sql",
         "preformatted/301_multiline_jinjafmt.sql",
         "preformatted/400_create_table.sql",
         "unformatted/100_select_case.sql",

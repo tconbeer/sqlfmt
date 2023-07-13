@@ -187,6 +187,8 @@ class LineMerger:
 
         Returns a new list of Lines
         """
+        if not lines or all([line.formatting_disabled for line in lines]):
+            return lines
 
         try:
             merged_lines = self.create_merged_line(lines)

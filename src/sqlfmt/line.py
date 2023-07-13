@@ -104,7 +104,7 @@ class Line:
                 inline_comments.append(comment.render_inline())
 
         if inline_comments:
-            rendered_lines.append(f"{content}  {' '.join(inline_comments)}")
+            rendered_lines.append(f"{content}{''.join(inline_comments)}\n")
         else:
             rendered_lines.append(f"{self}")
 
