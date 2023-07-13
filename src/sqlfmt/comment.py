@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import ClassVar, Iterator, Optional, Tuple
 
 from sqlfmt.node import Node
-from sqlfmt.token import Token
+from sqlfmt.token import Token, TokenType
 
 
 @dataclass
@@ -82,7 +82,14 @@ class Comment:
         if self.previous_node is None:
             return False
         else:
-            return bool(self.previous_node.formatting_disabled)
+            # comment formatting is only disabled if there is an explicit FMT_OFF token
+            # (i.e., not if node formatting is disabled due to DATA nodes).
+            return any(
+                [
+                    t.type is TokenType.FMT_OFF
+                    for t in self.previous_node.formatting_disabled
+                ]
+            )
 
     def render_inline(self) -> str:
         """
