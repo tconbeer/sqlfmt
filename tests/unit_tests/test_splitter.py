@@ -76,18 +76,18 @@ def test_simple_comment_split(
     expected_comments = [
         (
             "-- not distinct, just an ordinary select here,"
-            " no big deal at all, it's okay really\n"
+            " no big deal at all, it's okay really"
         ),
         "",
-        "-- here is a long comment to be wrapped above this line\n",
-        "-- a short comment\n",
-        "-- standalone for third\n",
-        "-- here is another long comment to be wrapped but not indented\n",
+        "-- here is a long comment to be wrapped above this line",
+        "-- a short comment",
+        "-- standalone for third",
+        "-- here is another long comment to be wrapped but not indented",
         "",
-        "-- another comment that is a little bit too long to stay here\n",
-        "-- this should stay\n",
+        "-- another comment that is a little bit too long to stay here",
+        "-- this should stay",
         "",
-        "-- one last comment\n",
+        "-- one last comment",
     ]
 
     for i, line in enumerate(split_lines):

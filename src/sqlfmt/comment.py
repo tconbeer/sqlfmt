@@ -24,16 +24,14 @@ class Comment:
         without preceding whitespace, with a single space between the marker
         and the comment text.
         """
-        if self.formatting_disabled:
-            return f"{self.token.prefix}{self.token.token}\n"
-        elif self.is_multiline:
-            return f"{self.token.token}\n"
+        if self.is_multiline or self.formatting_disabled:
+            return f"{self.token.token}"
         else:
             marker, comment_text = self._comment_parts()
             if comment_text:
-                return f"{marker} {comment_text}\n"
+                return f"{marker} {comment_text}"
             else:
-                return f"{marker}\n"
+                return f"{marker}"
 
     def __len__(self) -> int:
         return len(str(self))
@@ -90,7 +88,8 @@ class Comment:
         """
         Renders a comment as an inline comment, assuming it'll fit.
         """
-        return str(self)
+        prefix = self.token.prefix if self.formatting_disabled else "  "
+        return f"{prefix}{self}"
 
     def render_standalone(self, max_length: int, prefix: str) -> str:
         """
@@ -98,23 +97,25 @@ class Comment:
         as a standalone comment (on its own line)
         """
         if self.formatting_disabled:
-            return str(self)
+            rendered = f"{self.token.prefix}{self}"
         elif self.is_multiline:
             # todo: split lines, indent each line the same
-            return prefix + str(self)
+            rendered = prefix + str(self)
         else:
             if len(self) + len(prefix) <= max_length:
-                return prefix + str(self)
+                rendered = prefix + str(self)
             else:
                 marker, comment_text = self._comment_parts()
                 if marker in ("--", "#"):
                     available_length = max_length - len(prefix) - len(marker) - 2
                     line_gen = self._split_before(comment_text, available_length)
-                    return "".join(
+                    rendered = "".join(
                         [prefix + marker + " " + txt.strip() + "\n" for txt in line_gen]
                     )
                 else:  # block-style or jinja comment. Don't wrap long lines for now
-                    return prefix + str(self)
+                    rendered = prefix + str(self)
+        nl = "\n"
+        return f"{rendered.rstrip(nl)}\n"
 
     @classmethod
     def _split_before(cls, text: str, max_length: int) -> Iterator[str]:
