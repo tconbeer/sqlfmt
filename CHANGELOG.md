@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.19.1] - 2023-07-13
+
 ### Bug Fixes
 
 -   Fixes a bug where `--fmt: off` comments could cause an error in formatting a file
@@ -420,7 +422,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.19.0...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.19.1...HEAD
+
+[0.19.1]: https://github.com/tconbeer/sqlfmt/compare/0.19.0...0.19.1
 
 [0.19.0]: https://github.com/tconbeer/sqlfmt/compare/0.18.3...0.19.0
 
