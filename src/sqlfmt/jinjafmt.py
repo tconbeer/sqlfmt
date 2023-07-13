@@ -364,7 +364,7 @@ class JinjaFormatter:
         split before the node (unless it is already the first node on that line)
         """
         line_length = self.mode.line_length
-        if line.contains_jinja:
+        if not line.formatting_disabled and line.contains_jinja:
             running_length = len(line.prefix)
             for i, node in enumerate(line.nodes):
                 is_blackened = self._format_jinja_node(

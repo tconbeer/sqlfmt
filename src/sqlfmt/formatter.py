@@ -60,13 +60,17 @@ class QueryFormatter:
             if (
                 line.is_standalone_jinja_statement
                 and line.nodes[0].is_closing_jinja_block
+                and not line.formatting_disabled
             ):
                 assert start_node
                 line.nodes[0].open_brackets = start_node.open_brackets
 
             if line.nodes and line.nodes[-1].open_jinja_blocks:
                 start_node = line.nodes[-1].open_jinja_blocks[-1]
-                if len(line.open_brackets) < len(start_node.open_brackets):
+                if (
+                    len(line.open_brackets) < len(start_node.open_brackets)
+                    and not start_node.formatting_disabled
+                ):
                     start_node.open_brackets = line.open_brackets
 
         return lines
@@ -84,7 +88,7 @@ class QueryFormatter:
         for line in lines:
             if line.is_blank_line:
                 max_cnt = 2 if line.depth == (0, 0) else 1
-                if cnt < max_cnt:
+                if cnt < max_cnt or line.formatting_disabled:
                     new_lines.append(line)
                 cnt += 1
             else:
@@ -99,6 +103,7 @@ class QueryFormatter:
         2. Formats jinja tags
         3. Dedents jinja block tags to match their least-indented contents
         4. Merges lines
+        5. Removes extra blank lines
         """
         lines = raw_query.lines
 
