@@ -24,7 +24,9 @@ class Comment:
         without preceding whitespace, with a single space between the marker
         and the comment text.
         """
-        if self.is_multiline:
+        if self.formatting_disabled:
+            return f"{self.token.prefix}{self.token.token}\n"
+        elif self.is_multiline:
             return f"{self.token.token}\n"
         else:
             marker, comment_text = self._comment_parts()
@@ -77,18 +79,27 @@ class Comment:
     def is_inline(self) -> bool:
         return not self.is_standalone and not self.is_multiline and not self.is_c_style
 
+    @property
+    def formatting_disabled(self) -> bool:
+        if self.previous_node is None:
+            return False
+        else:
+            return bool(self.previous_node.formatting_disabled)
+
     def render_inline(self) -> str:
         """
         Renders a comment as an inline comment, assuming it'll fit.
         """
-        return f"{self}"
+        return str(self)
 
     def render_standalone(self, max_length: int, prefix: str) -> str:
         """
         For a Comment, returns the string for properly formatting this Comment
         as a standalone comment (on its own line)
         """
-        if self.is_multiline:
+        if self.formatting_disabled:
+            return str(self)
+        elif self.is_multiline:
             # todo: split lines, indent each line the same
             return prefix + str(self)
         else:

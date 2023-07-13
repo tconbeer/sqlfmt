@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Bug Fixes
+
+-   Fixes a bug where `--fmt: off` comments could cause an error in formatting a file
+    ([#447](https://github.com/tconbeer/sqlfmt/issues/447) - thank you [@ramonvermeulen](https://github.com/ramonvermeulen)!).
+-   Fixes a bug where some formatting changes were applied to sections of code in
+    `--fmt: off` blocks.
+-   Fixes a bug where comments inside of `--fmt: off` would still be formatted.
+    ([#136](https://github.com/tconbeer/sqlfmt/issues/136)).
+
 ## [0.19.0] - 2023-06-08
 
 ### Bug Fixes
