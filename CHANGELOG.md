@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Bug Fixes
+
+-   Fixes a bug where `--exclude` would not follow symlinks when globbing
+    ([#457](https://github.com/tconbeer/sqlfmt/issues/457) - thank you [@jeancochrane](https://github.com/jeancochrane)!).
+
 ## [0.19.1] - 2023-07-13
 
 ### Bug Fixes

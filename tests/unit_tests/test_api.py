@@ -50,6 +50,8 @@ def all_files(file_discovery_dir: Path) -> Set[Path]:
         p / "a_directory/one_file.sql",
         p / "a_directory/nested_directory/another_file.sql",
         p / "a_directory/nested_directory/j2_extension.sql.jinja",
+        p / "a_directory/symlink_source_directory/symlink_file.sql",
+        p / "a_directory/symlink_target_directory/symlink_file.sql",
     }
     return files
 
@@ -74,7 +76,12 @@ def test_file_discovery(
     [
         ["**/*_file*"],
         ["**/*.sql"],
-        ["**/top*", "**/a_directory/*", "**/a_directory/**/another_file.sql"],
+        [
+            "**/top*",
+            "**/a_directory/*",
+            "**/a_directory/**/another_file.sql",
+            "**/a_directory/**/symlink_file.sql",
+        ],
     ],
 )
 def test_file_discovery_with_excludes(
