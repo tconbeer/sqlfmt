@@ -100,17 +100,18 @@ def get_matching_paths(paths: Iterable[Path], mode: Mode) -> Set[Path]:
         for s in mode.exclude:
             if PurePath(s).is_absolute():
                 exclude_set.update([Path(g) for g in glob(s, recursive=True)])
-            elif mode.exclude_root is not None:
+            else:
+                exclude_root = mode.exclude_root or Path.cwd()
                 try:
-                    exclude_set.update(mode.exclude_root.glob(s))
+                    # Prefer glob.glob() to Path.glob() here, even though the
+                    # latter would be more concise, since Path.glob() does not
+                    # resolve symlinks properly in Python <3.13
+                    exclude_set.update(
+                        [Path(g) for g in glob(str(exclude_root / s), recursive=True)]
+                    )
                 except IndexError:
                     # for some reason Path.glob(".") raises an index error,
                     # although glob.glob(".") returns ["."]
-                    pass
-            else:
-                try:
-                    exclude_set.update(Path.cwd().glob(s))
-                except IndexError:
                     pass
 
     return include_set - exclude_set
