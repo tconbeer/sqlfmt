@@ -45,6 +45,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/126_blank_lines.sql",
         "unformatted/127_more_comments.sql",
         "unformatted/128_double_slash_comments.sql",
+        "unformatted/129_duckdb_joins.sql",
         "unformatted/200_base_model.sql",
         "unformatted/201_basic_snapshot.sql",
         "unformatted/202_unpivot_macro.sql",
