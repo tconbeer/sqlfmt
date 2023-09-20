@@ -42,8 +42,6 @@ MAIN = [
         name="word_operator",
         priority=1100,
         pattern=group(
-            r"all",
-            r"any",
             r"as",
             r"(not\s+)?between",
             r"cube",
@@ -53,7 +51,7 @@ MAIN = [
             r"(not\s+)?in",
             r"is(\s+not)?(\s+distinct\s+from)?",
             r"isnull",
-            r"(not\s+)?i?like(\s+any)?",
+            r"(not\s+)?i?like(\s+(any|all))?",
             r"over",
             r"(un)?pivot",
             r"notnull",
