@@ -8,6 +8,10 @@ All notable changes to this project will be documented in this file.
 
 -   Drops support for Python 3.7. Please upgrade to Python 3.8 or higher.
 
+### Formatting Changes and Bug Fixes
+
+-   `any()` and `all()` will no longer get spaces between the function name and the parenthesis, unless they are a part of a `like any ()` or `like all ()` operator ([#483](https://github.com/tconbeer/sqlfmt/issues/483) - thank you [@damirbk](https://github.com/damirbk)!).
+
 ## [0.19.2] - 2023-07-31
 
 ### Bug Fixes
