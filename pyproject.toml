@@ -5,7 +5,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry]
 name = "shandy-sqlfmt"
 version = "0.19.2"
-description = "sqlfmt is an opinionated CLI tool that formats your sql files"
+description = "sqlfmt formats your dbt SQL files so you don't have to."
 readme = "README.md"
 authors = ["Ted Conbeer <ted@shandy.io>"]
 license = "Apache-2.0"
@@ -30,7 +30,7 @@ jinjafmt = ["black"]
 sqlfmt_primer = ["gitpython"]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.8"
 click = "^8.0"
 tqdm = "^4.0"
 platformdirs = ">=2.4,<4.0"
@@ -45,6 +45,7 @@ gitpython = { version = "^3.1.24", optional = true }
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^2.20.0"
 snakeviz = "^2.1.1"
+black = ">=23.9.1"
 
 [tool.poetry.group.static.dependencies]
 flake8 = "^5.0.4"
