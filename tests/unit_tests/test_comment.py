@@ -26,6 +26,15 @@ def short_mysql_comment() -> Comment:
 
 
 @pytest.fixture
+def short_js_comment() -> Comment:
+    t = Token(
+        type=TokenType.COMMENT, prefix=" ", token="// short comment", spos=0, epos=16
+    )
+    comment = Comment(t, is_standalone=False, previous_node=None)
+    return comment
+
+
+@pytest.fixture
 def nospace_comment() -> Comment:
     t = Token(
         type=TokenType.COMMENT, prefix=" ", token="--short comment", spos=0, epos=15
@@ -69,38 +78,54 @@ def fmt_disabled_comment() -> Comment:
 
 
 def test_get_marker(
-    short_comment: Comment, short_mysql_comment: Comment, nospace_comment: Comment
+    short_comment: Comment,
+    short_mysql_comment: Comment,
+    nospace_comment: Comment,
+    short_js_comment: Comment,
 ) -> None:
     assert short_comment._get_marker() == ("--", 3)
     assert short_mysql_comment._get_marker() == ("#", 2)
+    assert short_js_comment._get_marker() == ("//", 3)
     assert nospace_comment._get_marker() == ("--", 2)
 
 
 def test_comment_parts(
-    short_comment: Comment, short_mysql_comment: Comment, nospace_comment: Comment
+    short_comment: Comment,
+    short_mysql_comment: Comment,
+    nospace_comment: Comment,
+    short_js_comment: Comment,
 ) -> None:
     assert short_comment._comment_parts() == ("--", "short comment")
     assert short_mysql_comment._comment_parts() == ("#", "short comment")
+    assert short_js_comment._comment_parts() == ("--", "short comment")
     assert nospace_comment._comment_parts() == ("--", "short comment")
 
 
 def test_str_len(
-    short_comment: Comment, short_mysql_comment: Comment, nospace_comment: Comment
+    short_comment: Comment,
+    short_mysql_comment: Comment,
+    nospace_comment: Comment,
+    short_js_comment: Comment,
 ) -> None:
     assert str(short_comment) == short_comment.token.token
     assert str(short_mysql_comment) == short_mysql_comment.token.token
+    assert str(short_js_comment) == f"-- {short_js_comment.body}"
     assert str(nospace_comment) == str(short_comment)
 
     assert len(short_comment) == 16
     assert len(short_mysql_comment) == 15
+    assert len(short_js_comment) == 16
     assert len(nospace_comment) == 16
 
 
 def test_render_inline(
-    short_comment: Comment, nospace_comment: Comment, standalone_comment: Comment
+    short_comment: Comment,
+    nospace_comment: Comment,
+    short_js_comment: Comment,
 ) -> None:
     expected = "  -- short comment"
     assert short_comment.render_inline() == expected
+    assert short_js_comment.render_inline() == expected
     assert nospace_comment.render_inline() == expected
 
 

@@ -16,7 +16,7 @@ class Comment:
     token: Token
     is_standalone: bool
     previous_node: Optional[Node]
-    comment_marker: ClassVar[re.Pattern] = re.compile(r"(--|#|/\*|\{#-?)([^\S\n]*)")
+    comment_marker: ClassVar[re.Pattern] = re.compile(r"(--|#|//|/\*|\{#-?)([^\S\n]*)")
 
     def __str__(self) -> str:
         """
@@ -52,6 +52,18 @@ class Comment:
         _, len = match.span(2)
         return self.token.token[:epos], len
 
+    def _rewrite_marker(self, marker: str) -> str:
+        """
+        Rewrites the comment marker to the standard --
+
+        The following markers are rewritten:
+            //
+        """
+        if marker == "//":
+            return "--"
+        else:
+            return marker
+
     def _comment_parts(self) -> Tuple[str, str]:
         """
         For a comment, returns a tuple of the comment's marker and its contents
@@ -60,7 +72,7 @@ class Comment:
         assert not self.is_multiline
         marker, skipchars = self._get_marker()
         comment_text = self.token.token[skipchars:]
-        return marker, comment_text
+        return self._rewrite_marker(marker), comment_text
 
     @property
     def is_multiline(self) -> bool:
@@ -76,6 +88,13 @@ class Comment:
     @property
     def is_inline(self) -> bool:
         return not self.is_standalone and not self.is_multiline and not self.is_c_style
+
+    @property
+    def body(self) -> str:
+        if self.is_multiline:
+            return self.token.token.strip()
+        else:
+            return self._comment_parts()[1].strip()
 
     @property
     def formatting_disabled(self) -> bool:
