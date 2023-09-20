@@ -122,10 +122,8 @@ MAIN = [
             ),
             r"delete\s+from",
             r"from",
-            (
-                r"(natural\s+)?"
-                r"((inner|cross|((left|right|full)(\s+outer)?))\s+)?join"
-            ),
+            r"((cross|positional|semi|anti)\s+)?join",
+            (r"((natural|asof)\s+)?" r"((inner|(left|right|full)(\s+outer)?)\s+)?join"),
             # this is the USING following DELETE, not the join operator
             # (see above)
             r"using",

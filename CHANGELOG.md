@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 
 -   `any()` and `all()` will no longer get spaces between the function name and the parenthesis, unless they are a part of a `like any ()` or `like all ()` operator ([#483](https://github.com/tconbeer/sqlfmt/issues/483) - thank you [@damirbk](https://github.com/damirbk)!).
 -   Snowflake's `//` comment markers are now parsed as comments and rewritten to `--` on formatting ([#468](https://github.com/tconbeer/sqlfmt/issues/468) - thank you [@nilsonavp](https://github.com/nilsonavp)!).
+-   DuckDB's `semi`, `anti`, `positional`, and `asof` joins are now supported. ([#482](https://github.com/tconbeer/sqlfmt/issues/482)).
 
 ## [0.19.2] - 2023-07-31
 
