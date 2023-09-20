@@ -51,6 +51,8 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (CORE, "comment", "--no-space comment"),
         (CORE, "comment", "# mysql-style # comments"),
         (CORE, "comment", "#nospace"),
+        (CORE, "comment", "// why is this a comment??!"),
+        (CORE, "comment", "//whywhywhy??"),
         (CORE, "comment_start", "/*"),
         (CORE, "comment_end", "*/"),
         (MAIN, "statement_start", "case"),

@@ -25,6 +25,7 @@ SQL_QUOTED_EXP = group(
 SQL_COMMENT = group(
     r"--[^\r\n]*",
     r"#[^\r\n]*",
+    r"//[^\r\n]*",  # snowflake's js-style double-slash comment
     r"/\*[^*]*\*+(?:[^/*][^*]*\*+)*/",  # simple block comment
 )
 
