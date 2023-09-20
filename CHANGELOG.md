@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+
+-   Drops support for Python 3.7. Please upgrade to Python 3.8 or higher.
+
 ## [0.19.2] - 2023-07-31
 
 ### Bug Fixes
