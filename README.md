@@ -49,7 +49,21 @@ For more installation options, [read the docs](https://docs.sqlfmt.com/getting-s
 ### Getting Started
 
 #### Other prerequisites
-**sqlfmt is an alpha product** and will not always produce the formatted output you might want. It might even break your SQL syntax. It is **highly recommended** to only run sqlfmt on files in a version control system (like git), so that it is easy for you to revert any changes made by sqlfmt. On your first run, be sure to make a commit before running sqlfmt.
+**sqlfmt will not always produce the formatted output you might want.** It might even break your SQL syntax. It is **highly recommended** to only run sqlfmt on files in a version control system (like git), so that it is easy for you to revert any changes made by sqlfmt. On your first run, be sure to make a commit before running sqlfmt.
+
+There are certain situations where sqlfmt can be considered to be in Beta, or even more mature than that. Those are:
+
+1. Using sqlfmt to format select statements for one of the major dialects (PostgresSQL, MySQL, Snowflake, BQ, Redshift).
+
+1. Using sqlfmt to format a dbt project (which may also include jinja and some minimal DDL/DML, like grants, create function, etc.) for one of the major dialects.
+
+However, there are other use cases where sqlfmt is very much alpha:
+
+1. Formatting some less widely used dialects, like SQLServer.
+
+1. Formatting other DDL (create table, insert, etc.) (sqlfmt attempts to be no-op on these statements as much as possible).
+
+In these domains sqlfmt is nowhere near "feature complete" and caution is highly advised.
 
 #### Using sqlfmt
 To list commands and options:
