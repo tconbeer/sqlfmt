@@ -59,7 +59,7 @@ There are certain situations where sqlfmt can be considered to be in Beta, or ev
 
 However, there are other use cases where sqlfmt is very much alpha:
 
-1. Formatting some less widely used dialects, like SQLServer.
+1. Formatting some dialects that deviate from ANSI or Postgres, like T-SQL (SQLServer).
 
 1. Formatting other DDL (create table, insert, etc.) (sqlfmt attempts to be no-op on these statements as much as possible).
 
