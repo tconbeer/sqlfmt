@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "shandy-sqlfmt"
-version = "0.19.2"
+version = "0.20.0"
 description = "sqlfmt formats your dbt SQL files so you don't have to."
 readme = "README.md"
 authors = ["Ted Conbeer <ted@shandy.io>"]
