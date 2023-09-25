@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.20.0] - 2023-09-25
+
 ### BREAKING CHANGES
 
 -   Drops support for Python 3.7. Please upgrade to Python 3.8 or higher.
@@ -439,7 +441,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.19.2...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.20.0...HEAD
+
+[0.20.0]: https://github.com/tconbeer/sqlfmt/compare/0.19.2...0.20.0
 
 [0.19.2]: https://github.com/tconbeer/sqlfmt/compare/0.19.1...0.19.2
 
