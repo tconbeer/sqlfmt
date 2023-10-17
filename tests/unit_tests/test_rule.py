@@ -190,6 +190,7 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (MAIN, "set_operator", "minus"),
         (MAIN, "set_operator", "except"),
         (CORE, "bracket_open", "array<"),
+        (CORE, "bracket_open", "map<"),
         (CORE, "bracket_open", "table\n<"),
         (CORE, "bracket_open", "struct<"),
         (MAIN, "explain", "explain"),

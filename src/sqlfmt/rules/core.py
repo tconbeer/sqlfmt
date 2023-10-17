@@ -116,8 +116,8 @@ CORE = [
             r"\[",
             r"\(",
             r"\{",
-            # bq usese angle brackets for type definitions for compound types
-            r"(array|table|struct)\s*<",
+            # bq/athena uses angle brackets for type definitions for compound types
+            r"(array|map|table|struct)\s*<",
         ),
         action=partial(actions.add_node_to_buffer, token_type=TokenType.BRACKET_OPEN),
     ),

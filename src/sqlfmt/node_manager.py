@@ -54,6 +54,7 @@ class NodeManager:
             "[": "]",
             "case": "end",
             "array<": ">",
+            "map<": ">",
             "table<": ">",
             "struct<": ">",
         }
