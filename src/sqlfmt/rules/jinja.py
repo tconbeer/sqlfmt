@@ -244,7 +244,7 @@ JINJA = [
     Rule(
         name="jinja_expression_end",
         priority=610,
-        pattern=group(r"-?\}\}"),
+        pattern=group(r"-?\}\}(?<!\"\}\})"),
         action=actions.raise_sqlfmt_bracket_error,
     ),
 ]
