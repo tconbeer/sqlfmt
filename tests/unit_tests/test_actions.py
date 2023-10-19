@@ -1,6 +1,7 @@
 import re
 
 import pytest
+from jinja2.nodes import Const, Dict, Keyword, Pair
 
 from sqlfmt import actions
 from sqlfmt.analyzer import Analyzer
@@ -583,3 +584,57 @@ def test_handle_number_binary(default_analyzer: Analyzer) -> None:
     query = default_analyzer.parse_query(source_string=source_string.lstrip())
     numbers = [str(n).strip() for n in query.nodes if n.token.type is TokenType.NUMBER]
     assert numbers == ["1", "1", "1", "1", "-1", "2", "2", "2", "2"]
+
+
+def test_jinja_to_dict_simple() -> None:
+    jinja_obj = Dict(
+        {Pair(Const("key1"), Const("value1")), Pair(Const("key2"), Const(0))}
+    )
+    result = actions.jinja_to_dict(jinja_obj)
+    expected = {"key1": "value1", "key2": 0}
+    assert result == expected
+
+
+def test_jinja_to_dict_nested() -> None:
+    jinja_obj = Keyword("outer", Dict({Pair(Const("inner_key"), Const(None))}))
+    result = actions.jinja_to_dict(jinja_obj)
+    expected = {"outer": {"inner_key": None}}
+    assert result == expected
+
+
+def test_jinja_to_dict_mixed() -> None:
+    jinja_obj = Dict(
+        {
+            Pair(Const("key1"), Keyword("nested", Const("value1"))),
+            Pair(Const("key2"), Const(True)),
+        }
+    )
+    result = actions.jinja_to_dict(jinja_obj)
+    expected = {"key1": {"nested": "value1"}, "key2": True}
+    assert result == expected
+
+
+def test_jinja_to_dict_empty() -> None:
+    jinja_obj = Dict({})
+    result = actions.jinja_to_dict(jinja_obj)
+    assert result == {}
+
+
+def test_extract_nested_dictionary_false_positive() -> None:
+    source_string = """
+    This is a string that looks like a dictionary: {"foo":{"key": "value"}}.
+    """
+    result = actions.extract_nested_dictionary(source_string)
+    assert not result
+
+
+def test_extract_nested_dictionary() -> None:
+    source_string = (
+        r"{{ config(nested_dictionary={"
+        r'"foo": true, "tags": {'
+        r'"bar": "1", "baz": "2"'
+        r"}}) }}"
+    )
+    result = actions.extract_nested_dictionary(source_string)
+    expected = r'{"foo": true, "tags": {"bar": "1", "baz": "2"}}'
+    assert result == expected

@@ -6,6 +6,7 @@ if TYPE_CHECKING:
     from sqlfmt.analyzer import Analyzer
 
 MAYBE_WHITESPACES: str = r"[^\S\n]*"  # any whitespace except newline
+MAYBE_NESTED_DICTIONARY: str = r"\"}}|'}}"
 
 
 @dataclass
