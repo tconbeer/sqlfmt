@@ -2,13 +2,12 @@ import re
 from typing import TYPE_CHECKING, Callable, List, Optional
 
 from jinja2 import Environment
-from jinja2.nodes import Const, Dict, Keyword, Pair
 
 from sqlfmt.comment import Comment
 from sqlfmt.exception import SqlfmtBracketError, StopRulesetLexing
 from sqlfmt.line import Line
 from sqlfmt.node import Node, get_previous_token
-from sqlfmt.rule import MAYBE_NESTED_DICTIONARY, MAYBE_WHITESPACES, Rule
+from sqlfmt.rule import MAYBE_WHITESPACES, Rule
 from sqlfmt.token import Token, TokenType
 
 if TYPE_CHECKING:
@@ -489,44 +488,6 @@ def handle_jinja(
     raise StopRulesetLexing
 
 
-def jinja_to_dict(obj: Keyword | Dict | Pair | Const) -> dict | Const:
-    """
-    Parses a Jinja keyword with a dictionary value,
-    and returns a Python dictionary
-    """
-    if isinstance(obj, Keyword):
-        return {obj.key: jinja_to_dict(obj.value)}
-    elif isinstance(obj, Dict):
-        return {pair.key.value: jinja_to_dict(pair.value) for pair in obj.items}
-    elif isinstance(obj, Pair):
-        return {obj.key.value: jinja_to_dict(obj.value)}
-    elif isinstance(obj, Const):
-        return obj.value
-    return None
-
-
-def extract_nested_dictionary(source_string: str) -> str | None:
-    """
-    Iterates over a Jinja template to extract nested dictionaries
-
-    Returns None if no actual dictionary is matched,
-    e.g. a false positive like a string with "}}
-    """
-    env = Environment()
-    parsed_template = env.parse(source_string)
-    for outer_node in parsed_template.body:
-        for node in outer_node.iter_child_nodes():
-            if hasattr(node, "kwargs"):
-                keywords = node.kwargs
-                for keyword in keywords:
-                    if isinstance(keyword.value, Dict):
-                        dict_pattern = rf"(?<={keyword.key}=)" + r"{.*?}+"
-                        dict_result = re.search(dict_pattern, source_string, re.DOTALL)
-                        if dict_result:
-                            return dict_result[0]
-    return None
-
-
 def handle_potentially_nested_tokens(
     analyzer: "Analyzer",
     source_string: str,
@@ -543,15 +504,6 @@ def handle_potentially_nested_tokens(
     start_rule = analyzer.get_rule(rule_name=start_name)
     end_rule = analyzer.get_rule(rule_name=end_name)
 
-    # check if template contains a nested dictionary that can be
-    # misinterpreted as a Jinja expression ending
-    if re.search(MAYBE_NESTED_DICTIONARY, source_string):
-        if nested_dictionary := extract_nested_dictionary(source_string):
-            # use a positive lookbehind to exclude the nested dictionary as a match
-            # use an additional negative lookbehind to exclude } from match
-            nested_dict_pattern = rf"(?<!{nested_dictionary})".replace("}", "")
-            end_rule.pattern = nested_dict_pattern + r"(?<!})" + end_rule.pattern
-
     # extract properties from matching start of token
     pos, _ = match.span(0)
     spos, epos = match.span(1)
@@ -562,13 +514,26 @@ def handle_potentially_nested_tokens(
     program = re.compile(
         MAYBE_WHITESPACES + group(*patterns), re.IGNORECASE | re.DOTALL
     )
-    epos = analyzer.search_for_terminating_token(
-        start_rule=start_name,
-        program=program,
-        nesting_program=start_rule.program,
-        tail=source_string[epos:],
-        pos=epos,
-    )
+    while True:
+        epos = analyzer.search_for_terminating_token(
+            start_rule=start_name,
+            program=program,
+            nesting_program=start_rule.program,
+            tail=source_string[epos:],
+            pos=epos,
+        )
+        if start_name != "jinja_expression_start":
+            break
+        else:
+            # jinja expressions can contain nested dictionaries whose brackets might
+            # incorrectly match; e.g., {{ {'a': {'b': 1}} }}. We use the jinja lexer
+            # on our match to ensure that the last token is a jinja variable_end
+            # token; if it's not, we keep searching.
+            jinja_tokens = list(Environment().lex(source_string[spos:epos]))
+            final_token_type = jinja_tokens[-1][1]
+            if final_token_type == "variable_end":
+                break
+
     token_text = source_string[spos:epos]
     token = Token(token_type, prefix, token_text, pos, epos)
     node = analyzer.node_manager.create_node(token, analyzer.previous_node)
