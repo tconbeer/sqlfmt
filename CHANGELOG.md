@@ -4,12 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.21.0] - 2023-10-20
+
 ### Bug Fixes
 
 -   Adds support for the `map<...>` type declaration syntax from Athena. ([#500](https://github.com/tconbeer/sqlfmt/issues/500) - thank you for the issue and fix, [@benjamin-awd](https://github.com/benjamin-awd)!)
 -   Fixes a bug where nested dicts inside jinja expressions (e.g., `{{ {'a': {'b': 1}} }}`) could cause parsing errors ([#471](https://github.com/tconbeer/sqlfmt/issues/500) - thank you [@rparvathaneni-sc](https://github.com/rparvathaneni-sc) and [@benjamin-awd](https://github.com/benjamin-awd)!). This fix introduces a dependency on jinja2 > v3.0.
 -   Fixes a bug in the lexing logic that prevented the walrus operator (`:=`) from being lexed as a single token ([#502](https://github.com/tconbeer/sqlfmt/issues/502) - thank you [@federico-hero](https://github.com/federico-hero)!).
-
 
 ## [0.20.0] - 2023-09-25
 
@@ -448,7 +449,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.20.0...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.21.0...HEAD
+
+[0.21.0]: https://github.com/tconbeer/sqlfmt/compare/0.20.0...0.21.0
 
 [0.20.0]: https://github.com/tconbeer/sqlfmt/compare/0.19.2...0.20.0
 
