@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Bug Fixes
+
+-   Adds support for the `map<...>` type declaration syntax from Athena. ([#500](https://github.com/tconbeer/sqlfmt/issues/500) - thank you for the issue and fix, [@benjamin-awd](https://github.com/benjamin-awd)!)
+
+
 ## [0.20.0] - 2023-09-25
 
 ### BREAKING CHANGES
