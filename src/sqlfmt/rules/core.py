@@ -92,6 +92,12 @@ CORE = [
         action=partial(actions.add_node_to_buffer, token_type=TokenType.DOUBLE_COLON),
     ),
     Rule(
+        name="walrus",
+        priority=421,
+        pattern=group(r":="),
+        action=partial(actions.add_node_to_buffer, token_type=TokenType.OPERATOR),
+    ),
+    Rule(
         name="colon",
         priority=430,
         pattern=group(r":"),
@@ -183,7 +189,7 @@ CORE = [
             r"[*+?]?\?",  # regex greedy/non-greedy, also ?
             r"!!",  # negate text match
             r"%%",  # psycopg escaped mod operator
-            r"[+\-*/%&|^=<>:#!]=?",  # singles
+            r"[+\-*/%&|^=<>#!]=?",  # singles
         ),
         action=partial(actions.add_node_to_buffer, token_type=TokenType.OPERATOR),
     ),
