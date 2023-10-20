@@ -68,6 +68,7 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (CORE, "bracket_open", "["),
         (CORE, "bracket_close", ")"),
         (CORE, "double_colon", "::"),
+        (CORE, "walrus", ":="),
         (CORE, "colon", ":"),
         (CORE, "semicolon", ";"),
         (CORE, "operator", "+"),
