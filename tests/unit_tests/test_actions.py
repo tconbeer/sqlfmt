@@ -7,6 +7,7 @@ from sqlfmt.analyzer import Analyzer
 from sqlfmt.exception import SqlfmtBracketError, StopRulesetLexing
 from sqlfmt.rules import FUNCTION, JINJA
 from sqlfmt.token import Token, TokenType
+from tests.util import read_test_data
 
 
 @pytest.fixture
@@ -583,3 +584,22 @@ def test_handle_number_binary(default_analyzer: Analyzer) -> None:
     query = default_analyzer.parse_query(source_string=source_string.lstrip())
     numbers = [str(n).strip() for n in query.nodes if n.token.type is TokenType.NUMBER]
     assert numbers == ["1", "1", "1", "1", "-1", "2", "2", "2", "2"]
+
+
+def test_handle_nested_dictionary_in_jinja_expression(
+    jinja_analyzer: Analyzer,
+) -> None:
+    source_string, _ = read_test_data(
+        "unit_tests/test_actions/test_handle_potentially_nested_tokens.sql"
+    )
+    match = re.match(r"(\{\{)", source_string)
+    assert match
+    actions.handle_potentially_nested_tokens(
+        analyzer=jinja_analyzer,
+        source_string=source_string,
+        match=match,
+        start_name="jinja_expression_start",
+        end_name="jinja_expression_end",
+        token_type=TokenType.JINJA_EXPRESSION,
+    )
+    assert jinja_analyzer.pos == 355

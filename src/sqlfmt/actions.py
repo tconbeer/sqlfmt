@@ -1,6 +1,8 @@
 import re
 from typing import TYPE_CHECKING, Callable, List, Optional
 
+from jinja2 import Environment
+
 from sqlfmt.comment import Comment
 from sqlfmt.exception import SqlfmtBracketError, StopRulesetLexing
 from sqlfmt.line import Line
@@ -501,6 +503,7 @@ def handle_potentially_nested_tokens(
     """
     start_rule = analyzer.get_rule(rule_name=start_name)
     end_rule = analyzer.get_rule(rule_name=end_name)
+
     # extract properties from matching start of token
     pos, _ = match.span(0)
     spos, epos = match.span(1)
@@ -511,13 +514,26 @@ def handle_potentially_nested_tokens(
     program = re.compile(
         MAYBE_WHITESPACES + group(*patterns), re.IGNORECASE | re.DOTALL
     )
-    epos = analyzer.search_for_terminating_token(
-        start_rule=start_name,
-        program=program,
-        nesting_program=start_rule.program,
-        tail=source_string[epos:],
-        pos=epos,
-    )
+    while True:
+        epos = analyzer.search_for_terminating_token(
+            start_rule=start_name,
+            program=program,
+            nesting_program=start_rule.program,
+            tail=source_string[epos:],
+            pos=epos,
+        )
+        if start_name != "jinja_expression_start":
+            break
+        else:
+            # jinja expressions can contain nested dictionaries whose brackets might
+            # incorrectly match; e.g., {{ {'a': {'b': 1}} }}. We use the jinja lexer
+            # on our match to ensure that the last token is a jinja variable_end
+            # token; if it's not, we keep searching.
+            jinja_tokens = list(Environment().lex(source_string[spos:epos]))
+            final_token_type = jinja_tokens[-1][1]
+            if final_token_type == "variable_end":
+                break
+
     token_text = source_string[spos:epos]
     token = Token(token_type, prefix, token_text, pos, epos)
     node = analyzer.node_manager.create_node(token, analyzer.previous_node)
