@@ -49,7 +49,7 @@ black = ">=23.9.1"
 [tool.poetry.group.static.dependencies]
 flake8 = "^5.0.4"
 isort = "^5.9.3"
-mypy = ">=0.990,<1.7"
+mypy = ">=0.990,<1.8"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.2.0"
