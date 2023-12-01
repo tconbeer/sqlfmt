@@ -52,7 +52,7 @@ jobs:
           source .venv/bin/activate
           pytest --cov=sqlfmt --cov-report xml:tests/.coverage/cov.xml tests/unit_tests
       - name: Report coverage to CodeClimate
-        uses: paambaati/codeclimate-action@v3.2.0
+        uses: paambaati/codeclimate-action@v5.0.0
         env:
           CC_TEST_REPORTER_ID: ${{ secrets.CODE_CLIMATE_TEST_REPORTER_ID }}
         with:
