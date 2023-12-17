@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Bug Fixes
+
+-   Fixes a bug where extra indentation was added inside multiline jinja tags if those jinja tags contained a python multiline string ([#536](https://github.com/tconbeer/sqlfmt/issues/500) - thank you [@yassun7010](https://github.com/yassun7010)!).
 ## [0.21.0] - 2023-10-20
 
 ### Bug Fixes
