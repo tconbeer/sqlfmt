@@ -286,10 +286,12 @@ class JinjaTag:
         return f"{self.opening_marker} {self.verb}{self.code} {self.closing_marker}"
 
     def _find_multiline_python_str_lines(self) -> MutableSet[int]:
-        # we don't have to worry about syntax errors here because black has already
-        # run on this code.
-        tree = ast.parse(self.code, mode="eval")
-        
+        try:
+            tree = ast.parse(self.code, mode="eval")
+        except SyntaxError:
+            # this jinja isn't quite python, so give up here.
+            return set()
+
         line_indicies: MutableSet[int] = set()
         for node in ast.walk(tree):
             if (
