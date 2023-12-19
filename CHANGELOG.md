@@ -4,9 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.21.1] - 2023-12-19
+
 ### Bug Fixes
 
 -   Fixes a bug where extra indentation was added inside multiline jinja tags if those jinja tags contained a python multiline string ([#536](https://github.com/tconbeer/sqlfmt/issues/500) - thank you [@yassun7010](https://github.com/yassun7010)!).
+
 ## [0.21.0] - 2023-10-20
 
 ### Bug Fixes
@@ -452,7 +455,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.21.0...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.21.1...HEAD
+
+[0.21.1]: https://github.com/tconbeer/sqlfmt/compare/0.21.0...0.21.1
 
 [0.21.0]: https://github.com/tconbeer/sqlfmt/compare/0.20.0...0.21.0
 
