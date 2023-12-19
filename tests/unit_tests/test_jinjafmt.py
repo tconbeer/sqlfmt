@@ -481,3 +481,19 @@ def test_preprocess_and_postprocess_are_inverse_ops(source_string: str) -> None:
     assert BlackWrapper._postprocess_string(
         *BlackWrapper._preprocess_string(source_string)
     ).replace(" ", "") == source_string.replace(" ", "")
+
+
+@pytest.mark.parametrize(
+    "source_string",
+    [
+        """{{\n    config(\n        foo="bar",\n    )\n}}""",
+        '''{{\n    config(\n        foo="""\n\nbar\n\n""",\n    )\n}}''',
+    ],
+)
+def test_multiline_str(source_string: str) -> None:
+    tag = JinjaTag.from_string(source_string=source_string, depth=(0, 0))
+    tag.code, tag.is_blackened = BlackWrapper().format_string(
+        source_string=tag.code, max_length=88
+    )
+    assert tag.is_blackened
+    assert str(tag) == source_string

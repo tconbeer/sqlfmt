@@ -1,10 +1,11 @@
+import ast
 import keyword
 import re
 from dataclasses import dataclass, field
 from importlib import import_module
 from itertools import chain, product
 from types import ModuleType
-from typing import Dict, List, NamedTuple, Optional, Tuple
+from typing import Dict, List, MutableSet, NamedTuple, Optional, Tuple
 
 from sqlfmt.line import Line
 from sqlfmt.mode import Mode
@@ -259,6 +260,7 @@ class JinjaTag:
         will already be indented to the proper depth (because of the Line).
         """
         indent = " " * 4 * (self.depth[0] + self.depth[1])
+        no_indent_lines = self._find_multiline_python_str_lines()
         code_lines = iter(self.code.splitlines(keepends=False))
 
         if self.verb:
@@ -268,8 +270,10 @@ class JinjaTag:
             lines = [f"{self.opening_marker}"]
             extra_indent = " " * 4
 
-        for code_line in code_lines:
-            lines.append(f"{indent}{extra_indent}{code_line}")
+        for i, code_line in enumerate(code_lines, start=1 if self.verb else 0):
+            lines.append(
+                f"{indent}{'' if i in no_indent_lines else extra_indent}{code_line}"
+            )
 
         if self.verb:
             lines[-1] = f"{indent}{lines[-1].lstrip()} {self.closing_marker}"
@@ -280,6 +284,25 @@ class JinjaTag:
 
     def _basic_str(self) -> str:
         return f"{self.opening_marker} {self.verb}{self.code} {self.closing_marker}"
+
+    def _find_multiline_python_str_lines(self) -> MutableSet[int]:
+        try:
+            tree = ast.parse(self.code, mode="eval")
+        except SyntaxError:
+            # this jinja isn't quite python, so give up here.
+            return set()
+
+        line_indicies: MutableSet[int] = set()
+        for node in ast.walk(tree):
+            if (
+                isinstance(node, ast.Constant)
+                and isinstance(node.value, str)
+                and "\n" in node.value
+                and node.end_lineno is not None
+            ):
+                line_indicies |= set(range(node.lineno, node.end_lineno))
+
+        return line_indicies
 
     def _remove_trailing_comma(self) -> None:
         """
