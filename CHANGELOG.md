@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.21.2] - 2024-01-22
+
 ### Bug Fixes
 
 -   `{% for %}...{% else %}...{% endfor %}` loops are now supported. Previously, a BracketError was raised if a `for` loop included an `else` tag ([#549](https://github.com/tconbeer/sqlfmt/issues/549) - thank you, [@yassun7010](https://github.com/yassun7010)!).
@@ -459,7 +461,9 @@ All notable changes to this project will be documented in this file.
 -   supports --check and --diff options
 -   supports --no-color
 
-[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.21.1...HEAD
+[Unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.21.2...HEAD
+
+[0.21.2]: https://github.com/tconbeer/sqlfmt/compare/0.21.1...0.21.2
 
 [0.21.1]: https://github.com/tconbeer/sqlfmt/compare/0.21.0...0.21.1
 
