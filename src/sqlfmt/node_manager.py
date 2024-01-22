@@ -77,8 +77,11 @@ class NodeManager:
         closes start_tag
         """
         try:
-            if any(s in token.token.lower() for s in ["endif", "else", "elif"]):
-                if not any(s in start_tag.value for s in ["if", "else"]):
+            if "endif" in token.token.lower():
+                if not any(s in start_tag.value for s in ["if", "elif", "else"]):
+                    raise ValueError
+            elif "endfor" in token.token.lower():
+                if not any(s in start_tag.value for s in ["for", "else"]):
                     raise ValueError
             else:
                 end_text, _ = re.subn(r"[{}%\-\s]", "", token.token.lower())

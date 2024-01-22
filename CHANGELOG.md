@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Bug Fixes
+
+-   `{% for %}...{% else %}...{% endfor %}` loops are now supported. Previously, a BracketError was raised if a `for` loop included an `else` tag ([#549](https://github.com/tconbeer/sqlfmt/issues/549) - thank you, [@yassun7010](https://github.com/yassun7010)!).
+
 ## [0.21.1] - 2023-12-19
 
 ### Bug Fixes
