@@ -1,8 +1,8 @@
 .PHONY: check
 check:
-	pytest
 	isort .
 	black .
+	pytest
 	flake8 .
 	mypy --disallow-any-unimported
 

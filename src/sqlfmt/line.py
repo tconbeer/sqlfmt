@@ -134,9 +134,11 @@ class Line:
                 previous_node=previous_node,
                 nodes=nodes,
                 comments=comments,
-                formatting_disabled=previous_node.formatting_disabled
-                if previous_node is not None
-                else [],
+                formatting_disabled=(
+                    previous_node.formatting_disabled
+                    if previous_node is not None
+                    else []
+                ),
             )
 
         return line
