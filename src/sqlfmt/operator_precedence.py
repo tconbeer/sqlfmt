@@ -79,6 +79,10 @@ class OperatorPrecedence(IntEnum):
             "~*": OperatorPrecedence.MEMBERSHIP,
             "!~": OperatorPrecedence.MEMBERSHIP,
             "!~*": OperatorPrecedence.MEMBERSHIP,
+            "~~": OperatorPrecedence.MEMBERSHIP,
+            "~~*": OperatorPrecedence.MEMBERSHIP,
+            "!~~": OperatorPrecedence.MEMBERSHIP,
+            "!~~*": OperatorPrecedence.MEMBERSHIP,
         }
         return value_mapping.get(node.value, OperatorPrecedence.OTHER)
 
