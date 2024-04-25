@@ -163,7 +163,7 @@ CORE = [
         pattern=group(
             r"\|\|?\/",  # square or cube root ||/
             r"~=",  # geo compare
-            r"!?~\*?",  # posix like/not like
+            r"!?~{1,2}\*?",  # posix like/not like
             r"\?(=|!|<=|<!)",  # regex lookahead/behind
             r"\?(-\||\|\||-|\|)",  # regex lookahead/behind
             r"@-@",  # length operator

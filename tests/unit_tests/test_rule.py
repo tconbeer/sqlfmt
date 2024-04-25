@@ -95,6 +95,13 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (CORE, "operator", "!~"),
         (CORE, "operator", "~*"),
         (CORE, "operator", "!~*"),
+        # postgres (not) like/ilike operators
+        # like posix but doubles the tilde
+        # https://github.com/tconbeer/sqlfmt/issues/576
+        (CORE, "operator", "~~"),
+        (CORE, "operator", "!~~"),
+        (CORE, "operator", "~~*"),
+        (CORE, "operator", "!~~*"),
         # postgresql geo operators
         # see: https://www.postgresql.org/docs/current/functions-geometry.html
         (CORE, "operator", "@-@"),

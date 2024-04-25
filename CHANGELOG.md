@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Bug Fixes
+
+-   The Postgres operators for `(NOT) (I)LIKE`, `~~`, `~~*`, `!~~`, `!~~*`, are now supported (these use two tildes where the posix version of these operators use a single tilde) ([#576](https://github.com/tconbeer/sqlfmt/issues/576) - thank you [@tuckerrc](https://github.com/tuckerrc)!).
+
 ## [0.21.2] - 2024-01-22
 
 ### Bug Fixes
