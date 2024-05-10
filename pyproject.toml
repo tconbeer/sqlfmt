@@ -53,7 +53,7 @@ mypy = ">=0.990,<1.11"
 
 [tool.poetry.group.test.dependencies]
 pytest = ">=7.2,<9.0"
-pytest-cov = "^4.0.0"
+pytest-cov = ">=4,<6"
 
 [tool.poetry.scripts]
 sqlfmt = "sqlfmt.cli:sqlfmt"
