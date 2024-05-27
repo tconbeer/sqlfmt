@@ -12,6 +12,7 @@ from sqlfmt.api import (
     _perform_safety_check,
     _read_path_or_stdin,
     _update_source_files,
+    format_markdown_string,
     format_string,
     get_matching_paths,
     initialize_progress_bar,
@@ -47,8 +48,11 @@ def all_files(file_discovery_dir: Path) -> Set[Path]:
     files = {
         p / "top_level_file.sql",
         p / "top_level_file.two.sql",
+        p / "top_level_markdown_file.md",
         p / "a_directory/one_file.sql",
+        p / "a_directory/one_markdown_file.md",
         p / "a_directory/nested_directory/another_file.sql",
+        p / "a_directory/nested_directory/another_markdown_file.md",
         p / "a_directory/nested_directory/j2_extension.sql.jinja",
         p / "a_directory/symlink_source_directory/symlink_file.sql",
         p / "a_directory/symlink_target_directory/symlink_file.sql",
@@ -75,11 +79,12 @@ def test_file_discovery(
     "exclude",
     [
         ["**/*_file*"],
-        ["**/*.sql"],
+        ["**/*.sql", "**/*.md"],
         [
             "**/top*",
             "**/a_directory/*",
             "**/a_directory/**/another_file.sql",
+            "**/a_directory/**/another_markdown_file.md",
             "**/a_directory/**/symlink_file.sql",
         ],
     ],
@@ -95,7 +100,10 @@ def test_file_discovery_with_excludes(
 def test_file_discovery_with_abs_excludes(
     file_discovery_dir: Path, sql_jinja_files: Set[Path]
 ) -> None:
-    exclude = [str(file_discovery_dir / "**/*.sql")]
+    exclude = [
+        str(file_discovery_dir / "**/*.sql"),
+        str(file_discovery_dir / "**/*.md"),
+    ]
     mode = Mode(exclude=exclude, exclude_root=None)
     res = get_matching_paths(file_discovery_dir.iterdir(), mode)
     assert res == sql_jinja_files
@@ -114,7 +122,7 @@ def test_file_discovery_with_invalid_excludes(
 def test_file_discovery_with_excludes_no_root(
     file_discovery_dir: Path, all_files: Set[Path], sql_jinja_files: Set[Path]
 ) -> None:
-    mode = Mode(exclude=["**/*.sql"], exclude_root=None)
+    mode = Mode(exclude=["**/*.sql", "**/*.md"], exclude_root=None)
 
     # relative to here, excludes shouldn't do anything.
     cwd = os.getcwd()
@@ -139,6 +147,12 @@ def test_file_discovery_with_excludes_no_root(
 def test_format_empty_string(all_output_modes: Mode) -> None:
     source = expected = ""
     actual = format_string(source, all_output_modes)
+    assert expected == actual
+
+
+def test_format_markdown_empty_string(all_output_modes: Mode) -> None:
+    source = expected = ""
+    actual = format_markdown_string(source, all_output_modes)
     assert expected == actual
 
 
@@ -354,6 +368,18 @@ def test_run_with_callback(
     captured = capsys.readouterr()
 
     assert "." * expected_dots in captured.out
+
+
+def test_run_no_markdownfmt_mode(unformatted_files: List[Path]) -> None:
+    unformatted_markdown_files = [
+        file for file in unformatted_files if file.suffix == ".md"
+    ]
+    mode = Mode(no_markdownfmt=True)
+    report = run(files=unformatted_markdown_files, mode=mode)
+    assert report.number_changed == 0
+    assert report.number_unchanged == len(unformatted_markdown_files)
+    assert report.number_errored == 0
+    assert not any([res.from_cache for res in report.results])
 
 
 def test_initialize_progress_bar(default_mode: Mode) -> None:

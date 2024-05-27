@@ -92,6 +92,15 @@ from sqlfmt.mode import Mode
     ),
 )
 @click.option(
+    "--no-markdownfmt",
+    envvar="SQLFMT_NO_MARKDOWNFMT",
+    is_flag=True,
+    help=(
+        "Do not format sql code blocks in markdown files. Only necessary "
+        "to specify this flag if sqlfmt was installed with the markdownfmt extra."
+    ),
+)
+@click.option(
     "-l",
     "--line-length",
     envvar="SQLFMT_LINE_LENGTH",

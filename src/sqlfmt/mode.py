@@ -14,7 +14,9 @@ class Mode:
     report config. For more info on each option, see cli.py
     """
 
-    SQL_EXTENSIONS: List[str] = field(default_factory=lambda: [".sql", ".sql.jinja"])
+    INCLUDED_FILE_EXTENSIONS: List[str] = field(
+        default_factory=lambda: [".sql", ".sql.jinja", ".md"]
+    )
     dialect_name: str = "polyglot"
     line_length: int = 88
     check: bool = False
@@ -25,6 +27,7 @@ class Mode:
     fast: bool = False
     single_process: bool = False
     no_jinjafmt: bool = False
+    no_markdownfmt: bool = False
     reset_cache: bool = False
     verbose: bool = False
     quiet: bool = False

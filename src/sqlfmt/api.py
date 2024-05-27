@@ -54,6 +54,35 @@ def format_string(source_string: str, mode: Mode) -> str:
     return result
 
 
+def format_markdown_string(source_string: str, mode: Mode) -> str:
+    """
+    Takes a Markdown string and a mode as input, returns the the Markdown string with all of its SQL code blocks formatted.
+    """
+    if mode.no_markdownfmt:
+        return source_string
+
+    from mistletoe import Document
+    from mistletoe.block_token import BlockToken, CodeFence
+    from mistletoe.markdown_renderer import MarkdownRenderer
+
+    def format_sql_code_blocks(token: BlockToken):
+        """Walk through the AST and replace SQL code blocks with its formatted version."""
+        if isinstance(token, CodeFence) and token.language == "sql":
+            raw_text = token.children[0]
+            raw_text.content = format_string(raw_text.content, mode)
+
+        for child in token.children:
+            if isinstance(child, BlockToken):
+                format_sql_code_blocks(child)
+
+    with MarkdownRenderer() as renderer:
+        doc = Document(source_string)
+        format_sql_code_blocks(doc)
+        formatted_markdown_string = renderer.render(doc)
+
+    return formatted_markdown_string
+
+
 def run(
     files: Collection[Path],
     mode: Mode,
@@ -154,7 +183,7 @@ def _get_included_paths(paths: Iterable[Path], mode: Mode) -> Set[Path]:
     for p in paths:
         if p == STDIN_PATH:
             include_set.add(p)
-        elif p.is_file() and str(p).endswith(tuple(mode.SQL_EXTENSIONS)):
+        elif p.is_file() and str(p).endswith(tuple(mode.INCLUDED_FILE_EXTENSIONS)):
             include_set.add(p)
         elif p.is_dir():
             include_set |= _get_included_paths(p.iterdir(), mode)
@@ -233,10 +262,15 @@ def _format_one(path: Path, mode: Mode) -> SqlFormatResult:
     """
     Runs format_string on the contents of a single file (found at path). Handles
     potential user errors in formatted code, and returns a SqlfmtResult
+
+    If the file is a Markdown file, only format its SQL code blocks.
     """
     source, encoding, utf_bom = _read_path_or_stdin(path, mode)
     try:
-        formatted = format_string(source, mode)
+        if path.is_file() and path.suffix == ".md":
+            formatted = format_markdown_string(source, mode)
+        else:
+            formatted = format_string(source, mode)
         return SqlFormatResult(
             source_path=path,
             source_string=source,
