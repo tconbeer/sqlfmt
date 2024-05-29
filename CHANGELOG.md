@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Features
+
+-   Add support for formatting SQL code blocks in Markdown files. Introduces a new extra install (`pipx install shandy-sqlfmt[markdownfmt]`) and CLI option (`--no-markdownfmt`) ([#593](https://github.com/tconbeer/sqlfmt/issues/593) - thank you, [@michael-the1](https://github.com/michael-the1)).
+
 ## [0.21.3] - 2024-04-25
 
 ### Bug Fixes
