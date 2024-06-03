@@ -2,6 +2,7 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional
+from importlib import import_module
 
 from sqlfmt.dialect import ClickHouse, Polyglot
 from sqlfmt.exception import SqlfmtConfigError
@@ -14,9 +15,6 @@ class Mode:
     report config. For more info on each option, see cli.py
     """
 
-    INCLUDED_FILE_EXTENSIONS: List[str] = field(
-        default_factory=lambda: [".sql", ".sql.jinja", ".md"]
-    )
     dialect_name: str = "polyglot"
     line_length: int = 88
     check: bool = False
@@ -48,6 +46,17 @@ class Mode:
                 f"Mode was created with dialect_name={self.dialect_name}, "
                 "which is not supported. Did you mean 'polyglot'?"
             )
+
+    @property
+    def included_file_extensions(self) -> List[str]:
+        """List of file extensions to parse."""
+        if self.no_markdownfmt:
+            return [".sql", ".sql.jinja"]
+        try:
+            import_module("mistletoe")
+            return [".sql", ".sql.jinja", ".md"]
+        except ImportError:
+            return [".sql", ".sql.jinja"]
 
     @property
     def color(self) -> bool:
