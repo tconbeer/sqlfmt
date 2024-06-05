@@ -1,8 +1,8 @@
 import os
 from dataclasses import dataclass, field
+from importlib.util import find_spec
 from pathlib import Path
 from typing import List, Optional
-from importlib import import_module
 
 from sqlfmt.dialect import ClickHouse, Polyglot
 from sqlfmt.exception import SqlfmtConfigError
@@ -49,14 +49,13 @@ class Mode:
 
     @property
     def included_file_extensions(self) -> List[str]:
-        """List of file extensions to parse."""
-        if self.no_markdownfmt:
-            return [".sql", ".sql.jinja"]
-        try:
-            import_module("mistletoe")
+        """List of file extensions to parse.
+
+        Only parses Markdown files if mistletoe is installed and no_markdownfmt is not set.
+        """
+        if not self.no_markdownfmt and find_spec("mistletoe"):
             return [".sql", ".sql.jinja", ".md"]
-        except ImportError:
-            return [".sql", ".sql.jinja"]
+        return [".sql", ".sql.jinja"]
 
     @property
     def color(self) -> bool:
