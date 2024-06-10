@@ -183,7 +183,7 @@ def _get_included_paths(paths: Iterable[Path], mode: Mode) -> Set[Path]:
     for p in paths:
         if p == STDIN_PATH:
             include_set.add(p)
-        elif p.is_file() and str(p).endswith(tuple(mode.included_file_extensions)):
+        elif p.is_file() and str(p).endswith(mode.included_file_extensions):
             include_set.add(p)
         elif p.is_dir():
             include_set |= _get_included_paths(p.iterdir(), mode)
