@@ -24,7 +24,12 @@ from tqdm import tqdm
 
 from sqlfmt.analyzer import Analyzer
 from sqlfmt.cache import Cache, check_cache, clear_cache, load_cache, write_cache
-from sqlfmt.exception import SqlfmtEquivalenceError, SqlfmtError, SqlfmtUnicodeError
+from sqlfmt.exception import (
+    SqlfmtEquivalenceError,
+    SqlfmtError,
+    SqlfmtImportError,
+    SqlfmtUnicodeError,
+)
 from sqlfmt.formatter import QueryFormatter
 from sqlfmt.mode import Mode as Mode
 from sqlfmt.query import Query
@@ -61,9 +66,14 @@ def format_markdown_string(source_string: str, mode: Mode) -> str:
     if mode.no_markdownfmt:
         return source_string
 
-    from mistletoe import Document
-    from mistletoe.block_token import BlockToken, CodeFence
-    from mistletoe.markdown_renderer import MarkdownRenderer
+    try:
+        from mistletoe import Document
+        from mistletoe.block_token import BlockToken, CodeFence
+        from mistletoe.markdown_renderer import MarkdownRenderer
+    except ImportError:
+        raise SqlfmtImportError(
+            "Tried to format a Markdown file but markdownfmt extras are not installed."
+        )
 
     def format_sql_code_blocks(token: BlockToken):
         """Walk through the AST and replace SQL code blocks with its formatted version."""
