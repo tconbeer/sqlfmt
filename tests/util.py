@@ -75,7 +75,7 @@ def check_formatting(expected: str, actual: str, ctx: str = "") -> None:
 
 def discover_test_files(relpaths: Iterable[Union[str, Path]]) -> Iterator[Path]:
     for p in [BASE_DIR / p for p in relpaths]:
-        if p.is_file() and p.suffix == ".sql":
+        if p.is_file() and p.suffix in [".sql", ".md"]:
             yield p
         elif p.is_dir():
             yield from (discover_test_files(p.iterdir()))
