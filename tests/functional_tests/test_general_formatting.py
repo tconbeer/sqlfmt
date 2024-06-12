@@ -102,6 +102,8 @@ def test_formatting(p: str) -> None:
 @pytest.mark.parametrize(
     "p",
     [
+        "preformatted/008_markdown_file.md",
+        "preformatted/009_markdown_fmt_off.md",
         "unformatted/500_markdown_file.md",
     ],
 )
