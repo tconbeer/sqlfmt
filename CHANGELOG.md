@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Formatting Changes and Bug Fixes
+
+-   Databricks `left anti` & `right anti` joins are now supported.
+
+
 ## [0.21.3] - 2024-04-25
 
 ### Bug Fixes
