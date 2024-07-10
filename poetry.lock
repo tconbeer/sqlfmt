@@ -378,7 +378,7 @@ files = [
 name = "mistletoe"
 version = "1.3.0"
 description = "A fast, extensible Markdown parser in pure Python."
-optional = true
+optional = false
 python-versions = "~=3.5"
 files = [
     {file = "mistletoe-1.3.0-py3-none-any.whl", hash = "sha256:a0710d0cdb7d2458cef91cf6b9b897db442927f8778dae890cbbfb1853a51700"},
@@ -762,4 +762,4 @@ sqlfmt-primer = ["gitpython"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "00aaf8d31cec71f7e7a110cf23bd75c25266fee7d5af1eb25fe3d4fcf741beb7"
+content-hash = "3afca82a2be0f6110d9db34a25771b9ba607857533aaa89e372c7e2177c7ce68"
