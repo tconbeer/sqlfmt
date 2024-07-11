@@ -32,7 +32,7 @@ jobs:
         with:
           version: 1.2.2
       - name: Install python dependencies
-        run: poetry install --sync --no-interaction -E jinjafmt --only main,test
+        run: poetry install --sync --no-interaction -E "jinjafmt markdownfmt" --only main,test
       - name: Run tests
         run: poetry run pytest
 
@@ -82,7 +82,7 @@ jobs:
           key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
       - name: Install python dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --sync --no-interaction -E jinjafmt --only main,test
+        run: poetry install --sync --no-interaction -E "jinjafmt markdownfmt" --only main,test
       - name: Run tests
         run: |
           source .venv/bin/activate

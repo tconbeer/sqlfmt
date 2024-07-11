@@ -47,7 +47,6 @@ mistletoe = { version = '*', optional = true}
 pre-commit = ">=2.20,<4.0"
 snakeviz = "^2.1.1"
 black = "^24"
-mistletoe = "^1.3.0"
 
 [tool.poetry.group.static.dependencies]
 flake8 = "^5.0.4"

@@ -46,7 +46,7 @@ jobs:
       #     key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
       - name: Install python dependencies
         # if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --sync --no-interaction -E jinjafmt --only main,test
+        run: poetry install --sync --no-interaction -E "jinjafmt markdownfmt" --only main,test
       - name: Run unit tests and generate cov report
         run: |
           source .venv/bin/activate
