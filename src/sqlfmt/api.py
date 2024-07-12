@@ -60,9 +60,7 @@ def format_string(source_string: str, mode: Mode) -> str:
 
 
 def format_markdown_string(source_string: str, mode: Mode) -> str:
-    """
-    Takes a Markdown string and a mode as input, returns the the Markdown string with all of its SQL code blocks formatted.
-    """
+    """Format the SQL code blocks of a Markdown string."""
     if mode.no_markdownfmt:
         return source_string
 
@@ -75,8 +73,8 @@ def format_markdown_string(source_string: str, mode: Mode) -> str:
             "Tried to format a Markdown file but markdownfmt extras are not installed."
         )
 
-    def format_sql_code_blocks(token: BlockToken):
-        """Walk through the AST and replace SQL code blocks with its formatted version."""
+    def format_sql_code_blocks(token: BlockToken) -> None:
+        """Walk through the AST and format any SQL code blocks."""
         if isinstance(token, CodeFence) and token.language == "sql":
             raw_text = token.children[0]
             raw_text.content = format_string(raw_text.content, mode)

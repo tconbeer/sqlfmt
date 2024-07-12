@@ -51,7 +51,8 @@ class Mode:
     def included_file_extensions(self) -> Tuple[str, ...]:
         """List of file extensions to parse.
 
-        Only parses Markdown files if mistletoe is installed and no_markdownfmt is not set.
+        Only parses Markdown files if mistletoe is installed and no_markdownfmt is not
+        set.
         """
         if not self.no_markdownfmt and find_spec("mistletoe"):
             return (".sql", ".sql.jinja", ".md")
