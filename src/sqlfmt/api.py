@@ -79,7 +79,7 @@ def format_markdown_string(source_string: str, mode: Mode) -> str:
             raw_text = token.children[0]
             raw_text.content = format_string(raw_text.content, mode)
 
-        for child in token.children:
+        for child in getattr(token, "children", []):
             if isinstance(child, BlockToken):
                 format_sql_code_blocks(child)
 
