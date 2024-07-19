@@ -86,7 +86,7 @@ def format_markdown_string(source_string: str, mode: Mode) -> str:
     with MarkdownRenderer() as renderer:
         doc = Document(source_string)
         format_sql_code_blocks(doc)
-        formatted_markdown_string = renderer.render(doc)
+        formatted_markdown_string: str = renderer.render(doc)
 
     return formatted_markdown_string
 
