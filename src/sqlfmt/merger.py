@@ -305,6 +305,7 @@ class LineMerger:
         else:
             return (
                 line.starts_with_operator
+                and not line.previous_token_is_comma
                 and OperatorPrecedence.from_node(line.nodes[0]) <= max_precedence
             ) or line.starts_with_comma
 

@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 - DuckDB's `union [all] by name` is now supported ([#611](https://github.com/tconbeer/sqlfmt/issues/611) - thank you [@aersam](https://github.com/aersam)!).
 - `interval` is now parsed as a word operator. Parenthesized expressions like `interval (10) days` will maintain the space after `interval`.
+- Fixed a bug where a line starting with an operator or word operator could be erroneously merged into a previous line ([#602](https://github.com/tconbeer/sqlfmt/issues/602) - thank you [@roveo](https://github.com/roveo)!).
 
 ## [0.21.4] - 2024-07-09
 
