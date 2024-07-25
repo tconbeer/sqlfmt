@@ -49,6 +49,7 @@ MAIN = [
             r"filter",
             r"grouping sets",
             r"(not\s+)?in",
+            r"interval",
             r"is(\s+not)?(\s+distinct\s+from)?",
             r"isnull",
             r"(not\s+)?i?like(\s+(any|all))?",

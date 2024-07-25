@@ -144,6 +144,7 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (MAIN, "word_operator", "in"),
         (MAIN, "word_operator", "not in"),
         (MAIN, "word_operator", "not\n\nin"),
+        (MAIN, "word_operator", "interval"),
         (MAIN, "word_operator", "like"),
         (MAIN, "word_operator", "not like"),
         (MAIN, "word_operator", "ilike"),
