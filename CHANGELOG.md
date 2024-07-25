@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.22.0] - 2024-07-25
+
 ### Formatting Changes and Bug Fixes
 
 - DuckDB's `union [all] by name` is now supported ([#611](https://github.com/tconbeer/sqlfmt/issues/611) - thank you [@aersam](https://github.com/aersam)!).
@@ -479,7 +481,8 @@ All notable changes to this project will be documented in this file.
 - supports --check and --diff options
 - supports --no-color
 
-[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.21.4...HEAD
+[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.22.0...HEAD
+[0.22.0]: https://github.com/tconbeer/sqlfmt/compare/0.21.4...0.22.0
 [0.21.4]: https://github.com/tconbeer/sqlfmt/compare/0.21.3...0.21.4
 [0.21.3]: https://github.com/tconbeer/sqlfmt/compare/0.21.2...0.21.3
 [0.21.2]: https://github.com/tconbeer/sqlfmt/compare/0.21.1...0.21.2
