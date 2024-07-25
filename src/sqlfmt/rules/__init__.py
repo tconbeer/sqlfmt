@@ -177,7 +177,7 @@ MAIN = [
         name="set_operator",
         priority=1320,
         pattern=group(
-            r"(union|intersect|except|minus)(\s+(all|distinct))?",
+            r"(union|intersect|except|minus)(\s+(all|distinct))?(\s+by\s+name)?",
         )
         + group(r"\W", r"$"),
         action=actions.handle_set_operator,

@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Formatting Changes and Bug Fixes
+
+- DuckDB's `union [all] by name` is now supported ([#611](https://github.com/tconbeer/sqlfmt/issues/611) - thank you [@aersam](https://github.com/aersam)!).
+
 ## [0.21.4] - 2024-07-09
 
 ### Formatting Changes and Bug Fixes
