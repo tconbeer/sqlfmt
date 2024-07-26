@@ -1,5 +1,4 @@
 import pytest
-
 from sqlfmt.dialect import ClickHouse, Polyglot
 from sqlfmt.exception import SqlfmtConfigError
 from sqlfmt.mode import Mode

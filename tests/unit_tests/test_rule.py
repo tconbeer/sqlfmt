@@ -3,7 +3,6 @@ from collections import Counter
 from typing import List
 
 import pytest
-
 from sqlfmt.rule import Rule
 from sqlfmt.rules import CLONE, CORE, FUNCTION, GRANT, JINJA, MAIN, WAREHOUSE
 
@@ -17,8 +16,8 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
     matching_rules = filter(lambda rule: rule.name == rule_name, ruleset)
     try:
         return next(matching_rules)
-    except StopIteration:
-        raise ValueError(f"No rule '{rule_name}' in ruleset '{ruleset}'")
+    except StopIteration as e:
+        raise ValueError(f"No rule '{rule_name}' in ruleset '{ruleset}'") from e
 
 
 @pytest.mark.parametrize(

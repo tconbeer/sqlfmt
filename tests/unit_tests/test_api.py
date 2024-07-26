@@ -5,8 +5,6 @@ from pathlib import Path
 from typing import Any, List, Set, Type
 
 import pytest
-from tqdm import tqdm
-
 from sqlfmt.api import (
     _format_many,
     _perform_safety_check,
@@ -24,6 +22,7 @@ from sqlfmt.exception import (
     SqlfmtUnicodeError,
 )
 from sqlfmt.mode import Mode
+from tqdm import tqdm
 
 
 @pytest.fixture

@@ -18,6 +18,7 @@ repos:
           - jinja2
           - black
           - pytest
+          - gitpython
         args:
           - "--disallow-untyped-calls"
           - "--disallow-untyped-defs"

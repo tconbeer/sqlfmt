@@ -40,11 +40,11 @@ class Mode:
         }
         try:
             self.dialect = dialects[self.dialect_name.lower()]()
-        except KeyError:
+        except KeyError as e:
             raise SqlfmtConfigError(
                 f"Mode was created with dialect_name={self.dialect_name}, "
                 "which is not supported. Did you mean 'polyglot'?"
-            )
+            ) from e
 
     @property
     def color(self) -> bool:

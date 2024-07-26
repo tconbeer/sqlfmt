@@ -200,9 +200,10 @@ class Node:
         if not prev_token:
             return False
         else:
-            return not (
-                prev_token.type
-                in (TokenType.UNTERM_KEYWORD, TokenType.COMMA, TokenType.DOT)
+            return prev_token.type not in (
+                TokenType.UNTERM_KEYWORD,
+                TokenType.COMMA,
+                TokenType.DOT,
             )
 
     @property

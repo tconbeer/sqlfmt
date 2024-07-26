@@ -1,12 +1,12 @@
 import itertools
 
 import pytest
-
 from sqlfmt.exception import CannotMergeException
 from sqlfmt.merger import LineMerger
 from sqlfmt.mode import Mode
 from sqlfmt.operator_precedence import OperatorPrecedence
 from sqlfmt.segment import Segment, create_segments_from_lines
+
 from tests.util import read_test_data
 
 

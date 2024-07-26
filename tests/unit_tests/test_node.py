@@ -1,8 +1,8 @@
 import pytest
-
 from sqlfmt.mode import Mode
 from sqlfmt.node_manager import NodeManager
 from sqlfmt.token import Token, TokenType
+
 from tests.util import read_test_data
 
 

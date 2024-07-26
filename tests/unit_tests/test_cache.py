@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Dict, Generator, List, Tuple
 
 import pytest
-
 from sqlfmt.cache import (
     Cache,
     check_cache,
@@ -15,6 +14,7 @@ from sqlfmt.cache import (
 from sqlfmt.exception import SqlfmtError
 from sqlfmt.mode import Mode
 from sqlfmt.report import SqlFormatResult
+
 from tests.util import BASE_DIR
 
 

@@ -2,7 +2,6 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
-
 from sqlfmt.cli import sqlfmt as sqlfmt_main
 
 
@@ -118,7 +117,7 @@ def test_end_to_end_errors(
 
 
 @pytest.mark.parametrize(
-    "options,input,expected_stdout,expected_exit",
+    "options,stream_input,expected_stdout,expected_exit",
     [
         ("-", "select    1\n", "select 1\n\n", 0),
         ("-", "select 1\n", "select 1\n\n", 0),
@@ -131,10 +130,10 @@ def test_end_to_end_errors(
 def test_stdin(
     sqlfmt_runner: CliRunner,
     options: str,
-    input: str,
+    stream_input: str,
     expected_stdout: str,
     expected_exit: int,
 ) -> None:
-    results = sqlfmt_runner.invoke(sqlfmt_main, args=options, input=input)
+    results = sqlfmt_runner.invoke(sqlfmt_main, args=options, input=stream_input)
     assert results.exit_code == expected_exit
     assert results.stdout == expected_stdout

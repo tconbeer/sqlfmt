@@ -117,8 +117,8 @@ class Analyzer:
         matching_rules = filter(lambda rule: rule.name == rule_name, self.rules)
         try:
             return next(matching_rules)
-        except StopIteration:
-            raise ValueError(f"No rule '{rule_name}'")
+        except StopIteration as e:
+            raise ValueError(f"No rule '{rule_name}'") from e
 
     def lex_one(self, source_string: str) -> None:
         """
