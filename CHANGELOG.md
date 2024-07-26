@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.23.1] - 2024-07-26
+
 ## [0.23.0] - 2024-07-26
 
 ### Formatting Changes and Bug Fixes
@@ -487,7 +489,8 @@ All notable changes to this project will be documented in this file.
 - supports --check and --diff options
 - supports --no-color
 
-[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.23.0...HEAD
+[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.23.1...HEAD
+[0.23.1]: https://github.com/tconbeer/sqlfmt/compare/0.23.0...0.23.1
 [0.23.0]: https://github.com/tconbeer/sqlfmt/compare/0.22.0...0.23.0
 [0.22.0]: https://github.com/tconbeer/sqlfmt/compare/0.21.4...0.22.0
 [0.21.4]: https://github.com/tconbeer/sqlfmt/compare/0.21.3...0.21.4
