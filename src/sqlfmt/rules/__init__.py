@@ -25,7 +25,10 @@ MAIN = [
         priority=1000,
         pattern=group(r"case") + group(r"\W", r"$"),
         action=partial(
-            actions.add_node_to_buffer, token_type=TokenType.STATEMENT_START
+            actions.handle_reserved_keyword,
+            action=partial(
+                actions.add_node_to_buffer, token_type=TokenType.STATEMENT_START
+            ),
         ),
     ),
     Rule(
@@ -33,9 +36,12 @@ MAIN = [
         priority=1010,
         pattern=group(r"end") + group(r"\W", r"$"),
         action=partial(
-            actions.safe_add_node_to_buffer,
-            token_type=TokenType.STATEMENT_END,
-            fallback_token_type=TokenType.NAME,
+            actions.handle_reserved_keyword,
+            action=partial(
+                actions.safe_add_node_to_buffer,
+                token_type=TokenType.STATEMENT_END,
+                fallback_token_type=TokenType.NAME,
+            ),
         ),
     ),
     Rule(
@@ -65,7 +71,12 @@ MAIN = [
             r"within\s+group",
         )
         + group(r"\W", r"$"),
-        action=partial(actions.add_node_to_buffer, token_type=TokenType.WORD_OPERATOR),
+        action=partial(
+            actions.handle_reserved_keyword,
+            action=partial(
+                actions.add_node_to_buffer, token_type=TokenType.WORD_OPERATOR
+            ),
+        ),
     ),
     Rule(
         name="star_replace_exclude",
@@ -76,8 +87,10 @@ MAIN = [
         )
         + group(r"\s+\("),
         action=partial(
-            actions.add_node_to_buffer,
-            token_type=TokenType.WORD_OPERATOR,
+            actions.handle_reserved_keyword,
+            action=partial(
+                actions.add_node_to_buffer, token_type=TokenType.WORD_OPERATOR
+            ),
         ),
     ),
     Rule(
@@ -88,13 +101,21 @@ MAIN = [
         name="join_using",
         priority=1110,
         pattern=group(r"using") + group(r"\s*\("),
-        action=partial(actions.add_node_to_buffer, token_type=TokenType.WORD_OPERATOR),
+        action=partial(
+            actions.handle_reserved_keyword,
+            action=partial(
+                actions.add_node_to_buffer, token_type=TokenType.WORD_OPERATOR
+            ),
+        ),
     ),
     Rule(
         name="on",
         priority=1120,
         pattern=group(r"on") + group(r"\W", r"$"),
-        action=partial(actions.add_node_to_buffer, token_type=TokenType.ON),
+        action=partial(
+            actions.handle_reserved_keyword,
+            action=partial(actions.add_node_to_buffer, token_type=TokenType.ON),
+        ),
     ),
     Rule(
         name="boolean_operator",
@@ -106,8 +127,10 @@ MAIN = [
         )
         + group(r"\W", r"$"),
         action=partial(
-            actions.add_node_to_buffer,
-            token_type=TokenType.BOOLEAN_OPERATOR,
+            actions.handle_reserved_keyword,
+            action=partial(
+                actions.add_node_to_buffer, token_type=TokenType.BOOLEAN_OPERATOR
+            ),
         ),
     ),
     Rule(
@@ -154,7 +177,12 @@ MAIN = [
             r"returning",
         )
         + group(r"\W", r"$"),
-        action=partial(actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD),
+        action=partial(
+            actions.handle_reserved_keyword,
+            action=partial(
+                actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD
+            ),
+        ),
     ),
     Rule(
         name="frame_clause",
@@ -162,7 +190,12 @@ MAIN = [
         pattern=group(r"(range|rows|groups)\s+")
         + group(r"(between\s+)?((unbounded|\d+)\s+(preceding|following)|current\s+row)")
         + group(r"\W", r"$"),
-        action=partial(actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD),
+        action=partial(
+            actions.handle_reserved_keyword,
+            action=partial(
+                actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD
+            ),
+        ),
     ),
     Rule(
         # BQ arrays use an offset(n) function for
@@ -172,7 +205,12 @@ MAIN = [
         name="offset_keyword",
         priority=1310,
         pattern=group(r"offset") + group(r"\s+", r"$"),
-        action=partial(actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD),
+        action=partial(
+            actions.handle_reserved_keyword,
+            action=partial(
+                actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD
+            ),
+        ),
     ),
     Rule(
         name="set_operator",
@@ -181,7 +219,10 @@ MAIN = [
             r"(union|intersect|except|minus)(\s+(all|distinct))?(\s+by\s+name)?",
         )
         + group(r"\W", r"$"),
-        action=actions.handle_set_operator,
+        action=partial(
+            actions.handle_reserved_keyword,
+            action=actions.handle_set_operator,
+        ),
     ),
     Rule(
         name="explain",
@@ -189,7 +230,7 @@ MAIN = [
         pattern=group(r"explain(\s+(analyze|verbose|using\s+(tabular|json|text)))?")
         + group(r"\W", r"$"),
         action=partial(
-            actions.handle_nonreserved_keyword,
+            actions.handle_nonreserved_top_level_keyword,
             action=partial(
                 actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD
             ),
@@ -200,7 +241,7 @@ MAIN = [
         priority=2010,
         pattern=group(r"grant", r"revoke") + group(r"\W", r"$"),
         action=partial(
-            actions.handle_nonreserved_keyword,
+            actions.handle_nonreserved_top_level_keyword,
             action=partial(actions.lex_ruleset, new_ruleset=GRANT),
         ),
     ),
@@ -209,7 +250,7 @@ MAIN = [
         priority=2015,
         pattern=group(CREATE_CLONABLE + r"\s+.+?\s+clone") + group(r"\W", r"$"),
         action=partial(
-            actions.handle_nonreserved_keyword,
+            actions.handle_nonreserved_top_level_keyword,
             action=partial(
                 actions.lex_ruleset,
                 new_ruleset=CLONE,
@@ -221,7 +262,7 @@ MAIN = [
         priority=2020,
         pattern=group(CREATE_FUNCTION, ALTER_DROP_FUNCTION) + group(r"\W", r"$"),
         action=partial(
-            actions.handle_nonreserved_keyword,
+            actions.handle_nonreserved_top_level_keyword,
             action=partial(
                 actions.lex_ruleset,
                 new_ruleset=FUNCTION,
@@ -237,7 +278,7 @@ MAIN = [
         )
         + group(r"\W", r"$"),
         action=partial(
-            actions.handle_nonreserved_keyword,
+            actions.handle_nonreserved_top_level_keyword,
             action=partial(
                 actions.lex_ruleset,
                 new_ruleset=WAREHOUSE,
@@ -301,7 +342,7 @@ MAIN = [
         + r"(?!\()"
         + group(r"\W", r"$"),
         action=partial(
-            actions.handle_nonreserved_keyword,
+            actions.handle_nonreserved_top_level_keyword,
             action=partial(actions.add_node_to_buffer, token_type=TokenType.FMT_OFF),
         ),
     ),

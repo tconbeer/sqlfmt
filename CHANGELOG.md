@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Formatting Changes and Bug Fixes
+
+- sqlfmt will now parse unquoted reserved keywords as names if they are qualified by a period, e.g., `foo.select` or `foo.case` ([#599](https://github.com/tconbeer/sqlfmt/issues/599) - thank you [@matthieucan](https://github.com/matthieucan)!). 
+
 ## [0.22.0] - 2024-07-25
 
 ### Formatting Changes and Bug Fixes
