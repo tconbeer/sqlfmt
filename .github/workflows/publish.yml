@@ -17,7 +17,10 @@ jobs:
       POETRY_INSTALLER_PARALLEL: 1
       POETRY_VIRTUALENVS_CREATE: 1
     permissions:
+      contents: write
+      deployments: write
       id-token: write
+      packages: write
 
     steps:
       - name: Check out project main branch
