@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.23.2] - 2024-07-26
+
 ### Bug Fixes
 
 - Fixes a bug where complex python statements inside of jinja tags could cause unstable formatting ([#600](https://github.com/tconbeer/sqlfmt/issues/600) - thank you [@nenkie76](https://github.com/nenkie76)!)
@@ -497,7 +499,8 @@ All notable changes to this project will be documented in this file.
 - supports --check and --diff options
 - supports --no-color
 
-[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.23.1...HEAD
+[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.23.2...HEAD
+[0.23.2]: https://github.com/tconbeer/sqlfmt/compare/0.23.1...0.23.2
 [0.23.1]: https://github.com/tconbeer/sqlfmt/compare/0.23.0...0.23.1
 [0.23.0]: https://github.com/tconbeer/sqlfmt/compare/0.22.0...0.23.0
 [0.22.0]: https://github.com/tconbeer/sqlfmt/compare/0.21.4...0.22.0
