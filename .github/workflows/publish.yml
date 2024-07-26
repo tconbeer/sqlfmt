@@ -11,33 +11,56 @@ jobs:
   publish-package:
     if: ${{ github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/v') }}
     runs-on: ubuntu-latest
+    environment: publish
+    env:
+      POETRY_VIRTUALENVS_IN_PROJECT: 1
+      POETRY_INSTALLER_PARALLEL: 1
+      POETRY_VIRTUALENVS_CREATE: 1
+    permissions:
+      id-token: write
 
     steps:
-      - name: Check out sqlfmt main branch
+      - name: Check out project main branch
         uses: actions/checkout@v4
         with:
           ref: main
+
       - name: Set up Python 3.10
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
+
+      - name: Load cached Poetry installation
+        id: cached-poetry-install
+        uses: actions/cache@v4
+        with:
+          path: ~/.local
+          key: ${{ runner.os }}-poetry-183  # increment to reset cache
+
+      - name: Add cached Poetry to PATH
+        if: steps.cached-poetry-install.outputs.cache-hit == 'true'
+        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+
       - name: Install Poetry
+        if: steps.cached-poetry-install.outputs.cache-hit != 'true'
         uses: snok/install-poetry@v1
         with:
-          version: 1.2.2
-      - name: Configure poetry
-        run: poetry config --no-interaction pypi-token.pypi ${{ secrets.SQLFMT_PYPI_TOKEN }}
-      - name: Get sqlfmt Version
-        id: sqlfmt_version
-        run: echo "sqlfmt_version=$(poetry version --short)" >> $GITHUB_OUTPUT
+          version: 1.8.3
+
+      - name: Get project Version
+        id: project_version
+        run: echo "project_version=$(poetry version --short)" >> $GITHUB_OUTPUT
+
       - name: Build package
         run: poetry build --no-interaction
+
       - name: Publish package to PyPI
-        run: poetry publish --no-interaction
+        uses: pypa/gh-action-pypi-publish@release/v1
+
       - name: Create a Github Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.sqlfmt_version.outputs.sqlfmt_version }}
+          tag_name: v${{ steps.project_version.outputs.project_version }}
           target_commitish: main
           token: ${{ secrets.SQLFMT_RELEASE_TOKEN }}
           body_path: CHANGELOG.md
@@ -67,4 +90,4 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:v${{ steps.sqlfmt_version.outputs.sqlfmt_version }}
+            ghcr.io/${{ github.repository }}:v${{ steps.project_version.outputs.project_version }}
