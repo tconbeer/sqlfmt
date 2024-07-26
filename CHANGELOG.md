@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 ## [0.23.1] - 2024-07-26
 
+### Bug Fixes
+
+- Fixes a bug with the publish workflow that prevented a new package from being published to GHCR for 0.23.0
+
 ## [0.23.0] - 2024-07-26
 
 ### Formatting Changes and Bug Fixes
