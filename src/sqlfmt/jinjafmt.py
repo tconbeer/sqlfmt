@@ -271,9 +271,8 @@ class JinjaTag:
             extra_indent = " " * 4
 
         for i, code_line in enumerate(code_lines, start=1 if self.verb else 0):
-            lines.append(
-                f"{indent}{'' if i in no_indent_lines else extra_indent}{code_line}"
-            )
+            line_indent = "" if i in no_indent_lines else f"{indent}{extra_indent}"
+            lines.append(f"{line_indent}{code_line}")
 
         if self.verb:
             lines[-1] = f"{indent}{lines[-1].lstrip()} {self.closing_marker}"
@@ -287,7 +286,7 @@ class JinjaTag:
 
     def _find_multiline_python_str_lines(self) -> MutableSet[int]:
         try:
-            tree = ast.parse(self.code, mode="eval")
+            tree = ast.parse(self.code, mode="exec")
         except SyntaxError:
             # this jinja isn't quite python, so give up here.
             return set()
