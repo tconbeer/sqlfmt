@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.23.0] - 2024-07-26
+
 ### Formatting Changes and Bug Fixes
 
 - sqlfmt will now parse unquoted reserved keywords as names if they are qualified by a period, e.g., `foo.select` or `foo.case` ([#599](https://github.com/tconbeer/sqlfmt/issues/599) - thank you [@matthieucan](https://github.com/matthieucan)!). 
@@ -485,7 +487,8 @@ All notable changes to this project will be documented in this file.
 - supports --check and --diff options
 - supports --no-color
 
-[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.22.0...HEAD
+[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.23.0...HEAD
+[0.23.0]: https://github.com/tconbeer/sqlfmt/compare/0.22.0...0.23.0
 [0.22.0]: https://github.com/tconbeer/sqlfmt/compare/0.21.4...0.22.0
 [0.21.4]: https://github.com/tconbeer/sqlfmt/compare/0.21.3...0.21.4
 [0.21.3]: https://github.com/tconbeer/sqlfmt/compare/0.21.2...0.21.3
