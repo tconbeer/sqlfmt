@@ -44,16 +44,15 @@ gitpython = { version = "^3.1.24", optional = true }
 [tool.poetry.group.dev.dependencies]
 pre-commit = ">=2.20,<4.0"
 snakeviz = "^2.1.1"
-black = "^24"
 
 [tool.poetry.group.static.dependencies]
-flake8 = "^5.0.4"
-isort = "^5.9.3"
-mypy = ">=0.990,<1.11"
+ruff = "^0.5"
+mypy = "^1.11"
 
 [tool.poetry.group.test.dependencies]
-pytest = ">=7.2,<9.0"
-pytest-cov = ">=4,<6"
+black = "^24"
+pytest = "^8"
+pytest-cov = "^5"
 
 [tool.poetry.scripts]
 sqlfmt = "sqlfmt.cli:sqlfmt"
@@ -63,11 +62,40 @@ sqlfmt_primer = { callable = "sqlfmt_primer.primer:sqlfmt_primer", extras = ["sq
 line-length = 88
 target-version = ["py38"]
 
-[tool.isort]
-multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
-ensure_newline_before_comments = true
-line_length = 88
-src_paths = ["src/sqlfmt", "tests"]
+[tool.ruff]
+line-length = 88
+target-version = "py38"
+
+[tool.ruff.lint]
+select = ["A", "B", "E", "F", "I"]
+
+[tool.mypy]
+python_version = "3.8"
+files = [
+    "src/**/*.py",
+    "tests/**/*.py",
+]
+mypy_path = "stubs,src"
+
+show_column_numbers = true
+
+# show error messages from unrelated files
+follow_imports = "normal"
+
+# be strict
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+disallow_incomplete_defs = true
+disallow_subclassing_any = true
+strict_optional = true
+
+warn_return_any = true
+warn_no_return = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unused_configs = true
+
+no_implicit_reexport = true
+strict_equality = true

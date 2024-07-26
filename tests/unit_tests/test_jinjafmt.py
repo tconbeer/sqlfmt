@@ -2,7 +2,6 @@ import sys
 from typing import Dict, Tuple
 
 import pytest
-
 from sqlfmt.analyzer import Analyzer
 from sqlfmt.jinjafmt import BlackWrapper, JinjaFormatter, JinjaTag
 from sqlfmt.line import Line
@@ -71,7 +70,7 @@ def test_jinja_tag_from_string(tag: str, result: Tuple[str, str, str, str]) -> N
 
 
 @pytest.mark.parametrize(
-    "type,tag,formatted",
+    "ttype,tag,formatted",
     [
         (TokenType.JINJA_EXPRESSION, "{{ expression }}", "{{ expression }}"),
         (TokenType.JINJA_EXPRESSION, "{{expression}}", "{{ expression }}"),
@@ -112,12 +111,12 @@ def test_jinja_tag_from_string(tag: str, result: Tuple[str, str, str, str]) -> N
 )
 def test_format_jinja_node(
     jinja_formatter: JinjaFormatter,
-    type: TokenType,
+    ttype: TokenType,
     tag: str,
     formatted: str,
     node_manager: NodeManager,
 ) -> None:
-    t = Token(type=type, prefix="", token=tag, spos=0, epos=len(tag))
+    t = Token(type=ttype, prefix="", token=tag, spos=0, epos=len(tag))
     n = node_manager.create_node(t, previous_node=None)
     jinja_formatter._format_jinja_node(n, 88)
     assert n.value == formatted

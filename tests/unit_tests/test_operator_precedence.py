@@ -1,5 +1,4 @@
 import pytest
-
 from sqlfmt.analyzer import Analyzer
 from sqlfmt.operator_precedence import OperatorPrecedence
 

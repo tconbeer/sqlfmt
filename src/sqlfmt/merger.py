@@ -347,7 +347,7 @@ class LineMerger:
         new_segments = [segments[0]]
 
         # first stubborn-merge all p0 operators
-        for i, segment in enumerate(segments[1:], start=1):
+        for segment in segments[1:]:
             if (
                 # always stubbornly merge P0 operators (e.g., `over`)
                 self._segment_continues_operator_sequence(

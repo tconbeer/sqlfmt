@@ -65,7 +65,7 @@ def _find_config_file(search_paths: List[Path]) -> Optional[Path]:
 
     Returns None if no file exists
     """
-    for f in [dir / "pyproject.toml" for dir in search_paths]:
+    for f in [p / "pyproject.toml" for p in search_paths]:
         if f.exists():
             return f
     else:
@@ -87,12 +87,12 @@ def _load_config_from_path(config_path: Optional[Path]) -> Config:
         except OSError as e:
             raise SqlfmtConfigError(
                 f"Error opening pyproject.toml config file at {config_path}. {e}"
-            )
+            ) from e
         except tomllib.TOMLDecodeError as e:
             raise SqlfmtConfigError(
                 f"Error decoding pyproject.toml config file at {config_path}. "
                 f"Check for invalid TOML. {e}"
-            )
+            ) from e
         raw_config: Config = pyproject_dict.get("tool", {}).get("sqlfmt", {})
         if "exclude" in raw_config and "exclude_root" not in raw_config:
             raw_config["exclude_root"] = config_path.parent

@@ -49,8 +49,8 @@ class Comment:
         match = self.comment_marker.match(self.token.token)
         assert match, f"{self.token.token} does not match comment marker"
         _, epos = match.span(1)
-        _, len = match.span(2)
-        return self.token.token[:epos], len
+        _, text_offset = match.span(2)
+        return self.token.token[:epos], text_offset
 
     def _rewrite_marker(self, marker: str) -> str:
         """

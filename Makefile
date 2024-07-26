@@ -1,10 +1,9 @@
 .PHONY: check
 check:
-	isort .
-	black .
+	ruff format .
+	ruff check . --fix
 	pytest
-	flake8 .
-	mypy --disallow-any-unimported
+	mypy
 
 .PHONY: unit
 unit:
@@ -12,11 +11,9 @@ unit:
 
 .PHONY: lint
 lint:
-	isort .
-	black .
-	flake8 .
-	mypy --disallow-any-unimported
-
+	ruff format .
+	ruff check . --fix
+	mypy
 
 .PHONY: profiling
 profiling: .profiling/all.rstats
