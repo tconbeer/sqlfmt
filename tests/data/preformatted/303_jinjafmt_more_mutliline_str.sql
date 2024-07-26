@@ -9,5 +9,10 @@
         column_b1,
         column_b2,
         """,
+        "c": (
+            "foooooooooooooooooooo,\n"
+            "barrrrrrrrrrrrrrrrrrr,\n"
+            "bazzzzzzzzzzzzzzzzzzz,\n"
+        ),
     } %}
 {% endmacro %}
