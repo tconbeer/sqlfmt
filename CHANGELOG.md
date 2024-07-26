@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Bug Fixes
+
+- Fixes a bug where complex python statements inside of jinja tags could cause unstable formatting ([#600](https://github.com/tconbeer/sqlfmt/issues/600) - thank you [@nenkie76](https://github.com/nenkie76)!)
+
 ## [0.23.1] - 2024-07-26
 
 ### Bug Fixes
