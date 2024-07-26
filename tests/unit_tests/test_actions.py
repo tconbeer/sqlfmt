@@ -603,3 +603,55 @@ def test_handle_nested_dictionary_in_jinja_expression(
         token_type=TokenType.JINJA_EXPRESSION,
     )
     assert jinja_analyzer.pos == 355
+
+
+def test_handle_reserved_keywords(default_analyzer: Analyzer) -> None:
+    source_string = """
+    select case;
+    select foo.case;
+    select foo.select;
+    interval;
+    foo.interval;
+    explain;
+    foo.explain;
+    """
+    query = default_analyzer.parse_query(source_string=source_string.lstrip())
+    assert len(query.lines) == 7
+    case_line = query.lines[0]
+    assert len(case_line.nodes) == 4
+    assert case_line.nodes[0].token.type is TokenType.UNTERM_KEYWORD
+    assert case_line.nodes[1].token.type is TokenType.STATEMENT_START
+
+    case_name_line = query.lines[1]
+    assert len(case_name_line.nodes) == 6
+    assert case_name_line.nodes[0].token.type is TokenType.UNTERM_KEYWORD
+    assert case_name_line.nodes[1].token.type is TokenType.NAME
+    assert case_name_line.nodes[2].token.type is TokenType.DOT
+    assert case_name_line.nodes[3].token.type is TokenType.NAME
+
+    select_name_line = query.lines[2]
+    assert len(select_name_line.nodes) == 6
+    assert select_name_line.nodes[0].token.type is TokenType.UNTERM_KEYWORD
+    assert select_name_line.nodes[1].token.type is TokenType.NAME
+    assert select_name_line.nodes[2].token.type is TokenType.DOT
+    assert select_name_line.nodes[3].token.type is TokenType.NAME
+
+    interval_line = query.lines[3]
+    assert len(interval_line.nodes) == 3
+    assert interval_line.nodes[0].token.type is TokenType.WORD_OPERATOR
+
+    interval_name_line = query.lines[4]
+    assert len(interval_name_line.nodes) == 5
+    assert interval_name_line.nodes[0].token.type is TokenType.NAME
+    assert interval_name_line.nodes[1].token.type is TokenType.DOT
+    assert interval_name_line.nodes[2].token.type is TokenType.NAME
+
+    explain_line = query.lines[5]
+    assert len(explain_line.nodes) == 3
+    assert explain_line.nodes[0].token.type is TokenType.UNTERM_KEYWORD
+
+    explain_name_line = query.lines[6]
+    assert len(explain_name_line.nodes) == 5
+    assert explain_name_line.nodes[0].token.type is TokenType.NAME
+    assert explain_name_line.nodes[1].token.type is TokenType.DOT
+    assert explain_name_line.nodes[2].token.type is TokenType.NAME

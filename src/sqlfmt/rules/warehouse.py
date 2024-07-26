@@ -45,6 +45,11 @@ WAREHOUSE = [
             r"rename\s+to",
         )
         + group(r"\W", r"$"),
-        action=partial(actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD),
+        action=partial(
+            actions.handle_reserved_keyword,
+            action=partial(
+                actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD
+            ),
+        ),
     ),
 ]
