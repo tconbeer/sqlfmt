@@ -68,10 +68,10 @@ def format_markdown_string(source_string: str, mode: Mode) -> str:
         from mistletoe import Document
         from mistletoe.block_token import BlockToken, CodeFence
         from mistletoe.markdown_renderer import MarkdownRenderer
-    except ImportError:
+    except ImportError as e:
         raise SqlfmtImportError(
             "Tried to format a Markdown file but markdownfmt extras are not installed."
-        )
+        ) from e
 
     def format_sql_code_blocks(token: BlockToken) -> None:
         """Walk through the AST and format any SQL code blocks."""

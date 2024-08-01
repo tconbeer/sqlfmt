@@ -1,5 +1,4 @@
 import pytest
-
 from sqlfmt.api import format_markdown_string, format_string
 from sqlfmt.mode import Mode
 
