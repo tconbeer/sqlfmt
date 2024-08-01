@@ -2,7 +2,6 @@ from collections import Counter
 from typing import Any
 
 import pytest
-
 from sqlfmt.dialect import ClickHouse, Dialect, Polyglot
 from sqlfmt.rules.common import group
 

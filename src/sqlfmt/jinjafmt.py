@@ -271,9 +271,8 @@ class JinjaTag:
             extra_indent = " " * 4
 
         for i, code_line in enumerate(code_lines, start=1 if self.verb else 0):
-            lines.append(
-                f"{indent}{'' if i in no_indent_lines else extra_indent}{code_line}"
-            )
+            line_indent = "" if i in no_indent_lines else f"{indent}{extra_indent}"
+            lines.append(f"{line_indent}{code_line}")
 
         if self.verb:
             lines[-1] = f"{indent}{lines[-1].lstrip()} {self.closing_marker}"
@@ -286,19 +285,35 @@ class JinjaTag:
         return f"{self.opening_marker} {self.verb}{self.code} {self.closing_marker}"
 
     def _find_multiline_python_str_lines(self) -> MutableSet[int]:
+        """
+        Return a set line numbers that correspond with the lines
+        of a triple-quoted multiline string (except for the first line
+        of each string). These are lines that should never have
+        their indentation adjusted
+        """
         try:
-            tree = ast.parse(self.code, mode="eval")
+            tree = ast.parse(self.code, mode="exec")
         except SyntaxError:
             # this jinja isn't quite python, so give up here.
             return set()
 
         line_indicies: MutableSet[int] = set()
+        raw_lines = self.code.splitlines()
         for node in ast.walk(tree):
             if (
                 isinstance(node, ast.Constant)
                 and isinstance(node.value, str)
-                and "\n" in node.value
                 and node.end_lineno is not None
+                and node.end_lineno > node.lineno
+                and "\n" in node.value
+                and (
+                    '"""' in raw_lines[node.lineno - 1]
+                    or "'''" in raw_lines[node.lineno - 1]
+                )
+                and (
+                    '"""' in raw_lines[node.end_lineno - 1]
+                    or "'''" in raw_lines[node.end_lineno - 1]
+                )
             ):
                 line_indicies |= set(range(node.lineno, node.end_lineno))
 

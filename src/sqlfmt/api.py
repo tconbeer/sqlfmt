@@ -368,7 +368,7 @@ def _read_path_or_stdin(path: Path, mode: Mode) -> Tuple[str, str, str]:
                 "with the --encoding option. Or set --encoding to 'none' to "
                 "use the system default encoding. We suggest always using "
                 "utf-8 for all files."
-            )
+            ) from e
     return source, encoding, detected_bom
 
 
@@ -390,7 +390,7 @@ def _perform_safety_check(analyzer: Analyzer, raw_query: Query, result: str) -> 
 
     try:
         assert filtered_raw_tokens == filtered_result_tokens
-    except AssertionError:
+    except AssertionError as e:
         raw_len = len(filtered_raw_tokens)
         result_len = len(filtered_result_tokens)
         mismatch_pos = 0
@@ -413,7 +413,7 @@ def _perform_safety_check(analyzer: Analyzer, raw_query: Query, result: str) -> 
             f"query was {result_len} tokens. First mismatching "
             f"token at position {mismatch_pos}: raw: {mismatch_raw}; "
             f"result: {mismatch_res}."
-        )
+        ) from e
 
     raw_comments = [
         comment.body for line in raw_query.lines for comment in line.comments
@@ -425,7 +425,7 @@ def _perform_safety_check(analyzer: Analyzer, raw_query: Query, result: str) -> 
     stripped_res = "".join(["".join(c.split()) for c in result_comments])
     try:
         assert stripped_raw == stripped_res
-    except AssertionError:
+    except AssertionError as e:
         raw_len = len(stripped_raw)
         result_len = len(stripped_res)
         mismatch_pos = 0
@@ -446,4 +446,4 @@ def _perform_safety_check(analyzer: Analyzer, raw_query: Query, result: str) -> 
             f"query had {result_len} comment characters. First mismatching "
             f"character at position {mismatch_pos}: raw: {mismatch_raw}; "
             f"result: {mismatch_res}."
-        )
+        ) from e

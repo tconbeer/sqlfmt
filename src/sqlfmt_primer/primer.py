@@ -8,7 +8,6 @@ from typing import List, Optional
 import click
 from git.repo import Repo
 from platformdirs import user_cache_dir
-
 from sqlfmt.api import get_matching_paths, initialize_progress_bar, run
 from sqlfmt.cache import get_cache_file
 from sqlfmt.mode import Mode
@@ -30,9 +29,9 @@ def get_projects() -> List[SQLProject]:
         SQLProject(
             name="gitlab",
             git_url="https://github.com/tconbeer/gitlab-analytics-sqlfmt.git",
-            git_ref="b1935f4",  # sqlfmt 54b8edd
-            expected_changed=56,
-            expected_unchanged=2454,
+            git_ref="5cd49f6",  # sqlfmt aed0f39
+            expected_changed=1,
+            expected_unchanged=2416,
             expected_errored=0,
             sub_directory=Path("transform/snowflake-dbt/"),
         ),

@@ -6,7 +6,32 @@ All notable changes to this project will be documented in this file.
 
 ### Features
 
--   Add support for formatting SQL code blocks in Markdown files. Introduces a new extra install (`pipx install shandy-sqlfmt[markdownfmt]`) and CLI option (`--no-markdownfmt`) ([#593](https://github.com/tconbeer/sqlfmt/issues/593) - thank you, [@michael-the1](https://github.com/michael-the1)).
+- Add support for formatting SQL code blocks in Markdown files. Introduces a new extra install (`pipx install shandy-sqlfmt[markdownfmt]`) and CLI option (`--no-markdownfmt`) ([#593](https://github.com/tconbeer/sqlfmt/issues/593) - thank you, [@michael-the1](https://github.com/michael-the1)).
+## [0.23.2] - 2024-07-26
+
+### Bug Fixes
+
+- Fixes a bug where complex python statements inside of jinja tags could cause unstable formatting ([#600](https://github.com/tconbeer/sqlfmt/issues/600) - thank you [@nenkie76](https://github.com/nenkie76)!)
+
+## [0.23.1] - 2024-07-26
+
+### Bug Fixes
+
+- Fixes a bug with the publish workflow that prevented a new package from being published to GHCR for 0.23.0
+
+## [0.23.0] - 2024-07-26
+
+### Formatting Changes and Bug Fixes
+
+- sqlfmt will now parse unquoted reserved keywords as names if they are qualified by a period, e.g., `foo.select` or `foo.case` ([#599](https://github.com/tconbeer/sqlfmt/issues/599) - thank you [@matthieucan](https://github.com/matthieucan)!). 
+
+## [0.22.0] - 2024-07-25
+
+### Formatting Changes and Bug Fixes
+
+- DuckDB's `union [all] by name` is now supported ([#611](https://github.com/tconbeer/sqlfmt/issues/611) - thank you [@aersam](https://github.com/aersam)!).
+- `interval` is now parsed as a word operator. Parenthesized expressions like `interval (10) days` will maintain the space after `interval`.
+- Fixed a bug where a line starting with an operator or word operator could be erroneously merged into a previous line ([#602](https://github.com/tconbeer/sqlfmt/issues/602) - thank you [@roveo](https://github.com/roveo)!).
 
 ## [0.21.4] - 2024-07-09
 
@@ -477,7 +502,11 @@ All notable changes to this project will be documented in this file.
 - supports --check and --diff options
 - supports --no-color
 
-[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.21.4...HEAD
+[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.23.2...HEAD
+[0.23.2]: https://github.com/tconbeer/sqlfmt/compare/0.23.1...0.23.2
+[0.23.1]: https://github.com/tconbeer/sqlfmt/compare/0.23.0...0.23.1
+[0.23.0]: https://github.com/tconbeer/sqlfmt/compare/0.22.0...0.23.0
+[0.22.0]: https://github.com/tconbeer/sqlfmt/compare/0.21.4...0.22.0
 [0.21.4]: https://github.com/tconbeer/sqlfmt/compare/0.21.3...0.21.4
 [0.21.3]: https://github.com/tconbeer/sqlfmt/compare/0.21.2...0.21.3
 [0.21.2]: https://github.com/tconbeer/sqlfmt/compare/0.21.1...0.21.2

@@ -1,7 +1,6 @@
 from typing import List
 
 import pytest
-
 from sqlfmt.comment import Comment
 from sqlfmt.node_manager import NodeManager
 from sqlfmt.token import Token, TokenType

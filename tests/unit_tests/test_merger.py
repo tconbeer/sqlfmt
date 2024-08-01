@@ -1,12 +1,12 @@
 import itertools
 
 import pytest
-
 from sqlfmt.exception import CannotMergeException
 from sqlfmt.merger import LineMerger
 from sqlfmt.mode import Mode
 from sqlfmt.operator_precedence import OperatorPrecedence
 from sqlfmt.segment import Segment, create_segments_from_lines
+
 from tests.util import read_test_data
 
 
@@ -541,6 +541,18 @@ def test_no_merge_short_multiline_nodes(merger: LineMerger) -> None:
 def test_no_merge_formatting_disabled(merger: LineMerger) -> None:
     source_string, expected_string = read_test_data(
         "unit_tests/test_merger/test_no_merge_formatting_disabled.sql"
+    )
+    raw_query = merger.mode.dialect.initialize_analyzer(
+        merger.mode.line_length
+    ).parse_query(source_string)
+    merged_lines = merger.maybe_merge_lines(raw_query.lines)
+    result_string = "".join([str(line) for line in merged_lines])
+    assert result_string == expected_string
+
+
+def test_do_not_merge_operator_sequences_across_commas(merger: LineMerger) -> None:
+    source_string, expected_string = read_test_data(
+        "unit_tests/test_merger/test_no_merge_operator_sequences_across_commas.sql"
     )
     raw_query = merger.mode.dialect.initialize_analyzer(
         merger.mode.line_length

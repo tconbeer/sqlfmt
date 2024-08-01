@@ -12,7 +12,12 @@ CLONE = [
         name="unterm_keyword",
         priority=1300,
         pattern=group(CREATE_CLONABLE, r"clone") + group(r"\W", r"$"),
-        action=partial(actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD),
+        action=partial(
+            actions.handle_reserved_keyword,
+            action=partial(
+                actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD
+            ),
+        ),
     ),
     Rule(
         name="word_operator",
@@ -22,6 +27,11 @@ CLONE = [
             r"before",
         )
         + group(r"\W", r"$"),
-        action=partial(actions.add_node_to_buffer, token_type=TokenType.WORD_OPERATOR),
+        action=partial(
+            actions.handle_reserved_keyword,
+            action=partial(
+                actions.add_node_to_buffer, token_type=TokenType.WORD_OPERATOR
+            ),
+        ),
     ),
 ]

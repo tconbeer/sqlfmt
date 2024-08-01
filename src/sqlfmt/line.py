@@ -2,8 +2,8 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
 
 from sqlfmt.comment import Comment
-from sqlfmt.node import Node
-from sqlfmt.token import Token
+from sqlfmt.node import Node, get_previous_token
+from sqlfmt.token import Token, TokenType
 
 
 @dataclass
@@ -149,6 +149,14 @@ class Line:
         for node in self.nodes:
             tokens.append(node.token)
         return tokens
+
+    @property
+    def previous_token_is_comma(self) -> bool:
+        token, _ = get_previous_token(self.previous_node)
+        if token is None:
+            return False
+        else:
+            return token.type is TokenType.COMMA
 
     @property
     def is_blank_line(self) -> bool:

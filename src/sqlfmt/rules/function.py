@@ -15,7 +15,10 @@ FUNCTION = [
             r"as",
         )
         + group(r"\W", r"$"),
-        action=actions.handle_ddl_as,
+        action=partial(
+            actions.handle_reserved_keyword,
+            action=actions.handle_ddl_as,
+        ),
     ),
     Rule(
         name="word_operator",
@@ -27,7 +30,12 @@ FUNCTION = [
             r"runtime_version",
         )
         + group(r"\W", r"$"),
-        action=partial(actions.add_node_to_buffer, token_type=TokenType.WORD_OPERATOR),
+        action=partial(
+            actions.handle_reserved_keyword,
+            action=partial(
+                actions.add_node_to_buffer, token_type=TokenType.WORD_OPERATOR
+            ),
+        ),
     ),
     Rule(
         name="unterm_keyword",
@@ -85,6 +93,11 @@ FUNCTION = [
             r"(re)?set(\s+all)?",
         )
         + group(r"\W", r"$"),
-        action=partial(actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD),
+        action=partial(
+            actions.handle_reserved_keyword,
+            action=partial(
+                actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD
+            ),
+        ),
     ),
 ]

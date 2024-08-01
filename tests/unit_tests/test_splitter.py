@@ -1,12 +1,12 @@
 from typing import List
 
 import pytest
-
 from sqlfmt.analyzer import Analyzer
 from sqlfmt.line import Line
 from sqlfmt.mode import Mode
 from sqlfmt.node_manager import NodeManager
 from sqlfmt.splitter import LineSplitter
+
 from tests.util import read_test_data
 
 

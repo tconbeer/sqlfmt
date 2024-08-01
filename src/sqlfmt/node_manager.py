@@ -88,12 +88,12 @@ class NodeManager:
                 start_value = end_text.replace("end", "")
                 if start_value not in start_tag.value:
                     raise ValueError
-        except ValueError:
+        except ValueError as e:
             raise SqlfmtBracketError(
                 f"Closing jinja tag '{token.token}' found at pos {token.spos} does "
                 f"not match last opened tag '{start_tag.value}' found at pos "
                 f"{start_tag.token.spos}."
-            )
+            ) from e
 
     def open_brackets(
         self, token: Token, previous_node: Optional[Node]
@@ -128,22 +128,22 @@ class NodeManager:
                 last_bracket = open_brackets.pop()
                 if last_bracket.is_unterm_keyword:
                     last_bracket = open_brackets.pop()
-            except IndexError:
+            except IndexError as e:
                 raise SqlfmtBracketError(
                     f"Closing bracket '{token.token}' found at "
                     f"{token.spos} before bracket was opened."
-                )
+                ) from e
             else:
                 self.raise_on_mismatched_bracket(token, last_bracket)
         elif token.type is TokenType.JINJA_BLOCK_END:
             try:
                 start_tag = open_jinja_blocks.pop()
                 self.raise_on_mismatched_jinja_tags(token, start_tag)
-            except IndexError:
+            except IndexError as e:
                 raise SqlfmtBracketError(
                     f"Closing bracket '{token.token}' found at "
                     f"{token.spos} before bracket was opened."
-                )
+                ) from e
         # if we hit a semicolon, reset open_brackets, since we're
         # about to start a new query
         elif token.type is TokenType.SEMICOLON:

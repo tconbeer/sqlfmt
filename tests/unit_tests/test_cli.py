@@ -7,8 +7,8 @@ from typing import List
 
 import pytest
 from click.testing import CliRunner
-
 from sqlfmt.cli import sqlfmt as sqlfmt_main
+
 from tests.util import copy_config_file_to_dst
 
 
@@ -69,8 +69,8 @@ def test_version_command(sqlfmt_runner: CliRunner) -> None:
 
 
 def test_stdin(sqlfmt_runner: CliRunner) -> None:
-    input = "select 1"
-    results = sqlfmt_runner.invoke(sqlfmt_main, args="-", input=input)
+    stream_input = "select 1"
+    results = sqlfmt_runner.invoke(sqlfmt_main, args="-", input=stream_input)
     assert results.exit_code == 0
     assert results.stdout == "select 1\n\n"
 

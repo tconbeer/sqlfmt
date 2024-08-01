@@ -305,6 +305,7 @@ class LineMerger:
         else:
             return (
                 line.starts_with_operator
+                and not line.previous_token_is_comma
                 and OperatorPrecedence.from_node(line.nodes[0]) <= max_precedence
             ) or line.starts_with_comma
 
@@ -346,7 +347,7 @@ class LineMerger:
         new_segments = [segments[0]]
 
         # first stubborn-merge all p0 operators
-        for i, segment in enumerate(segments[1:], start=1):
+        for segment in segments[1:]:
             if (
                 # always stubbornly merge P0 operators (e.g., `over`)
                 self._segment_continues_operator_sequence(

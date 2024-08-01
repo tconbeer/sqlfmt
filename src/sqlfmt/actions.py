@@ -308,7 +308,41 @@ def handle_number(analyzer: "Analyzer", source_string: str, match: re.Match) -> 
     )
 
 
-def handle_nonreserved_keyword(
+def handle_reserved_keyword(
+    analyzer: "Analyzer",
+    source_string: str,
+    match: re.Match,
+    action: Callable[["Analyzer", str, re.Match], None],
+) -> None:
+    """
+    Reserved keywords can be used in most dialects as table or column
+    names without quoting if they are qualified.
+    https://github.com/tconbeer/sqlfmt/issues/599
+
+    This checks if the previous token is a period, and if so, lexes
+    this token as a name; otherwise this action executes the passed
+    action (which likely adds the node as some kind of keyword).
+    """
+    if analyzer.previous_node is None:
+        action(analyzer, source_string, match)
+        return
+
+    previous_token, _ = get_previous_token(analyzer.previous_node)
+    if previous_token is not None and previous_token.type is TokenType.DOT:
+        token = Token.from_match(source_string, match, token_type=TokenType.NAME)
+        if not token.prefix:
+            node = analyzer.node_manager.create_node(
+                token=token, previous_node=analyzer.previous_node
+            )
+            analyzer.node_buffer.append(node)
+            analyzer.pos = token.epos
+            return
+
+    # in all other cases, this is a keyword.
+    action(analyzer, source_string, match)
+
+
+def handle_nonreserved_top_level_keyword(
     analyzer: "Analyzer",
     source_string: str,
     match: re.Match,
@@ -317,6 +351,10 @@ def handle_nonreserved_keyword(
     """
     Checks to see if we're at depth 0 (assuming this is a name); if so, then take the
     passed action, otherwise lex it as a name.
+
+    For example, this allows us to lex these differently:
+    explain select 1;
+    select explain, 1;
     """
     token = Token.from_match(source_string, match, token_type=TokenType.NAME)
     node = analyzer.node_manager.create_node(
@@ -326,7 +364,9 @@ def handle_nonreserved_keyword(
         analyzer.node_buffer.append(node)
         analyzer.pos = token.epos
     else:
-        action(analyzer, source_string, match)
+        handle_reserved_keyword(
+            analyzer=analyzer, source_string=source_string, match=match, action=action
+        )
 
 
 def lex_ruleset(

@@ -2,13 +2,13 @@ from copy import deepcopy
 from typing import List
 
 import pytest
-
 from sqlfmt.analyzer import Analyzer
 from sqlfmt.comment import Comment
 from sqlfmt.line import Line
 from sqlfmt.mode import Mode
 from sqlfmt.node_manager import NodeManager
 from sqlfmt.token import Token, TokenType
+
 from tests.util import read_test_data
 
 
