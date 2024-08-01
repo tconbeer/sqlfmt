@@ -52,9 +52,13 @@ jobs:
           version: 1.8.3
 
       - name: Install python dependencies
+<<<<<<< HEAD
+        run: poetry install --sync --no-interaction -E "jinjafmt markdownfmt" --only main,test
+=======
         run: |
           poetry install --sync --no-interaction -E jinjafmt --only main,test
 
+>>>>>>> origin/main
       - name: Run tests
         run: poetry run pytest
 
@@ -118,7 +122,7 @@ jobs:
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: |
           poetry env use ${{ steps.setup-python.outputs.python-version }}
-          poetry install --sync --no-interaction -E jinjafmt --only main,test
+          poetry install --sync --no-interaction -E "jinjafmt markdownfmt" --only main,test
 
       - name: Run tests
         run: |

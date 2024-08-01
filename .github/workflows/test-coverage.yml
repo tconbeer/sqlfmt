@@ -59,7 +59,7 @@ jobs:
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: |
           poetry env use ${{ steps.setup-python.outputs.python-version }}
-          poetry install --sync --no-interaction -E jinjafmt --only main,test
+          poetry install --sync --no-interaction -E "jinjafmt markdownfmt" --only main,test
           poetry env info
 
       - name: Run unit tests and generate cov report

@@ -1,7 +1,8 @@
 import os
 from dataclasses import dataclass, field
+from importlib.util import find_spec
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from sqlfmt.dialect import ClickHouse, Polyglot
 from sqlfmt.exception import SqlfmtConfigError
@@ -14,7 +15,6 @@ class Mode:
     report config. For more info on each option, see cli.py
     """
 
-    SQL_EXTENSIONS: List[str] = field(default_factory=lambda: [".sql", ".sql.jinja"])
     dialect_name: str = "polyglot"
     line_length: int = 88
     check: bool = False
@@ -25,6 +25,7 @@ class Mode:
     fast: bool = False
     single_process: bool = False
     no_jinjafmt: bool = False
+    no_markdownfmt: bool = False
     reset_cache: bool = False
     verbose: bool = False
     quiet: bool = False
@@ -45,6 +46,17 @@ class Mode:
                 f"Mode was created with dialect_name={self.dialect_name}, "
                 "which is not supported. Did you mean 'polyglot'?"
             ) from e
+
+    @property
+    def included_file_extensions(self) -> Tuple[str, ...]:
+        """List of file extensions to parse.
+
+        Only parses Markdown files if mistletoe is installed and no_markdownfmt is not
+        set.
+        """
+        if not self.no_markdownfmt and find_spec("mistletoe"):
+            return (".sql", ".sql.jinja", ".md")
+        return (".sql", ".sql.jinja")
 
     @property
     def color(self) -> bool:

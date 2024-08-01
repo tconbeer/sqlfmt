@@ -24,7 +24,12 @@ from tqdm import tqdm
 
 from sqlfmt.analyzer import Analyzer
 from sqlfmt.cache import Cache, check_cache, clear_cache, load_cache, write_cache
-from sqlfmt.exception import SqlfmtEquivalenceError, SqlfmtError, SqlfmtUnicodeError
+from sqlfmt.exception import (
+    SqlfmtEquivalenceError,
+    SqlfmtError,
+    SqlfmtImportError,
+    SqlfmtUnicodeError,
+)
 from sqlfmt.formatter import QueryFormatter
 from sqlfmt.mode import Mode as Mode
 from sqlfmt.query import Query
@@ -52,6 +57,38 @@ def format_string(source_string: str, mode: Mode) -> str:
         _perform_safety_check(analyzer, raw_query, result)
 
     return result
+
+
+def format_markdown_string(source_string: str, mode: Mode) -> str:
+    """Format the SQL code blocks of a Markdown string."""
+    if mode.no_markdownfmt:
+        return source_string
+
+    try:
+        from mistletoe import Document
+        from mistletoe.block_token import BlockToken, CodeFence
+        from mistletoe.markdown_renderer import MarkdownRenderer
+    except ImportError as e:
+        raise SqlfmtImportError(
+            "Tried to format a Markdown file but markdownfmt extras are not installed."
+        ) from e
+
+    def format_sql_code_blocks(token: BlockToken) -> None:
+        """Walk through the AST and format any SQL code blocks."""
+        if isinstance(token, CodeFence) and token.language == "sql":
+            raw_text = token.children[0]
+            raw_text.content = format_string(raw_text.content, mode)
+
+        for child in getattr(token, "children", []):
+            if isinstance(child, BlockToken):
+                format_sql_code_blocks(child)
+
+    with MarkdownRenderer() as renderer:
+        doc = Document(source_string)
+        format_sql_code_blocks(doc)
+        formatted_markdown_string: str = renderer.render(doc)
+
+    return formatted_markdown_string
 
 
 def run(
@@ -154,7 +191,7 @@ def _get_included_paths(paths: Iterable[Path], mode: Mode) -> Set[Path]:
     for p in paths:
         if p == STDIN_PATH:
             include_set.add(p)
-        elif p.is_file() and str(p).endswith(tuple(mode.SQL_EXTENSIONS)):
+        elif p.is_file() and str(p).endswith(mode.included_file_extensions):
             include_set.add(p)
         elif p.is_dir():
             include_set |= _get_included_paths(p.iterdir(), mode)
@@ -233,10 +270,15 @@ def _format_one(path: Path, mode: Mode) -> SqlFormatResult:
     """
     Runs format_string on the contents of a single file (found at path). Handles
     potential user errors in formatted code, and returns a SqlfmtResult
+
+    If the file is a Markdown file, only format its SQL code blocks.
     """
     source, encoding, utf_bom = _read_path_or_stdin(path, mode)
     try:
-        formatted = format_string(source, mode)
+        if path.is_file() and path.suffix == ".md":
+            formatted = format_markdown_string(source, mode)
+        else:
+            formatted = format_string(source, mode)
         return SqlFormatResult(
             source_path=path,
             source_string=source,
