@@ -46,7 +46,7 @@ pre-commit = ">=2.20,<4.0"
 snakeviz = "^2.1.1"
 
 [tool.poetry.group.static.dependencies]
-ruff = "^0.5"
+ruff = ">=0.5,<0.7"
 mypy = "^1.11"
 
 [tool.poetry.group.test.dependencies]
