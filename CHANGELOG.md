@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 ## [0.23.3] - 2024-11-12
 
+### Bug Fixes
+
+- Fixes a bug where sqlfmt would split a comment containing a jinja tag into multiple lines, thus breaking the jinja tag ([#628](https://github.com/tconbeer/sqlfmt/issues/628) - thank you for your issue and PR, [@ryantimjohn](https://github.com/ryantimjohn)!).
+
 ## [0.23.2] - 2024-07-26
 
 ### Bug Fixes
