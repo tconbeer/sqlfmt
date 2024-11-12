@@ -1,4 +1,6 @@
 -- source: https://github.com/tconbeer/sqlfmt/issues/348
+-- source: https://github.com/tconbeer/sqlfmt/issues/628
+-- depends_on: {{ ref('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx') }}
 with table_a as (
     select
         /* Notice that this select statement can fit on a single line without comments */
@@ -26,6 +28,8 @@ select 1
 , 4 -- four inline
 )))))__SQLFMT_OUTPUT__(((((
 -- source: https://github.com/tconbeer/sqlfmt/issues/348
+-- source: https://github.com/tconbeer/sqlfmt/issues/628
+-- depends_on: {{ ref('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx') }}
 with
     table_a as (
         select
