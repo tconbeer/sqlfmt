@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.23.3] - 2024-11-12
+
+### Bug Fixes
+
+- Fixes a bug where sqlfmt would split a comment containing a jinja tag into multiple lines, thus breaking the jinja tag ([#628](https://github.com/tconbeer/sqlfmt/issues/628) - thank you for your issue and PR, [@ryantimjohn](https://github.com/ryantimjohn)!).
+
 ## [0.23.2] - 2024-07-26
 
 ### Bug Fixes
@@ -499,7 +505,8 @@ All notable changes to this project will be documented in this file.
 - supports --check and --diff options
 - supports --no-color
 
-[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.23.2...HEAD
+[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.23.3...HEAD
+[0.23.3]: https://github.com/tconbeer/sqlfmt/compare/0.23.2...0.23.3
 [0.23.2]: https://github.com/tconbeer/sqlfmt/compare/0.23.1...0.23.2
 [0.23.1]: https://github.com/tconbeer/sqlfmt/compare/0.23.0...0.23.1
 [0.23.0]: https://github.com/tconbeer/sqlfmt/compare/0.22.0...0.23.0
