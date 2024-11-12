@@ -153,6 +153,9 @@ class Comment:
         """
         if len(text) < max_length:
             yield text.rstrip()
+        elif re.match(r".*({{.*?}}|{%.*?%}).*", text):
+            # jinja comments are not split
+            yield text.rstrip()
         else:
             for idx, char in enumerate(reversed(text[:max_length])):
                 if char.isspace():
