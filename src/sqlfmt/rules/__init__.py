@@ -55,6 +55,7 @@ MAIN = [
         pattern=group(
             r"filter",
             r"isnull",
+            r"(r|i)?like",
         )
         + group(r"\("),
         action=partial(
@@ -76,7 +77,7 @@ MAIN = [
             r"interval",
             r"is(\s+not)?(\s+distinct\s+from)?",
             r"isnull",
-            r"(not\s+)?i?like(\s+(any|all))?",
+            r"(not\s+)?(r|i)?like(\s+(any|all))?",
             r"over",
             r"(un)?pivot",
             r"notnull",
