@@ -65,11 +65,22 @@ CORE = [
         action=actions.raise_sqlfmt_bracket_error,
     ),
     Rule(
+        # see https://spark.apache.org/docs/latest/sql-ref-literals.html#integral-literal-syntax
+        name="spark_int_literals",
+        priority=349,
+        pattern=group(
+            r"(\+|-)?\d+(l|s|y)",
+        ),
+        action=actions.handle_number,
+    ),
+    Rule(
+        # the (bd|d|f) groups add support for Spark fractional literals
+        # https://spark.apache.org/docs/latest/sql-ref-literals.html#fractional-literals-syntax
         name="number",
         priority=350,
         pattern=group(
-            r"(\+|-)?\d+(\.\d*)?(e(\+|-)?\d+)?",
-            r"(\+|-)?\.\d+(e(\+|-)?\d+)?",
+            r"(\+|-)?\d+(\.\d*)?(e(\+|-)?\d+)?(bd|d|f)?",
+            r"(\+|-)?\.\d+(e(\+|-)?\d+)?(bd|d|f)?",
         ),
         action=actions.handle_number,
     ),
