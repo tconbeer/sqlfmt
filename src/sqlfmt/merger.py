@@ -77,6 +77,12 @@ class LineMerger:
                     raise CannotMergeException(
                         "Can't merge lines with inline comments and other comments"
                     )
+                elif any(
+                    [comment.is_databricks_query_hint for comment in line.comments]
+                ):
+                    raise CannotMergeException(
+                        "Can't merge lines with a databricks type hint comment"
+                    )
                 elif (
                     len(line.comments) == 1
                     and len(line.nodes) > 1

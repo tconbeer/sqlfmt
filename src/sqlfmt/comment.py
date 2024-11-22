@@ -24,14 +24,18 @@ class Comment:
         without preceding whitespace, with a single space between the marker
         and the comment text.
         """
-        if self.is_multiline or self.formatting_disabled:
-            return f"{self.token.token}"
+        if (
+            self.is_multiline
+            or self.formatting_disabled
+            or self.is_databricks_query_hint
+        ):
+            return self.token.token
         else:
             marker, comment_text = self._comment_parts()
             if comment_text:
                 return f"{marker} {comment_text}"
             else:
-                return f"{marker}"
+                return marker
 
     def __len__(self) -> int:
         return len(str(self))
@@ -84,6 +88,10 @@ class Comment:
     @property
     def is_c_style(self) -> bool:
         return self.token.token.startswith("/*")
+
+    @property
+    def is_databricks_query_hint(self) -> bool:
+        return self.token.token.startswith("/*+")
 
     @property
     def is_inline(self) -> bool:
