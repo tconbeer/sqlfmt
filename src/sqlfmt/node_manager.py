@@ -275,17 +275,6 @@ class NodeManager:
         ):
             formatting_disabled.pop()
 
-        # formatting can be disabled because of unsupported
-        # ddl. When we hit a semicolon we need to pop
-        # all of the formatting disabled tokens caused by ddl
-        # off the stack
-        if token.type is TokenType.SEMICOLON:
-            while (
-                formatting_disabled
-                and "fmt:" not in formatting_disabled[-1].token.lower()
-            ):
-                formatting_disabled.pop()
-
         return formatting_disabled
 
     def append_newline(self, line: Line) -> None:
