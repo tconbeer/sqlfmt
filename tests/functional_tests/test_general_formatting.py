@@ -20,6 +20,7 @@ from tests.util import check_formatting, read_test_data
         "preformatted/302_jinjafmt_multiline_str.sql",
         "preformatted/303_jinjafmt_more_mutliline_str.sql",
         "preformatted/400_create_table.sql",
+        "preformatted/401_create_row_access_policy.sql",
         "unformatted/100_select_case.sql",
         "unformatted/101_multiline.sql",
         "unformatted/102_lots_of_comments.sql",

@@ -15,6 +15,7 @@ from sqlfmt.rules.core import CORE as CORE
 from sqlfmt.rules.function import FUNCTION as FUNCTION
 from sqlfmt.rules.grant import GRANT as GRANT
 from sqlfmt.rules.jinja import JINJA as JINJA  # noqa
+from sqlfmt.rules.unsupported import UNSUPPORTED as UNSUPPORTED
 from sqlfmt.rules.warehouse import WAREHOUSE as WAREHOUSE
 from sqlfmt.token import TokenType
 
@@ -77,7 +78,7 @@ MAIN = [
             r"interval",
             r"is(\s+not)?(\s+distinct\s+from)?",
             r"isnull",
-            r"(not\s+)?(r|i)?like(\s+(any|all))?",
+            r"(not\s+)?i?like(\s+(any|all))?",
             r"over",
             r"(un)?pivot",
             r"notnull",
@@ -362,7 +363,10 @@ MAIN = [
         + group(r"\W", r"$"),
         action=partial(
             actions.handle_nonreserved_top_level_keyword,
-            action=partial(actions.add_node_to_buffer, token_type=TokenType.FMT_OFF),
+            action=partial(
+                actions.lex_ruleset,
+                new_ruleset=UNSUPPORTED,
+            ),
         ),
     ),
 ]

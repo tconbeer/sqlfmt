@@ -384,7 +384,7 @@ def test_disabled_formatting(default_mode: Mode) -> None:
     assert create_publication_line.formatting_disabled
     assert create_publication_line.nodes
     create_token = create_publication_line.nodes[0].token
-    assert create_token.type is TokenType.FMT_OFF
+    assert create_token.type is TokenType.DATA
     assert create_token in create_publication_line.nodes[0].formatting_disabled
     assert len(create_publication_line.nodes[0].formatting_disabled) == 3
     semicolon_node = create_publication_line.nodes[-2]
