@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.24.0] - 2024-11-22
+
 ### Formatting Changes and Bug Fixes
 
 - sqlfmt no longer adds a space between the function name and parens for `filter()`, `isnull()`, and `rlike('foo', 'bar')` (but it also permits `filter ()`, `isnull ()`, and `rlike ('foo')` to support dialects where those are operators, not function names) ([#641](https://github.com/tconbeer/sqlfmt/issues/641), [#478](https://github.com/tconbeer/sqlfmt/issues/478) - thank you [@williamscs](https://github.com/williamscs), [@hongtron](https://github.com/hongtron), and [@chwiese](https://github.com/chwiese)!).
@@ -512,7 +514,8 @@ All notable changes to this project will be documented in this file.
 - supports --check and --diff options
 - supports --no-color
 
-[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.23.3...HEAD
+[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.24.0...HEAD
+[0.24.0]: https://github.com/tconbeer/sqlfmt/compare/0.23.3...0.24.0
 [0.23.3]: https://github.com/tconbeer/sqlfmt/compare/0.23.2...0.23.3
 [0.23.2]: https://github.com/tconbeer/sqlfmt/compare/0.23.1...0.23.2
 [0.23.1]: https://github.com/tconbeer/sqlfmt/compare/0.23.0...0.23.1
