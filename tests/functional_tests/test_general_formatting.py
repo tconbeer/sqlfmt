@@ -51,6 +51,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/129_duckdb_joins.sql",
         "unformatted/130_athena_data_types.sql",
         "unformatted/131_assignment_statement.sql",
+        "unformatted/132_spark_number_literals.sql",
         "unformatted/133_for_else.sql",
         "unformatted/200_base_model.sql",
         "unformatted/201_basic_snapshot.sql",

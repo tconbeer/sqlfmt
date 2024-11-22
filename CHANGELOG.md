@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Formatting Changes and Bug Fixes
+
+- sqlfmt no longer adds a space between the function name and parens for `filter()` and `isnull()` (but it also permits `filter ()` and `isnull ()` to support dialects where those are operators, not function names) ([#641](https://github.com/tconbeer/sqlfmt/issues/641) - thank you [@williamscs](https://github.com/williamscs) and [@hongtron](https://github.com/hongtron)!).
+- sqlfmt now supports Spark type-hinted numeric literals like `32y` and `+3.2e6bd` and will not introduce a space between the digits and their type suffix ([#640](https://github.com/tconbeer/sqlfmt/issues/640) - thank you [@ShaneMazur](https://github.com/ShaneMazur)!).
+
 ## [0.23.3] - 2024-11-12
 
 ### Bug Fixes
