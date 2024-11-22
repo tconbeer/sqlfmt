@@ -419,6 +419,13 @@ def test_regex_anti_match(
         (MAIN, "frame_clause", "range 1 following", "range "),
         (MAIN, "frame_clause", "range current row", "range "),
         (MAIN, "frame_clause", "groups between 1 preceding", "groups "),
+        (MAIN, "functions_that_overlap_with_word_operators", "filter(foo)", "filter"),
+        (
+            MAIN,
+            "functions_that_overlap_with_word_operators",
+            "isnull(bar, baz)",
+            "isnull",
+        ),
     ],
 )
 def test_regex_partial_match(
