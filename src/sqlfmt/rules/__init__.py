@@ -48,7 +48,7 @@ MAIN = [
         # There are some function names in some dialects that are the same as
         # word operators in other dialects. Here we lex those as function
         # names IFF the name is immediately followed by a `(` (with no space
-        # after the name. Otherwise they are lexed as word_operators by the 
+        # after the name. Otherwise they are lexed as word_operators by the
         # next rule.
         name="functions_that_overlap_with_word_operators",
         priority=1099,
