@@ -27,7 +27,7 @@ class Comment:
         if (
             self.is_multiline
             or self.formatting_disabled
-            or self.is_databricks_type_hint
+            or self.is_databricks_query_hint
         ):
             return self.token.token
         else:
@@ -90,7 +90,7 @@ class Comment:
         return self.token.token.startswith("/*")
 
     @property
-    def is_databricks_type_hint(self) -> bool:
+    def is_databricks_query_hint(self) -> bool:
         return self.token.token.startswith("/*+")
 
     @property

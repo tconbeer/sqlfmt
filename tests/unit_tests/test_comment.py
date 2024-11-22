@@ -2,6 +2,7 @@ from typing import List
 
 import pytest
 from sqlfmt.comment import Comment
+from sqlfmt.node import Node
 from sqlfmt.node_manager import NodeManager
 from sqlfmt.token import Token, TokenType
 
@@ -61,6 +62,30 @@ def multiline_comment() -> Comment:
 
 
 @pytest.fixture
+def datbricks_query_hint_comment() -> Comment:
+    n = Node(
+        Token(
+            type=TokenType.UNTERM_KEYWORD,
+            prefix="",
+            token="select",
+            spos=0,
+            epos=6,
+        ),
+        previous_node=None,
+        prefix="",
+        value="select",
+        open_brackets=[],
+        open_jinja_blocks=[],
+        formatting_disabled=[],
+    )
+    t = Token(
+        type=TokenType.COMMENT, prefix=" ", token="/*+ hint here */", spos=6, epos=23
+    )
+    comment = Comment(t, is_standalone=False, previous_node=n)
+    return comment
+
+
+@pytest.fixture
 def fmt_disabled_comment() -> Comment:
     t = Token(type=TokenType.FMT_OFF, prefix="", token="--fmt: off", spos=0, epos=10)
     mgr = NodeManager(case_sensitive_names=False)
@@ -81,11 +106,13 @@ def test_get_marker(
     short_mysql_comment: Comment,
     nospace_comment: Comment,
     short_js_comment: Comment,
+    datbricks_query_hint_comment: Comment,
 ) -> None:
     assert short_comment._get_marker() == ("--", 3)
     assert short_mysql_comment._get_marker() == ("#", 2)
     assert short_js_comment._get_marker() == ("//", 3)
     assert nospace_comment._get_marker() == ("--", 2)
+    assert datbricks_query_hint_comment._get_marker() == ("/*", 2)
 
 
 def test_comment_parts(
@@ -210,3 +237,7 @@ def test_no_wrap_long_jinja_comments() -> None:
     rendered = comment.render_standalone(88, "")
 
     assert rendered == comment_str + "\n"
+
+
+def test_no_add_space_databricks_hint(datbricks_query_hint_comment: Comment) -> None:
+    assert str(datbricks_query_hint_comment) == datbricks_query_hint_comment.token.token
