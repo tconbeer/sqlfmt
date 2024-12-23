@@ -6,7 +6,7 @@ from sqlfmt.rules.common import EOL, NEWLINE, SQL_COMMENT, SQL_QUOTED_EXP, group
 from sqlfmt.rules.jinja import JINJA
 from sqlfmt.token import TokenType
 
-CORE = [
+ALWAYS = [
     Rule(
         name="fmt_off",
         priority=0,
@@ -65,19 +65,41 @@ CORE = [
         action=actions.raise_sqlfmt_bracket_error,
     ),
     Rule(
-        name="number",
+        name="semicolon",
         priority=350,
+        pattern=group(r";"),
+        action=actions.handle_semicolon,
+    ),
+    Rule(
+        name="newline",
+        priority=9000,
+        pattern=group(NEWLINE),
+        action=actions.handle_newline,
+    ),
+]
+
+
+CORE = [
+    *ALWAYS,
+    Rule(
+        # see https://spark.apache.org/docs/latest/sql-ref-literals.html#integral-literal-syntax
+        name="spark_int_literals",
+        priority=400,
         pattern=group(
-            r"(\+|-)?\d+(\.\d*)?(e(\+|-)?\d+)?",
-            r"(\+|-)?\.\d+(e(\+|-)?\d+)?",
+            r"(\+|-)?\d+(l|s|y)",
         ),
         action=actions.handle_number,
     ),
     Rule(
-        name="semicolon",
-        priority=400,
-        pattern=group(r";"),
-        action=actions.handle_semicolon,
+        # the (bd|d|f) groups add support for Spark fractional literals
+        # https://spark.apache.org/docs/latest/sql-ref-literals.html#fractional-literals-syntax
+        name="number",
+        priority=401,
+        pattern=group(
+            r"(\+|-)?\d+(\.\d*)?(e(\+|-)?\d+)?(bd|d|f)?",
+            r"(\+|-)?\.\d+(e(\+|-)?\d+)?(bd|d|f)?",
+        ),
+        action=actions.handle_number,
     ),
     Rule(
         name="star",
@@ -198,11 +220,5 @@ CORE = [
         priority=5000,
         pattern=group(r"\w+"),
         action=partial(actions.add_node_to_buffer, token_type=TokenType.NAME),
-    ),
-    Rule(
-        name="newline",
-        priority=9000,
-        pattern=group(NEWLINE),
-        action=actions.handle_newline,
     ),
 ]

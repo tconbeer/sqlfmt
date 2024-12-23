@@ -7,6 +7,22 @@ All notable changes to this project will be documented in this file.
 ### Features
 
 - Add support for formatting SQL code blocks in Markdown files. Introduces a new extra install (`pipx install shandy-sqlfmt[markdownfmt]`) and CLI option (`--no-markdownfmt`) ([#593](https://github.com/tconbeer/sqlfmt/issues/593) - thank you, [@michael-the1](https://github.com/michael-the1)).
+
+## [0.24.0] - 2024-11-22
+
+### Formatting Changes and Bug Fixes
+
+- sqlfmt no longer adds a space between the function name and parens for `filter()`, `isnull()`, and `rlike('foo', 'bar')` (but it also permits `filter ()`, `isnull ()`, and `rlike ('foo')` to support dialects where those are operators, not function names) ([#641](https://github.com/tconbeer/sqlfmt/issues/641), [#478](https://github.com/tconbeer/sqlfmt/issues/478) - thank you [@williamscs](https://github.com/williamscs), [@hongtron](https://github.com/hongtron), and [@chwiese](https://github.com/chwiese)!).
+- sqlfmt now supports Spark type-hinted numeric literals like `32y` and `+3.2e6bd` and will not introduce a space between the digits and their type suffix ([#640](https://github.com/tconbeer/sqlfmt/issues/640) - thank you [@ShaneMazur](https://github.com/ShaneMazur)!).
+- sqlfmt now supports Databricks query hint comments like `/*+ COALESCE(3) */` ([#639](https://github.com/tconbeer/sqlfmt/issues/639) - thank you [@wr-atlas](https://github.com/wr-atlas)!).
+- sqlfmt now no-ops instead of errors when encountering `create row access policy` statements with `grant` sub-statements (it also generally more robustly handles unsupported DDL) ([#633](https://github.com/tconbeer/sqlfmt/issues/633)).
+
+## [0.23.3] - 2024-11-12
+
+### Bug Fixes
+
+- Fixes a bug where sqlfmt would split a comment containing a jinja tag into multiple lines, thus breaking the jinja tag ([#628](https://github.com/tconbeer/sqlfmt/issues/628) - thank you for your issue and PR, [@ryantimjohn](https://github.com/ryantimjohn)!).
+
 ## [0.23.2] - 2024-07-26
 
 ### Bug Fixes
@@ -502,7 +518,9 @@ All notable changes to this project will be documented in this file.
 - supports --check and --diff options
 - supports --no-color
 
-[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.23.2...HEAD
+[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.24.0...HEAD
+[0.24.0]: https://github.com/tconbeer/sqlfmt/compare/0.23.3...0.24.0
+[0.23.3]: https://github.com/tconbeer/sqlfmt/compare/0.23.2...0.23.3
 [0.23.2]: https://github.com/tconbeer/sqlfmt/compare/0.23.1...0.23.2
 [0.23.1]: https://github.com/tconbeer/sqlfmt/compare/0.23.0...0.23.1
 [0.23.0]: https://github.com/tconbeer/sqlfmt/compare/0.22.0...0.23.0

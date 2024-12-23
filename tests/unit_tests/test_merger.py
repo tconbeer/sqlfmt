@@ -560,3 +560,15 @@ def test_do_not_merge_operator_sequences_across_commas(merger: LineMerger) -> No
     merged_lines = merger.maybe_merge_lines(raw_query.lines)
     result_string = "".join([str(line) for line in merged_lines])
     assert result_string == expected_string
+
+
+def test_do_not_merge_databricks_query_hints(merger: LineMerger) -> None:
+    source_string, expected_string = read_test_data(
+        "unit_tests/test_merger/test_no_merge_databricks_query_hints.sql"
+    )
+    raw_query = merger.mode.dialect.initialize_analyzer(
+        merger.mode.line_length
+    ).parse_query(source_string)
+    merged_lines = merger.maybe_merge_lines(raw_query.lines)
+    result_string = "".join([str(line) for line in merged_lines])
+    assert result_string == expected_string
