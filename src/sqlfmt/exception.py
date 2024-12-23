@@ -63,6 +63,14 @@ class SqlfmtEquivalenceError(SqlfmtError):
     pass
 
 
+class SqlfmtImportError(SqlfmtError):
+    """
+    Raised when an extra library is imported while not installed
+    """
+
+    pass
+
+
 class SqlfmtControlFlowException(Exception):
     """
     Generic exception for exceptions used to manage control

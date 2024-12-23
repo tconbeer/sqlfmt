@@ -1,5 +1,5 @@
 import pytest
-from sqlfmt.api import format_string
+from sqlfmt.api import format_markdown_string, format_string
 from sqlfmt.mode import Mode
 
 from tests.util import check_formatting, read_test_data
@@ -101,4 +101,24 @@ def test_formatting(p: str) -> None:
     check_formatting(expected, actual, ctx=p)
 
     second_pass = format_string(actual, mode)
+    check_formatting(expected, second_pass, ctx=f"2nd-{p}")
+
+
+@pytest.mark.parametrize(
+    "p",
+    [
+        "preformatted/008_markdown_file.md",
+        "preformatted/009_markdown_fmt_off.md",
+        "unformatted/500_markdown_file.md",
+    ],
+)
+def test_markdown_formatting(p: str) -> None:
+    mode = Mode()
+
+    source, expected = read_test_data(p)
+    actual = format_markdown_string(source, mode)
+
+    check_formatting(expected, actual, ctx=p)
+
+    second_pass = format_markdown_string(actual, mode)
     check_formatting(expected, second_pass, ctx=f"2nd-{p}")
