@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import ClassVar, Iterator, Optional, Tuple
 
 from sqlfmt.node import Node
-from sqlfmt.token import Token, TokenType
+from sqlfmt.tokens import Token, TokenType
 
 
 @dataclass

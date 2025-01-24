@@ -3,7 +3,7 @@ from enum import IntEnum
 from typing import Callable, List
 
 from sqlfmt.node import Node
-from sqlfmt.token import TokenType
+from sqlfmt.tokens import TokenType
 
 
 class OperatorPrecedence(IntEnum):

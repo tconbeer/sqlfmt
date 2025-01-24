@@ -1,5 +1,5 @@
-from sqlfmt.formatter import QueryFormatter
 from sqlfmt.mode import Mode
+from sqlfmt.query_formatter import QueryFormatter
 
 
 def test_dedent_jinja_block_ends(default_mode: Mode) -> None:

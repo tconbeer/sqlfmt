@@ -8,7 +8,7 @@ from sqlfmt.jinjafmt import BlackWrapper, JinjaFormatter, JinjaTag
 from sqlfmt.line import Line
 from sqlfmt.mode import Mode
 from sqlfmt.node_manager import NodeManager
-from sqlfmt.token import Token, TokenType
+from sqlfmt.tokens import Token, TokenType
 
 
 @pytest.fixture

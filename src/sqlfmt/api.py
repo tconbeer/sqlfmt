@@ -25,9 +25,9 @@ from tqdm import tqdm
 from sqlfmt.analyzer import Analyzer
 from sqlfmt.cache import Cache, check_cache, clear_cache, load_cache, write_cache
 from sqlfmt.exception import SqlfmtEquivalenceError, SqlfmtError, SqlfmtUnicodeError
-from sqlfmt.formatter import QueryFormatter
 from sqlfmt.mode import Mode as Mode
 from sqlfmt.query import Query
+from sqlfmt.query_formatter import QueryFormatter
 from sqlfmt.report import STDIN_PATH, Report, SqlFormatResult
 
 T = TypeVar("T")

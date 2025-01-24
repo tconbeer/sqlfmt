@@ -4,7 +4,7 @@ from sqlfmt import actions
 from sqlfmt.rule import Rule
 from sqlfmt.rules.common import group
 from sqlfmt.rules.core import CORE
-from sqlfmt.token import TokenType
+from sqlfmt.tokens import TokenType
 
 GRANT = [
     *CORE,

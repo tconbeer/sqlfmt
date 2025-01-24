@@ -4,7 +4,7 @@ from sqlfmt import actions
 from sqlfmt.rule import Rule
 from sqlfmt.rules.common import NEWLINE, group
 from sqlfmt.rules.core import ALWAYS
-from sqlfmt.token import TokenType
+from sqlfmt.tokens import TokenType
 
 UNSUPPORTED = [
     *ALWAYS,

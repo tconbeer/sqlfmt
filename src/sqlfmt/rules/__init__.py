@@ -17,7 +17,7 @@ from sqlfmt.rules.grant import GRANT as GRANT
 from sqlfmt.rules.jinja import JINJA as JINJA  # noqa
 from sqlfmt.rules.unsupported import UNSUPPORTED as UNSUPPORTED
 from sqlfmt.rules.warehouse import WAREHOUSE as WAREHOUSE
-from sqlfmt.token import TokenType
+from sqlfmt.tokens import TokenType
 
 MAIN = [
     *CORE,

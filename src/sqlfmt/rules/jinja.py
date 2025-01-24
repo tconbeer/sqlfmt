@@ -3,7 +3,7 @@ from functools import partial
 from sqlfmt import actions
 from sqlfmt.rule import Rule
 from sqlfmt.rules.common import NEWLINE, group
-from sqlfmt.token import TokenType
+from sqlfmt.tokens import TokenType
 
 JINJA_SHARED_PATTERNS = {
     "set": r"\{%-?\s*set\s+[^=]+?-?%\}",

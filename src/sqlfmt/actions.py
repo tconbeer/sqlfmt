@@ -8,7 +8,7 @@ from sqlfmt.exception import SqlfmtBracketError, StopRulesetLexing
 from sqlfmt.line import Line
 from sqlfmt.node import Node, get_previous_token
 from sqlfmt.rule import MAYBE_WHITESPACES, Rule
-from sqlfmt.token import Token, TokenType
+from sqlfmt.tokens import Token, TokenType
 
 if TYPE_CHECKING:
     from sqlfmt.analyzer import Analyzer
