@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.25.0] - 2025-01-24
+
 ### Formatting Changes and Bug Fixes
 
 - sqlfmt no longer adds a space between the `*` and `columns` in DuckDB `*columns` expressions ([#657](https://github.com/tconbeer/sqlfmt/issues/657) - thank you [@aersam](https://github.com/aersam)!)
@@ -12,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - sqlfmt will now lowercase the letters in a number literal like `".1234567E+2BD` ([#645](https://github.com/tconbeer/sqlfmt/issues/645)).
 
 ### Testing
+
 - sqlfmt is now tested against and fully supports Python 3.13
 
 ## [0.24.0] - 2024-11-22
@@ -524,7 +527,8 @@ All notable changes to this project will be documented in this file.
 - supports --check and --diff options
 - supports --no-color
 
-[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.24.0...HEAD
+[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.25.0...HEAD
+[0.25.0]: https://github.com/tconbeer/sqlfmt/compare/0.24.0...0.25.0
 [0.24.0]: https://github.com/tconbeer/sqlfmt/compare/0.23.3...0.24.0
 [0.23.3]: https://github.com/tconbeer/sqlfmt/compare/0.23.2...0.23.3
 [0.23.2]: https://github.com/tconbeer/sqlfmt/compare/0.23.1...0.23.2
