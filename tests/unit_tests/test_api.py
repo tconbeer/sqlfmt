@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Any, List, Set, Type
 
 import pytest
+from tqdm import tqdm
+
 from sqlfmt.api import (
     _format_many,
     _perform_safety_check,
@@ -22,7 +24,6 @@ from sqlfmt.exception import (
     SqlfmtUnicodeError,
 )
 from sqlfmt.mode import Mode
-from tqdm import tqdm
 
 
 @pytest.fixture
@@ -160,9 +161,9 @@ def test_format_many_preformatted(
 ) -> None:
     results = list(_format_many(preformatted_files, {}, all_output_modes))
 
-    assert len(results) == len(
-        preformatted_files
-    ), "Did not generate one result for each input file"
+    assert len(results) == len(preformatted_files), (
+        "Did not generate one result for each input file"
+    )
     assert not any([res.has_changed for res in results]), "Changed preformatted file"
     assert all(
         [raw == res.source_path for raw, res in zip(preformatted_files, results)]
@@ -174,9 +175,9 @@ def test_format_many_unformatted(
 ) -> None:
     results = list(_format_many(unformatted_files, {}, default_mode))
 
-    assert len(results) == len(
-        unformatted_files
-    ), "Did not generate one result for each input file"
+    assert len(results) == len(unformatted_files), (
+        "Did not generate one result for each input file"
+    )
     assert all([res.has_changed for res in results]), "Did not change unformatted file"
     assert all(
         [raw == res.source_path for raw, res in zip(unformatted_files, results)]

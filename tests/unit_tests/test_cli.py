@@ -7,8 +7,8 @@ from typing import List
 
 import pytest
 from click.testing import CliRunner
-from sqlfmt.cli import sqlfmt as sqlfmt_main
 
+from sqlfmt.cli import sqlfmt as sqlfmt_main
 from tests.util import copy_config_file_to_dst
 
 

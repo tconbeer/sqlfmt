@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Dict, Generator, List, Tuple
 
 import pytest
+
 from sqlfmt.cache import (
     Cache,
     check_cache,
@@ -14,7 +15,6 @@ from sqlfmt.cache import (
 from sqlfmt.exception import SqlfmtError
 from sqlfmt.mode import Mode
 from sqlfmt.report import SqlFormatResult
-
 from tests.util import BASE_DIR
 
 
@@ -107,15 +107,15 @@ def test_write_cache(
         written_cache = pickle.load(f)
     assert isinstance(written_cache, dict)
     assert small_cache.keys() == written_cache.keys()
-    assert (
-        written_cache[sample_paths["001"]] != sample_stat
-    ), "Should write new stat to cache for unchanged files"
-    assert (
-        written_cache[sample_paths["002"]] == sample_stat
-    ), "Should not write new stat to cache for results from cache"
-    assert (
-        written_cache[sample_paths["003"]] != sample_stat
-    ), "Should write new stat to cache for changed files in default mode"
+    assert written_cache[sample_paths["001"]] != sample_stat, (
+        "Should write new stat to cache for unchanged files"
+    )
+    assert written_cache[sample_paths["002"]] == sample_stat, (
+        "Should not write new stat to cache for results from cache"
+    )
+    assert written_cache[sample_paths["003"]] != sample_stat, (
+        "Should write new stat to cache for changed files in default mode"
+    )
     assert sample_paths["900"] not in written_cache, "Should not write errors to cache"
 
 

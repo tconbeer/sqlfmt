@@ -1,10 +1,10 @@
 import pytest
+
 from sqlfmt.analyzer import Analyzer
 from sqlfmt.comment import Comment
 from sqlfmt.exception import SqlfmtBracketError, SqlfmtParsingError
 from sqlfmt.mode import Mode
 from sqlfmt.token import Token, TokenType
-
 from tests.util import read_test_data
 
 
@@ -363,18 +363,18 @@ def test_star_parsing(default_analyzer: Analyzer) -> None:
 
     assert space_star_q
     assert len(space_star_q.nodes) == 5
-    assert (
-        space_star_q.nodes[1].prefix == " "
-    ), "There should be a space between select and star in select *"
+    assert space_star_q.nodes[1].prefix == " ", (
+        "There should be a space between select and star in select *"
+    )
 
     dot_star = "select my_table.* from my_table\n"
     dot_star_q = default_analyzer.parse_query(source_string=dot_star)
 
     assert dot_star_q
     assert len(dot_star_q.nodes) == 7
-    assert (
-        dot_star_q.nodes[3].prefix == ""
-    ), "There should be no space between dot and star in my_table.*"
+    assert dot_star_q.nodes[3].prefix == "", (
+        "There should be no space between dot and star in my_table.*"
+    )
 
 
 @pytest.mark.parametrize(
@@ -395,9 +395,9 @@ def test_open_paren_parsing(
     assert q
     for node in q.nodes:
         if node.token.token == "(":
-            assert (
-                node.prefix == expected_prefix
-            ), "Open paren prefixed by wrong number of spaces"
+            assert node.prefix == expected_prefix, (
+                "Open paren prefixed by wrong number of spaces"
+            )
 
 
 def test_unterminated_multiline_token(default_analyzer: Analyzer) -> None:

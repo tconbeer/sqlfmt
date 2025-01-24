@@ -6,9 +6,9 @@ from typing import Any
 
 import pytest
 from click.testing import CliRunner
+
 from sqlfmt.analyzer import Analyzer
 from sqlfmt.mode import Mode
-
 from tests.util import copy_test_data_to_tmp
 
 # make tests module importable
@@ -21,7 +21,6 @@ def pytest_sessionstart(session: pytest.Session) -> None:
     before performing collection and entering the run test loop.
     """
     from sqlfmt.cache import clear_cache
-
     from tests.util import delete_results_dir
 
     delete_results_dir()

@@ -49,9 +49,9 @@ def delete_results_dir() -> None:
 
 def check_formatting(expected: str, actual: str, ctx: str = "") -> None:
     try:
-        assert (
-            expected == actual
-        ), "Formatting error. Output file written to tests/.results/"
+        assert expected == actual, (
+            "Formatting error. Output file written to tests/.results/"
+        )
     except AssertionError as e:
         import inspect
 

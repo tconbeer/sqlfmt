@@ -329,7 +329,7 @@ class JinjaTag:
         trailing_comma_match = trailing_comma_prog.search(source_string)
         if trailing_comma_match:
             idx = trailing_comma_match.span()[0]
-            processed_string = f"{source_string[:idx]}{source_string[idx+1:]}"
+            processed_string = f"{source_string[:idx]}{source_string[idx + 1 :]}"
             self.code = processed_string
 
     @classmethod
