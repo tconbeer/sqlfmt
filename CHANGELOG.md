@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - sqlfmt no longer adds a space between the `*` and `columns` in DuckDB `*columns` expressions ([#657](https://github.com/tconbeer/sqlfmt/issues/657) - thank you [@aersam](https://github.com/aersam)!)
 - sqlfmt no longer adds a space between the `:` and `['name']` in a DataBricks escaped variant expression like `foo:['bar.baz']` ([#637](https://github.com/tconbeer/sqlfmt/issues/637) - thank you [@aersam](https://github.com/aersam)!)
 - sqlfmt no longer lexes the Postgres operators `#>`, `#>>`, `#-`, and `##` as comments ([#461](https://github.com/tconbeer/sqlfmt/issues/461) - thank you [@pauljz](https://github.com/pauljz) and many others!)
+- sqlfmt will now lowercase the letters in a number literal like `".1234567E+2BD` ([#645](https://github.com/tconbeer/sqlfmt/issues/645)).
 
 ### Testing
 - sqlfmt is now tested against and fully supports Python 3.13
