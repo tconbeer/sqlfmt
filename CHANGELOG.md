@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Formatting Changes and Bug Fixes
+
+- sqlfmt no longer adds a space between the `*` and `columns` in DuckDB `*columns` expressions ([#657](https://github.com/tconbeer/sqlfmt/issues/657) - thank you [@aersam](https://github.com/aersam)!)
+
 ## [0.24.0] - 2024-11-22
 
 ### Formatting Changes and Bug Fixes
