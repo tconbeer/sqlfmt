@@ -94,7 +94,6 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (CORE, "operator", "<=>"),
         (CORE, "operator", "||/"),
         (CORE, "operator", "|/"),
-        (CORE, "operator", "#"),
         (CORE, "operator", ">>"),
         (CORE, "operator", "<<"),
         (CORE, "operator", "!"),
@@ -115,7 +114,7 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         # see: https://www.postgresql.org/docs/current/functions-geometry.html
         (CORE, "operator", "@-@"),
         (CORE, "operator", "@@"),
-        (CORE, "operator", "##"),
+        (CORE, "pg_operator", "##"),
         (CORE, "operator", "<->"),
         (CORE, "operator", "<@"),
         (CORE, "operator", "@>"),
@@ -143,8 +142,8 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         # see https://www.postgresql.org/docs/current/functions-json.html
         (CORE, "operator", "->"),
         (CORE, "operator", "->>"),
-        (CORE, "operator", "#>"),
-        (CORE, "operator", "#>>"),
+        (CORE, "pg_operator", "#>"),
+        (CORE, "pg_operator", "#>>"),
         (CORE, "operator", "-|-"),  # range adjacency
         (MAIN, "word_operator", "is"),
         (MAIN, "word_operator", "is not"),
