@@ -131,6 +131,7 @@ class TokenType(Enum):
             TokenType.ON,
             TokenType.BOOLEAN_OPERATOR,
             TokenType.SET_OPERATOR,
+            TokenType.NUMBER,
         ]
 
     @cached_property

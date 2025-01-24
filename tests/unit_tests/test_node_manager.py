@@ -267,6 +267,22 @@ def test_capitalization_operators(default_mode: Mode, source_string: str) -> Non
 @pytest.mark.parametrize(
     "source_string",
     [
+        "1e4",
+        "1E4",
+        "-.1234567E+2BD",
+    ],
+)
+def test_capitalization_numbers(default_mode: Mode, source_string: str) -> None:
+    q = default_mode.dialect.initialize_analyzer(
+        line_length=default_mode.line_length
+    ).parse_query(source_string=source_string)
+    parsed_string = "".join(str(line) for line in q.lines)
+    assert parsed_string.rstrip("\n") == source_string.lower()
+
+
+@pytest.mark.parametrize(
+    "source_string",
+    [
         "my_schema.my_table\n",
         "my_table.*\n",
         '"my_table".*\n',
