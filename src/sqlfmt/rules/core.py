@@ -82,6 +82,13 @@ ALWAYS = [
 CORE = [
     *ALWAYS,
     Rule(
+        # see https://github.com/tconbeer/sqlfmt/issues/461
+        name="pg_operator",
+        priority=299,  # comments are 300
+        pattern=group(r"#(>>?|-|#)"),
+        action=partial(actions.add_node_to_buffer, token_type=TokenType.OPERATOR),
+    ),
+    Rule(
         # see https://spark.apache.org/docs/latest/sql-ref-literals.html#integral-literal-syntax
         name="spark_int_literals",
         priority=400,
@@ -190,7 +197,6 @@ CORE = [
             r"\?(-\||\|\||-|\|)",  # regex lookahead/behind
             r"@-@",  # length operator
             r"@@@?",  # center point operator; also text match
-            r"##",  # closest point
             r"<->",  # distance operator
             r"<=>",  # null-safe equals (mysql)
             r"@>",  # contains
@@ -199,7 +205,7 @@ CORE = [
             r"\|?>>=?",
             r"<<(=|\|)?",
             r"=>",
-            r"(-|#)>>?",  # json extraction
+            r"->>?",  # json extraction
             r"&&",
             r"&<\|?",  # not extends
             r"\|?&>",  # not extends
@@ -211,7 +217,7 @@ CORE = [
             r"[*+?]?\?",  # regex greedy/non-greedy, also ?
             r"!!",  # negate text match
             r"%%",  # psycopg escaped mod operator
-            r"[+\-*/%&|^=<>#!]=?",  # singles
+            r"[+\-*/%&|^=<>!]=?",  # singles
         ),
         action=partial(actions.add_node_to_buffer, token_type=TokenType.OPERATOR),
     ),
