@@ -4,7 +4,7 @@ from sqlfmt import actions
 from sqlfmt.rule import Rule
 from sqlfmt.rules.common import EOL, NEWLINE, SQL_COMMENT, SQL_QUOTED_EXP, group
 from sqlfmt.rules.jinja import JINJA
-from sqlfmt.token import TokenType
+from sqlfmt.tokens import TokenType
 
 ALWAYS = [
     Rule(

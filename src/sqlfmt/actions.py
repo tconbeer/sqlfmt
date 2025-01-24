@@ -8,7 +8,7 @@ from sqlfmt.exception import SqlfmtBracketError, StopRulesetLexing
 from sqlfmt.line import Line
 from sqlfmt.node import Node, get_previous_token
 from sqlfmt.rule import MAYBE_WHITESPACES, Rule
-from sqlfmt.token import Token, TokenType
+from sqlfmt.tokens import Token, TokenType
 
 if TYPE_CHECKING:
     from sqlfmt.analyzer import Analyzer
@@ -29,7 +29,7 @@ def raise_sqlfmt_bracket_error(
     raise SqlfmtBracketError(
         f"Encountered closing bracket '{raw_token}' at position"
         f" {spos}, before matching opening bracket. Context:"
-        f" {source_string[spos:spos+50]}"
+        f" {source_string[spos : spos + 50]}"
     )
 
 
@@ -193,7 +193,7 @@ def handle_ddl_as(
         assert analyzer.rule_stack, (
             "Internal Error! Open an issue. Could not parse DDL 'as' "
             f"at pos {analyzer.pos}. Context: "
-            f"{source_string[analyzer.pos :analyzer.pos+50]}"
+            f"{source_string[analyzer.pos : analyzer.pos + 50]}"
         )
         analyzer.pop_rules()
 
@@ -228,7 +228,7 @@ def handle_closing_angle_bracket(
         assert operator_match, (
             "Internal Error! Open an issue. Could not parse closing bracket '>' "
             f"at pos {analyzer.pos}. Context: "
-            f"{source_string[analyzer.pos :analyzer.pos+10]}"
+            f"{source_string[analyzer.pos : analyzer.pos + 10]}"
         )
         add_node_to_buffer(
             analyzer=analyzer,

@@ -8,6 +8,7 @@ from typing import List, Optional
 import click
 from git.repo import Repo
 from platformdirs import user_cache_dir
+
 from sqlfmt.api import get_matching_paths, initialize_progress_bar, run
 from sqlfmt.cache import get_cache_file
 from sqlfmt.mode import Mode

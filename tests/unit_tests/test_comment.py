@@ -1,10 +1,11 @@
 from typing import List
 
 import pytest
+
 from sqlfmt.comment import Comment
 from sqlfmt.node import Node
 from sqlfmt.node_manager import NodeManager
-from sqlfmt.token import Token, TokenType
+from sqlfmt.tokens import Token, TokenType
 
 
 @pytest.fixture

@@ -1,9 +1,9 @@
 import pytest
+
 from sqlfmt.exception import SqlfmtBracketError
 from sqlfmt.mode import Mode
 from sqlfmt.node_manager import NodeManager
-from sqlfmt.token import Token, TokenType
-
+from sqlfmt.tokens import Token, TokenType
 from tests.util import read_test_data
 
 
@@ -202,10 +202,10 @@ def test_union_depth(default_mode: Mode) -> None:
 
 def test_capitalization(default_mode: Mode) -> None:
     source_string = (
-        "SELECT A, B, \"C\", {{ D }}, e, 'f', 'G'\n" 'fROM "H"."j" Join I ON k And L\n'
+        'SELECT A, B, "C", {{ D }}, e, \'f\', \'G\'\nfROM "H"."j" Join I ON k And L\n'
     )
     expected = (
-        "select a, b, \"C\", {{ D }}, e, 'f', 'G'\n" 'from "H"."j" join i on k and l\n'
+        'select a, b, "C", {{ D }}, e, \'f\', \'G\'\nfrom "H"."j" join i on k and l\n'
     )
     q = default_mode.dialect.initialize_analyzer(
         line_length=default_mode.line_length

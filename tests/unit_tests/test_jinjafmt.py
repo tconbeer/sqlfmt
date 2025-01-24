@@ -2,12 +2,13 @@ import sys
 from typing import Dict, Tuple
 
 import pytest
+
 from sqlfmt.analyzer import Analyzer
 from sqlfmt.jinjafmt import BlackWrapper, JinjaFormatter, JinjaTag
 from sqlfmt.line import Line
 from sqlfmt.mode import Mode
 from sqlfmt.node_manager import NodeManager
-from sqlfmt.token import Token, TokenType
+from sqlfmt.tokens import Token, TokenType
 
 
 @pytest.fixture
@@ -240,9 +241,7 @@ def test_black_wrapper_format_string_no_black(
     assert result == (source_string, False)
 
 
-@pytest.mark.parametrize(
-    "source_string", [":::", ":::\n:::", "1,\n2" "return(return_())"]
-)
+@pytest.mark.parametrize("source_string", [":::", ":::\n:::", "1,\n2return(return_())"])
 def test_black_wrapper_format_string_invalid_input(
     source_string: str,
     jinja_formatter: JinjaFormatter,

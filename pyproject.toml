@@ -46,8 +46,8 @@ pre-commit = { version = ">=4.0,<5", python = ">=3.9" }
 snakeviz = "^2.1.1"
 
 [tool.poetry.group.static.dependencies]
-ruff = "^0.5"
-mypy = "^1.11"
+ruff = "^0.9.3"
+mypy = "^1.14"
 
 [tool.poetry.group.test.dependencies]
 black = "^24"

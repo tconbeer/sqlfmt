@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
 
-from sqlfmt.token import Token, TokenType
+from sqlfmt.tokens import Token, TokenType
 
 
 def get_previous_token(prev_node: Optional["Node"]) -> Tuple[Optional[Token], bool]:

@@ -35,9 +35,9 @@ class LineSplitter:
                     new_line, comments = self.split_at_index(
                         line, head, i, comments, no_tail=True
                     )
-                    assert (
-                        not comments
-                    ), "Comments must be empty here or we'll drop them"
+                    assert not comments, (
+                        "Comments must be empty here or we'll drop them"
+                    )
                     new_lines.append(new_line)
                 return new_lines
             elif (

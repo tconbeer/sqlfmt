@@ -3,7 +3,7 @@ from enum import IntEnum
 from typing import Callable, List
 
 from sqlfmt.node import Node
-from sqlfmt.token import TokenType
+from sqlfmt.tokens import TokenType
 
 
 class OperatorPrecedence(IntEnum):
@@ -37,9 +37,9 @@ class OperatorPrecedence(IntEnum):
 
     @classmethod
     def from_node(cls, node: Node) -> "OperatorPrecedence":
-        assert (
-            node.is_operator
-        ), f"Internal error! {node} is not an operator. Please open an issue"
+        assert node.is_operator, (
+            f"Internal error! {node} is not an operator. Please open an issue"
+        )
         return cls._function_lookup(token_type=node.token.type)(node)
 
     @classmethod

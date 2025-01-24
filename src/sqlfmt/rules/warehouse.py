@@ -4,7 +4,7 @@ from sqlfmt import actions
 from sqlfmt.rule import Rule
 from sqlfmt.rules.common import ALTER_WAREHOUSE, CREATE_WAREHOUSE, group
 from sqlfmt.rules.core import CORE
-from sqlfmt.token import TokenType
+from sqlfmt.tokens import TokenType
 
 WAREHOUSE = [
     *CORE,

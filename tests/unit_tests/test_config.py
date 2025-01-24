@@ -2,9 +2,9 @@ from pathlib import Path
 from typing import Any, List
 
 import pytest
+
 from sqlfmt.config import _find_config_file, _get_common_parents, _load_config_from_path
 from sqlfmt.exception import SqlfmtConfigError
-
 from tests.util import copy_config_file_to_dst
 
 

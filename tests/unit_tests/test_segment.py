@@ -1,11 +1,11 @@
 from typing import List
 
 import pytest
+
 from sqlfmt.analyzer import Analyzer
 from sqlfmt.exception import SqlfmtSegmentError
 from sqlfmt.line import Line
 from sqlfmt.segment import Segment, create_segments_from_lines
-
 from tests.util import read_test_data
 
 

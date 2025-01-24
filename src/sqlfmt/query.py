@@ -3,7 +3,7 @@ from typing import List
 
 from sqlfmt.line import Line
 from sqlfmt.node import Node
-from sqlfmt.token import Token
+from sqlfmt.tokens import Token
 
 
 @dataclass

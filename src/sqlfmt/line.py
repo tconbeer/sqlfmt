@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple
 
 from sqlfmt.comment import Comment
 from sqlfmt.node import Node, get_previous_token
-from sqlfmt.token import Token, TokenType
+from sqlfmt.tokens import Token, TokenType
 
 
 @dataclass

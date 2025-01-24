@@ -4,7 +4,7 @@ from typing import List, Optional, Tuple
 from sqlfmt.exception import SqlfmtBracketError
 from sqlfmt.line import Line
 from sqlfmt.node import Node, get_previous_token
-from sqlfmt.token import Token, TokenType
+from sqlfmt.tokens import Token, TokenType
 
 
 class NodeManager:

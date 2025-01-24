@@ -3,6 +3,7 @@ from collections import Counter
 from typing import List
 
 import pytest
+
 from sqlfmt.rule import Rule
 from sqlfmt.rules import CLONE, CORE, FUNCTION, GRANT, JINJA, MAIN, WAREHOUSE
 
@@ -471,9 +472,9 @@ def test_regex_partial_match(
     assert match is not None, f"{rule_name} regex doesn't match {value}"
     start, end = match.span(1)
 
-    assert (
-        value[start:end] == matched_value
-    ), f"{rule_name} regex doesn't exactly match {matched_value}"
+    assert value[start:end] == matched_value, (
+        f"{rule_name} regex doesn't exactly match {matched_value}"
+    )
 
 
 def test_regex_should_not_match_empty_string() -> None:

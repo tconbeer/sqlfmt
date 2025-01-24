@@ -136,7 +136,7 @@ class Analyzer:
         else:
             raise SqlfmtParsingError(
                 f"Could not parse SQL at position {self.pos}:"
-                f" '{source_string[self.pos:self.pos+50].strip()}'"
+                f" '{source_string[self.pos : self.pos + 50].strip()}'"
             )
 
     def lex(self, source_string: str, eof_pos: int = -1) -> None:

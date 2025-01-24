@@ -1,12 +1,12 @@
 from typing import List
 
 import pytest
+
 from sqlfmt.analyzer import Analyzer
 from sqlfmt.line import Line
 from sqlfmt.mode import Mode
 from sqlfmt.node_manager import NodeManager
 from sqlfmt.splitter import LineSplitter
-
 from tests.util import read_test_data
 
 
@@ -432,9 +432,9 @@ def test_split_leading_comma_comment(
         "select\n",
         "    1\n",
         "    ,\n",
-        "    -- two\n" "    2  -- two inline\n",
+        "    -- two\n    2  -- two inline\n",
         "    ,\n",
-        "    -- three\n" "    3  -- three inline\n",
+        "    -- three\n    3  -- three inline\n",
     ]
     assert actual_result == expected_result
 
