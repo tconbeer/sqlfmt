@@ -22,6 +22,12 @@ from sqlfmt.token import TokenType
 MAIN = [
     *CORE,
     Rule(
+        name="star_columns",
+        priority=409,  # star is 410
+        pattern=group(r"\*columns") + group(r"\(", r"$"),
+        action=partial(actions.add_node_to_buffer, token_type=TokenType.NAME),
+    ),
+    Rule(
         name="statement_start",
         priority=1000,
         pattern=group(r"case") + group(r"\W", r"$"),
