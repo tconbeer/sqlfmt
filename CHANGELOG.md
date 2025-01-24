@@ -7,6 +7,9 @@ All notable changes to this project will be documented in this file.
 ### Formatting Changes and Bug Fixes
 
 - sqlfmt no longer adds a space between the `*` and `columns` in DuckDB `*columns` expressions ([#657](https://github.com/tconbeer/sqlfmt/issues/657) - thank you [@aersam](https://github.com/aersam)!)
+- sqlfmt no longer adds a space between the `:` and `['name']` in a DataBricks escaped variant expression like `foo:['bar.baz']` ([#637](https://github.com/tconbeer/sqlfmt/issues/637) - thank you [@aersam](https://github.com/aersam)!)
+
+### Testing
 - sqlfmt is now tested against and fully supports Python 3.13
 
 ## [0.24.0] - 2024-11-22

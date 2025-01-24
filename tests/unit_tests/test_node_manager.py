@@ -314,6 +314,7 @@ def test_identifier_whitespace(default_mode: Mode, source_string: str) -> None:
         "([])\n",
         "()[] + foo()[offset(1)]\n",
         "using (id)\n",
+        "foo:['bar.baz']\n",
     ],
 )
 def test_bracket_whitespace(default_mode: Mode, source_string: str) -> None:

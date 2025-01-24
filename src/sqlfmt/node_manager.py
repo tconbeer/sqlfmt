@@ -217,6 +217,15 @@ class NodeManager:
             )
         ):
             return NO_SPACE
+        # open square brackets that follow colons are escaped databricks
+        # variant cols
+        elif (
+            token.type is TokenType.BRACKET_OPEN
+            and token.token == "["
+            and previous_token
+            and previous_token.type is TokenType.COLON
+        ):
+            return NO_SPACE
         # need a space before any other open bracket
         elif token.type is TokenType.BRACKET_OPEN:
             return SPACE
