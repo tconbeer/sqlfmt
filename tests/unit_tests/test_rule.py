@@ -238,6 +238,7 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (MAIN, "other_identifiers", "%s"),
         (MAIN, "other_identifiers", "%(name)s"),
         (MAIN, "other_identifiers", "%(anything! else!)s"),
+        (MAIN, "star_columns", "*columns"),
         (MAIN, "newline", "\n"),
         (JINJA, "jinja_comment", "{# my comment #}"),
         (JINJA, "jinja_comment", "{#-my comment -#}"),
