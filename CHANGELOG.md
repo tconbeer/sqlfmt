@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.26.0] - 2025-01-27
+
 ### Formatting Changes and Bug Fixes
 
 - sqlfmt will no longer attempt to format quoted names in blocks of unsupported DDL ([#653](https://github.com/tconbeer/sqlfmt/issues/653) - thank you [@stiabh](https://github.com/stiabh)!)
@@ -532,7 +534,8 @@ All notable changes to this project will be documented in this file.
 - supports --check and --diff options
 - supports --no-color
 
-[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.25.0...HEAD
+[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.26.0...HEAD
+[0.26.0]: https://github.com/tconbeer/sqlfmt/compare/0.25.0...0.26.0
 [0.25.0]: https://github.com/tconbeer/sqlfmt/compare/0.24.0...0.25.0
 [0.24.0]: https://github.com/tconbeer/sqlfmt/compare/0.23.3...0.24.0
 [0.23.3]: https://github.com/tconbeer/sqlfmt/compare/0.23.2...0.23.3
