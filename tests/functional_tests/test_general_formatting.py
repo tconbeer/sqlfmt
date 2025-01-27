@@ -90,6 +90,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/409_create_external_function.sql",
         "unformatted/410_create_warehouse.sql",
         "unformatted/411_create_clone.sql",
+        "unformatted/412_pragma.sql",
         "unformatted/900_create_view.sql",
         "unformatted/999_unsupported_ddl.sql",
     ],

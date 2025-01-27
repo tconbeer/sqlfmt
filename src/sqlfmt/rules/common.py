@@ -53,3 +53,5 @@ CREATE_CLONABLE = (
     )
     + r"(\s+if\s+not\s+exists)?"
 )
+
+PRAGMA_SET_CALL = group(r"pragma", r"set", r"call")
