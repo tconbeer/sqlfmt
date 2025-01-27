@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Formatting Changes and Bug Fixes
+
+- sqlfmt will no longer attempt to format quoted names in blocks of unsupported DDL ([#653](https://github.com/tconbeer/sqlfmt/issues/653) - thank you [@stiabh](https://github.com/stiabh)!)
+
 ## [0.25.0] - 2025-01-24
 
 ### Formatting Changes and Bug Fixes
