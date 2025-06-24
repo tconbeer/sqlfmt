@@ -110,6 +110,10 @@ class Node:
     @property
     def divides_queries(self) -> bool:
         return self.token.type.divides_queries
+    
+    @property
+    def is_semicolon(self) -> bool:
+        return self.token.type is TokenType.SEMICOLON
 
     @property
     def is_opening_bracket(self) -> bool:
