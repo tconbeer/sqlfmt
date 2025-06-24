@@ -10,7 +10,7 @@ from sqlfmt.node_manager import NodeManager
 @dataclass
 class LineSplitter:
     node_manager: NodeManager
-    new_line_before_semicolon: bool = True
+    newline_before_semicolon: bool = True
 
     def maybe_split(self, line: Line) -> List[Line]:
         """
@@ -81,7 +81,7 @@ class LineSplitter:
             # always split before a node that divides queries
             or node.divides_queries
         ):
-            if not self.new_line_before_semicolon and node.is_semicolon:
+            if not self.newline_before_semicolon and node.is_semicolon:
                 return False
 
             return True

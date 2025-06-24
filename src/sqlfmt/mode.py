@@ -31,7 +31,7 @@ class Mode:
     no_progressbar: bool = False
     no_color: bool = False
     force_color: bool = False
-    new_line_before_semicolon: bool = True
+    newline_before_semicolon: bool = True
 
     def __post_init__(self) -> None:
         # get the dialect from its name.

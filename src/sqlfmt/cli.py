@@ -140,13 +140,11 @@ from sqlfmt.mode import Mode
     ),
 )
 @click.option(
-    "--new-line-before-semicolon/--no-new-line-before-semicolon",
-    envvar="SQLFMT_NEW_LINE_BEFORE_SEMICOLON",
+    "--newline-before-semicolon/--no-newline-before-semicolon",
+    envvar="SQLFMT_NEWLINE_BEFORE_SEMICOLON",
     is_flag=True,
     default=True,
-    help=(
-        "Whether to add a newline before semicolons. Defaults to true."
-    )
+    help=("Whether to add a newline before semicolons. Defaults to true."),
 )
 @click.option(
     "-d",

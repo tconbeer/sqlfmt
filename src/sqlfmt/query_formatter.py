@@ -21,7 +21,7 @@ class QueryFormatter:
         apparent
         """
         node_manager = NodeManager(self.mode.dialect.case_sensitive_names)
-        splitter = LineSplitter(node_manager, self.mode.new_line_before_semicolon)
+        splitter = LineSplitter(node_manager, self.mode.newline_before_semicolon)
         new_lines = []
         for line in lines:
             splits = list(splitter.maybe_split(line))
