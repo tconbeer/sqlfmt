@@ -36,9 +36,9 @@ class LineSplitter:
                     new_line, comments = self.split_at_index(
                         line, head, i, comments, no_tail=True
                     )
-                    assert not comments, (
-                        "Comments must be empty here or we'll drop them"
-                    )
+                    assert (
+                        not comments
+                    ), "Comments must be empty here or we'll drop them"
                     new_lines.append(new_line)
                 return new_lines
             elif (
@@ -79,8 +79,11 @@ class LineSplitter:
             or node.is_closing_bracket
             or node.is_closing_jinja_block
             # always split before a node that divides queries
-            or (node.divides_queries and (self.new_line_before_semicolon or not node.is_semicolon))
+            or node.divides_queries
         ):
+            if not self.new_line_before_semicolon and node.is_semicolon:
+                return False
+
             return True
         # split if an opening bracket immediately follows
         # a closing bracket
