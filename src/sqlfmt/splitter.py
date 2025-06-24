@@ -10,6 +10,7 @@ from sqlfmt.node_manager import NodeManager
 @dataclass
 class LineSplitter:
     node_manager: NodeManager
+    newline_before_semicolon: bool = True
 
     def maybe_split(self, line: Line) -> List[Line]:
         """
@@ -35,9 +36,9 @@ class LineSplitter:
                     new_line, comments = self.split_at_index(
                         line, head, i, comments, no_tail=True
                     )
-                    assert not comments, (
-                        "Comments must be empty here or we'll drop them"
-                    )
+                    assert (
+                        not comments
+                    ), "Comments must be empty here or we'll drop them"
                     new_lines.append(new_line)
                 return new_lines
             elif (
@@ -80,6 +81,9 @@ class LineSplitter:
             # always split before a node that divides queries
             or node.divides_queries
         ):
+            if not self.newline_before_semicolon and node.is_semicolon:
+                return False
+
             return True
         # split if an opening bracket immediately follows
         # a closing bracket

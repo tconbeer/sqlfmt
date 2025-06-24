@@ -98,6 +98,7 @@ class TokenType(Enum):
             TokenType.COMMA,
             TokenType.DOT,
             TokenType.NEWLINE,
+            TokenType.SEMICOLON,
         ]
 
     @cached_property
