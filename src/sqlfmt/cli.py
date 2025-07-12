@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Union
+from typing import List, Optional, Union
 
 import click
 
@@ -152,6 +152,18 @@ from sqlfmt.mode import Mode
         "case sensitivity in function, field, and alias names."
     ),
 )
+@click.option(
+    "--config",
+    "config_path",
+    envvar="SQLFMT_CONFIG",
+    type=click.Path(
+        exists=True, dir_okay=False, allow_dash=False, resolve_path=True, path_type=Path
+    ),
+    help=(
+        "A path to a `pyproject.toml` file. Options passed at the command line will "
+        "override settings in this file."
+    ),
+)
 @click.argument(
     "files",
     nargs=-1,
@@ -159,7 +171,10 @@ from sqlfmt.mode import Mode
 )
 @click.pass_context
 def sqlfmt(
-    ctx: click.Context, files: List[Path], **kwargs: Union[bool, int, List[str], str]
+    ctx: click.Context,
+    files: List[Path],
+    config_path: Optional[Path] = None,
+    **kwargs: Union[bool, int, List[str], str],
 ) -> None:
     """
     sqlfmt formats your dbt SQL files so you don't have to.
@@ -173,7 +188,7 @@ def sqlfmt(
     https://sqlfmt.com for documentation and more information.
     """
     if files:
-        config = load_config_file(files)
+        config = load_config_file(files, config_path)
         non_default_options = {
             k: v
             for k, v in kwargs.items()
