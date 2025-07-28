@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Features
+
+- sqlfmt now accepts a path to a `pyproject.toml` file as an argument. To leverage this pass `--config <path to file>`. If passed, sqlfmt will not attempt to find a config file. The file must exist or an exception will be thrown. Note that other options pased at the command line will override the settings within this file.
+
 ## [0.26.0] - 2025-01-27
 
 ### Formatting Changes and Bug Fixes

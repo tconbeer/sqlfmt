@@ -15,14 +15,19 @@ else:
 Config = Dict[str, Union[bool, int, List[str], str, Path]]
 
 
-def load_config_file(files: List[Path]) -> Config:
+def load_config_file(files: List[Path], config_path: Optional[Path]) -> Config:
     """
     files is a list of resolved, absolute paths (like the ones passed from the
     Click CLI). This finds a pyproject.toml file in the common parent directory
     of files (or in the common parent's parents).
+
+    If config_path is provided, searching for a config via files will be skipped
+    entirely.
     """
-    common_parents = _get_common_parents(files)
-    config_path = _find_config_file(common_parents)
+    if config_path is None:
+        common_parents = _get_common_parents(files)
+        config_path = _find_config_file(common_parents)
+
     config = _load_config_from_path(config_path)
     return config
 

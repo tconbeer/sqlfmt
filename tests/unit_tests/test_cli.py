@@ -209,3 +209,67 @@ def test_preformatted_inherit_encoding(
         assert results.stderr.startswith("1 file had errors")
         assert "006_has_bom.sql" in results.stderr
         assert "Could not parse SQL at position 1" in results.stderr
+
+
+def test_config_option(sqlfmt_runner: CliRunner, preformatted_dir: Path) -> None:
+    copy_config_file_to_dst("valid_sqlfmt_config.toml", preformatted_dir)
+    args = (
+        f"{preformatted_dir.as_posix()} "
+        f"--config {(preformatted_dir / 'pyproject.toml').as_posix()} "
+        "--check"
+    )
+    results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
+    # 3 files should fail formatting with longer line length in config
+    assert results.exit_code == 1
+    assert results.stderr.startswith("3 files failed formatting check")
+
+    args = f"{preformatted_dir.as_posix()} --check"
+    results = sqlfmt_runner.invoke(
+        sqlfmt_main,
+        args=args,
+        env={"SQLFMT_CONFIG": f"{preformatted_dir.as_posix()}/pyproject.toml"},
+    )
+    assert results.exit_code == 1
+    assert results.stderr.startswith("3 files failed formatting check")
+
+    # supply CLI args to override config file so checks pass
+    args = (
+        f"{preformatted_dir.as_posix()} "
+        f"--config {(preformatted_dir / 'pyproject.toml').as_posix()} "
+        "--line-length 88 --check"
+    )
+    results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
+    assert results.exit_code == 0
+
+    # supply CLI args to override config file so checks pass
+    args = f"{preformatted_dir.as_posix()} --line-length 88 --check"
+    results = sqlfmt_runner.invoke(
+        sqlfmt_main,
+        args=args,
+        env={"SQLFMT_CONFIG": f"{preformatted_dir.as_posix()}/pyproject.toml"},
+    )
+    assert results.exit_code == 0
+
+
+def test_config_does_not_exist(
+    sqlfmt_runner: CliRunner, preformatted_dir: Path
+) -> None:
+    # make sure sqlfmt fails fast if the passed config doesn't exist
+    args = (
+        f"--config {preformatted_dir.as_posix()}/does_not_exist.toml "
+        f"{preformatted_dir.as_posix()}"
+    )
+    results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
+    assert results.exit_code == 2
+    assert "Error: Invalid value for '--config'" in results.stderr
+    assert "does not exist" in results.stderr
+
+    args = f"{preformatted_dir.as_posix()}"
+    results = sqlfmt_runner.invoke(
+        sqlfmt_main,
+        args=args,
+        env={"SQLFMT_CONFIG": f"{preformatted_dir.as_posix()}/does_not_exist.toml"},
+    )
+    assert results.exit_code == 2
+    assert "Error: Invalid value for '--config'" in results.stderr
+    assert "does not exist" in results.stderr
