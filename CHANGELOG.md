@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.27.0] - 2025-07-28
+
 ### Features
 
 - sqlfmt now accepts a path to a `pyproject.toml` file as an argument. To leverage this pass `--config <path to file>`. If passed, sqlfmt will not attempt to find a config file. The file must exist or an exception will be thrown. Note that other options pased at the command line will override the settings within this file.
@@ -538,7 +540,8 @@ All notable changes to this project will be documented in this file.
 - supports --check and --diff options
 - supports --no-color
 
-[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.26.0...HEAD
+[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.27.0...HEAD
+[0.27.0]: https://github.com/tconbeer/sqlfmt/compare/0.26.0...0.27.0
 [0.26.0]: https://github.com/tconbeer/sqlfmt/compare/0.25.0...0.26.0
 [0.25.0]: https://github.com/tconbeer/sqlfmt/compare/0.24.0...0.25.0
 [0.24.0]: https://github.com/tconbeer/sqlfmt/compare/0.23.3...0.24.0
