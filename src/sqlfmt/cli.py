@@ -140,6 +140,13 @@ from sqlfmt.mode import Mode
     ),
 )
 @click.option(
+    "--newline-before-semicolon/--no-newline-before-semicolon",
+    envvar="SQLFMT_NEWLINE_BEFORE_SEMICOLON",
+    is_flag=True,
+    default=True,
+    help=("Whether to add a newline before semicolons. Defaults to true."),
+)
+@click.option(
     "-d",
     "--dialect",
     "dialect_name",
