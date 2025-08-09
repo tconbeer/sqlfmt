@@ -170,8 +170,8 @@ We'd love to hear from you! [Open an Issue](https://github.com/tconbeer/sqlfmt/i
 1. Install [Poetry](https://python-poetry.org/docs/#installation) v1.2 or higher if you don't have it already. You may also need or want pyenv, make, and gcc. A complete setup from a fresh install of Ubuntu can be found [here](https://github.com/tconbeer/linux_setup).
 1. Clone this repo into a directory (let's call it `sqlfmt`), then `cd sqlfmt`.
 1. Use `poetry install --all-extras --sync` to install the project (editable) and its dependencies (including the `jinjafmt` and `sqlfmt_primer` extras) into a new virtual env.
-1. Use `poetry shell` to spawn a subshell.
-1. Type `make` to run all tests and linters, or run `pytest`, `black`, `flake8`, `isort`, and `mypy` individually.
+1. Use `poetry shell` to spawn a subshell (if you are using Poetry v2.0 or higher, it is recommended that you use the command `eval $(poetry env activate)` instead. Alternatively, you can install the plugin [poetry-plugin-shell](https://github.com/python-poetry/poetry-plugin-shell)).
+2. Type `make` to run all tests and linters, or run `pytest`, `ruff`, and `mypy` individually.
 
 ### Updating primer repos to reflect formatting changes
 
