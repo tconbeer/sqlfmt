@@ -103,6 +103,7 @@ CORE = [
         name="number",
         priority=401,
         pattern=group(
+            r"0[xX][0-9a-fA-F]+",
             r"(\+|-)?\d+(\.\d*)?(e(\+|-)?\d+)?(bd|d|f)?",
             r"(\+|-)?\.\d+(e(\+|-)?\d+)?(bd|d|f)?",
         ),

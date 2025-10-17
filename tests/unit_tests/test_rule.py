@@ -75,6 +75,7 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (CORE, "number", "1e9d"),
         (CORE, "number", "1e-9f"),
         (CORE, "number", "1.55e-9bd"),
+        (CORE, "number", "0xFF"),
         (CORE, "bracket_open", "["),
         (CORE, "bracket_close", ")"),
         (CORE, "double_colon", "::"),
