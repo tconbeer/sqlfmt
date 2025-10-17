@@ -43,7 +43,7 @@ FROM
         count() AS hits
     FROM test.hits
     GROUP BY CounterID
-) ANY LEFT JOIN
+) LEFT ANY JOIN
 (
     SELECT
         CounterID,
@@ -89,7 +89,7 @@ where
 
 select counterid, hits, visits
 from (select counterid, count() as hits from test.hits group by counterid)
-any left join
+left any join
     (select counterid, sum(sign) as visits from test.visits group by counterid)
 using counterid
 order by hits desc
