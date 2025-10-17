@@ -244,7 +244,10 @@ MAIN = [
         name="set_operator",
         priority=1320,
         pattern=group(
-            r"(union|intersect|except|minus)(\s+(all|distinct))?(\s+by\s+name)?",
+            r"((inner|((full|left)(\s+outer)?))\s+)?"
+            r"(union|intersect|except|minus)"
+            r"(\s+(all|distinct))?"
+            r"(\s+(by\s+name|((strict\s+)?corresponding(\s+by)?)))?",
         )
         + group(r"\W", r"$"),
         action=partial(
