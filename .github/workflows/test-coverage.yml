@@ -11,60 +11,39 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ contains(github.event_name, 'pull_request') && github.event.pull_request.head.ref || github.sha }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   coverage:
     name: Test Coverage - 3.10
     runs-on: ubuntu-latest
-    env:
-      POETRY_VIRTUALENVS_IN_PROJECT: 1
-      POETRY_INSTALLER_PARALLEL: 1
-      POETRY_VIRTUALENVS_CREATE: 1
     steps:
       - name: Check out Repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
 
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v5
+      - name: Set up Python
         id: setup-python
+        uses: actions/setup-python@v6
         with:
-          python-version: "3.10"
+          python-version-file: ".python-version"
 
-      - name: Load cached Poetry installation
-        id: cached-poetry-install
-        uses: actions/cache@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
         with:
-          path: ~/.local
-          key: ${{ runner.os }}-poetry-183  # increment to reset cache
-
-      - name: Add cached Poetry to PATH
-        if: steps.cached-poetry-install.outputs.cache-hit == 'true'
-        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - name: Install Poetry
-        if: steps.cached-poetry-install.outputs.cache-hit != 'true'
-        uses: snok/install-poetry@v1
-        with:
-          version: 1.8.3
-
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: static-venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+          version: "0.9.3"
+          enable-cache: true
 
       - name: Install python dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: |
-          poetry env use ${{ steps.setup-python.outputs.python-version }}
-          poetry install --sync --no-interaction -E jinjafmt --only main,test
-          poetry env info
+          uv sync --locked --group test
 
       - name: Run unit tests and generate cov report
         run: |
-          poetry run pytest --cov=sqlfmt --cov-report xml:tests/.coverage/cov.xml tests/unit_tests
+          uv run pytest --cov=sqlfmt --cov-report xml:tests/.coverage/cov.xml tests/unit_tests
 
       - name: Report coverage to CodeClimate
         uses: paambaati/codeclimate-action@v9.0.0

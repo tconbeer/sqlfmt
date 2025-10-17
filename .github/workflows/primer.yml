@@ -16,55 +16,27 @@ jobs:
   primer:
     name: sqlfmt primer
     runs-on: ubuntu-latest
-    env:
-      POETRY_VIRTUALENVS_IN_PROJECT: 1
-      POETRY_INSTALLER_PARALLEL: 1
-      POETRY_VIRTUALENVS_CREATE: 1
 
     steps:
       - name: Check out Repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
 
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v5
+      - name: Set up Python
         id: setup-python
+        uses: actions/setup-python@v6
         with:
-          python-version: "3.8"
+          python-version-file: ".python-version"
 
-      - name: Load cached Poetry installation
-        id: cached-poetry-install
-        uses: actions/cache@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
         with:
-          path: ~/.local
-          key: ${{ runner.os }}-poetry-183  # increment to reset cache
-
-      - name: Add cached Poetry to PATH
-        if: steps.cached-poetry-install.outputs.cache-hit == 'true'
-        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - name: Install Poetry
-        if: steps.cached-poetry-install.outputs.cache-hit != 'true'
-        uses: snok/install-poetry@v1
-        with:
-          version: 1.8.3
-
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: static-venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+          version: "0.9.3"
+          enable-cache: true
 
       - name: Install python dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: |
-          poetry env use ${{ steps.setup-python.outputs.python-version }}
-          poetry install --sync --all-extras --no-interaction --only main
-          poetry env info
+        run: uv sync --locked --group primer
 
       - name: Run primer
-        run: |
-          source .venv/bin/activate
-          sqlfmt_primer
+        run: uv run sqlfmt_primer
