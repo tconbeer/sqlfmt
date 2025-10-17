@@ -20,7 +20,7 @@ class Comment:
 
     def __str__(self) -> str:
         """
-        Returns the contents of the comment token plus a trailing newline,
+        Returns the contents of the comment token,
         without preceding whitespace, with a single space between the marker
         and the comment text.
         """
@@ -118,6 +118,24 @@ class Comment:
                 ]
             )
 
+    @property
+    def should_preserve_indentation(self) -> bool:
+        """
+        Comments should preserve their original (token) indentation
+        if they have formatting disabled, OR if they are in a run
+        of DATA tokens.
+
+        Newlines in runs of DATA tokens won't themselves have
+        formatting disabled, so it's insufficient to check
+        the previous token.
+        """
+        return self.formatting_disabled or (
+            self.previous_node is not None
+            and self.previous_node.is_newline
+            and self.previous_node.previous_node is not None
+            and self.previous_node.previous_node.token.type is TokenType.DATA
+        )
+
     def render_inline(self) -> str:
         """
         Renders a comment as an inline comment, assuming it'll fit.
@@ -130,12 +148,13 @@ class Comment:
         For a Comment, returns the string for properly formatting this Comment
         as a standalone comment (on its own line)
         """
-        if self.formatting_disabled:
-            rendered = f"{self.token.prefix}{self}"
-        elif self.is_multiline:
-            # todo: split lines, indent each line the same
-            rendered = prefix + str(self)
+        if self.should_preserve_indentation:
+            prefix = self.token.prefix
+
+        if self.formatting_disabled or self.is_multiline:
+            rendered = f"{prefix}{self}"
         else:
+            # split long standalone comments onto multiple lines
             if len(self) + len(prefix) <= max_length:
                 rendered = prefix + str(self)
             else:
