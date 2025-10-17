@@ -82,9 +82,9 @@ MAIN = [
             r"delete\s+from",
             r"from",
             (
-                r"((global|natural|asof)\s+)?"
+                r"((global|any|all|natural|asof)\s+)?"
                 r"((inner|left|right|full|cross)\s+)?"
-                r"((outer|semi|anti|any|all|asof|cross|positional|array|paste)\s+)?join"
+                r"((outer|semi|anti|asof|cross|positional|array|paste)\s+)?join"
             ),
             # this is the USING following DELETE, not the join operator
             # (see above)
@@ -148,7 +148,7 @@ MAIN = [
             r"(not\s+)?exists",
             r"filter",
             r"grouping sets",
-            r"(not\s+)?in",
+            r"(global)?(not\s+)?in",
             r"interval",
             r"is(\s+not)?(\s+distinct\s+from)?",
             r"isnull",
