@@ -207,6 +207,7 @@ CORE = [
             r"<<(=|\|)?",
             r"=>",
             r"->>?",  # json extraction
+            r"\?(&|\|)",  # pg json contains keys
             r"&&",
             r"&<\|?",  # not extends
             r"\|?&>",  # not extends
