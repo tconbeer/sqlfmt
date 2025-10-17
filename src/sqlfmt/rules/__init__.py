@@ -127,7 +127,7 @@ MAIN = [
         # delete's USING, which is an unterminated
         # keyword
         name="join_using",
-        priority=1110,
+        priority=1049,
         pattern=group(r"using") + group(r"\s*\("),
         action=partial(
             actions.handle_reserved_keyword,
@@ -163,7 +163,7 @@ MAIN = [
     ),
     Rule(
         name="unterm_keyword",
-        priority=1300,
+        priority=1050,
         pattern=group(
             r"with(\s+recursive)?",
             (
@@ -174,16 +174,16 @@ MAIN = [
             ),
             r"delete\s+from",
             r"from",
-            r"((cross|positional|semi|anti)\s+)?join",
             (
-                r"((natural|asof)\s+)?"
-                r"((inner|(left|right|full)(\s+(outer|anti))?)\s+)?join"
+                r"((global|natural|asof)\s+)?"
+                r"((inner|left|right|full|cross)\s+)?"
+                r"((outer|semi|anti|any|all|asof|cross|positional|array|paste)\s+)?join"
             ),
             # this is the USING following DELETE, not the join operator
             # (see above)
             r"using",
             r"lateral\s+view(\s+outer)?",
-            r"where",
+            r"(pre)?where",
             r"group\s+by",
             r"cluster\s+by",
             r"distribute\s+by",
