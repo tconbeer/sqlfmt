@@ -54,6 +54,72 @@ MAIN = [
         ),
     ),
     Rule(
+        # a join's using word operator must be followed
+        # by parens; otherwise, it's probably a
+        # delete's USING, which is an unterminated
+        # keyword
+        name="join_using",
+        priority=1049,
+        pattern=group(r"using") + group(r"\s*\("),
+        action=partial(
+            actions.handle_reserved_keyword,
+            action=partial(
+                actions.add_node_to_buffer, token_type=TokenType.WORD_OPERATOR
+            ),
+        ),
+    ),
+    Rule(
+        name="unterm_keyword",
+        priority=1050,
+        pattern=group(
+            r"with(\s+recursive)?",
+            (
+                r"select(\s+(as\s+struct|as\s+value))?"
+                r"(\s+(all|top\s+\d+|distinct))?"
+                # select into is ddl that needs additional handling
+                r"(?!\s+into)"
+            ),
+            r"delete\s+from",
+            r"from",
+            (
+                r"((global|natural|asof)\s+)?"
+                r"((inner|left|right|full|cross)\s+)?"
+                r"((outer|semi|anti|any|all|asof|cross|positional|array|paste)\s+)?join"
+            ),
+            # this is the USING following DELETE, not the join operator
+            # (see above)
+            r"using",
+            r"lateral\s+view(\s+outer)?",
+            r"(pre)?where",
+            r"group\s+by",
+            r"cluster\s+by",
+            r"distribute\s+by",
+            r"sort\s+by",
+            r"having",
+            r"qualify",
+            r"window",
+            r"order\s+by",
+            r"limit",
+            r"fetch\s+(first|next)",
+            r"for\s+(update|no\s+key\s+update|share|key\s+share)",
+            r"when",
+            r"then",
+            r"else",
+            r"partition\s+by",
+            r"values",
+            # in pg, RETURNING can be the last clause of
+            # a DELETE statement
+            r"returning",
+        )
+        + group(r"\W", r"$"),
+        action=partial(
+            actions.handle_reserved_keyword,
+            action=partial(
+                actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD
+            ),
+        ),
+    ),
+    Rule(
         # There are some function names in some dialects that are the same as
         # word operators in other dialects. Here we lex those as function
         # names IFF the name is immediately followed by a `(` (with no space
@@ -122,21 +188,6 @@ MAIN = [
         ),
     ),
     Rule(
-        # a join's using word operator must be followed
-        # by parens; otherwise, it's probably a
-        # delete's USING, which is an unterminated
-        # keyword
-        name="join_using",
-        priority=1049,
-        pattern=group(r"using") + group(r"\s*\("),
-        action=partial(
-            actions.handle_reserved_keyword,
-            action=partial(
-                actions.add_node_to_buffer, token_type=TokenType.WORD_OPERATOR
-            ),
-        ),
-    ),
-    Rule(
         name="on",
         priority=1120,
         pattern=group(r"on") + group(r"\W", r"$"),
@@ -158,57 +209,6 @@ MAIN = [
             actions.handle_reserved_keyword,
             action=partial(
                 actions.add_node_to_buffer, token_type=TokenType.BOOLEAN_OPERATOR
-            ),
-        ),
-    ),
-    Rule(
-        name="unterm_keyword",
-        priority=1050,
-        pattern=group(
-            r"with(\s+recursive)?",
-            (
-                r"select(\s+(as\s+struct|as\s+value))?"
-                r"(\s+(all|top\s+\d+|distinct))?"
-                # select into is ddl that needs additional handling
-                r"(?!\s+into)"
-            ),
-            r"delete\s+from",
-            r"from",
-            (
-                r"((global|natural|asof)\s+)?"
-                r"((inner|left|right|full|cross)\s+)?"
-                r"((outer|semi|anti|any|all|asof|cross|positional|array|paste)\s+)?join"
-            ),
-            # this is the USING following DELETE, not the join operator
-            # (see above)
-            r"using",
-            r"lateral\s+view(\s+outer)?",
-            r"(pre)?where",
-            r"group\s+by",
-            r"cluster\s+by",
-            r"distribute\s+by",
-            r"sort\s+by",
-            r"having",
-            r"qualify",
-            r"window",
-            r"order\s+by",
-            r"limit",
-            r"fetch\s+(first|next)",
-            r"for\s+(update|no\s+key\s+update|share|key\s+share)",
-            r"when",
-            r"then",
-            r"else",
-            r"partition\s+by",
-            r"values",
-            # in pg, RETURNING can be the last clause of
-            # a DELETE statement
-            r"returning",
-        )
-        + group(r"\W", r"$"),
-        action=partial(
-            actions.handle_reserved_keyword,
-            action=partial(
-                actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD
             ),
         ),
     ),
