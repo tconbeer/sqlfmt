@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - sqlfmt now lexes and formats BigQuery hexadecimal literals as numbers, and no longer adds a space between `0` and `x` ([#696](https://github.com/tconbeer/sqlfmt/issues/696) - thank you [@KMontag42](https://github.com/KMontag42) and [@snrsw](https://github.com/snrsw)!).
 - sqlfmt no longer adds a second blank newline to the end of a query that only contains a comment (with no sql code) ([#686](https://github.com/tconbeer/sqlfmt/issues/686) - thank you [@nevdelap](https://github.com/nevdelap) and [@snrsw](https://github.com/snrsw)!).
 - sqlfmt now lexes Postgres JSON contains operators `?&` and `?|` as single operator tokens ([#690](https://github.com/tconbeer/sqlfmt/issues/690) - thank you [@thiemonipro](https://github.com/thiemonipro)!).
+- sqlfmt will no longer change the indentation of comments that follow unsupported DDL or other unparsed data ([#691](https://github.com/tconbeer/sqlfmt/issues/691) - thank you [@to-lz1](https://github.com/to-lz1)!).
 
 ### Python 3.14
 
