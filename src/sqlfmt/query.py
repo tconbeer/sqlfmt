@@ -32,8 +32,5 @@ class Query:
         return nodes
 
     def __str__(self) -> str:
-        if not self.lines:
-            return ""
-
         draft = [line.render_with_comments(self.line_length) for line in self.lines]
-        return "".join(draft).rstrip("\n") + "\n"
+        return "".join(draft)
