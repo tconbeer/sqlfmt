@@ -1,9 +1,9 @@
 .PHONY: check
 check:
-	ruff format .
-	ruff check . --fix
-	pytest
-	mypy
+	poetry run ruff format .
+	poetry run ruff check . --fix
+	poetry run pytest
+	poetry run mypy
 
 .PHONY: unit
 unit:
