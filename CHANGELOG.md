@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - sqlfmt no longer adds a second blank newline to the end of a query that only contains a comment (with no sql code) ([#686](https://github.com/tconbeer/sqlfmt/issues/686) - thank you [@nevdelap](https://github.com/nevdelap) and [@snrsw](https://github.com/snrsw)!).
 - sqlfmt now lexes Postgres JSON contains operators `?&` and `?|` as single operator tokens ([#690](https://github.com/tconbeer/sqlfmt/issues/690) - thank you [@thiemonipro](https://github.com/thiemonipro)!).
 - sqlfmt will no longer change the indentation of comments that follow unsupported DDL or other unparsed data ([#691](https://github.com/tconbeer/sqlfmt/issues/691) - thank you [@to-lz1](https://github.com/to-lz1)!).
+- sqlfmt is less likely to crash if trying to load a corrupted cache file ([#692](https://github.com/tconbeer/sqlfmt/issues/692) - thank you [@JeanninA](https://github.com/JeanninA)!).
 
 ### Python 3.14
 
