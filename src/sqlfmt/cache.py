@@ -36,7 +36,13 @@ def load_cache() -> Cache:
         with cache_file.open("rb") as f:
             cache: Cache = pickle.load(f)
             return cache
-    except (pickle.UnpicklingError, ValueError, IndexError, FileNotFoundError):
+    except (
+        pickle.UnpicklingError,
+        ValueError,
+        IndexError,
+        FileNotFoundError,
+        ModuleNotFoundError,
+    ):
         return {}
 
 
