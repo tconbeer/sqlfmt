@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Formatting Changes and Bug Fixes
 
 - sqlfmt now lexes and formats BigQuery hexadecimal literals as numbers, and no longer adds a space between `0` and `x` ([#696](https://github.com/tconbeer/sqlfmt/issues/696) - thank you [@KMontag42](https://github.com/KMontag42) and [@snrsw](https://github.com/snrsw)!).
+- sqlfmt no longer adds a second blank newline to the end of a query that only contains a comment (with no sql code) ([#686](https://github.com/tconbeer/sqlfmt/issues/686) - thank you [@nevdelap](https://github.com/nevdelap) and [@snrsw](https://github.com/snrsw)!).
 
 ## [0.27.0] - 2025-07-28
 

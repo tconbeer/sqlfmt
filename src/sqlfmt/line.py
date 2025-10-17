@@ -105,7 +105,10 @@ class Line:
 
         if inline_comments:
             rendered_lines.append(f"{content}{''.join(inline_comments)}\n")
-        else:
+        # if content is empty AND we've already rendered a standalone or multiline
+        # comment, skip rendering the line itself, since that just adds a duplicate
+        # newline.
+        elif content or not self.comments:
             rendered_lines.append(f"{self}")
 
         return "".join(rendered_lines)
