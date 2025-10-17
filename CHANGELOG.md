@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.28.0] - 2025-10-17
+
 ### Formatting Changes and Bug Fixes
 
 - sqlfmt now lexes and formats BigQuery hexadecimal literals as numbers, and no longer adds a space between `0` and `x` ([#696](https://github.com/tconbeer/sqlfmt/issues/696) - thank you [@KMontag42](https://github.com/KMontag42) and [@snrsw](https://github.com/snrsw)!).
@@ -558,7 +560,8 @@ All notable changes to this project will be documented in this file.
 - supports --check and --diff options
 - supports --no-color
 
-[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.27.0...HEAD
+[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.28.0...HEAD
+[0.28.0]: https://github.com/tconbeer/sqlfmt/compare/0.27.0...0.28.0
 [0.27.0]: https://github.com/tconbeer/sqlfmt/compare/0.26.0...0.27.0
 [0.26.0]: https://github.com/tconbeer/sqlfmt/compare/0.25.0...0.26.0
 [0.25.0]: https://github.com/tconbeer/sqlfmt/compare/0.24.0...0.25.0
