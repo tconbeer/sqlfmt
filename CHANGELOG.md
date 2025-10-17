@@ -9,6 +9,14 @@ All notable changes to this project will be documented in this file.
 - sqlfmt now lexes and formats BigQuery hexadecimal literals as numbers, and no longer adds a space between `0` and `x` ([#696](https://github.com/tconbeer/sqlfmt/issues/696) - thank you [@KMontag42](https://github.com/KMontag42) and [@snrsw](https://github.com/snrsw)!).
 - sqlfmt no longer adds a second blank newline to the end of a query that only contains a comment (with no sql code) ([#686](https://github.com/tconbeer/sqlfmt/issues/686) - thank you [@nevdelap](https://github.com/nevdelap) and [@snrsw](https://github.com/snrsw)!).
 
+### Python 3.14
+
+- This project now officially supports and is tested against Python 3.14.
+
+### Development
+
+- This project is now built using [uv](https://docs.astral.sh/uv/) instead of Poetry. If you are just a user of sqlfmt, this should make no difference -- you can still find this project on PyPI and install it however you like (although we recommend uv for that also).
+
 ## [0.27.0] - 2025-07-28
 
 ### Features

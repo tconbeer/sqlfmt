@@ -4,6 +4,7 @@ on:
   push:
     branches: [ main ]
   pull_request:
+  workflow_dispatch:
 
 # will cancel previous workflows triggered by the same event and for the same ref for PRs or same SHA otherwise
 concurrency:
@@ -15,112 +16,46 @@ defaults:
     shell: bash
 
 jobs:
-  test-windows:
-    name: Windows - 3.9
-    runs-on: Windows-latest
-    env:
-      POETRY_VIRTUALENVS_IN_PROJECT: 1
-      POETRY_INSTALLER_PARALLEL: 1
-      POETRY_VIRTUALENVS_CREATE: 1
-    steps:
-      - name: Check out Repo
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
-      - name: Set up Python 3.9
-        id: setup-python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.9"
-
-      - name: Load cached Poetry installation
-        id: cached-poetry-install
-        uses: actions/cache@v4
-        with:
-          path: ~\.local
-          key: ${{ runner.os }}-poetry-183
-
-      - name: Add cached Poetry to PATH
-        if: steps.cached-poetry-install.outputs.cache-hit == 'true'
-        run: echo "$HOME\.local\bin" >> $GITHUB_PATH
-
-      - name: Install Poetry
-        if: steps.cached-poetry-install.outputs.cache-hit != 'true'
-        uses: snok/install-poetry@v1
-        with:
-          version: 1.8.3
-
-      - name: Install python dependencies
-        run: |
-          poetry install --sync --no-interaction -E jinjafmt --only main,test
-
-      - name: Run tests
-        run: poetry run pytest
-
-
   test:
     name: ${{ matrix.os }} - ${{ matrix.py }}
     runs-on: ${{ matrix.os }}
-    env:
-      POETRY_VIRTUALENVS_IN_PROJECT: 1
-      POETRY_INSTALLER_PARALLEL: 1
-      POETRY_VIRTUALENVS_CREATE: 1
     strategy:
       fail-fast: false
       matrix:
         os:
           - ubuntu-latest
-          - MacOs-13
+          - MacOs-latest
+          - Windows-latest
         py:
+          - "3.14"
           - "3.13"
           - "3.12"
           - "3.11"
           - "3.10"
           - "3.9"
-          - "3.8"
     steps:
       - name: Check out Repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
 
       - name: Set up Python ${{ matrix.py }}
         id: setup-python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.py }}
 
-      - name: Load cached Poetry installation
-        id: cached-poetry-install
-        uses: actions/cache@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
         with:
-          path: ~/.local
-          key: ${{ runner.os }}-poetry-183
-
-      - name: Add cached Poetry to PATH
-        if: steps.cached-poetry-install.outputs.cache-hit == 'true'
-        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - name: Install Poetry
-        if: steps.cached-poetry-install.outputs.cache-hit != 'true'
-        uses: snok/install-poetry@v1
-        with:
-          version: 1.8.3
-
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+          version: "0.9.3"
+          python-version: ${{ matrix.py }}
+          enable-cache: true
 
       - name: Install python dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: |
-          poetry env use ${{ steps.setup-python.outputs.python-version }}
-          poetry install --sync --no-interaction -E jinjafmt --only main,test
+          uv sync --locked --group test
 
       - name: Run tests
         run: |
-          poetry run pytest
+          uv run --no-sync pytest

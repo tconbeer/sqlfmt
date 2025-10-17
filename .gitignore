@@ -1,4 +1,5 @@
 .mypy_cache
+.ruff_cache
 .profiling
 .pytest_cache
 .tox
@@ -13,3 +14,5 @@ Pipfile
 
 *.egg-info
 __pycache__
+
+.env

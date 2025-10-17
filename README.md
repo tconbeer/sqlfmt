@@ -31,62 +31,103 @@ Please visit [docs.sqlfmt.com](https://docs.sqlfmt.com) for more information on 
 #### Try it first
 Want to test out sqlfmt on a query before you install it? Go to [sqlfmt.com](https://sqlfmt.com) to use the interactive, web-based version.
 
-#### Install Using pipx (recommended)
-sqlfmt is a pip-installable Python package listed on PyPI under the name `shandy-sqlfmt`. You should install it into a virtual environment, which `pipx` does automatically:
+#### Recommended Installation: Use uv
 
-```
-pipx install shandy-sqlfmt
-```
+sqlfmt is a command-line tool that is built in Python and runs on MacOS, Linux, and Windows. It is distributed
+on PyPI under the name `shandy-sqlfmt`. There are many ways to install and run it, but we strongly 
+recommend using [uv](https://docs.astral.sh/uv):
 
-To install with the jinjafmt extra (which will also install the Python code formatter, *black*):
+1. [Install uv](https://docs.astral.sh/uv/getting-started/installation/#standalone-installer). From a POSIX shell, run:
 
-```
-pipx install shandy-sqlfmt[jinjafmt]
-```
+    ```bash
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
 
-For more installation options, [read the docs](https://docs.sqlfmt.com/getting-started/installation).
+    Or using Windows Powershell:
 
-### Getting Started
+    ```pwsh
+    powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+    ```
 
-#### Other prerequisites
-**sqlfmt will not always produce the formatted output you might want.** It might even break your SQL syntax. It is **highly recommended** to only run sqlfmt on files in a version control system (like git), so that it is easy for you to revert any changes made by sqlfmt. On your first run, be sure to make a commit before running sqlfmt.
+2. Install sqlfmt as a tool using uv:
 
-There are certain situations where sqlfmt can be considered to be in Beta, or even more mature than that. Those are:
+    ```bash
+    uv tool install "shandy-sqlfmt[jinjafmt]"
+    ```
 
-1. Using sqlfmt to format select statements for one of the major dialects (PostgresSQL, MySQL, Snowflake, BQ, Redshift).
+    This command will install sqlfmt into an isolated environment and add it to your PATH so you can easily run the executable.
 
-1. Using sqlfmt to format a dbt project (which may also include jinja and some minimal DDL/DML, like grants, create function, etc.) for one of the major dialects.
+    :::tip
+    Depending on your shell and OS, you may need single or double quotes around `shandy-sqlfmt[jinjafmt]`.
+    :::
 
-However, there are other use cases where sqlfmt is very much alpha:
+3. Test the installation; run sqlfmt with no arguments:
 
-1. Formatting some dialects that deviate from ANSI or Postgres, like T-SQL (SQLServer).
+    ```bash
+    sqlfmt
+    ```
 
-1. Formatting other DDL (create table, insert, etc.) (sqlfmt attempts to be no-op on these statements as much as possible).
+    You should see some ASCII art and help text.
 
-In these domains sqlfmt is nowhere near "feature complete" and caution is highly advised.
+:::warning PyPI Names
+The PyPI distribtuion is `shandy-sqlfmt`, NOT `sqlfmt`, which is a different (unrelated but not malicious) package.
+This is unfortunate, but the author cannot do anything about it.
+:::
 
-#### Using sqlfmt
+#### Other Installation Options
+
+1. **Use pip or something pip-like:**
+
+    If you know what you’re doing, after installing Python 3.9 or above and activating your virtual environment, install `shandy-sqlfmt` using pip, pipx, poetry, or any other program that can install Python packages from PyPI:
+
+    ```bash
+    pip install "shandy-sqlfmt[jinjafmt]"
+    ```
+
+2. **Use Docker**
+
+    You can skip installation altogether and pull the official Docker image instead. See [the docs](./using-container) on running sqlfmt in a container.
+
+
+### Using sqlfmt
+
+:::danger Before You Begin
+**sqlfmt may not always produce the formatted output you want.** It might even break your SQL syntax. It is **highly recommended** to only run sqlfmt on files in a version control system (like git), so that it is easy for you to revert any changes made by sqlfmt. On your first run, be sure to make a commit before running sqlfmt.
+
+For more on sqlfmt's maturity see [Maturity and Stability](https://sqlfmt.com/docs/versioning/).
+:::
+
+
+sqlfmt is a command-line tool. It works on any posix terminal and on Windows Powershell. If you have used the Python code formatter *Black*, the sqlfmt commands will look familiar. 
+
+:::tip
+The code snippets below are commands that can be typed into your terminal, after installing sqlfmt.
+:::
+
 To list commands and options:
 
 ```bash
 sqlfmt --help
 ```
 
-If you want to format all `.sql` and `.sql.jinja` files in your current working directory (and all nested directories), simply type:
+If you want to format all `.sql` and `.sql.jinja` files in your current working directory (and all nested directories), simply type (note the trailing `.`, denoting the current directory):
+
 ```bash
-$ sqlfmt .
+sqlfmt .
 ```
 
-If you don't want to format the files you have on disk, you can run sqlfmt with the `--check` option. sqlfmt will exit with code 1 if the files on disk are not properly formatted:
+If you don't want to format the files you have on disk, you can use the `--check` or `--diff` options. sqlfmt will exit with code 1 if the files on disk are not properly formatted:
+
 ```bash
-$ sqlfmt --check .
-```
-If you want to print a diff of changes that sqlfmt would make to format a file (but not update the file on disk), you can use the `--diff` option. `--diff` also exits with 1 on changes:
-```bash
-$ sqlfmt --diff .
+sqlfmt --check .
+sqlfmt --diff .
 ```
 
-For more commands, see [the docs](https://docs.sqlfmt.com/getting-started/using-sqlfmt).
+sqlfmt can also format code passed through standard input (`stdin`) by passing `-` as the files argument. The formatted code will be output to `stdout` (all other output from sqlfmt is routed to `stderr`):
+```bash
+echo "select 1" | sqlfmt -
+```
+
 
 #### Configuring sqlfmt using pyproject.toml
 
@@ -167,11 +208,10 @@ We'd love to hear from you! [Open an Issue](https://github.com/tconbeer/sqlfmt/i
 
 ### Setting up Your Dev Environment and Running Tests
 
-1. Install [Poetry](https://python-poetry.org/docs/#installation) v1.2 or higher if you don't have it already. You may also need or want pyenv, make, and gcc. A complete setup from a fresh install of Ubuntu can be found [here](https://github.com/tconbeer/linux_setup).
+1. Install [uv](https://docs.astral.sh/uv/getting-started/installation/) You may also need or want make.
 1. Clone this repo into a directory (let's call it `sqlfmt`), then `cd sqlfmt`.
-1. Use `poetry install --all-extras --sync` to install the project (editable) and its dependencies (including the `jinjafmt` and `sqlfmt_primer` extras) into a new virtual env.
-1. Use `poetry shell` to spawn a subshell (if you are using Poetry v2.0 or higher, it is recommended that you use the command `eval $(poetry env activate)` instead. Alternatively, you can install the plugin [poetry-plugin-shell](https://github.com/python-poetry/poetry-plugin-shell)).
-2. Type `make` to run all tests and linters, or run `pytest`, `ruff`, and `mypy` individually.
+1. Use `uv sync --all-groups --all-extras` to install the project (editable) and its dependencies (including the `jinjafmt` and `sqlfmt_primer` extras) into a new virtual env.
+1. Type `make` to run all tests and linters, or run `pytest`, `ruff`, and `mypy` individually, using `uv` (e.g., `uv run pytest`).
 
 ### Updating primer repos to reflect formatting changes
 
