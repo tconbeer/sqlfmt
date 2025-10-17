@@ -1,19 +1,15 @@
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+[project]
 
-[tool.poetry]
 name = "shandy-sqlfmt"
 version = "0.27.0"
+requires-python = ">=3.8,<3.15"
 description = "sqlfmt formats your dbt SQL files so you don't have to."
-readme = "README.md"
-authors = ["Ted Conbeer <ted@shandy.io>"]
+authors = [
+    { name = "Ted Conbeer", email = "tconbeer@users.noreply.github.com" }
+]
 license = "Apache-2.0"
-homepage = "https://sqlfmt.com"
-repository = "https://github.com/tconbeer/sqlfmt"
-documentation = "https://docs.sqlfmt.com"
+readme = "README.md"
 classifiers = [
-    "Development Status :: 3 - Alpha",
     "Operating System :: MacOS :: MacOS X",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX :: Linux",
@@ -21,55 +17,90 @@ classifiers = [
     "Topic :: Software Development :: Quality Assurance",
     "Typing :: Typed",
 ]
-packages = [
-    { include = "sqlfmt", from = "src" },
+dependencies = [
+    "click>=8.1,<9",
+    "tqdm>=4.67,<5",
+    "platformdirs>=2.4,<5.0",
+    "importlib_metadata>=8.0,<9; python_version < '3.10'",
+    "tomli>=2.0,<3; python_version < '3.11'",
+    "jinja2>=3.0,<4",
 ]
 
-[tool.poetry.extras]
-jinjafmt = ["black"]
-sqlfmt_primer = ["gitpython"]
 
-[tool.poetry.dependencies]
-python = "^3.8"
-click = "^8.0"
-tqdm = "^4.0"
-platformdirs = ">=2.4,<5.0"
-importlib_metadata = { version = "*", python = "<3.8" }
-tomli = { version = "^2.0", python = "<3.11" }
-jinja2 = "^3.0"
+[project.optional-dependencies]
 
-black = { version = "*", optional = true }
-gitpython = { version = "^3.1.24", optional = true }
+jinjafmt = ["black==24.8.0"]
+sqlfmt_primer = ["gitpython==3.1.44"]
 
-[tool.poetry.group.dev.dependencies]
-pre-commit = { version = ">=4.0,<5", python = ">=3.9" }
-snakeviz = "^2.1.1"
 
-[tool.poetry.group.static.dependencies]
-ruff = "^0.9.3"
-mypy = "^1.14"
+[dependency-groups]
+dev = [
+    "pre-commit>=3.3,<4",
+    "snakeviz>=2.1.1,<3",
+]
+static = [
+    "ruff>=0.14.1",
+    "mypy>=1.14.1,<2",
+    "gitpython==3.1.44",
+    "black==24.8.0",
+]
+test = [
+    "black==24.8.0",
+    "pytest>=8,<9",
+    "pytest-cov>=5,<6"
+]
 
-[tool.poetry.group.test.dependencies]
-black = "^24"
-pytest = "^8"
-pytest-cov = "^5"
 
-[tool.poetry.scripts]
+[project.urls]
+
+Homepage = "https://sqlfmt.com"
+Repository = "https://github.com/tconbeer/sqlfmt"
+Documentation = "https://docs.sqlfmt.com"
+"Bug Tracker" = "https://github.com/tconbeer/sqlfmt/issues"
+Changelog = "https://github.com/tconbeer/sqlfmt/blob/main/CHANGELOG.md"
+
+
+[project.scripts]
+
 sqlfmt = "sqlfmt.cli:sqlfmt"
-sqlfmt_primer = { callable = "sqlfmt_primer.primer:sqlfmt_primer", extras = ["sqlfmt_primer"] }
+sqlfmt_primer = "sqlfmt_primer.primer:sqlfmt_primer"
 
-[tool.black]
-line-length = 88
-target-version = ["py38"]
+
+[build-system]
+
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+
+[tool.hatch.build.targets.wheel]
+
+packages = [
+    "src/sqlfmt",
+]
+
+[tool.hatch.build.targets.sdist]
+
+only-include = [
+    "src",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "pyproject.toml"
+]
+
 
 [tool.ruff]
-line-length = 88
+
 target-version = "py38"
 
+
 [tool.ruff.lint]
+
 select = ["A", "B", "E", "F", "I"]
 
+
 [tool.mypy]
+
 python_version = "3.8"
 files = [
     "src/**/*.py",
