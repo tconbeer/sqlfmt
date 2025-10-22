@@ -48,7 +48,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/122_values.sql",
         "unformatted/123_spark_keywords.sql",
         "unformatted/124_bq_compound_types.sql",
-        "unformatted/125_numeric_constants.sql",
+        "unformatted/125_numeric_literals.sql",
         "unformatted/126_blank_lines.sql",
         "unformatted/127_more_comments.sql",
         "unformatted/128_double_slash_comments.sql",

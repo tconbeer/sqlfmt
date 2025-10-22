@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Formatting Changes and Bug Fixes
+
+- sqlfmt now correctly lexes number literals that contain a thousands separator (`_`), like `1_000_000` ([#716](https://github.com/tconbeer/sqlfmt/issues/716) - thank you [@hai-ld](https://github.com/hai-ld)!).
+
 ## [0.28.0] - 2025-10-17
 
 ### Formatting Changes and Bug Fixes
