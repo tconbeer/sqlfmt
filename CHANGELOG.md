@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.28.1] - 2025-10-22
+
 ### Formatting Changes and Bug Fixes
 
 - sqlfmt now correctly lexes number literals that contain a thousands separator (`_`), like `1_000_000` ([#716](https://github.com/tconbeer/sqlfmt/issues/716) - thank you [@hai-ld](https://github.com/hai-ld)!).
@@ -564,7 +566,8 @@ All notable changes to this project will be documented in this file.
 - supports --check and --diff options
 - supports --no-color
 
-[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.28.0...HEAD
+[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.28.1...HEAD
+[0.28.1]: https://github.com/tconbeer/sqlfmt/compare/0.28.0...0.28.1
 [0.28.0]: https://github.com/tconbeer/sqlfmt/compare/0.27.0...0.28.0
 [0.27.0]: https://github.com/tconbeer/sqlfmt/compare/0.26.0...0.27.0
 [0.26.0]: https://github.com/tconbeer/sqlfmt/compare/0.25.0...0.26.0
