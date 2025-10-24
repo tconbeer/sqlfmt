@@ -208,6 +208,7 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (MAIN, "unterm_keyword", "anti join"),
         (MAIN, "unterm_keyword", "any join"),
         (MAIN, "unterm_keyword", "left any join"),
+        (MAIN, "unterm_keyword", "any left join"),
         (MAIN, "unterm_keyword", "all join"),
         (MAIN, "unterm_keyword", "array join"),
         (MAIN, "unterm_keyword", "left array join"),

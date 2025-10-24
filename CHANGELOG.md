@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Formatting Changes and Bug Fixes
+
+- sqlfmt now lexes ClickHouse `any left join` as a join keyword; in 0.28.0 we only supported the other syntax, `left any join` ([#719](https://github.com/tconbeer/sqlfmt/issues/719) - thank you [@haild-metricvn](https://github.com/haild-metricvn); see also [#713](https://github.com/tconbeer/sqlfmt/pull/713)).
+
 ## [0.28.1] - 2025-10-22
 
 ### Formatting Changes and Bug Fixes
