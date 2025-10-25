@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.28.2] - 2025-10-24
+
 ### Formatting Changes and Bug Fixes
 
 - sqlfmt now lexes ClickHouse `any left join` as a join keyword; in 0.28.0 we only supported the other syntax, `left any join` ([#719](https://github.com/tconbeer/sqlfmt/issues/719) - thank you [@haild-metricvn](https://github.com/haild-metricvn); see also [#713](https://github.com/tconbeer/sqlfmt/pull/713)).
@@ -570,7 +572,8 @@ All notable changes to this project will be documented in this file.
 - supports --check and --diff options
 - supports --no-color
 
-[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.28.1...HEAD
+[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.28.2...HEAD
+[0.28.2]: https://github.com/tconbeer/sqlfmt/compare/0.28.1...0.28.2
 [0.28.1]: https://github.com/tconbeer/sqlfmt/compare/0.28.0...0.28.1
 [0.28.0]: https://github.com/tconbeer/sqlfmt/compare/0.27.0...0.28.0
 [0.27.0]: https://github.com/tconbeer/sqlfmt/compare/0.26.0...0.27.0
