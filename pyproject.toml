@@ -46,7 +46,7 @@ static = [
 test = [
     "black==24.8.0",
     "pytest>=8,<9",
-    "pytest-cov>=5,<6",
+    "pytest-cov>=5,<8",
 ]
 primer = [
     "gitpython==3.1.44",
