@@ -120,8 +120,8 @@ def test_end_to_end_errors(
 @pytest.mark.parametrize(
     "options,stream_input,expected_stdout,expected_exit",
     [
-        ("-", "select    1\n", "select 1\n\n", 0),
-        ("-", "select 1\n", "select 1\n\n", 0),
+        ("-", "select    1\n", "select 1\n", 0),  # removes excess space
+        ("-", "select 1\n\n", "select 1\n", 0),  # one trailing newline
         ("- --check", "select    1\n", "", 1),
         ("- --diff", "select    1\n", "", 1),
         ("- --check", "select 1\n", "", 0),

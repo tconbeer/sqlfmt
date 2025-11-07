@@ -31,11 +31,11 @@ def unstyle_output(msg: str) -> str:
     return s
 
 
-def display_output(msg: str, err: bool = True) -> None:
+def display_output(msg: str, err: bool = True, nl: bool = True) -> None:
     """
-    A thin wrapper around click.echo; defaults to printing to stderr.
+    A thin wrapper around click.echo; defaults to stderr with trailing newline.
     """
-    click.echo(msg, err=err)
+    click.echo(msg, err=err, nl=nl)
 
 
 @dataclass
@@ -61,9 +61,10 @@ class SqlFormatResult:
     def maybe_print_to_stdout(self) -> None:
         """
         If sqlfmt received a query via stdin, print the formatted string to stdout
+        without an additional trailing newline
         """
         if self.source_path == STDIN_PATH:
-            display_output(self.formatted_string, err=False)
+            display_output(self.formatted_string, err=False, nl=False)
 
     @property
     def has_changed(self) -> bool:

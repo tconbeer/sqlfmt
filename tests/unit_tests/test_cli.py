@@ -72,7 +72,7 @@ def test_stdin(sqlfmt_runner: CliRunner) -> None:
     stream_input = "select 1"
     results = sqlfmt_runner.invoke(sqlfmt_main, args="-", input=stream_input)
     assert results.exit_code == 0
-    assert results.stdout == "select 1\n\n"
+    assert results.stdout == "select 1\n"
 
 
 def test_preformatted_check(sqlfmt_runner: CliRunner, preformatted_dir: Path) -> None:
