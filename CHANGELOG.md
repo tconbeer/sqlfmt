@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Formatting Changes and Bug Fixes
+
+- sqlfmt no longer includes an extra trailing newline when writing formatted code to stdout.
+  ([#729](https://github.com/tconbeer/sqlfmt/issues/729), [#730](https://github.com/tconbeer/sqlfmt/pull/730))
+
 ## [0.28.2] - 2025-10-24
 
 ### Formatting Changes and Bug Fixes
