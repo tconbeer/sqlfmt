@@ -166,7 +166,10 @@ def test_format_many_preformatted(
     )
     assert not any([res.has_changed for res in results]), "Changed preformatted file"
     assert all(
-        [raw == res.source_path for raw, res in zip(preformatted_files, results)]
+        [
+            raw == res.source_path
+            for raw, res in zip(preformatted_files, results, strict=True)
+        ]
     ), "Result stored a source path that doesn't match the raw path passed to api"
 
 
@@ -180,7 +183,10 @@ def test_format_many_unformatted(
     )
     assert all([res.has_changed for res in results]), "Did not change unformatted file"
     assert all(
-        [raw == res.source_path for raw, res in zip(unformatted_files, results)]
+        [
+            raw == res.source_path
+            for raw, res in zip(unformatted_files, results, strict=True)
+        ]
     ), "Result stored a source path that doesn't match the raw path passed to api"
 
 
@@ -207,7 +213,9 @@ def test_update_source_files_preformatted(
         [
             expected == actual
             for expected, actual in zip(
-                expected_last_update_timestamps, actual_last_update_timestamps
+                expected_last_update_timestamps,
+                actual_last_update_timestamps,
+                strict=True,
             )
         ]
     ), "Should not have written a new file for an unchanged result"
@@ -235,7 +243,9 @@ def test_update_source_files_unformatted(
     assert all(
         [
             new > original
-            for original, new in zip(original_update_timestamps, new_update_timestamps)
+            for original, new in zip(
+                original_update_timestamps, new_update_timestamps, strict=True
+            )
         ]
     ), "Should have written a new file for an unchanged result"
 

@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## Breaking changes
+
+- sqlfmt now requires Python 3.10+
+
 ### Formatting Changes and Bug Fixes
 
 - sqlfmt no longer includes an extra trailing newline when writing formatted code to stdout.

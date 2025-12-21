@@ -1,6 +1,6 @@
 .PHONY: check
 check:
-	uv sync --group test --group static
+	uv sync --all-groups
 	uv run ruff format .
 	uv run ruff check . --fix
 	uv run pytest
@@ -13,10 +13,10 @@ unit:
 
 .PHONY: lint
 lint:
-	uv sync --group static
-	ruff format .
-	ruff check . --fix
-	mypy
+	uv sync --all-groups
+	uv run ruff format .
+	uv run ruff check . --fix
+	uv run mypy
 
 .PHONY: profiling
 profiling: .profiling/all.rstats
