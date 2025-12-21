@@ -29,7 +29,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
 
 @pytest.fixture
 def sqlfmt_runner() -> CliRunner:
-    return CliRunner(mix_stderr=False)
+    return CliRunner()
 
 
 @pytest.fixture
