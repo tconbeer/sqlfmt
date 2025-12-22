@@ -34,7 +34,7 @@ jinjafmt = ["black>=24"]
 
 [dependency-groups]
 dev = [
-    "pre-commit>=3.3,<4",
+    "pre-commit>=4.5,<5",
     "snakeviz>=2.1.1,<3",
 ]
 static = [
