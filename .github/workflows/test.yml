@@ -47,7 +47,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
-          version: "0.9.18"
+          version: "0.9.20"
           python-version: ${{ matrix.py }}
           enable-cache: true
 
