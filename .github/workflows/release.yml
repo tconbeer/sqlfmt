@@ -28,7 +28,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
-          version: "0.9.20"
+          version: "0.9.21"
 
       - name: Create release branch
         run: |
