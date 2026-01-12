@@ -646,7 +646,6 @@ test = [
 requires-dist = [
     { name = "black", marker = "extra == 'jinjafmt'", specifier = ">=24" },
     { name = "click", specifier = ">=8.3,<8.4" },
-    { name = "importlib-metadata", marker = "python_full_version < '3.10'", specifier = ">=8.0,<9" },
     { name = "jinja2", specifier = ">=3.0,<4" },
     { name = "platformdirs", specifier = ">=2.4,<5.0" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0,<3" },
