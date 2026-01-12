@@ -18,7 +18,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "click>=8.3,<8.4",
+    "click>=8.0,<9",
     "tqdm>=4.67,<5",
     "platformdirs>=2.4,<5.0",
     "tomli>=2.0,<3; python_version < '3.11'",
