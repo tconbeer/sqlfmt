@@ -638,6 +638,7 @@ static = [
 ]
 test = [
     { name = "black" },
+    { name = "click" },
     { name = "pytest" },
     { name = "pytest-cov" },
 ]
@@ -670,6 +671,7 @@ static = [
 ]
 test = [
     { name = "black", specifier = "==25.12.0" },
+    { name = "click", specifier = ">=8.3,<9" },
     { name = "pytest", specifier = ">=9,<10" },
     { name = "pytest-cov", specifier = ">=7,<8" },
 ]
