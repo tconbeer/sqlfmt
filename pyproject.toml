@@ -39,7 +39,7 @@ dev = [
 static = [
     "ruff>=0.14.1",
     "mypy>=1.14.1,<2",
-    "gitpython==3.1.47",
+    "gitpython==3.1.48",
     "black==26.3.1",
 ]
 test = [
@@ -49,7 +49,7 @@ test = [
     "click>=8.3,<9",
 ]
 primer = [
-    "gitpython==3.1.47",
+    "gitpython==3.1.48",
     "black==26.3.1",
 ]
 
