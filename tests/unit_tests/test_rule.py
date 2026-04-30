@@ -255,6 +255,8 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (MAIN, "other_identifiers", "$2"),
         (MAIN, "other_identifiers", "?2"),
         (MAIN, "other_identifiers", "$email"),
+        (MAIN, "other_identifiers", "METADATA$FILENAME"),
+        (MAIN, "other_identifiers", "METADATA$FILE_LAST_MODIFIED"),
         (MAIN, "other_identifiers", "@my_unquoted_stage"),
         (MAIN, "other_identifiers", "%s"),
         (MAIN, "other_identifiers", "%(name)s"),
