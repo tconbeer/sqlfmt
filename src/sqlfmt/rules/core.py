@@ -174,6 +174,7 @@ CORE = [
         priority=600,
         pattern=group(
             r"@\w+",  # stages
+            r"metadata\$\w+",  # Snowflake metadata columns
             r"\$\d+",  # pg placeholders
             r"\$\w+",  # variables
             r"%(\([^%()]+\))?s",  # psycopg placeholders
