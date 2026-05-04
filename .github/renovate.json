@@ -6,7 +6,6 @@
   "packageRules": [
     {
       "matchFileNames": [".python-version"],
-      "matchDatasources": ["python-version"],
       "enabled": false
     },
     {
