@@ -4,13 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.30.0] - 2026-05-04
+
 ### Formatting Changes and Bug Fixes
 
 - sqlfmt now correctly lexes Snowflake metadata columns like `METADATA$FILENAME` as single tokens, rather than splitting on the `$`.
 
 ### Report (stderr) Changes
 
-- `sqlfmt --quiet` has been updated to suppress *all* report output, except error messages ([#752](https://github.com/tconbeer/sqlfmt/issues/752), thank you [@tuckerrc](https://github.com/tuckerrc)!). This makes it more suitable for shell scripts and bash pipelines.
+- `sqlfmt --quiet` has been updated to suppress _all_ report output, except error messages ([#752](https://github.com/tconbeer/sqlfmt/issues/752), thank you [@tuckerrc](https://github.com/tuckerrc)!). This makes it more suitable for shell scripts and bash pipelines.
 - `sqlfmt --diff` now includes the filename in the diff, instead of the placeholders, `source_query` and `formatted_query`; it is now compatible with `--quiet`.
 
 ## [0.29.0] - 2026-01-12
@@ -592,7 +594,8 @@ All notable changes to this project will be documented in this file.
 - supports --check and --diff options
 - supports --no-color
 
-[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.29.0...HEAD
+[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.30.0...HEAD
+[0.30.0]: https://github.com/tconbeer/sqlfmt/compare/0.29.0...0.30.0
 [0.29.0]: https://github.com/tconbeer/sqlfmt/compare/0.28.2...0.29.0
 [0.28.2]: https://github.com/tconbeer/sqlfmt/compare/0.28.1...0.28.2
 [0.28.1]: https://github.com/tconbeer/sqlfmt/compare/0.28.0...0.28.1
