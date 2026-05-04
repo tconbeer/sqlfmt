@@ -61,7 +61,7 @@ class SqlFormatResult:
     def maybe_print_to_stdout(self) -> None:
         """
         If sqlfmt received a query via stdin, print the formatted string to stdout
-        without an additional trailing newline
+        without an additional trailing newline.
         """
         if self.source_path == STDIN_PATH:
             display_output(self.formatted_string, err=False, nl=False)
@@ -89,6 +89,8 @@ class Report:
         """
         Returns the full contents of the Report
         """
+
+        # Calculate and display summary statistics
         report = []
         formatted = (
             "failed formatting check"
@@ -100,24 +102,35 @@ class Report:
             if (self.mode.check or self.mode.diff)
             else "left unchanged"
         )
-        if self.number_errored > 0:
-            error_msg = (
-                f"{self._pluralize_file(self.number_errored)} had errors while "
-                f"formatting."
-            )
-            report.append(style_output(error_msg, fg="red", bold=True))
-        if self.number_changed > 0:
-            changed_msg = f"{self._pluralize_file(self.number_changed)} {formatted}."
-            report.append(style_output(changed_msg, bold=True))
-        report.append(f"{self._pluralize_file(self.number_unchanged)} {unchanged}.")
-        for res in self.errored_results[0:50]:
+        if not self.mode.quiet:
+            if self.number_errored > 0:
+                error_msg = (
+                    f"{self._pluralize_file(self.number_errored)} had errors while "
+                    f"formatting."
+                )
+                report.append(style_output(error_msg, fg="red", bold=True))
+            if self.number_changed > 0:
+                changed_msg = (
+                    f"{self._pluralize_file(self.number_changed)} {formatted}."
+                )
+                report.append(style_output(changed_msg, bold=True))
+            report.append(f"{self._pluralize_file(self.number_unchanged)} {unchanged}.")
+
+        # If configured, display detailed changes
+        max_errors = 1 if self.mode.quiet else 50
+        for res in self.errored_results[0:max_errors]:
             err = style_output(str(res.exception), fg="red")
             report.append(f"{res.display_path}\n    {err}")
-        if not self.mode.quiet or self.mode.diff:
+
+        if not self.mode.quiet and not self.mode.diff:
             for res in self.changed_results:
                 report.append(f"{res.display_path} {formatted}.")
-                if self.mode.diff:
-                    report.append(self._generate_diff(res))
+
+        if self.mode.diff:
+            for res in self.changed_results:
+                report.append(f"{res.display_path} {formatted}.")
+                report.append(self._generate_diff(res))
+
         if self.mode.verbose:
             for res in self.unchanged_results:
                 report.append(f"{res.display_path} {unchanged}.")
@@ -125,6 +138,7 @@ class Report:
         msg = "\n".join(report)
         if self.mode.color is False:
             msg = unstyle_output(msg)
+
         return msg
 
     @staticmethod
@@ -146,8 +160,14 @@ class Report:
         for line in difflib.unified_diff(
             result.source_string.splitlines(keepends=True),
             result.formatted_string.splitlines(keepends=True),
-            fromfile="source_query",
-            tofile="formatted_query",
+            fromfile="STDIN"
+            if result.source_path == STDIN_PATH
+            else str(result.display_path),
+            tofile="STDOUT"
+            if result.source_path == STDIN_PATH
+            else str(result.display_path),
+            fromfiledate="(Source Query)",
+            tofiledate="(Formatted Query)",
         ):
             if line[-1] == "\n":
                 cleaned_lines.append(cls._style_diff_line(line))
@@ -183,7 +203,12 @@ class Report:
         if not self.mode.check and not self.mode.diff:
             for res in self.results:
                 res.maybe_print_to_stdout()
-        display_output(str(self), err=True)
+
+        report = str(self)
+        # The report can be empty (e.g., quiet mode). In
+        # that case, don't print a blank line to stderr.
+        if report:
+            display_output(report, err=True)
 
     @property
     def changed_results(self) -> List[SqlFormatResult]:

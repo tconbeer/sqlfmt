@@ -8,6 +8,11 @@ All notable changes to this project will be documented in this file.
 
 - sqlfmt now correctly lexes Snowflake metadata columns like `METADATA$FILENAME` as single tokens, rather than splitting on the `$`.
 
+### Report (stderr) Changes
+
+- `sqlfmt --quiet` has been updated to suppress *all* report output, except error messages ([#752](https://github.com/tconbeer/sqlfmt/issues/752), thank you [@tuckerrc](https://github.com/tuckerrc)!). This makes it more suitable for shell scripts and bash pipelines.
+- `sqlfmt --diff` now includes the filename in the diff, instead of the placeholders, `source_query` and `formatted_query`; it is now compatible with `--quiet`.
+
 ## [0.29.0] - 2026-01-12
 
 ## Breaking changes
