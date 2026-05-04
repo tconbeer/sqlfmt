@@ -20,9 +20,6 @@ from sqlfmt.cli import sqlfmt as sqlfmt_main
         "--check --diff",
         "--no-color",
         "--diff --no-color",
-        "-q",
-        "--quiet",
-        "--check -q",
         "--no-jinjafmt",
         "-k",
         "--reset-cache",
@@ -44,14 +41,35 @@ def test_end_to_end_preformatted(
     assert result
     assert f"{preformatted_count} files" in result.stderr
 
-    if "check" in options or "diff" in options:
+    if "check" in options:
         assert "passed formatting check" in result.stderr
+    elif "diff" in options:
+        assert "would be left unchanged" in result.stderr
     else:
         assert "left unchanged" in result.stderr
 
     if "-v" in options or "--verbose" in options:
         assert "001_select_1.sql" in result.stderr
 
+    assert result.exit_code == 0
+
+
+@pytest.mark.parametrize(
+    "options",
+    ["-q", "--quiet", "--check -q", "--diff -q"],
+)
+def test_end_to_end_preformatted_quiet(
+    sqlfmt_runner: CliRunner, preformatted_dir: Path, options: str
+) -> None:
+    # CliRunner removes backslashes from strings passed in as args,
+    # which makes this test fail when running on windows. We need
+    # to format the path as a posix path (with forward slashes)
+    # as a workaround.
+    args = f"{preformatted_dir.as_posix()} {options}"
+    result = sqlfmt_runner.invoke(sqlfmt_main, args=args)
+
+    assert result
+    assert result.stderr == ""
     assert result.exit_code == 0
 
 
@@ -65,9 +83,6 @@ def test_end_to_end_preformatted(
         "--diff --check",
         "--check --no-color",
         "--diff --no-color",
-        "-q --check",
-        "--quiet --check",
-        "--check -q",
         "--dialect clickhouse --check",
     ],
 )
@@ -85,13 +100,34 @@ def test_end_to_end_check_unformatted(
 
     assert result
     assert f"{unformatted_count} files" in result.stderr
-    assert "failed formatting check" in result.stderr
-
-    if "-q" in options or "--quiet" in options:
-        assert "100_select_case.sql" not in result.stderr
+    if "diff" in options and "check" not in options:
+        assert "would be formatted" in result.stderr
     else:
-        assert "100_select_case.sql" in result.stderr
+        assert "failed formatting check" in result.stderr
 
+    assert result.exit_code == 1
+
+
+@pytest.mark.parametrize(
+    "options",
+    [
+        "-q --check",
+        "--quiet --check",
+        "--check -q",
+    ],
+)
+def test_end_to_end_check_unformatted_quiet(
+    sqlfmt_runner: CliRunner, unformatted_dir: Path, options: str
+) -> None:
+    # CliRunner removes backslashes from strings passed in as args,
+    # which makes this test fail when running on windows. We need
+    # to format the path as a posix path (with forward slashes)
+    # as a workaround.
+    args = f"{unformatted_dir.as_posix()} {options}"
+    result = sqlfmt_runner.invoke(sqlfmt_main, args=args)
+
+    assert result
+    assert result.stderr == ""
     assert result.exit_code == 1
 
 
@@ -111,7 +147,8 @@ def test_end_to_end_errors(
     error_count = sum((1 for f in error_dir.iterdir() if f.is_file()))
 
     assert result
-    assert f"{error_count} files had errors" in result.stderr
+    if "quiet" not in options:
+        assert f"{error_count} files had errors" in result.stderr
     assert "sqlfmt encountered an error" in result.stderr
     assert "900_bad_token.sql" in result.stderr
     assert result.exit_code == 2

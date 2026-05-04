@@ -111,7 +111,10 @@ from sqlfmt.mode import Mode
     "--quiet",
     envvar="SQLFMT_QUIET",
     is_flag=True,
-    help=("Prints much less information to stderr."),
+    help=(
+        "Stop emitting all non-critical output. Error messages will still be "
+        "emitted (which can silenced by 2>/dev/null)."
+    ),
 )
 @click.option(
     "--no-progressbar",

@@ -149,7 +149,7 @@ def test_no_change_report_diff_mode(
 ) -> None:
     report = Report(no_change_results, diff_mode)
     assert report
-    assert str(report) == "2 files passed formatting check."
+    assert str(report) == "2 files would be left unchanged."
 
 
 def test_changed_report_diff_mode(
@@ -157,19 +157,19 @@ def test_changed_report_diff_mode(
 ) -> None:
     report = Report(changed_results, diff_mode)
     expected_report = (
-        "\x1b[1m2 files failed formatting check.\x1b[0m\n"
-        "1 file passed formatting check.\n"
-        f"{Path('~/path/to/another_file.sql')} failed formatting check.\n"
-        "\x1b[31m\x1b[22m--- source_query\n"
-        "\x1b[0m\x1b[32m\x1b[22m+++ formatted_query\n"
+        "\x1b[1m2 files would be formatted.\x1b[0m\n"
+        "1 file would be left unchanged.\n"
+        f"{Path('~/path/to/another_file.sql')} would be formatted.\n"
+        f"{Path('~/path/to/yet_another_file.sql')} would be formatted.\n"
+        f"\x1b[31m\x1b[22m--- {Path('~/path/to/another_file.sql')}\t(Source Query)\n"
+        f"\x1b[0m\x1b[32m\x1b[22m+++ {Path('~/path/to/another_file.sql')}\t(Formatted Query)\n"  # noqa: E501
         "\x1b[0m\x1b[36m\x1b[22m@@ -1 +1 @@\n"
         "\x1b[0m\x1b[31m\x1b[22m-SELECT * from my_table where true\n"
         "\x1b[0m\\ No newline at end of file\n"
         "\x1b[32m\x1b[22m+select * from my_table where true\n"
         "\x1b[0m\n"
-        f"{Path('~/path/to/yet_another_file.sql')} failed formatting check.\n"
-        "\x1b[31m\x1b[22m--- source_query\n"
-        "\x1b[0m\x1b[32m\x1b[22m+++ formatted_query\n"
+        f"\x1b[31m\x1b[22m--- {Path('~/path/to/yet_another_file.sql')}\t(Source Query)\n"  # noqa: E501
+        f"\x1b[0m\x1b[32m\x1b[22m+++ {Path('~/path/to/yet_another_file.sql')}\t(Formatted Query)\n"  # noqa: E501
         "\x1b[0m\x1b[36m\x1b[22m@@ -1,4 +1 @@\n"
         "\x1b[0m\x1b[31m\x1b[22m-select a,\n"
         "\x1b[0m\x1b[31m\x1b[22m- b\n"
@@ -187,19 +187,19 @@ def test_changed_report_no_color_diff_mode(
 ) -> None:
     report = Report(changed_results, no_color_diff_mode)
     expected_report = (
-        "2 files failed formatting check.\n"
-        "1 file passed formatting check.\n"
-        f"{Path('~/path/to/another_file.sql')} failed formatting check.\n"
-        "--- source_query\n"
-        "+++ formatted_query\n"
+        "2 files would be formatted.\n"
+        "1 file would be left unchanged.\n"
+        f"{Path('~/path/to/another_file.sql')} would be formatted.\n"
+        f"{Path('~/path/to/yet_another_file.sql')} would be formatted.\n"
+        f"--- {Path('~/path/to/another_file.sql')}\t(Source Query)\n"
+        f"+++ {Path('~/path/to/another_file.sql')}\t(Formatted Query)\n"
         "@@ -1 +1 @@\n"
         "-SELECT * from my_table where true\n"
         "\\ No newline at end of file\n"
         "+select * from my_table where true\n"
         "\n"
-        f"{Path('~/path/to/yet_another_file.sql')} failed formatting check.\n"
-        "--- source_query\n"
-        "+++ formatted_query\n"
+        f"--- {Path('~/path/to/yet_another_file.sql')}\t(Source Query)\n"
+        f"+++ {Path('~/path/to/yet_another_file.sql')}\t(Formatted Query)\n"
         "@@ -1,4 +1 @@\n"
         "-select a,\n"
         "- b\n"
