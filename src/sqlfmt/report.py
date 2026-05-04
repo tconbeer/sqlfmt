@@ -126,13 +126,13 @@ class Report:
             for res in self.changed_results:
                 report.append(f"{res.display_path} {formatted}.")
 
-        if self.mode.diff:
-            for res in self.changed_results:
-                report.append(self._generate_diff(res))
-
         if self.mode.verbose:
             for res in self.unchanged_results:
                 report.append(f"{res.display_path} {unchanged}.")
+
+        if self.mode.diff:
+            for res in self.changed_results:
+                report.append(self._generate_diff(res))
 
         msg = "\n".join(report)
         if self.mode.color is False:
