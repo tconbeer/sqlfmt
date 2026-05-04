@@ -41,8 +41,10 @@ def test_end_to_end_preformatted(
     assert result
     assert f"{preformatted_count} files" in result.stderr
 
-    if "check" in options or "diff" in options:
+    if "check" in options:
         assert "passed formatting check" in result.stderr
+    elif "diff" in options:
+        assert "would be left unchanged" in result.stderr
     else:
         assert "left unchanged" in result.stderr
 
@@ -98,7 +100,10 @@ def test_end_to_end_check_unformatted(
 
     assert result
     assert f"{unformatted_count} files" in result.stderr
-    assert "failed formatting check" in result.stderr
+    if "diff" in options and "check" not in options:
+        assert "would be formatted" in result.stderr
+    else:
+        assert "failed formatting check" in result.stderr
 
     assert result.exit_code == 1
 

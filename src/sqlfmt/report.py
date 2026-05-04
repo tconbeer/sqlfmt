@@ -90,18 +90,18 @@ class Report:
         Returns the full contents of the Report
         """
 
-        # Calculate and display summary statistics
         report = []
-        formatted = (
-            "failed formatting check"
-            if (self.mode.check or self.mode.diff)
-            else "formatted"
-        )
-        unchanged = (
-            "passed formatting check"
-            if (self.mode.check or self.mode.diff)
-            else "left unchanged"
-        )
+        if self.mode.check:
+            formatted = "failed formatting check"
+            unchanged = "passed formatting check"
+        elif self.mode.diff:
+            formatted = "would be formatted"
+            unchanged = "would be left unchanged"
+        else:
+            formatted = "formatted"
+            unchanged = "left unchanged"
+
+        # Calculate and display summary statistics
         if not self.mode.quiet:
             if self.number_errored > 0:
                 error_msg = (
@@ -122,13 +122,12 @@ class Report:
             err = style_output(str(res.exception), fg="red")
             report.append(f"{res.display_path}\n    {err}")
 
-        if not self.mode.quiet and not self.mode.diff:
+        if not self.mode.quiet:
             for res in self.changed_results:
                 report.append(f"{res.display_path} {formatted}.")
 
         if self.mode.diff:
             for res in self.changed_results:
-                report.append(f"{res.display_path} {formatted}.")
                 report.append(self._generate_diff(res))
 
         if self.mode.verbose:
