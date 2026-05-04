@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Formatting Changes and Bug Fixes
+
+- sqlfmt now correctly lexes Snowflake metadata columns like `METADATA$FILENAME` as single tokens, rather than splitting on the `$`.
+
 ## [0.29.0] - 2026-01-12
 
 ## Breaking changes
