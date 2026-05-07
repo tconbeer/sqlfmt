@@ -38,7 +38,7 @@ dev = [
 ]
 static = [
     "ruff>=0.14.1",
-    "mypy>=1.14.1,<2",
+    "mypy>=2,<3",
     "gitpython==3.1.50",
     "black==26.3.1",
 ]
