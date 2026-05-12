@@ -281,7 +281,7 @@ def test_verbose_logging(sqlfmt_runner: CliRunner, preformatted_dir: Path) -> No
     results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
     assert results.exit_code == 0
     # Verbose mode should print each file being processed
-    assert "Reading" in results.stderr or "Processing" in results.stderr
+    assert "Reading" in results.stderr
     # Should see at least one file path in the output
     sql_files = list(preformatted_dir.glob("*.sql"))
     assert len(sql_files) > 0
