@@ -40,17 +40,17 @@ static = [
     "ruff>=0.14.1",
     "mypy>=2,<3",
     "gitpython==3.1.50",
-    "black==26.3.1",
+    "black==26.5.0",
 ]
 test = [
-    "black==26.3.1",
+    "black==26.5.0",
     "pytest>=9,<10",
     "pytest-cov>=7,<8",
     "click>=8.3,<9",
 ]
 primer = [
     "gitpython==3.1.50",
-    "black==26.3.1",
+    "black==26.5.0",
 ]
 
 
