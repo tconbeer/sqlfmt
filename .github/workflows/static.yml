@@ -23,7 +23,7 @@ jobs:
           version: "0.11.32"
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         id: setup-python
         with:
           python-version-file: ".python-version"
