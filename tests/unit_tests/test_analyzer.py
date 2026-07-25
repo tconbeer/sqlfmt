@@ -493,3 +493,26 @@ def test_jinja_block_parsing(default_analyzer: Analyzer) -> None:
         TokenType.JINJA_BLOCK_END,  # {% endmacro %}
     ]
     assert types == expected_types
+
+
+@pytest.mark.parametrize(
+    "source_string",
+    [
+        "create TABLE a (\n    A text --test; it's a comment\n)\n",
+        "create table a (x int); -- trailing; comment\n",
+        "create table a (\n    x int  # hash; comment\n)\n",
+        "create table a (\n    x int  /* block; comment */\n)\n",
+    ],
+)
+def test_semicolon_in_unsupported_ddl_comment(
+    default_analyzer: Analyzer, source_string: str
+) -> None:
+    """
+    A semicolon inside a comment must not terminate an unsupported statement.
+    See https://github.com/tconbeer/sqlfmt/issues/838
+    """
+    q = default_analyzer.parse_query(source_string=source_string)
+    comment_tokens = [
+        comment.token.token for line in q.lines for comment in line.comments
+    ]
+    assert any(";" in token for token in comment_tokens)
