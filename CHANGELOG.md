@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Formatting Changes and Bug Fixes
+
+- sqlfmt no longer raises a parsing error on unsupported DDL that contains a semicolon inside a string literal ([#685](https://github.com/tconbeer/sqlfmt/issues/685) - thank you [@nevdelap](https://github.com/nevdelap)!).
+
 ## [0.30.0] - 2026-05-04
 
 ### Formatting Changes and Bug Fixes

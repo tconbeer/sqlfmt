@@ -9,6 +9,11 @@ create table foo as (
 );
 SELECT
     1;
+insert into something
+values
+(101, 'Something with ; a semicolon.'),
+;
+create table bar (a text default 'x ; y');
 )))))__SQLFMT_OUTPUT__(((((
 CREATE PUBLICATION insert_only FOR TABLE mydata
     WITH (publish = 'insert');
@@ -21,3 +26,8 @@ create table foo as (
 );
 select 1
 ;
+insert into something
+values
+(101, 'Something with ; a semicolon.'),
+;
+create table bar (a text default 'x ; y');

@@ -21,7 +21,10 @@ UNSUPPORTED = [
     Rule(
         name="unsupported_line",
         priority=1000,
-        pattern=group(r"[^;\n]+?") + group(r";", NEWLINE, r"$"),
+        # a semicolon inside a string literal does not terminate the line, so
+        # quoted expressions have to be consumed whole before we look for the
+        # terminator
+        pattern=group(rf"(?:{SQL_QUOTED_EXP}|[^;\n])+?") + group(r";", NEWLINE, r"$"),
         action=partial(
             actions.handle_reserved_keyword,
             action=partial(actions.add_node_to_buffer, token_type=TokenType.DATA),
