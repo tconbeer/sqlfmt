@@ -32,7 +32,8 @@ UNSUPPORTED = [
         # similarly, a semicolon inside a comment doesn't terminate an expression,
         # so we need to stop lexing at the start of a comment to let the higher-priority
         # comment rule consume that comment.
-        pattern=group(rf"(?:{SQL_QUOTED_EXP}|[^;\n])+?") + group(r";", NEWLINE, COMMENT_START, r"$"),
+        pattern=group(rf"(?:{SQL_QUOTED_EXP}|[^;\n])+?")
+        + group(r";", NEWLINE, COMMENT_START, r"$"),
         action=partial(
             actions.handle_reserved_keyword,
             action=partial(actions.add_node_to_buffer, token_type=TokenType.DATA),
