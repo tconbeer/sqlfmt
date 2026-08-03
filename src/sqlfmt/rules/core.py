@@ -2,7 +2,14 @@ from functools import partial
 
 from sqlfmt import actions
 from sqlfmt.rule import Rule
-from sqlfmt.rules.common import EOL, NEWLINE, SQL_COMMENT, SQL_QUOTED_EXP, group
+from sqlfmt.rules.common import (
+    EOL,
+    JINJA_START,
+    NEWLINE,
+    SQL_COMMENT,
+    SQL_QUOTED_EXP,
+    group,
+)
 from sqlfmt.rules.jinja import JINJA
 from sqlfmt.tokens import TokenType
 
@@ -25,7 +32,7 @@ ALWAYS = [
     Rule(
         name="jinja_start",
         priority=120,
-        pattern=group(r"\{[{%#]"),
+        pattern=JINJA_START,
         action=partial(actions.lex_ruleset, new_ruleset=JINJA),
     ),
     # we should never match the end of a jinja tag by itself

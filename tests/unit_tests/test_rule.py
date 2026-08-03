@@ -5,9 +5,18 @@ from typing import List
 import pytest
 
 from sqlfmt.rule import Rule
-from sqlfmt.rules import CLONE, CORE, FUNCTION, GRANT, JINJA, MAIN, WAREHOUSE
+from sqlfmt.rules import (
+    CLONE,
+    CORE,
+    FUNCTION,
+    GRANT,
+    JINJA,
+    MAIN,
+    UNSUPPORTED,
+    WAREHOUSE,
+)
 
-ALL_RULESETS = [CLONE, CORE, FUNCTION, GRANT, JINJA, MAIN, WAREHOUSE]
+ALL_RULESETS = [CLONE, CORE, FUNCTION, GRANT, JINJA, MAIN, WAREHOUSE, UNSUPPORTED]
 
 
 def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
@@ -389,6 +398,11 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (CLONE, "name", "foo"),
         (CLONE, "word_operator", "at"),
         (CLONE, "word_operator", "before"),
+        (
+            UNSUPPORTED,
+            "unsupported_line",
+            "create table foo (a text default 'foo;bar')",
+        ),
     ],
 )
 def test_regex_exact_match(
@@ -485,6 +499,18 @@ def test_regex_anti_match(
             "ilike('foo', 'bar')",
             "ilike",
         ),
+        (
+            UNSUPPORTED,
+            "unsupported_line",
+            "create table foo (a -- my comment",
+            "create table foo (a",
+        ),
+        (
+            UNSUPPORTED,
+            "unsupported_line",
+            "create table foo (a {{ some_jinja }}",
+            "create table foo (a",
+        ),
     ],
 )
 def test_regex_partial_match(
@@ -516,10 +542,19 @@ def test_core_priority_range() -> None:
 
 
 @pytest.mark.parametrize("ruleset", ALL_RULESETS)
-def test_rule_priorities_unique_within_ruleset(ruleset: List[Rule]) -> None:
+def test_rule_names_unique_within_ruleset(ruleset: List[Rule]) -> None:
     name_counts = Counter([rule.name for rule in ruleset])
     assert max(name_counts.values()) == 1
+
+
+@pytest.mark.parametrize("ruleset", ALL_RULESETS)
+def test_rule_priorities_unique_within_ruleset(ruleset: List[Rule]) -> None:
     priority_counts = Counter([rule.priority for rule in ruleset])
     assert max(priority_counts.values()) == 1
+
+
+# unsupported ruleset intentionally includes a dupe rule for names
+@pytest.mark.parametrize("ruleset", ALL_RULESETS[:-1])
+def test_rule_patterns_unique_within_ruleset(ruleset: List[Rule]) -> None:
     pattern_counts = Counter([rule.pattern for rule in ruleset])
     assert max(pattern_counts.values()) == 1
