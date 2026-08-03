@@ -8,6 +8,8 @@ def group(*choices: str) -> str:
 NEWLINE: str = r"\r?\n"
 EOL = group(NEWLINE, r"$")
 
+JINJA_START = group(r"\{[{%#]")
+
 SQL_QUOTED_EXP = group(
     # tripled single quotes (optionally raw/bytes)
     r"(rb?|b|br)?'''.*?'''",
@@ -22,6 +24,7 @@ SQL_QUOTED_EXP = group(
     r"`([^`\\]*(\\.[^`\\]*)*)`",
 )
 
+SQL_COMMENT_START = r"(?=--|#|//|/\*)"
 SQL_COMMENT = group(
     r"--[^\r\n]*",
     r"#[^\r\n]*",

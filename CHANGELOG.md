@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 - sqlfmt no longer raises a parsing error on unsupported DDL that contains a semicolon inside a string literal ([#685](https://github.com/tconbeer/sqlfmt/issues/685) - thank you [@nevdelap](https://github.com/nevdelap)!).
 - sqlfmt no longer raises a parsing error when a comment inside an unsupported DDL statement contains a semicolon ([#838](https://github.com/tconbeer/sqlfmt/issues/838)).
+- sqlfmt no longer raises a parsing error when a line of unsupported DDL contains jinja ([#700](https://github.com/tconbeer/sqlfmt/issues/700))
 
 ## [0.30.0] - 2026-05-04
 
