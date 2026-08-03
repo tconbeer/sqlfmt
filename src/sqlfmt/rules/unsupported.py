@@ -6,6 +6,11 @@ from sqlfmt.rules.common import NEWLINE, SQL_QUOTED_EXP, group
 from sqlfmt.rules.core import ALWAYS
 from sqlfmt.tokens import TokenType
 
+# a semicolon inside a comment does not terminate an unsupported statement,
+# so unsupported_line must stop before a comment starts and let the comment
+# rule (which has a lower priority number) lex the whole comment.
+COMMENT_START = r"(?=--|#|//|/\*)"
+
 UNSUPPORTED = [
     *ALWAYS,
     # quoted names need to be lexed as DATA, so they are not formatted.
@@ -24,7 +29,11 @@ UNSUPPORTED = [
         # a semicolon inside a string literal does not terminate the line, so
         # quoted expressions have to be consumed whole before we look for the
         # terminator
-        pattern=group(rf"(?:{SQL_QUOTED_EXP}|[^;\n])+?") + group(r";", NEWLINE, r"$"),
+        # similarly, a semicolon inside a comment doesn't terminate an expression,
+        # so we need to stop lexing at the start of a comment to let the higher-priority
+        # comment rule consume that comment.
+        pattern=group(rf"(?:{SQL_QUOTED_EXP}|[^;\n])+?")
+        + group(r";", NEWLINE, COMMENT_START, r"$"),
         action=partial(
             actions.handle_reserved_keyword,
             action=partial(actions.add_node_to_buffer, token_type=TokenType.DATA),
