@@ -1,26 +1,46 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json", 
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "constraints": {
+    "python": ">=3.10"
+  },
+  "automerge": true,
+  "automergeStrategy": "squash",
+  "platformAutomerge": true,
+  "rebaseWhen": "behind-base-branch",
+  "minimumReleaseAge": "3 days",
   "lockFileMaintenance": {
-    "enabled": true
+    "enabled": true,
+    "automerge": true,
+    "schedule": ["before 5am on monday"]
+  },
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "automerge": true,
+    "minimumReleaseAge": null,
+    "schedule": ["at any time"],
+    "labels": ["security"]
   },
   "packageRules": [
     {
+      "description": "Never bump the Python interpreter; sqlfmt supports 3.10+",
+      "matchDepNames": ["python"],
+      "enabled": false
+    },
+    {
+      "description": "Belt and braces: the interpreter pin is managed by hand",
       "matchFileNames": [".python-version"],
       "enabled": false
     },
     {
+      "description": "One PR for everything that isn't a major bump",
       "groupName": "all non-major dependencies",
       "groupSlug": "all-nonmajor",
       "matchPackageNames": ["*"],
-      "matchUpdateTypes": ["minor", "patch", "pin"],
-      "automerge": true
-    },
-    {
-      "matchUpdateTypes": ["major"],
-      "automerge": true
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"]
     }
-  ],
-  "extends": [
-    "config:recommended"
   ]
 }
