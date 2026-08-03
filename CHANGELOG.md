@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.31.0] - 2026-08-03
+
 ### Formatting Changes and Bug Fixes
 
 - sqlfmt no longer raises a parsing error on unsupported DDL that contains a semicolon inside a string literal ([#685](https://github.com/tconbeer/sqlfmt/issues/685) - thank you [@nevdelap](https://github.com/nevdelap)!).
@@ -600,7 +602,8 @@ All notable changes to this project will be documented in this file.
 - supports --check and --diff options
 - supports --no-color
 
-[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.30.0...HEAD
+[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.31.0...HEAD
+[0.31.0]: https://github.com/tconbeer/sqlfmt/compare/0.30.0...0.31.0
 [0.30.0]: https://github.com/tconbeer/sqlfmt/compare/0.29.0...0.30.0
 [0.29.0]: https://github.com/tconbeer/sqlfmt/compare/0.28.2...0.29.0
 [0.28.2]: https://github.com/tconbeer/sqlfmt/compare/0.28.1...0.28.2
