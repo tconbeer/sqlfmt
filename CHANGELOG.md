@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Formatting Changes and Bug Fixes
+
+- sqlfmt no longer removes blank lines that follow a comment inside a `fmt: off` region ([#673](https://github.com/tconbeer/sqlfmt/issues/673) - thank you [@jmskarda](https://github.com/jmskarda)!).
+
 ## [0.31.0] - 2026-08-03
 
 ### Formatting Changes and Bug Fixes

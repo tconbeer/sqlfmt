@@ -117,13 +117,24 @@ def handle_newline(
 
     However, if we have lexed a standalone comment, we do not want to create
     a Line with only that comment; instead, it must be added to the next Line
-    that contains Nodes
+    that contains Nodes.
+
+    That deferral is a formatting decision, so it must not apply where
+    formatting is disabled: holding the comment back also swallows the newline
+    that terminates it, and then every blank line that follows lands in the same
+    branch and is dropped too. Flushing instead keeps the source verbatim, and
+    costs nothing, because render_with_comments already skips a line whose
+    content is empty once it has rendered a standalone comment.
     """
     nl_token = Token.from_match(source_string, match, TokenType.NEWLINE)
     nl_node = analyzer.node_manager.create_node(
         token=nl_token, previous_node=analyzer.previous_node
     )
-    if analyzer.node_buffer or not analyzer.comment_buffer:
+    if (
+        analyzer.node_buffer
+        or not analyzer.comment_buffer
+        or nl_node.formatting_disabled
+    ):
         analyzer.node_buffer.append(nl_node)
         analyzer.line_buffer.append(
             Line.from_nodes(
