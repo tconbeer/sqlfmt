@@ -8,6 +8,14 @@ def group(*choices: str) -> str:
 NEWLINE: str = r"\r?\n"
 EOL = group(NEWLINE, r"$")
 
+# A number literal must not be followed by word characters: SparkSQL allows field
+# names that start with a digit, like 9021_web_flag, and without this the number
+# rules would lex the leading digits as a literal and leave the rest as a separate
+# name token. Backtracking is handled for free -- every shorter match also ends in
+# a word character, so the whole rule declines and the name rule (\w+) takes the
+# identifier whole.
+NOT_AN_IDENTIFIER_TAIL = r"(?!\w)"
+
 JINJA_START = group(r"\{[{%#]")
 
 SQL_QUOTED_EXP = group(
