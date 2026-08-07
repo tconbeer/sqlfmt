@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Formatting Changes and Bug Fixes
 
 - sqlfmt no longer removes blank lines that follow a comment inside a `fmt: off` region ([#673](https://github.com/tconbeer/sqlfmt/issues/673) - thank you [@jmskarda](https://github.com/jmskarda)!).
+- sqlfmt no longer raises a parsing error on a run of single quotes that is not a triple-quoted string, like `select '''' || 'quoted_text' || ''''`; it also no longer silently splits longer quote runs such as `''''''''` into two tokens ([#553](https://github.com/tconbeer/sqlfmt/issues/553) - thank you [@albertsgrc](https://github.com/albertsgrc) and [@ifmateus](https://github.com/ifmateus)!).
 
 ## [0.31.0] - 2026-08-03
 

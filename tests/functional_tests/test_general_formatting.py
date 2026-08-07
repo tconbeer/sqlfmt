@@ -18,6 +18,7 @@ from tests.util import check_formatting, read_test_data
         "preformatted/008_reserved_names.sql",
         "preformatted/009_empty.sql",
         "preformatted/010_comment_only.sql",
+        "preformatted/011_triple_quotes.sql",
         "preformatted/301_multiline_jinjafmt.sql",
         "preformatted/302_jinjafmt_multiline_str.sql",
         "preformatted/303_jinjafmt_more_mutliline_str.sql",
