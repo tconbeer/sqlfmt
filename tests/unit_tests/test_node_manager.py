@@ -397,7 +397,14 @@ def test_disabled_formatting(default_mode: Mode) -> None:
     assert selects[3].formatting_disabled
     assert not selects[4].formatting_disabled
 
-    create_publication_line = q.lines[5]
+    # located by content rather than by index: a standalone comment inside a
+    # fmt: off region now flushes its own Line, which shifts every index after it
+    # without changing a byte of rendered output
+    create_publication_line = next(
+        line
+        for line in q.lines
+        if line.nodes and line.nodes[0].token.type is TokenType.DATA
+    )
     assert create_publication_line.formatting_disabled
     assert create_publication_line.nodes
     create_token = create_publication_line.nodes[0].token
