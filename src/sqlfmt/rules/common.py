@@ -8,21 +8,16 @@ def group(*choices: str) -> str:
 NEWLINE: str = r"\r?\n"
 EOL = group(NEWLINE, r"$")
 
-# A number literal must not be followed by word characters leading to an
-# underscore: SparkSQL allows field names that start with a digit, like
-# 9021_web_flag, and without this the number rules lex the leading digits as a
-# literal and leave the rest as a separate name token.
+# A number literal must not be followed by another identifier character.
+# SparkSQL regular identifiers may begin with a digit and do not require an
+# underscore, so an underscore-dependent guard misclassifies valid names such
+# as 9021webflag. Without this guard the number rules lex the leading digits as
+# a literal and leave the rest as a separate name token.
 #
-# The underscore is what makes this safe to narrow. A bare (?!\w) would also
-# swallow a number abutting a keyword -- `select 1as x` and `x=1and y=2` are
-# valid, and would lex as the single names `1as` and `1and`. Requiring an
-# underscore in the trailing run separates the identifier case from the
-# keyword case, which is why the fixture guards both.
-#
-# Backtracking is handled for free: every shorter match leaves the same
-# underscore ahead of it, so the whole rule declines and the name rule (\w+)
-# takes the identifier whole.
-NOT_AN_IDENTIFIER_TAIL = r"(?!\w*_)"
+# The name rule (\w+) then takes the complete identifier. Numeric literal
+# suffixes remain part of the number patterns and are consumed before this
+# lookahead runs.
+NOT_AN_IDENTIFIER_TAIL = r"(?!\w)"
 
 JINJA_START = group(r"\{[{%#]")
 
