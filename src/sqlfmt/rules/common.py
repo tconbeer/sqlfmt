@@ -11,10 +11,20 @@ EOL = group(NEWLINE, r"$")
 JINJA_START = group(r"\{[{%#]")
 
 SQL_QUOTED_EXP = group(
-    # tripled single quotes (optionally raw/bytes)
-    r"(rb?|b|br)?'''.*?'''",
-    # tripled double quotes
-    r'(rb?|b|br)?""".*?"""',
+    # tripled single quotes (optionally raw/bytes).
+    #
+    # The body cannot be a lazy .*? — that closes on the FIRST ''' it can reach,
+    # so `select '''' || 'x' || ''''` is read as a triple-quoted string starting
+    # at the first quote and ending three quotes later, stranding a lone quote
+    # that nothing can lex. Matching quote runs explicitly, and refusing a
+    # closer that is itself followed by another quote, makes the alternative
+    # decline rather than mis-close, so the escaped-single-quote alternative
+    # below gets its turn. [^'] rather than [^'\r\n] because these patterns are
+    # compiled with re.DOTALL and multi-line triple-quoted strings must keep
+    # matching.
+    r"(rb?|b|br)?'''(?:[^'](?:[^']|'(?!''))*)?'''(?!')",
+    # tripled double quotes follow the same quote-run rule as single quotes.
+    r'(rb?|b|br)?"""(?:[^"](?:[^"]|"(?!""))*)?"""(?!")',
     # possibly escaped double quotes
     r'(rb?|b|br|u&|@)?"([^"\\]*(\\.[^"\\]*|""[^"\\]*)*)"',
     # possibly escaped single quotes
