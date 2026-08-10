@@ -23,8 +23,8 @@ SQL_QUOTED_EXP = group(
     # compiled with re.DOTALL and multi-line triple-quoted strings must keep
     # matching.
     r"(rb?|b|br)?'''(?:[^'](?:[^']|'(?!''))*)?'''(?!')",
-    # tripled double quotes
-    r'(rb?|b|br)?""".*?"""',
+    # tripled double quotes follow the same quote-run rule as single quotes.
+    r'(rb?|b|br)?"""(?:[^"](?:[^"]|"(?!""))*)?"""(?!")',
     # possibly escaped double quotes
     r'(rb?|b|br|u&|@)?"([^"\\]*(\\.[^"\\]*|""[^"\\]*)*)"',
     # possibly escaped single quotes
