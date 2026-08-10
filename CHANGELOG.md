@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.32.0] - 2026-08-10
+
 ### Formatting Changes and Bug Fixes
 
 - sqlfmt no longer removes blank lines that follow a comment inside a `fmt: off` region ([#673](https://github.com/tconbeer/sqlfmt/issues/673) - thank you [@jmskarda](https://github.com/jmskarda)!).
@@ -607,7 +609,8 @@ All notable changes to this project will be documented in this file.
 - supports --check and --diff options
 - supports --no-color
 
-[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.31.0...HEAD
+[unreleased]: https://github.com/tconbeer/sqlfmt/compare/0.32.0...HEAD
+[0.32.0]: https://github.com/tconbeer/sqlfmt/compare/0.31.0...0.32.0
 [0.31.0]: https://github.com/tconbeer/sqlfmt/compare/0.30.0...0.31.0
 [0.30.0]: https://github.com/tconbeer/sqlfmt/compare/0.29.0...0.30.0
 [0.29.0]: https://github.com/tconbeer/sqlfmt/compare/0.28.2...0.29.0
