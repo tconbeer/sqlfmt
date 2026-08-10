@@ -1,7 +1,7 @@
 [project]
 
 name = "shandy-sqlfmt"
-version = "0.31.0"
+version = "0.32.0"
 requires-python = ">=3.10"
 description = "sqlfmt formats your dbt SQL files so you don't have to."
 authors = [
