@@ -273,3 +273,18 @@ def test_config_does_not_exist(
     assert results.exit_code == 2
     assert "Error: Invalid value for '--config'" in results.stderr
     assert "does not exist" in results.stderr
+
+
+def test_verbose_logging(sqlfmt_runner: CliRunner, preformatted_dir: Path) -> None:
+    # Use single-process mode to ensure verbose output is captured by CliRunner
+    args = f"{preformatted_dir.as_posix()} --verbose --check --no-progressbar --single-process"
+    results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
+    assert results.exit_code == 0
+    # Verbose mode should print each file being processed
+    assert "Reading" in results.stderr
+    # Should see at least one file path in the output
+    sql_files = list(preformatted_dir.glob("*.sql"))
+    assert len(sql_files) > 0
+    # Check that at least one file path appears in verbose output
+    file_found = any(f.name in results.stderr for f in sql_files)
+    assert file_found, f"No file paths found in verbose output: {results.stderr}"
