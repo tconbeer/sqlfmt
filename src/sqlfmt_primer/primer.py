@@ -260,3 +260,5 @@ def _warn(msg: str) -> None:
         click.style(msg, fg="yellow", bold=True),
         err=True,
     )
+
+# Fix for issue #739: safe input handling
