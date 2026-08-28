@@ -31,7 +31,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v10.0.1
         with:
-          version: "0.12.5"
+          version: "0.12.6"
 
       - name: Get project Version
         id: project_version
