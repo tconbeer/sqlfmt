@@ -87,11 +87,11 @@ class DuckDB(Polyglot):
             else:
                 modified_rules.append(rule)
         
-        # Add the // operator rule with priority 299 (before comments at 300)
+        # Add the // operator rule with priority 298 (before pg_operator at 299 and comments at 300)
         modified_rules.append(
             Rule(
                 name="duckdb_int_div",
-                priority=299,
+                priority=298,
                 pattern=group(r"//"),
                 action=partial(
                     actions.add_node_to_buffer, token_type=TokenType.OPERATOR

@@ -71,7 +71,7 @@ class TestDuckDB:
         assert "duckdb_int_div" in rule_names
 
     def test_int_div_rule_priority(self, duckdb: DuckDB) -> None:
-        # The // operator rule should have priority 299 (before comments at 300)
+        # The // operator rule should have priority 298 (before pg_operator at 299 and comments at 300)
         rules = duckdb.get_rules()
         int_div_rule = [rule for rule in rules if rule.name == "duckdb_int_div"][0]
-        assert int_div_rule.priority == 299
+        assert int_div_rule.priority == 298
