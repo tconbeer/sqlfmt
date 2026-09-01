@@ -7,7 +7,7 @@ from sqlfmt.analyzer import Analyzer
 from sqlfmt.node_manager import NodeManager
 from sqlfmt.rule import Rule
 from sqlfmt.rules import MAIN
-from sqlfmt.rules.common import NEWLINE, group
+from sqlfmt.rules.common import group
 from sqlfmt.tokens import TokenType
 
 
@@ -87,7 +87,8 @@ class DuckDB(Polyglot):
             else:
                 modified_rules.append(rule)
 
-        # Add the // operator rule with priority 298 (before pg_operator at 299 and comments at 300)
+        # Add the // operator rule with priority 298
+        # (before pg_operator at 299 and comments at 300)
         modified_rules.append(
             Rule(
                 name="duckdb_int_div",
