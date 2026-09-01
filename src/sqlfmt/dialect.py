@@ -1,10 +1,14 @@
 from abc import ABC, abstractmethod
+from functools import partial
 from typing import List
 
+from sqlfmt import actions
 from sqlfmt.analyzer import Analyzer
 from sqlfmt.node_manager import NodeManager
 from sqlfmt.rule import Rule
 from sqlfmt.rules import MAIN
+from sqlfmt.rules.common import NEWLINE, group
+from sqlfmt.tokens import TokenType
 
 
 class Dialect(ABC):
@@ -52,3 +56,49 @@ class Polyglot(Dialect):
 
 class ClickHouse(Polyglot):
     case_sensitive_names = True
+
+
+class DuckDB(Polyglot):
+    """
+    DuckDB dialect. In DuckDB, // is the integer division operator,
+    not a comment marker.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        # Replace the comment rule to exclude // comments
+        # and add a rule for the // operator
+        modified_rules = []
+        for rule in self.RULES:
+            if rule.name == "comment":
+                # Replace with a comment rule that excludes //
+                modified_rules.append(
+                    Rule(
+                        name="comment",
+                        priority=300,
+                        pattern=group(
+                            r"--[^\r\n]*",
+                            r"#[^\r\n]*",
+                            r"/\*[^*]*\*+(?:[^/*][^*]*\*+)*/",  # block comment
+                        ),
+                        action=actions.add_comment_to_buffer,
+                    )
+                )
+            else:
+                modified_rules.append(rule)
+        
+        # Add the // operator rule with priority 299 (before comments at 300)
+        modified_rules.append(
+            Rule(
+                name="duckdb_int_div",
+                priority=299,
+                pattern=group(r"//"),
+                action=partial(
+                    actions.add_node_to_buffer, token_type=TokenType.OPERATOR
+                ),
+            )
+        )
+        self.RULES = modified_rules
+
+    def get_rules(self) -> List[Rule]:
+        return super().get_rules()
