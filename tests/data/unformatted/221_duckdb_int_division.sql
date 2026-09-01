@@ -31,7 +31,8 @@ where z // 2 > 5
 -- regular comments should still work
 select 1  -- this is a comment
 ;
-select 2  -- this is also a comment
+select 2  # this is also a comment
 ;
-select /* block comment */ 3
+select  /* block comment */
+    3
 ;
