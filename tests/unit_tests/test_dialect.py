@@ -3,7 +3,7 @@ from typing import Any
 
 import pytest
 
-from sqlfmt.dialect import ClickHouse, Dialect, Polyglot
+from sqlfmt.dialect import ClickHouse, Dialect, DuckDB, Polyglot
 from sqlfmt.rules.common import group
 
 
@@ -22,7 +22,7 @@ def test_dialect() -> None:
 
 
 class TestAllDialects:
-    @pytest.fixture(params=[Polyglot, ClickHouse])
+    @pytest.fixture(params=[Polyglot, ClickHouse, DuckDB])
     def dialect(self, request: Any) -> Polyglot:
         d = request.param()
         assert isinstance(d, Polyglot)
@@ -54,3 +54,24 @@ class TestClickHouse:
 
     def test_case_sensitive(self, clickhouse: ClickHouse) -> None:
         assert clickhouse.case_sensitive_names is True
+
+
+class TestDuckDB:
+    @pytest.fixture
+    def duckdb(self) -> DuckDB:
+        return DuckDB()
+
+    def test_case_insensitive(self, duckdb: DuckDB) -> None:
+        assert duckdb.case_sensitive_names is False
+
+    def test_has_int_div_operator_rule(self, duckdb: DuckDB) -> None:
+        # DuckDB should have a rule for the // operator
+        rules = duckdb.get_rules()
+        rule_names = [rule.name for rule in rules]
+        assert "duckdb_int_div" in rule_names
+
+    def test_int_div_rule_priority(self, duckdb: DuckDB) -> None:
+        # The // operator rule should have priority 299 (before comments at 300)
+        rules = duckdb.get_rules()
+        int_div_rule = [rule for rule in rules if rule.name == "duckdb_int_div"][0]
+        assert int_div_rule.priority == 299
