@@ -1,6 +1,6 @@
 import pytest
 
-from sqlfmt.dialect import ClickHouse, Polyglot
+from sqlfmt.dialect import ClickHouse, DuckDB, Polyglot
 from sqlfmt.exception import SqlfmtConfigError
 from sqlfmt.mode import Mode
 
@@ -42,6 +42,11 @@ def test_dialect() -> None:
     # clickhouse is a subclass of Polyglot
     assert isinstance(clickhouse_mode.dialect, Polyglot)
     assert isinstance(clickhouse_mode.dialect, ClickHouse)
+
+    duckdb_mode = Mode(dialect_name="duckdb")
+    # duckdb is a subclass of Polyglot
+    assert isinstance(duckdb_mode.dialect, Polyglot)
+    assert isinstance(duckdb_mode.dialect, DuckDB)
 
 
 def test_dialect_raises() -> None:
