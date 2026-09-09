@@ -8,6 +8,17 @@ def group(*choices: str) -> str:
 NEWLINE: str = r"\r?\n"
 EOL = group(NEWLINE, r"$")
 
+# A number literal must not be followed by another identifier character.
+# SparkSQL regular identifiers may begin with a digit and do not require an
+# underscore, so an underscore-dependent guard misclassifies valid names such
+# as 9021webflag. Without this guard the number rules lex the leading digits as
+# a literal and leave the rest as a separate name token.
+#
+# The name rule (\w+) then takes the complete identifier. Numeric literal
+# suffixes remain part of the number patterns and are consumed before this
+# lookahead runs.
+NOT_AN_IDENTIFIER_TAIL = r"(?!\w)"
+
 JINJA_START = group(r"\{[{%#]")
 
 SQL_QUOTED_EXP = group(
