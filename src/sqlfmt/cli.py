@@ -147,12 +147,13 @@ from sqlfmt.mode import Mode
     "--dialect",
     "dialect_name",
     envvar="SQLFMT_DIALECT",
-    type=click.Choice(["polyglot", "clickhouse"], case_sensitive=False),
+    type=click.Choice(["polyglot", "clickhouse", "duckdb"], case_sensitive=False),
     default="polyglot",
     help=(
         "The SQL dialect for the target files. Nearly all dialects are supported "
         "by the default polyglot dialect. Select the ClickHouse dialect to respect "
-        "case sensitivity in function, field, and alias names."
+        "case sensitivity in function, field, and alias names. Select the DuckDB "
+        "dialect to treat // as the integer division operator instead of a comment."
     ),
 )
 @click.option(
