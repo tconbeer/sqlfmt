@@ -3,7 +3,13 @@ from typing import Any, List
 
 import pytest
 
-from sqlfmt.config import _find_config_file, _get_common_parents, _load_config_from_path
+from sqlfmt.config import (
+    Config,
+    _find_config_file,
+    _get_common_parents,
+    _load_config_from_path,
+    _validate_config,
+)
 from sqlfmt.exception import SqlfmtConfigError
 from tests.util import copy_config_file_to_dst
 
@@ -123,3 +129,36 @@ def test_load_config_from_None(tmp_path: Path) -> None:
     copy_config_file_to_dst("invalid_toml_config.toml", tmp_path)
     config = _load_config_from_path(None)
     assert config == {}
+
+
+@pytest.mark.parametrize(
+    "raw,key",
+    [
+        ({"check": "yes"}, "check"),
+        ({"exclude": "target/**"}, "exclude"),
+        ({"encoding": 5}, "encoding"),
+        ({"dialect": ["polyglot"]}, "dialect"),
+        ({"line_length": True}, "line_length"),
+    ],
+)
+def test_validate_config_wrong_type(raw: Config, key: str) -> None:
+    with pytest.raises(SqlfmtConfigError) as excinfo:
+        _validate_config(raw)
+    assert f"option {key} must be" in str(excinfo.value)
+
+
+def test_validate_config_correct_types() -> None:
+    raw: Config = {
+        "check": True,
+        "exclude": ["target/**"],
+        "encoding": "utf-8",
+        "dialect": "clickhouse",
+        "line_length": 100,
+    }
+    assert _validate_config(raw) == {
+        "check": True,
+        "exclude": ["target/**"],
+        "encoding": "utf-8",
+        "dialect_name": "clickhouse",
+        "line_length": 100,
+    }

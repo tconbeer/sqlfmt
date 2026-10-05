@@ -294,3 +294,14 @@ def test_invalid_line_length_exits_cleanly(
     )
     assert results.exit_code == 2
     assert "Invalid value for '-l' / '--line-length'" in results.stderr
+
+
+def test_no_matching_files_hint(sqlfmt_runner: CliRunner, tmp_path: Path) -> None:
+    (tmp_path / "notes.txt").write_text("select 1")
+    results = sqlfmt_runner.invoke(sqlfmt_main, args=tmp_path.as_posix())
+    assert results.exit_code == 0
+    assert results.stderr.startswith("0 files left unchanged")
+    assert "No SQL files were found" in results.stderr
+
+    results = sqlfmt_runner.invoke(sqlfmt_main, args=f"{tmp_path.as_posix()} --quiet")
+    assert results.stderr == ""
