@@ -5,7 +5,9 @@ import click
 
 from sqlfmt import api
 from sqlfmt.config import load_config_file
+from sqlfmt.exception import SqlfmtConfigError
 from sqlfmt.mode import Mode
+from sqlfmt.report import display_output
 
 
 @click.command()
@@ -96,7 +98,7 @@ from sqlfmt.mode import Mode
     "--line-length",
     envvar="SQLFMT_LINE_LENGTH",
     default=88,
-    type=int,
+    type=click.IntRange(min=1),
     help=("The maximum line length allowed in output files. Default is 88."),
 )
 @click.option(
@@ -191,14 +193,18 @@ def sqlfmt(
     https://sqlfmt.com for documentation and more information.
     """
     if files:
-        config = load_config_file(files, config_path)
-        non_default_options = {
-            k: v
-            for k, v in kwargs.items()
-            if ctx.get_parameter_source(k).name != "DEFAULT"  # type: ignore
-        }
-        config.update(non_default_options)
-        mode = Mode(**config)  # type: ignore
+        try:
+            config = load_config_file(files, config_path)
+            non_default_options = {
+                k: v
+                for k, v in kwargs.items()
+                if ctx.get_parameter_source(k).name != "DEFAULT"  # type: ignore
+            }
+            config.update(non_default_options)
+            mode = Mode(**config)  # type: ignore
+        except SqlfmtConfigError as e:
+            display_output(str(e))
+            ctx.exit(2)
 
         matched_files = api.get_matching_paths(files, mode=mode)
         progress_bar, progress_callback = api.initialize_progress_bar(
@@ -228,7 +234,7 @@ def show_welcome_message() -> None:
     Prints a nice welcome message for new users who might accidentally
     enter `$ sqlfmt` without any arguments
     """
-    from sqlfmt.report import display_output, style_output
+    from sqlfmt.report import style_output
 
     art = r"""
                _  __           _

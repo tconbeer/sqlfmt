@@ -273,3 +273,35 @@ def test_config_does_not_exist(
     assert results.exit_code == 2
     assert "Error: Invalid value for '--config'" in results.stderr
     assert "does not exist" in results.stderr
+
+
+def test_invalid_config_key_exits_cleanly(
+    sqlfmt_runner: CliRunner, preformatted_dir: Path
+) -> None:
+    copy_config_file_to_dst("invalid_key_config.toml", preformatted_dir)
+    results = sqlfmt_runner.invoke(sqlfmt_main, args=preformatted_dir.as_posix())
+    assert results.exit_code == 2
+    assert "Config file contains key foo" in results.stderr
+    assert "SQL_EXTENSIONS" not in results.stderr
+    assert "Traceback" not in results.stderr
+
+
+def test_invalid_line_length_exits_cleanly(
+    sqlfmt_runner: CliRunner, preformatted_dir: Path
+) -> None:
+    results = sqlfmt_runner.invoke(
+        sqlfmt_main, args=f"{preformatted_dir.as_posix()} --line-length 0"
+    )
+    assert results.exit_code == 2
+    assert "Invalid value for '-l' / '--line-length'" in results.stderr
+
+
+def test_no_matching_files_hint(sqlfmt_runner: CliRunner, tmp_path: Path) -> None:
+    (tmp_path / "notes.txt").write_text("select 1")
+    results = sqlfmt_runner.invoke(sqlfmt_main, args=tmp_path.as_posix())
+    assert results.exit_code == 0
+    assert results.stderr.startswith("0 files left unchanged")
+    assert "No SQL files were found" in results.stderr
+
+    results = sqlfmt_runner.invoke(sqlfmt_main, args=f"{tmp_path.as_posix()} --quiet")
+    assert results.stderr == ""
