@@ -273,3 +273,24 @@ def test_config_does_not_exist(
     assert results.exit_code == 2
     assert "Error: Invalid value for '--config'" in results.stderr
     assert "does not exist" in results.stderr
+
+
+def test_invalid_config_key_exits_cleanly(
+    sqlfmt_runner: CliRunner, preformatted_dir: Path
+) -> None:
+    copy_config_file_to_dst("invalid_key_config.toml", preformatted_dir)
+    results = sqlfmt_runner.invoke(sqlfmt_main, args=preformatted_dir.as_posix())
+    assert results.exit_code == 2
+    assert "Config file contains key foo" in results.stderr
+    assert "SQL_EXTENSIONS" not in results.stderr
+    assert "Traceback" not in results.stderr
+
+
+def test_invalid_line_length_exits_cleanly(
+    sqlfmt_runner: CliRunner, preformatted_dir: Path
+) -> None:
+    results = sqlfmt_runner.invoke(
+        sqlfmt_main, args=f"{preformatted_dir.as_posix()} --line-length 0"
+    )
+    assert results.exit_code == 2
+    assert "Invalid value for '-l' / '--line-length'" in results.stderr

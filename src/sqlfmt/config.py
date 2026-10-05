@@ -113,8 +113,19 @@ def _validate_config(raw_config: Config) -> Config:
             raise SqlfmtConfigError(
                 f"Config file contains key {k}, which is not a "
                 f"supported option. Must be one of "
-                f"{list(Mode.__dataclass_fields__.keys())}"
+                f"{_supported_keys()}"
             )
         else:
             config[k] = v
     return config
+
+
+def _supported_keys() -> List[str]:
+    """
+    Returns the names of the options that a user can set in a config file
+    """
+    return [
+        "dialect" if k == "dialect_name" else k
+        for k in Mode.__dataclass_fields__
+        if k != "SQL_EXTENSIONS"
+    ]
