@@ -12,7 +12,6 @@ from (values ('some long string literal', 'another very long literal', 'more str
 select *
 
 from (values (1, 2, 3), (4, 5, 6))
-;
 
 select *
 
@@ -37,4 +36,3 @@ from
             ),
             ('something shorter', 'short', 'fits', 7, 8, 9)
     ) as v
-;

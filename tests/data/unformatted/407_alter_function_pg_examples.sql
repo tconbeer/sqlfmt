@@ -15,24 +15,17 @@ DROP FUNCTION update_employee_salaries();
 -- https://www.postgresql.org/docs/current/sql-alterfunction.html
 alter function sqrt(integer)
 rename to square_root
-;
 alter function sqrt(integer)
 owner to joe
-;
 alter function sqrt(integer)
 set schema maths
-;
 alter function sqrt(integer)
 depends on extension mathlib
-;
 alter function check_password(text)
 set search_path = admin, pg_temp
-;
 alter function check_password(text)
 reset search_path
-;
 drop function sqrt(integer)
-;
 drop function
     square_root(integer),
     square_root(bigint),
@@ -40,8 +33,5 @@ drop function
     square_root(numeric),
     square_root(money)
 cascade
-;
 drop function update_employee_salaries
-;
 drop function update_employee_salaries()
-;

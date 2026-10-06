@@ -14,7 +14,6 @@ select
     usage_activity_by_stage_monthly['manage']['events'] as monthly_active_users_last_28_days
 
 from hello
-;
 
 select
     split_array('foo, bar, baz, qux', ',')[2] as baz,
