@@ -51,7 +51,9 @@ as r"""
 ;
 
 select multiplyinputs(a, b)
-from (select 3 as a, 2 as b)
+
+from
+    (select 3 as a, 2 as b)
 ;
 
 create function mydataset.remote_multiply_inputs(x float64, y float64)
@@ -62,17 +64,27 @@ options (endpoint = "https://us-central1-myproject.cloudfunctions.net/multiply")
 
 create or replace table function mydataset.names_by_year(y int64)
 as
+
 select year, name, sum(number) as total
+
 from `bigquery-public-data.usa_names.usa_1910_current`
+
 where year = y
-group by year, name
+
+group by year,
+    name
 ;
 
 create or replace table function mydataset.names_by_year(y int64)
 returns table<name string, year int64, total int64>
 as
+
 select year, name, sum(number) as total
+
 from `bigquery-public-data.usa_names.usa_1910_current`
+
 where year = y
-group by year, name
+
+group by year,
+    name
 ;

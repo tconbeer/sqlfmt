@@ -39,14 +39,18 @@ select * from journal_merge_list
                 {% set relation_source = "stg_" + source + "_journals" %}
 
                 select '{{source}}' as source, *
+
                 from {{ ref(relation_source) }}
 
                 {% if not loop.last %}
+
                     union all
                 {% endif %}
             {% endfor %}
         )
+
     select *
+
     from journal_merge_list
 
 {% else %} {{ config(enabled=false) }}

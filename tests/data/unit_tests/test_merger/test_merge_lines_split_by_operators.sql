@@ -131,7 +131,6 @@ where
     and another_thing = another_thing_entirely
     or maybe_something_completely_different
     and (
-        something_something = 'Some Literal'
-        or (foo = 'another literal' and bar = 'something else')
+        something_something = 'Some Literal' or (foo = 'another literal' and bar = 'something else')
     )
     and foo_bar <> 0

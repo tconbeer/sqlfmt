@@ -16,7 +16,7 @@ class Mode:
 
     SQL_EXTENSIONS: List[str] = field(default_factory=lambda: [".sql", ".sql.jinja"])
     dialect_name: str = "polyglot"
-    line_length: int = 88
+    line_length: int = 100
     check: bool = False
     diff: bool = False
     exclude: List[str] = field(default_factory=list)

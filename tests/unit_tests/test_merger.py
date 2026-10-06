@@ -178,7 +178,8 @@ def test_cte_merge(merger: LineMerger) -> None:
     result = list(map(str, merged_lines))
 
     expected = [
-        "with my_cte as (select * from my_table) select * from my_cte\n",
+        "with my_cte as (select * from my_table)\n",
+        "select * from my_cte\n",
     ]
 
     assert result == expected
@@ -204,11 +205,8 @@ def test_case_then_merge(merger: LineMerger) -> None:
 
     expected = [
         "\n",
-        "case\n",
-        "    when some_initial_condition_is_true\n",
-        "    then some_other_condition\n",
-        "    else something_else_entirely\n",
-        "end\n",
+        "case when some_initial_condition_is_true then some_other_condition "
+        "else something_else_entirely end\n",
     ]
 
     assert result == expected

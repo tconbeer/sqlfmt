@@ -50,13 +50,16 @@ with
             || '.'
             || lower(table_name) as fqd_name,
             listagg(column_name, ',') as email_column_names
+
         from "RAW"."INFORMATION_SCHEMA"."COLUMNS"
+
         where
             lower(column_name) like '%email%'
             and table_schema in ('SNAPSHOTS')
             and data_type not in {{ data_types }}
             and lower(column_name) not in {{ exclude_columns }}
             and lower(table_name) like ('gitlab_dotcom_%')
+
         group by 1
 
     ),
@@ -69,7 +72,9 @@ with
             || '.'
             || lower(table_name) as fqd_name,
             listagg(column_name, ',') as non_email_column_names
+
         from "RAW"."INFORMATION_SCHEMA"."COLUMNS" as a
+
         where
             lower(column_name) not like '%email%'
             and table_schema in ('SNAPSHOTS')
@@ -78,10 +83,12 @@ with
             and lower(column_name) not like '%id%'
             and lower(column_name) not in {{ exclude_columns }}
             and lower(table_name) like ('gitlab_dotcom_%')
+
         group by 1
 
     )
 
 select a.fqd_name, a.email_column_names, b.non_email_column_names
+
 from email_columns a
 left join non_email_columns b on a.fqd_name = b.fqd_name

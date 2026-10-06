@@ -38,12 +38,18 @@ with
             col2,  -- col2
             /* Special column */
             special_column,
+
         from {{ ref("table_a") }}
     ),
     /* Some interesting comments above a CTE with a leading comma */
-    table_b as (select * from {{ ref("table_b") }})
+    table_b as (
+        select *
+
+        from {{ ref("table_b") }}
+    )
 
 select *
+
 from table_a, table_b
 ;
 

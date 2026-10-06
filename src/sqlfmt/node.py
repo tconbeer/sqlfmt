@@ -3,6 +3,22 @@ from typing import List, Optional, Tuple
 
 from sqlfmt.tokens import Token, TokenType
 
+# UNTERM_KEYWORD values (by first word) that start a top-level clause of a
+# select statement, as opposed to other UNTERM_KEYWORDs (joins, with, when/
+# then/else, partition by, ...) that are handled by other formatting rules.
+# This set is intentionally the only thing that need grow as more clauses
+# gain house-style treatment -- the blank-line-insertion machinery itself
+# (Line.starts_new_major_clause) is generic over whatever is listed here.
+MAJOR_CLAUSE_KEYWORDS = frozenset(
+    {"select", "from", "where", "group", "having", "order", "qualify", "limit"}
+)
+
+# Clause keywords (by first word) whose items (conditions joined by and/or,
+# or columns joined by commas) must always be split one-per-line when there
+# is more than one item, regardless of whether the whole clause would fit
+# on one line.
+FORCE_SPLIT_CLAUSE_KEYWORDS = frozenset({"where", "having", "group"})
+
 
 def get_previous_token(prev_node: Optional["Node"]) -> Tuple[Optional[Token], bool]:
     """
@@ -240,6 +256,51 @@ class Node:
             return False
         else:
             return self.has_preceding_between_operator
+
+    @property
+    def is_major_clause_keyword(self) -> bool:
+        """
+        True for UNTERM_KEYWORD nodes that start a top-level clause of a
+        select statement (select, from, where, group by, having, order by,
+        qualify, limit). Used to insert blank lines between clauses, and
+        (for a subset of these) to force always-split formatting of
+        multi-item clauses. Deliberately keyed off a value set, not every
+        UNTERM_KEYWORD, so it excludes joins, with, when/then/else,
+        partition by, etc.
+        """
+        if not self.is_unterm_keyword:
+            return False
+        first_word = self.value.split(" ", 1)[0]
+        if first_word not in MAJOR_CLAUSE_KEYWORDS:
+            return False
+        # "order by" is also valid syntax nested inside a window function's
+        # over (...) or an ordered-set aggregate's within group (...) --
+        # that's not the select statement's own order by clause, so it
+        # doesn't count as a major clause (and shouldn't force a blank
+        # line / split).
+        if first_word == "order" and self._is_nested_in_over_or_within_group:
+            return False
+        return True
+
+    @property
+    def _is_nested_in_over_or_within_group(self) -> bool:
+        if not self.open_brackets:
+            return False
+        parent = self.open_brackets[-1]
+        if parent.token.type is not TokenType.BRACKET_OPEN:
+            return False
+        prev_token, _ = get_previous_token(parent.previous_node)
+        if prev_token is None or prev_token.type is not TokenType.WORD_OPERATOR:
+            return False
+        normalized = " ".join(prev_token.token.lower().split())
+        return normalized in ("over", "within group")
+
+    @property
+    def is_set_operator(self) -> bool:
+        """
+        True for union/union all/intersect/except/minus
+        """
+        return self.token.type is TokenType.SET_OPERATOR
 
     @property
     def is_newline(self) -> bool:

@@ -25,6 +25,11 @@ class LineMerger:
         if len(lines) <= 1:
             return lines
 
+        if sum(1 for line in lines if line.starts_new_major_clause) > 1:
+            raise CannotMergeException(
+                "Can't merge multiple top-level clauses onto one line"
+            )
+
         nodes, comments = self._extract_components(lines)
 
         merged_line = Line.from_nodes(

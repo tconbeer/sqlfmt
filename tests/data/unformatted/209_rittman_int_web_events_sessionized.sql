@@ -186,7 +186,9 @@ from ordered_conversion_tagged
 
     with
         events as (
-            select * from {{ ref("int_web_events") }}
+            select *
+
+            from {{ ref("int_web_events") }}
         /*  {% if is_incremental() %}
     where visitor_id in (
         select distinct visitor_id
@@ -206,13 +208,7 @@ from ordered_conversion_tagged
 
         numbered as (
 
-            select
-
-                *,
-
-                row_number() over (
-                    partition by visitor_id order by event_ts
-                ) as event_number
+            select *, row_number() over (partition by visitor_id order by event_ts) as event_number
 
             from events
 
@@ -252,6 +248,7 @@ from ordered_conversion_tagged
                     then 0
                     else 1
                 end as new_session
+
             from diffed
 
         ),
@@ -310,9 +307,16 @@ from ordered_conversion_tagged
                 order_id,
                 total_revenue,
                 currency_code
+
             from session_numbers
         ),
-        id_stitching as (select * from {{ ref("int_web_events_user_stitching") }}),
+        id_stitching as (
+
+            select *
+
+            from {{ ref("int_web_events_user_stitching") }}
+
+        ),
 
         joined as (
 
@@ -320,9 +324,7 @@ from ordered_conversion_tagged
 
                 session_ids.*,
 
-                coalesce(
-                    id_stitching.user_id, session_ids.visitor_id
-                ) as blended_user_id
+                coalesce(id_stitching.user_id, session_ids.visitor_id) as blended_user_id
 
             from session_ids
             left join id_stitching on id_stitching.visitor_id = session_ids.visitor_id
@@ -331,9 +333,7 @@ from ordered_conversion_tagged
         ordered as (
             select
                 *,
-                row_number() over (
-                    partition by blended_user_id order by event_ts
-                ) as event_seq,
+                row_number() over (partition by blended_user_id order by event_ts) as event_seq,
                 row_number() over (
                     partition by blended_user_id, session_id order by event_ts
                 ) as event_in_session_seq,
@@ -341,9 +341,8 @@ from ordered_conversion_tagged
                 case
                     when
                         event_type = 'Page View'
-                        and session_id = lead(session_id, 1) over (
-                            partition by visitor_id order by event_number
-                        )
+                        and session_id
+                        = lead(session_id, 1) over (partition by visitor_id order by event_number)
                     then
                         {{
                             dbt_utils.datediff(
@@ -353,6 +352,7 @@ from ordered_conversion_tagged
                             )
                         }}
                 end time_on_page_secs
+
             from joined
 
         ),
@@ -406,9 +406,12 @@ from ordered_conversion_tagged
                             )
                     end as pre_converting_page_title,
                 {% endif %}
+
             from ordered o
         )
+
     select *
+
     from ordered_conversion_tagged
 
 {% else %} {{ config(enabled=false) }}

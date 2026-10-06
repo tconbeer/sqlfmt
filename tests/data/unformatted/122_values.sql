@@ -10,9 +10,12 @@ from (values ('some long string literal', 'another very long literal', 'more str
 ) as v;
 )))))__SQLFMT_OUTPUT__(((((
 select *
+
 from (values (1, 2, 3), (4, 5, 6))
 ;
+
 select *
+
 from
     (
         values

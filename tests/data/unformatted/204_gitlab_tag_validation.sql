@@ -133,9 +133,7 @@
 
         {% if error_message.errors != [] %}
 
-            {% for message in error_message.errors %}
-                {% do log(message, info=true) %}
-            {% endfor %}
+            {% for message in error_message.errors %} {% do log(message, info=true) %} {% endfor %}
 
             {% do exceptions.warn("Tag Validation Error") %}
 
