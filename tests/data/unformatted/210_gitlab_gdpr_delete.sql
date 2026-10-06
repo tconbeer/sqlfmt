@@ -73,7 +73,7 @@ with
             || lower(table_name) as fqd_name,
             listagg(column_name, ',') as non_email_column_names
 
-        from "RAW"."INFORMATION_SCHEMA"."COLUMNS" as a
+        from "RAW"."INFORMATION_SCHEMA"."COLUMNS" a
 
         where
             lower(column_name) not like '%email%'
@@ -91,4 +91,5 @@ with
 select a.fqd_name, a.email_column_names, b.non_email_column_names
 
 from email_columns a
-left join non_email_columns b on a.fqd_name = b.fqd_name
+left join non_email_columns b
+    on a.fqd_name = b.fqd_name

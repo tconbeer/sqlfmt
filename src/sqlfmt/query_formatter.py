@@ -226,8 +226,19 @@ class QueryFormatter:
             new_lines.append(new_line)
             prev_node = new_line.nodes[-1]
 
-        if line.comments:
-            new_lines[-1].comments.extend(line.comments)
+        # standalone/multiline comments render *before* a Line's own content,
+        # so they belong on the first split-off group (matching their
+        # original position, ahead of the whole join); trailing inline
+        # comments render after a Line's content, so they belong on the
+        # last group. Misplacing a standalone comment onto a later group
+        # changes its printed position relative to the join/table-ref line,
+        # which both looks wrong and breaks idempotency (the comment's new
+        # position can change how the next pass merges things).
+        for comment in line.comments:
+            if comment.is_standalone or comment.is_multiline:
+                new_lines[0].comments.append(comment)
+            else:
+                new_lines[-1].comments.append(comment)
 
         return new_lines
 

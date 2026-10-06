@@ -21,4 +21,4 @@ select
             barbar = "bazbaz" and bazbaz = "quxqux" and something_else_quite_long = "a long literal"
     ) as something_else
 
-from my_table as foobar
+from my_table foobar

@@ -13,4 +13,4 @@ select
     t.valid_to  /* not existing */
     as `ValidTo`
 
-from `gold`.`dim_customer_credit_limit_agg` as t
+from `gold`.`dim_customer_credit_limit_agg` t

@@ -82,7 +82,7 @@ from
         select client, count(distinct value) as zindices
 
         from `httparchive.almanac.parsed_css`
-        left join unnest(getzindexvalues(css)) as value
+        left join unnest(getzindexvalues(css)) value
 
         where date = '2019-07-01'
 

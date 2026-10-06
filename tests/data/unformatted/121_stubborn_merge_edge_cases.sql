@@ -84,9 +84,12 @@ with
             u.owner_email
 
         from renamed d
-        join hubspot_deal_stages s on d.deal_pipeline_stage_id = s.pipeline_stage_id
-        join hubspot_deal_pipelines_source p on s.pipeline_id = p.pipeline_id
-        left outer join hubspot_deal_owners u on safe_cast(d.deal_owner_id as int64) = u.owner_id
+        inner join hubspot_deal_stages s
+            on d.deal_pipeline_stage_id = s.pipeline_stage_id
+        inner join hubspot_deal_pipelines_source p
+            on s.pipeline_id = p.pipeline_id
+        left join hubspot_deal_owners u
+            on safe_cast(d.deal_owner_id as int64) = u.owner_id
     ),
     converting_sessions_deduped as (
         select

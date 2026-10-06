@@ -21,6 +21,6 @@ from
         group by customer_id
 
         having sum(order_total) > 100
-    ) as s
+    ) s
 
 where s.total > 500

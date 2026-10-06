@@ -58,13 +58,17 @@ LIMIT 10;
 select expressions_list
 
 from table_1
-global left join table_2 on equi_cond and closest_match_cond
+global left join table_2
+    on equi_cond
+    and closest_match_cond
 ;
 
 select expressions_list
 
 from table_1
-asof left join table_2 on equi_cond and closest_match_cond
+asof left join table_2
+    on equi_cond
+    and closest_match_cond
 ;
 
 select expressions_list
@@ -80,7 +84,7 @@ from
         select number as a
 
         from numbers(2)
-    ) as t1
+    ) t1
 paste join
     (
         select number as a
@@ -88,7 +92,7 @@ paste join
         from numbers(2)
 
         order by a desc
-    ) as t2
+    ) t2
 ;
 
 select a, b, totypename(a), totypename(b)

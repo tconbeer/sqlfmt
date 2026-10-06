@@ -38,14 +38,16 @@ FROM trades t ASOF LEFT JOIN prices p USING (symbol, created_at);
 select cars.name, cars.manufacturer
 
 from cars
-semi join region on cars.region = region.id
+semi join region
+    on cars.region = region.id
 ;
 
 -- return a list of cars with no recorded safety data.
 select cars.name, cars.manufacturer
 
 from cars
-anti join safety_data on cars.safety_report_id = safety_data.report_id
+anti join safety_data
+    on cars.safety_report_id = safety_data.report_id
 ;
 
 select *
@@ -85,14 +87,18 @@ positional join df2
 select t.*, p.price
 
 from trades t
-asof join prices p on t.symbol = p.symbol and t.created_at >= p.created_at
+asof join prices p
+    on t.symbol = p.symbol
+    and t.created_at >= p.created_at
 ;
 
 -- attach prices or NULLs to stock trades
 select *
 
 from trades t
-asof left join prices p on t.symbol = p.symbol and t.created_at >= p.created_at
+asof left join prices p
+    on t.symbol = p.symbol
+    and t.created_at >= p.created_at
 ;
 
 select *

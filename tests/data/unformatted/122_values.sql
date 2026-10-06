@@ -36,5 +36,5 @@ from
                 6
             ),
             ('something shorter', 'short', 'fits', 7, 8, 9)
-    ) as v
+    ) v
 ;
