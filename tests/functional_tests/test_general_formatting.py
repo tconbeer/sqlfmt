@@ -103,6 +103,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/504_house_style_set_operators.sql",
         "unformatted/505_house_style_composed_qualify_limit_union.sql",
         "unformatted/506_house_style_composed_nested_subquery.sql",
+        "unformatted/507_house_style_window_functions.sql",
         "unformatted/900_create_view.sql",
         "unformatted/998_unsupported_ddl_with_jinja.sql",
         "unformatted/999_unsupported_ddl.sql",

@@ -23,6 +23,11 @@ select a
 
 from t2
 
-qualify row_number() over (partition by a order by a) = 1
+qualify
+    row_number() over (
+        partition by a
+        order by a
+    )
+    = 1
 
 limit 5

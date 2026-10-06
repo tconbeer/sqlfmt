@@ -5,10 +5,11 @@ from sqlfmt.jinjafmt import JinjaFormatter
 from sqlfmt.line import Line
 from sqlfmt.merger import LineMerger
 from sqlfmt.mode import Mode
-from sqlfmt.node import FORCE_SPLIT_CLAUSE_KEYWORDS, Node
+from sqlfmt.node import FORCE_SPLIT_CLAUSE_KEYWORDS, Node, get_previous_token
 from sqlfmt.node_manager import NodeManager
 from sqlfmt.query import Query
 from sqlfmt.splitter import LineSplitter
+from sqlfmt.tokens import TokenType
 
 
 @dataclass
@@ -183,6 +184,155 @@ class QueryFormatter:
             new_lines.append(line)
         return new_lines
 
+    def _box_window_functions(self, lines: List[Line]) -> List[Line]:
+        """
+        Boxes each non-trivial window function (an over (...) with a
+        partition by/order by/frame-clause sub-clause) with a blank
+        line, per the house style's universal multi-line-construct rule
+        -- except over (...) itself is never blank-line-boxed on the
+        inside (that's enforced upstream by the merger; see
+        Node.is_window_subclause_start).
+
+        - If the window function is wrapped inside another function
+          call's parens (e.g. coalesce(sum(a) over (...), 0)), the blank
+          line goes *inside* that outer call's parens, same as any other
+          multi-line construct wrapped in a call (story 25).
+        - If it's a bare item in a select list on its own, the blank
+          line goes *around* it instead (story 28), since there's no
+          outer bracket to box and over (...) can't be boxed on the
+          inside.
+        - Anywhere else (e.g. a window-function predicate in a qualify
+          clause), it's left alone -- out of scope for this rule.
+        """
+        node_line_idx = {
+            id(node): i for i, line in enumerate(lines) for node in line.nodes
+        }
+
+        insert_blank_before: set = set()
+        insert_blank_after: set = set()
+        seen_over_parens: set = set()
+
+        for line in lines:
+            for node in line.nodes:
+                if not node.is_window_subclause_start:
+                    continue
+                if line.formatting_disabled or node.formatting_disabled:
+                    continue
+                over_paren = node.open_brackets[-1]
+                if id(over_paren) in seen_over_parens:
+                    continue
+                seen_over_parens.add(id(over_paren))
+
+                open_idx = node_line_idx.get(id(over_paren))
+                if open_idx is None:
+                    continue
+                close_idx = self._find_matching_close_idx(
+                    lines, open_idx, over_paren
+                )
+                if close_idx is None:
+                    continue
+
+                outer = (
+                    over_paren.open_brackets[-1] if over_paren.open_brackets else None
+                )
+                if outer is None:
+                    continue
+                elif self._is_function_call_open_paren(outer):
+                    # story 25: box inside the outer call's parens
+                    outer_open_idx = node_line_idx.get(id(outer))
+                    if outer_open_idx is None:
+                        continue
+                    outer_close_idx = self._find_matching_close_idx(
+                        lines, outer_open_idx, outer
+                    )
+                    insert_blank_after.add(outer_open_idx)
+                    if outer_close_idx is not None:
+                        insert_blank_before.add(outer_close_idx)
+                elif (
+                    outer.is_unterm_keyword
+                    and outer.value.split(" ", 1)[0] == "select"
+                ):
+                    # story 28: box around the bare select-list item
+                    insert_blank_before.add(open_idx)
+                    insert_blank_after.add(close_idx)
+                # else: out of scope (e.g. a qualify predicate) -- leave as-is
+
+        if not insert_blank_before and not insert_blank_after:
+            return lines
+
+        node_manager = NodeManager(self.mode.dialect.case_sensitive_names)
+        new_lines: List[Line] = []
+        for i, line in enumerate(lines):
+            if (
+                i in insert_blank_before
+                and new_lines
+                and not new_lines[-1].is_blank_line
+            ):
+                blank_line = Line(previous_node=line.previous_node)
+                node_manager.append_newline(blank_line)
+                new_lines.append(blank_line)
+            new_lines.append(line)
+            if (
+                i in insert_blank_after
+                and i + 1 < len(lines)
+                and not lines[i + 1].is_blank_line
+            ):
+                blank_line = Line(
+                    previous_node=line.nodes[-1] if line.nodes else line.previous_node
+                )
+                node_manager.append_newline(blank_line)
+                new_lines.append(blank_line)
+        return new_lines
+
+    @staticmethod
+    def _opening_bracket_closed_by(node: Node) -> Optional[Node]:
+        """
+        Given a closing bracket Node, returns the opening bracket Node
+        that it closes (whether or not any content lies between them).
+        Returns None if node isn't a closing bracket.
+        """
+        if not node.is_closing_bracket:
+            return None
+        prev = node.previous_node
+        while prev is not None and prev.is_newline:
+            prev = prev.previous_node
+        if prev is None:
+            return None
+        if prev.is_opening_bracket:
+            return prev
+        if not prev.open_brackets:
+            return None
+        opening = prev.open_brackets[-1]
+        if opening.is_unterm_keyword:
+            # the closing bracket pops both the inner unterm keyword
+            # (e.g. partition by/where) *and* the bracket it's nested
+            # in -- see NodeManager.open_brackets -- so the bracket we
+            # actually care about is one level further out
+            if len(prev.open_brackets) < 2:
+                return None
+            opening = prev.open_brackets[-2]
+        return opening
+
+    @classmethod
+    def _find_matching_close_idx(
+        cls, lines: List[Line], open_idx: int, opening_node: Node
+    ) -> Optional[int]:
+        for j in range(open_idx, len(lines)):
+            for node in lines[j].nodes:
+                if cls._opening_bracket_closed_by(node) is opening_node:
+                    return j
+        return None
+
+    @staticmethod
+    def _is_function_call_open_paren(node: Node) -> bool:
+        if node.token.type is not TokenType.BRACKET_OPEN:
+            return False
+        prev_token, _ = get_previous_token(node.previous_node)
+        return prev_token is not None and prev_token.type in (
+            TokenType.NAME,
+            TokenType.QUOTED_NAME,
+        )
+
     def _remove_extra_blank_lines(self, lines: List[Line]) -> List[Line]:
         """
         A query can have at most 2 consecutive blank lines at depth (0,0)
@@ -222,6 +372,7 @@ class QueryFormatter:
             self._merge_lines,
             self._force_split_multi_item_clauses,
             self._insert_blank_lines,
+            self._box_window_functions,
             self._remove_extra_blank_lines,
         ]
 

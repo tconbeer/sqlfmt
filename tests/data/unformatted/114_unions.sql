@@ -102,7 +102,11 @@ union all
         category,
         canonicaldomain,
         median_time_s as metric,
-        dense_rank() over (partition by client order by median_time_s desc) as sorted_order
+
+        dense_rank() over (
+            partition by client
+            order by median_time_s desc
+        ) as sorted_order
 
     from base
 )

@@ -20,6 +20,20 @@ MAJOR_CLAUSE_KEYWORDS = frozenset(
 FORCE_SPLIT_CLAUSE_KEYWORDS = frozenset({"where", "having", "group"})
 
 
+def _is_over_open_paren(node: "Node") -> bool:
+    """
+    True if node is the opening "(" of a window function's over (...)
+    (as opposed to any other bracket, like a plain function call or
+    "within group (...)").
+    """
+    if node.token.type is not TokenType.BRACKET_OPEN:
+        return False
+    prev_token, _ = get_previous_token(node.previous_node)
+    if prev_token is None or prev_token.type is not TokenType.WORD_OPERATOR:
+        return False
+    return " ".join(prev_token.token.lower().split()) == "over"
+
+
 def get_previous_token(prev_node: Optional["Node"]) -> Tuple[Optional[Token], bool]:
     """
     Returns the token of prev_node, unless prev_node is a
@@ -294,6 +308,51 @@ class Node:
             return False
         normalized = " ".join(prev_token.token.lower().split())
         return normalized in ("over", "within group")
+
+    @property
+    def is_window_subclause_start(self) -> bool:
+        """
+        True for the first Node (partition by/order by/a frame clause's
+        rows|range|groups keyword) of a sub-clause nested directly inside
+        a window function's over (...). Used to always force each
+        sub-clause onto its own line (house style story 26) -- unlike
+        "within group (order by ...)", which isn't a window function and
+        isn't in scope for this rule.
+        """
+        if not self.is_unterm_keyword:
+            return False
+        if not self.open_brackets:
+            return False
+        return _is_over_open_paren(self.open_brackets[-1])
+
+    @property
+    def closes_non_trivial_over_clause(self) -> bool:
+        """
+        True for the closing ")" of a window function's over (...) that
+        has at least one sub-clause inside it (i.e. isn't the trivial
+        `over ()`).
+        """
+        if not self.is_closing_bracket:
+            return False
+        prev = self.previous_node
+        while prev is not None and prev.is_newline:
+            prev = prev.previous_node
+        if prev is None:
+            return False
+        if prev.is_opening_bracket:
+            return _is_over_open_paren(prev)
+        if not prev.open_brackets:
+            return False
+        opening = prev.open_brackets[-1]
+        if opening.is_unterm_keyword:
+            # the closing bracket pops both the sub-clause keyword (e.g.
+            # partition by/order by) *and* the bracket it's nested in --
+            # see NodeManager.open_brackets -- so the bracket we actually
+            # care about is one level further out
+            if len(prev.open_brackets) < 2:
+                return False
+            opening = prev.open_brackets[-2]
+        return _is_over_open_paren(opening)
 
     @property
     def is_set_operator(self) -> bool:

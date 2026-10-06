@@ -6,7 +6,7 @@ from sqlfmt.comment import Comment
 from sqlfmt.exception import CannotMergeException, SqlfmtSegmentError
 from sqlfmt.line import Line
 from sqlfmt.mode import Mode
-from sqlfmt.node import Node
+from sqlfmt.node import Node, _is_over_open_paren
 from sqlfmt.operator_precedence import OperatorPrecedence
 from sqlfmt.segment import Segment, create_segments_from_lines
 
@@ -30,6 +30,12 @@ class LineMerger:
                 "Can't merge multiple top-level clauses onto one line"
             )
 
+        if self._spans_window_clause_boundary(lines):
+            raise CannotMergeException(
+                "Can't merge a non-trivial window function's sub-clauses, "
+                "or its over (...) open/close parens, onto the same line"
+            )
+
         nodes, comments = self._extract_components(lines)
 
         merged_line = Line.from_nodes(
@@ -48,6 +54,33 @@ class LineMerger:
         )
 
         return leading_blank_lines + [merged_line] + trailing_blank_lines
+
+    @staticmethod
+    def _spans_window_clause_boundary(lines: List[Line]) -> bool:
+        """
+        A non-trivial window function's over (...) always puts each
+        sub-clause (partition by/order by/a frame clause) on its own
+        line, with the open/close parens also on their own lines, and
+        -- unlike the universal multi-line-construct rule -- never a
+        blank line directly inside them. That means these boundaries
+        must never collapse onto the same printed line as each other,
+        even when the result would otherwise fit under the line-length
+        limit.
+        """
+        subclause_starts = 0
+        boundary_seen = False
+        for line in lines:
+            if not line.nodes:
+                continue
+            if line.nodes[0].is_window_subclause_start:
+                subclause_starts += 1
+            if any(n.closes_non_trivial_over_clause for n in line.nodes):
+                boundary_seen = True
+            if line.opens_new_bracket and _is_over_open_paren(
+                line.nodes[-1].open_brackets[-1]
+            ):
+                boundary_seen = True
+        return subclause_starts > 1 or (subclause_starts >= 1 and boundary_seen)
 
     def safe_create_merged_line(self, lines: List[Line]) -> List[Line]:
         try:
