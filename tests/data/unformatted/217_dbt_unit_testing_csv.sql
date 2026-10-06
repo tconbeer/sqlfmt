@@ -69,8 +69,7 @@
 {% endcall %}
 )))))__SQLFMT_OUTPUT__(((((
 {% call dbt_unit_testing.test(
-    "customers",
-    "should sum order values to calculate customer_lifetime_value"
+    "customers", "should sum order values to calculate customer_lifetime_value"
 ) %}
 
     {% call dbt_unit_testing.mock_ref("stg_customers", {"input_format": "csv"}) %}
@@ -97,8 +96,7 @@
 {% endcall %}
 
 {% call dbt_unit_testing.test(
-    "customers",
-    "should sum order values to calculate customer_lifetime_value"
+    "customers", "should sum order values to calculate customer_lifetime_value"
 ) %}
 
     {% call dbt_unit_testing.mock_ref("stg_customers", {"input_format": "csv"}) %}

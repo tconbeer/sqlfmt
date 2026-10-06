@@ -56,42 +56,83 @@ LIMIT 10;
 )))))__SQLFMT_OUTPUT__(((((
 -- FROM https://clickhouse.com/docs/sql-reference/statements/select/join
 select expressions_list
+
 from table_1
 global left join table_2 on equi_cond and closest_match_cond
 ;
 
 select expressions_list
+
 from table_1
 asof left join table_2 on equi_cond and closest_match_cond
 ;
 
 select expressions_list
+
 from table_1
 asof join table_2 using (equi_column1, equi_columnn, asof_column)
 ;
 
 select *
-from (select number as a from numbers(2)) as t1
-paste join (select number as a from numbers(2) order by a desc) as t2
+
+from
+    (
+        select number as a
+
+        from numbers(2)
+    ) as t1
+paste join
+    (
+        select number as a
+
+        from numbers(2)
+
+        order by a desc
+    ) as t2
 ;
 
 select a, b, totypename(a), totypename(b)
+
 from t_1
 full join t_2 using (a, b)
 ;
 
 select uniq(userid)
+
 from distributed_table
+
 where
     counterid = 101500
-    and userid global in (select userid from distributed_table where counterid = 34)
+    and userid global in (
+        select userid
+
+        from distributed_table
+
+        where counterid = 34
+    )
 ;
 
 select counterid, hits, visits
-from (select counterid, count() as hits from test.hits group by counterid)
+
+from
+    (
+        select counterid, count() as hits
+
+        from test.hits
+
+        group by counterid
+    )
 any left join
-    (select counterid, sum(sign) as visits from test.visits group by counterid)
+    (
+        select counterid, sum(sign) as visits
+
+        from test.visits
+
+        group by counterid
+    )
 using counterid
+
 order by hits desc
+
 limit 10
 ;

@@ -174,6 +174,7 @@ For FY23 and beyond, targets in the sheetload file were set at the user_segment_
 date as (
 
     select distinct fiscal_month_name_fy, fiscal_year, first_day_of_month
+
     from date_details_source
 
 ),
@@ -186,33 +187,23 @@ target_matrix as (
         {{ get_keyed_nulls("sales_qualified_source.dim_sales_qualified_source_id") }}
         as dim_sales_qualified_source_id,
         {{ get_keyed_nulls("order_type.dim_order_type_id") }} as dim_order_type_id
+
     from {{ ref("sheetload_sales_funnel_targets_matrix_source") }}
     left join
         date
-        on {{
-            sales_funnel_text_slugify(
-                "sheetload_sales_funnel_targets_matrix_source.month"
-            )
-        }} = {{ sales_funnel_text_slugify("date.fiscal_month_name_fy") }}
+        on {{ sales_funnel_text_slugify("sheetload_sales_funnel_targets_matrix_source.month") }}
+        = {{ sales_funnel_text_slugify("date.fiscal_month_name_fy") }}
     left join
         sales_qualified_source
         on {{
             sales_funnel_text_slugify(
                 "sheetload_sales_funnel_targets_matrix_source.opportunity_source"
             )
-        }}
-        = {{
-            sales_funnel_text_slugify(
-                "sales_qualified_source.sales_qualified_source_name"
-            )
-        }}
+        }} = {{ sales_funnel_text_slugify("sales_qualified_source.sales_qualified_source_name") }}
     left join
         order_type
-        on {{
-            sales_funnel_text_slugify(
-                "sheetload_sales_funnel_targets_matrix_source.order_type"
-            )
-        }} = {{ sales_funnel_text_slugify("order_type.order_type_name") }}
+        on {{ sales_funnel_text_slugify("sheetload_sales_funnel_targets_matrix_source.order_type") }}
+        = {{ sales_funnel_text_slugify("order_type.order_type_name") }}
 
 ),
 fy22_user_hierarchy as (
@@ -222,8 +213,11 @@ because if there were multiple hierarchies for this user_area, the last one crea
 sheetload and user_area in the hierarchy so the targets do not fan out.
 */
     select *
+
     from sfdc_user_hierarchy_stamped
-    where fiscal_year = 2022 and is_last_user_area_in_fiscal_year = 1
+
+    where fiscal_year = 2022
+        and is_last_user_area_in_fiscal_year = 1
 
 ),
 fy23_and_beyond_user_hierarchy as (
@@ -231,8 +225,11 @@ fy23_and_beyond_user_hierarchy as (
 For FY23 and beyond, targets in the sheetload file were set at the user_segment_geo_region_area grain, so we join to the stamped hierarchy on the user_segment_geo_region_area.
 */
     select *
+
     from sfdc_user_hierarchy_stamped
-    where fiscal_year > 2022 and is_last_user_hierarchy_in_fiscal_year = 1
+
+    where fiscal_year > 2022
+        and is_last_user_hierarchy_in_fiscal_year = 1
 
 ),
 unioned_targets as (
@@ -256,15 +253,13 @@ unioned_targets as (
         fy22_user_hierarchy.crm_opp_owner_region_stamped,
         fy22_user_hierarchy.dim_crm_opp_owner_area_stamped_id,
         fy22_user_hierarchy.crm_opp_owner_area_stamped
+
     from target_matrix
     left join
         fy22_user_hierarchy
         on {{ sales_funnel_text_slugify("target_matrix.area") }}
-        = {{
-            sales_funnel_text_slugify(
-                "fy22_user_hierarchy.crm_opp_owner_area_stamped"
-            )
-        }}
+        = {{ sales_funnel_text_slugify("fy22_user_hierarchy.crm_opp_owner_area_stamped") }}
+
     where target_matrix.fiscal_year = 2022
 
     union all
@@ -288,17 +283,18 @@ unioned_targets as (
         fy23_and_beyond_user_hierarchy.crm_opp_owner_region_stamped,
         fy23_and_beyond_user_hierarchy.dim_crm_opp_owner_area_stamped_id,
         fy23_and_beyond_user_hierarchy.crm_opp_owner_area_stamped
+
     from target_matrix
     left join
         fy23_and_beyond_user_hierarchy
         on {{ sales_funnel_text_slugify("target_matrix.area") }}
-        =
-        {{
+        = {{
             sales_funnel_text_slugify(
                 "fy23_and_beyond_user_hierarchy.crm_opp_owner_sales_segment_geo_region_area_stamped"
             )
         }}
         and target_matrix.fiscal_year = fy23_and_beyond_user_hierarchy.fiscal_year
+
     where target_matrix.fiscal_year > 2022
 
 ),
@@ -317,8 +313,7 @@ final_targets as (
                     "unioned_targets.order_type",
                 ]
             )
-        }}
-        as sales_funnel_target_id,
+        }} as sales_funnel_target_id,
         unioned_targets.kpi_name,
         unioned_targets.first_day_of_month,
         unioned_targets.fiscal_year,

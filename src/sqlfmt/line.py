@@ -208,6 +208,21 @@ class Line:
             return False
 
     @property
+    def starts_new_major_clause(self) -> bool:
+        """
+        True for a Line that starts a new top-level clause of a select
+        statement (select/from/where/group by/having/order by/qualify/
+        limit), or a set operator (union/union all/intersect/except).
+        Used to force each such clause onto its own line and to insert a
+        blank line between clauses.
+        """
+        try:
+            node = self.nodes[0]
+        except IndexError:
+            return False
+        return node.is_major_clause_keyword or node.is_set_operator
+
+    @property
     def contains_unterm_keyword(self) -> bool:
         return any([n.is_unterm_keyword for n in self.nodes])
 

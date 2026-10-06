@@ -82,11 +82,11 @@ with
             s.pipeline_stage_closed_won,
             u.owner_full_name,
             u.owner_email
+
         from renamed d
         join hubspot_deal_stages s on d.deal_pipeline_stage_id = s.pipeline_stage_id
         join hubspot_deal_pipelines_source p on s.pipeline_id = p.pipeline_id
-        left outer join
-            hubspot_deal_owners u on safe_cast(d.deal_owner_id as int64) = u.owner_id
+        left outer join hubspot_deal_owners u on safe_cast(d.deal_owner_id as int64) = u.owner_id
     ),
     converting_sessions_deduped as (
         select
@@ -103,12 +103,17 @@ with
             + sum(count_first_order_conversions)
             + sum(count_repeat_order_conversions) as count_conversions,
             max(converted_ts) as converted_ts
+
         from converting_events
+
         group by 1
     ),
+
 select *
+
 from converting_sessions_deduped
 ;
+
 -- COPYRIGHT HTTP ARCHIVE
 -- LICENSED UNDER APACHE 2.0, with modifications
 -- SEE: 
@@ -119,6 +124,5 @@ select
         (stats.checkboxes > 0 or stats.radios > 0)
         and stats.checkboxes_in_fieldset_with_legend = 0
         and stats.radios_in_fieldset_with_legend = 0
-    ) / countif(
-        stats.checkboxes > 0 or stats.radios > 0
-    ) as perc_sites_with_none_in_legend
+    )
+    / countif(stats.checkboxes > 0 or stats.radios > 0) as perc_sites_with_none_in_legend

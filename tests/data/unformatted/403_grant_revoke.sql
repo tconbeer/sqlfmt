@@ -35,12 +35,17 @@ granted by some_admin_role
 ;
 revoke all privileges
 on all tables in schema my_schema
+
 from old_role
 cascade
 ;
 revoke grant option for select, insert, update, delete, truncate, references, trigger
+
 from old_admin_role
 ;
+
 select foo
+
 from bar
+
 where true

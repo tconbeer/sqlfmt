@@ -12,5 +12,5 @@ dbt-snowflake = "^1.0.0"
 sqlfmt = "^0.6.0"
 
 [tool.sqlfmt]
-line_length = 100
+line_length = 120
 CHECK = true

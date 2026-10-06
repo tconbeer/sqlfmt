@@ -31,8 +31,7 @@ select
         range between unbounded preceding and unbounded following
     ) as g,
     last_value(a ignore nulls) over (
-        partition by user_id
-        order by performed_at asc
-        rows 5 preceding exclude current row
+        partition by user_id order by performed_at asc rows 5 preceding exclude current row
     ) as h
+
 from my_table

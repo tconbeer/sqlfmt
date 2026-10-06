@@ -67,7 +67,7 @@ def test_load_config_from_path(tmp_path: Path) -> None:
     copy_config_file_to_dst("valid_sqlfmt_config.toml", tmp_path)
     config = _load_config_from_path(tmp_path / "pyproject.toml")
     assert config
-    assert config["line_length"] == 100
+    assert config["line_length"] == 120
     assert config["check"] is True
     assert config.get("name", "does not exist") == "does not exist"
     assert config.get("exclude_root", "does not exist") == "does not exist"

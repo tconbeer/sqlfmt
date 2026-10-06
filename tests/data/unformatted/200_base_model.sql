@@ -38,7 +38,11 @@ with source as (select * from {{ source('my_application', 'users') }}),
 select * from renamed
 )))))__SQLFMT_OUTPUT__(((((
 with
-    source as (select * from {{ source("my_application", "users") }}),
+    source as (
+        select *
+
+        from {{ source("my_application", "users") }}
+    ),
     renamed as (
 
         select
@@ -77,8 +81,11 @@ with
 
         from source
 
-        where nvl(is_deleted, false) is false and id <> 123456  -- a very long comment about why we would exclude this user from this table that we will not wrap
+        where nvl(is_deleted, false) is false
+            and id <> 123456  -- a very long comment about why we would exclude this user from this table that we will not wrap
 
     )
+
 select *
+
 from renamed
