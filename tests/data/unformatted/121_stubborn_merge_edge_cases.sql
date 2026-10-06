@@ -64,6 +64,7 @@ countif((stats.checkboxes > 0 or stats.radios > 0)
 -- https://github.com/rittmananalytics/ra_data_warehouse/blob/d8dc7bd1c008ca79f9d09c909734e28a66ef6366/LICENSE.txt
 with
     joined as (
+
         select
             d.*,
             d.days_in_deal_stage_0
@@ -87,8 +88,11 @@ with
         join hubspot_deal_stages s on d.deal_pipeline_stage_id = s.pipeline_stage_id
         join hubspot_deal_pipelines_source p on s.pipeline_id = p.pipeline_id
         left outer join hubspot_deal_owners u on safe_cast(d.deal_owner_id as int64) = u.owner_id
+
     ),
+
     converting_sessions_deduped as (
+
         select
             session_id session_id,
             max(blended_user_id) as blended_user_id,
@@ -107,6 +111,7 @@ with
         from converting_events
 
         group by 1
+
     ),
 
 select *

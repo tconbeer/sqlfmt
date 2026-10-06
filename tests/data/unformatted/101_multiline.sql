@@ -56,18 +56,22 @@ select * from renamed /* what!?! */ where true
 */
 with
     source as (
-        select *
 
-        from {{ ref("my_model") }}
+        select * from {{ ref("my_model") }}
+
     ),
+
     /* This is a multiline comment in very bad style,
     * which starts and ends on lines with other tokens.
     */
     renamed as (
+
         select id, another_field, and_another, and_still_another
 
         from source
+
     ),
+
     {% set my_variable_in_bad_style = ["a", "short", "list", "of", "strings"] %}
 
 {#

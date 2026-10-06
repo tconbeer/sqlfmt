@@ -375,6 +375,7 @@ with
         qualify rank() over (partition by id order by incr_updt_dt desc) = 1
 
     ),
+
     renamed as (
 
         select
