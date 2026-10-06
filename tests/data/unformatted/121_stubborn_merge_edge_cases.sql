@@ -117,7 +117,6 @@ with
 select *
 
 from converting_sessions_deduped
-;
 
 -- COPYRIGHT HTTP ARCHIVE
 -- LICENSED UNDER APACHE 2.0, with modifications

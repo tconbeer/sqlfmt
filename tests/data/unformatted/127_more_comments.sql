@@ -54,7 +54,6 @@ with
 select *
 
 from table_a, table_b
-;
 
 select
     1,

@@ -173,6 +173,16 @@ class Line:
             return False
 
     @property
+    def is_semicolon_only(self) -> bool:
+        """
+        True for a Line whose only content is a semicolon (plus the
+        trailing newline). The house style has no semicolons in its
+        output, so such Lines are dropped entirely rather than rendered.
+        """
+        content_nodes = [n for n in self.nodes if not n.is_newline]
+        return len(content_nodes) > 0 and all(n.is_semicolon for n in content_nodes)
+
+    @property
     def starts_with_unterm_keyword(self) -> bool:
         try:
             return self.nodes[0].is_unterm_keyword

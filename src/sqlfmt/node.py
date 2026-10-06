@@ -137,6 +137,10 @@ class Node:
         return self.token.type is TokenType.COMMA
 
     @property
+    def is_semicolon(self) -> bool:
+        return self.token.type is TokenType.SEMICOLON
+
+    @property
     def divides_queries(self) -> bool:
         return self.token.type.divides_queries
 

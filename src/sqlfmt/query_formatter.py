@@ -49,6 +49,16 @@ class QueryFormatter:
         lines = merger.maybe_merge_lines(lines)
         return lines
 
+    def _remove_semicolons(self, lines: List[Line]) -> List[Line]:
+        """
+        The house style never prints semicolons (dbt models are single
+        bare statements), so Lines whose only content is a semicolon are
+        dropped entirely. Any following major clause (e.g. a second
+        statement's `select`) still gets its usual blank-line separation
+        from _insert_blank_lines, since that stage runs after this one.
+        """
+        return [line for line in lines if not line.is_semicolon_only]
+
     def _dedent_jinja_blocks(self, lines: List[Line]) -> List[Line]:
         """
         Jinja block tags, like {% if foo %} and {% endif %}, shouldn't
@@ -267,6 +277,7 @@ class QueryFormatter:
             self._format_jinja,
             self._dedent_jinja_blocks,
             self._merge_lines,
+            self._remove_semicolons,
             self._force_split_multi_item_clauses,
             self._box_cte_bodies,
             self._insert_blank_lines,

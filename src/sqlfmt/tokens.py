@@ -139,6 +139,10 @@ class TokenType(Enum):
         return self not in [
             TokenType.NEWLINE,
             TokenType.COMMENT,
+            # house style never prints semicolons (dbt models are bare
+            # statements), so their presence/absence doesn't affect
+            # token-equivalence between raw and formatted output.
+            TokenType.SEMICOLON,
         ]
 
 
