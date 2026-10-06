@@ -54,15 +54,6 @@ primer = [
 ]
 
 
-[project.urls]
-
-Homepage = "https://sqlfmt.com"
-Repository = "https://github.com/tconbeer/sqlfmt"
-Documentation = "https://docs.sqlfmt.com"
-"Bug Tracker" = "https://github.com/tconbeer/sqlfmt/issues"
-Changelog = "https://github.com/tconbeer/sqlfmt/blob/main/CHANGELOG.md"
-
-
 [project.scripts]
 
 sqlfmt = "sqlfmt.cli:sqlfmt"
@@ -86,7 +77,6 @@ packages = [
 only-include = [
     "src",
     "README.md",
-    "CHANGELOG.md",
     "LICENSE",
     "pyproject.toml"
 ]
