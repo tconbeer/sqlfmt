@@ -38,15 +38,27 @@ select 1
 )))))__SQLFMT_OUTPUT__(((((
 with
     one as (
+
         select  -- short
             1
+
     ),
+
     two as (
+
         select  -- too long but it's an inline comment so it has to stay here or we'll get stability issues
             a_long_enough_field, another_long_enough_field
+
     ),
-    three as (select 1),  -- short enough
+
+    three as (
+
+        select 1
+
+    ),  -- short enough
+
     four as (
+
         select
             my_table.a_field,  -- too long but it's an inline comment so it has to stay here or we'll get stability issues
             my_table.b_field,
@@ -55,6 +67,7 @@ with
         from my_table
 
         where something == 5
+
     )
 
 select  -- not distinct

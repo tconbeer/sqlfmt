@@ -32,6 +32,7 @@ select 1
 -- depends_on: {{ ref('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx') }}
 with
     table_a as (
+
         select
             /* Notice that this select statement can fit on a single line without comments */
             col1,
@@ -40,12 +41,14 @@ with
             special_column,
 
         from {{ ref("table_a") }}
+
     ),
+
     /* Some interesting comments above a CTE with a leading comma */
     table_b as (
-        select *
 
-        from {{ ref("table_b") }}
+        select * from {{ ref("table_b") }}
+
     )
 
 select *

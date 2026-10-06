@@ -342,6 +342,79 @@ class Line:
         return False
 
     @property
+    def is_with_clause_start(self) -> bool:
+        """
+        True for a Line that starts a `with` clause (the start of a CTE
+        chain). `with` isn't a major clause keyword (it doesn't get a
+        blank line before it when following e.g. a derived table's own
+        `select`), but it does need a blank line after a dbt config()
+        block (house style story 8) -- see is_dbt_config_block.
+        """
+        try:
+            node = self.nodes[0]
+        except IndexError:
+            return False
+        return (
+            node.is_unterm_keyword and node.value.split(" ", 1)[0] == "with"
+        )
+
+    @property
+    def is_dbt_config_block(self) -> bool:
+        """
+        True for a Line at the top of the file consisting of a single
+        jinja expression that calls dbt's config() macro, e.g.
+        `{{ config(...) }}`. Used to insert a blank line between the
+        config block and the `with`/`select` that follows it (house
+        style story 8).
+        """
+        if self.previous_node is not None:
+            return False
+        content_nodes = [n for n in self.nodes if not n.is_newline]
+        if len(content_nodes) != 1 or not content_nodes[0].is_jinja:
+            return False
+        return "config(" in content_nodes[0].value.replace(" ", "").lower()
+
+    @property
+    def is_inside_cte_body(self) -> bool:
+        """
+        True for a Line whose innermost open bracket at its start is a
+        CTE's opening paren (i.e., this Line is part of a CTE's body).
+        """
+        ob = self.open_brackets
+        return bool(ob) and ob[-1].is_cte_open_paren
+
+    @property
+    def opens_cte_body(self) -> bool:
+        """
+        True for a Line that ends with a CTE's opening paren, e.g.
+        "renamed as (". Used to insert a blank line immediately after.
+        """
+        content_nodes = [n for n in self.nodes if not n.is_newline]
+        return bool(content_nodes) and content_nodes[-1].is_cte_open_paren
+
+    @property
+    def closes_cte_body(self) -> bool:
+        """
+        True for a Line, like ")" or "),", that closes a CTE's body
+        (opened on a previous line). Used to insert a blank line
+        immediately before.
+        """
+        if (
+            self.previous_node is not None
+            and self.previous_node.open_brackets
+            and self.nodes
+        ):
+            explicit_brackets = [
+                b for b in self.previous_node.open_brackets if b.is_opening_bracket
+            ]
+            if (
+                explicit_brackets
+                and explicit_brackets[-1] not in self.nodes[-1].open_brackets
+            ):
+                return explicit_brackets[-1].is_cte_open_paren
+        return False
+
+    @property
     def opens_new_bracket(self) -> bool:
         """
         Returns True iff the Nodes in this Line open a new explicit bracket and do

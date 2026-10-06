@@ -39,7 +39,6 @@ where
     c
     + d
     < e
-
 )))))__SQLFMT_OUTPUT__(((((
 with  -- with
     tbl  -- tbl
@@ -51,8 +50,12 @@ with  -- with
             4  -- four inline
     ),  -- close
     second  -- second
-    as (select 1),
-    third as (select 2)  -- third
+    as (
+        select 1
+    ),
+    third as (
+        select 2
+    )  -- third
 select *
 from
     tbl,  -- tbl

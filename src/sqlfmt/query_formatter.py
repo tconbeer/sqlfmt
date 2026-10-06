@@ -152,6 +152,50 @@ class QueryFormatter:
 
         return new_lines
 
+    def _box_cte_bodies(self, lines: List[Line]) -> List[Line]:
+        """
+        Every CTE's body gets a blank line immediately after its opening
+        "as (" and immediately before its closing ")" (house style
+        stories 5-6), regardless of whether the body is one line (a
+        trivial import CTE) or many. The closing ")" (or "),") is already
+        glued onto a single Line by the merger's existing stubborn-merge
+        behavior -- nothing to do there. Also inserts a blank line after
+        a CTE's closing line when more content follows (e.g. the next
+        CTE's name), so CTE boundaries are unambiguous; the separate
+        blank-line-before-next-major-clause rule in _insert_blank_lines
+        already covers the case where the with-clause ends and the main
+        query's own first clause follows.
+        """
+        node_manager = NodeManager(self.mode.dialect.case_sensitive_names)
+
+        def blank_line_after(prev_line: Line) -> Line:
+            blank_line = Line(previous_node=prev_line.nodes[-1] if prev_line.nodes else None)
+            node_manager.append_newline(blank_line)
+            return blank_line
+
+        new_lines: List[Line] = []
+        for i, line in enumerate(lines):
+            if (
+                line.closes_cte_body
+                and not line.formatting_disabled
+                and new_lines
+                and not new_lines[-1].is_blank_line
+            ):
+                new_lines.append(blank_line_after(new_lines[-1]))
+
+            new_lines.append(line)
+
+            next_line = lines[i + 1] if i + 1 < len(lines) else None
+            if (
+                (line.opens_cte_body or line.closes_cte_body)
+                and not line.formatting_disabled
+                and next_line is not None
+                and not next_line.is_blank_line
+            ):
+                new_lines.append(blank_line_after(line))
+
+        return new_lines
+
     def _insert_blank_lines(self, lines: List[Line]) -> List[Line]:
         """
         Inserts a blank Line before any Line that starts a new top-level
@@ -170,8 +214,11 @@ class QueryFormatter:
         node_manager = NodeManager(self.mode.dialect.case_sensitive_names)
         new_lines: List[Line] = []
         for line in lines:
+            starts_clause_after_config = (
+                line.is_with_clause_start or line.starts_new_major_clause
+            ) and bool(new_lines) and new_lines[-1].is_dbt_config_block
             if (
-                line.starts_new_major_clause
+                (line.starts_new_major_clause or starts_clause_after_config)
                 and not line.formatting_disabled
                 and new_lines
                 and not new_lines[-1].is_blank_line
@@ -221,6 +268,7 @@ class QueryFormatter:
             self._dedent_jinja_blocks,
             self._merge_lines,
             self._force_split_multi_item_clauses,
+            self._box_cte_bodies,
             self._insert_blank_lines,
             self._remove_extra_blank_lines,
         ]
