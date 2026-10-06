@@ -251,11 +251,33 @@ class NodeManager:
         whitespace replaced with a single space
         """
         if token.type.is_always_lowercased:
-            return " ".join(token.token.lower().split())
+            value = " ".join(token.token.lower().split())
+            if token.type is TokenType.UNTERM_KEYWORD:
+                value = self._canonicalize_join(value)
+            return value
         elif token.type is TokenType.NAME and not self.case_sensitive_names:
             return token.token.lower()
         else:
             return token.token
+
+    @staticmethod
+    def _canonicalize_join(value: str) -> str:
+        """
+        House style always spells out "inner join" explicitly (a bare
+        "join" means inner join), and never spells out "outer" for a
+        left/right join ("left outer join" -> "left join"). Other join
+        modifiers (full, cross, natural, semi/anti, etc.) are left as
+        whatever the source wrote, since the spec only constrains the
+        inner/left/right cases. This only ever rewrites the printed value
+        of a single already-lexed UNTERM_KEYWORD token (the join regex
+        matches all of these modifiers as one token), so it never adds or
+        removes a token -- safe for the token-equivalence safety check.
+        """
+        if value == "join":
+            return "inner join"
+        if value in ("left outer join", "right outer join"):
+            return value.replace(" outer", "")
+        return value
 
     def disable_formatting(
         self, token: Token, previous_node: Optional[Node]

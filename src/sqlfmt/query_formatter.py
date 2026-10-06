@@ -9,6 +9,7 @@ from sqlfmt.node import FORCE_SPLIT_CLAUSE_KEYWORDS, Node
 from sqlfmt.node_manager import NodeManager
 from sqlfmt.query import Query
 from sqlfmt.splitter import LineSplitter
+from sqlfmt.tokens import TokenType
 
 
 @dataclass
@@ -152,6 +153,84 @@ class QueryFormatter:
 
         return new_lines
 
+    def _force_split_join_on_clauses(self, lines: List[Line]) -> List[Line]:
+        """
+        A join's "on" condition always drops to its own line below the
+        join keyword and table reference, regardless of whether the whole
+        thing would fit on one line (unlike where/having, which only force
+        -split when there's more than one condition). Multiple and/or
+        -joined "on" conditions stack one per line, same as where/having.
+
+        When the join clause is too long to fit on one line, the merger's
+        existing operator-precedence-aware segment merging already
+        produces exactly this shape on its own (on/and/or each get their
+        own line, since ON is the tightest-binding operator tier) -- this
+        pass only has work to do when the merger successfully collapsed
+        the whole join (keyword + table ref + on + conditions) onto a
+        single Line because it was short enough to fit.
+        """
+        new_lines: List[Line] = []
+        for line in lines:
+            new_lines.extend(self._maybe_split_join_line(line))
+        return new_lines
+
+    def _maybe_split_join_line(self, line: Line) -> List[Line]:
+        if not line.nodes or not line.nodes[0].is_unterm_keyword:
+            return [line]
+
+        keyword_node = line.nodes[0]
+        if not keyword_node.value.endswith("join"):
+            return [line]
+
+        child_depth = (keyword_node.depth[0] + 1, keyword_node.depth[1])
+
+        def is_on(node: Node) -> bool:
+            return node.depth == child_depth and node.token.type is TokenType.ON
+
+        if not any(is_on(node) for node in line.nodes[1:]):
+            return [line]
+
+        def is_and_or(node: Node) -> bool:
+            return (
+                node.depth == child_depth
+                and node.is_boolean_operator
+                and node.value in ("and", "or")
+                and not node.is_the_and_after_the_between_operator
+            )
+
+        groups: List[List[Node]] = [[]]
+        on_seen = False
+        for node in line.nodes[1:]:
+            if node.is_newline:
+                continue
+            if is_on(node):
+                on_seen = True
+                groups.append([])
+            elif on_seen and is_and_or(node):
+                groups.append([])
+            groups[-1].append(node)
+
+        groups = [g for g in groups if g]
+        if not groups:
+            return [line]
+        groups[0] = [keyword_node] + groups[0]
+
+        node_manager = NodeManager(self.mode.dialect.case_sensitive_names)
+        new_lines: List[Line] = []
+        prev_node = line.previous_node
+        for group in groups:
+            new_line = Line.from_nodes(
+                previous_node=prev_node, nodes=group, comments=[]
+            )
+            node_manager.append_newline(new_line)
+            new_lines.append(new_line)
+            prev_node = new_line.nodes[-1]
+
+        if line.comments:
+            new_lines[-1].comments.extend(line.comments)
+
+        return new_lines
+
     def _insert_blank_lines(self, lines: List[Line]) -> List[Line]:
         """
         Inserts a blank Line before any Line that starts a new top-level
@@ -221,6 +300,7 @@ class QueryFormatter:
             self._dedent_jinja_blocks,
             self._merge_lines,
             self._force_split_multi_item_clauses,
+            self._force_split_join_on_clauses,
             self._insert_blank_lines,
             self._remove_extra_blank_lines,
         ]
