@@ -92,6 +92,139 @@ class QueryFormatter:
 
         return lines
 
+    def _merge_single_condition_clause_keyword(self, lines: List[Line]) -> List[Line]:
+        """
+        Story 11: a single-condition where/having clause stays on the
+        same line as the keyword, even when that one condition's own
+        right-hand side is a multi-line subquery (e.g. `where
+        customer_id in (select ...)`). The generic merger can't glue
+        the keyword onto the condition in one pass in that case --
+        the subquery's own content makes the whole clause too long to
+        merge as a single unit, so the merger leaves the keyword as
+        its own bare Line, followed by the (unmerged) first Line of
+        the condition. This re-glues the two back together whenever
+        the clause has exactly one condition (no and/or at the
+        keyword's child depth -- a multi-condition clause is correctly
+        left split by the merger/_force_split_multi_item_clauses,
+        per story 12's stacking rule, and must not be touched here).
+        """
+        new_lines: List[Line] = []
+        skip_next = False
+        for i, line in enumerate(lines):
+            if skip_next:
+                skip_next = False
+                continue
+            merged = self._maybe_glue_clause_keyword(lines, i)
+            if merged is not None:
+                self._dedent_glued_condition_subquery(lines, i, merged)
+                new_lines.append(merged)
+                skip_next = True
+            else:
+                new_lines.append(line)
+        return new_lines
+
+    def _maybe_glue_clause_keyword(
+        self, lines: List[Line], i: int
+    ) -> Optional[Line]:
+        line = lines[i]
+        next_line = lines[i + 1] if i + 1 < len(lines) else None
+        if next_line is None or next_line.is_blank_line or line.formatting_disabled:
+            return None
+        if not line.nodes or not line.nodes[0].is_unterm_keyword:
+            return None
+
+        keyword_node = line.nodes[0]
+        keyword = keyword_node.value.split(" ", 1)[0]
+        if keyword not in ("where", "having"):
+            return None
+        # a bare keyword Line has nothing but the keyword itself and a
+        # trailing newline -- if the merger already attached content,
+        # there's nothing for this pass to do.
+        content_nodes = [n for n in line.nodes if not n.is_newline]
+        if len(content_nodes) != 1:
+            return None
+
+        if not self._is_single_condition_clause(lines, i + 1, keyword_node):
+            return None
+
+        merged_nodes = content_nodes + [
+            n for n in next_line.nodes if not n.is_newline
+        ]
+        merged_line = Line.from_nodes(
+            previous_node=line.previous_node,
+            nodes=merged_nodes,
+            comments=line.comments + next_line.comments,
+        )
+        node_manager = NodeManager(self.mode.dialect.case_sensitive_names)
+        node_manager.append_newline(merged_line)
+        if merged_line.is_too_long(self.mode.line_length):
+            return None
+        return merged_line
+
+    def _dedent_glued_condition_subquery(
+        self, lines: List[Line], i: int, merged_line: Line
+    ) -> None:
+        """
+        After _maybe_glue_clause_keyword folds a where/having keyword
+        onto its single condition's Line, the keyword no longer
+        occupies its own indent level -- the condition's subquery (if
+        it ends in an open paren, e.g. `in (`/`exists (`) takes over
+        the visual nesting from there, per story 11. The subquery's
+        contents and closing paren were parsed one level deeper than
+        that (as children of the keyword's own pseudo-bracket, which
+        used to get its own printed line), so this strips the keyword
+        node out of their open_brackets to shift them back in by that
+        one level, mutating the shared Node objects in place (same
+        approach as _fix_case_then_depth's depth bump, just shrinking
+        instead of growing).
+        """
+        keyword_node = merged_line.nodes[0]
+        content_nodes = [n for n in merged_line.nodes if not n.is_newline]
+        if not content_nodes:
+            return
+        open_node = content_nodes[-1]
+        if open_node.token.type is not TokenType.BRACKET_OPEN:
+            return
+        close_idx = self._find_matching_close_idx(lines, i + 1, open_node)
+        if close_idx is None:
+            return
+        for later_line in lines[i + 1 : close_idx + 1]:
+            for node in later_line.nodes:
+                if keyword_node in node.open_brackets:
+                    node.open_brackets = [
+                        b for b in node.open_brackets if b is not keyword_node
+                    ]
+
+    @staticmethod
+    def _is_single_condition_clause(
+        lines: List[Line], start: int, keyword_node: Node
+    ) -> bool:
+        """
+        True iff the where/having clause starting with keyword_node has
+        exactly one and/or-free condition -- scanning forward from
+        `start` through the clause's own scope (any Line still nested
+        at or beneath the keyword's child depth) for a boolean and/or
+        at the keyword's immediate child depth, which would mean this
+        is a multi-condition clause that must stay split (story 12).
+        """
+        child_depth = (keyword_node.depth[0] + 1, keyword_node.depth[1])
+        for line in lines[start:]:
+            if not line.nodes:
+                continue
+            if line.depth[0] < child_depth[0]:
+                break
+            for node in line.nodes:
+                if node.is_newline:
+                    continue
+                if (
+                    node.depth == child_depth
+                    and node.is_boolean_operator
+                    and node.value in ("and", "or")
+                    and not node.is_the_and_after_the_between_operator
+                ):
+                    return False
+        return True
+
     def _force_split_multi_item_clauses(self, lines: List[Line]) -> List[Line]:
         """
         where/having/group by clauses with more than one item (multiple
@@ -747,6 +880,7 @@ class QueryFormatter:
             self._dedent_jinja_blocks,
             self._merge_lines,
             self._remove_semicolons,
+            self._merge_single_condition_clause_keyword,
             self._force_split_multi_item_clauses,
             self._force_split_join_on_clauses,
             self._fix_case_then_depth,
