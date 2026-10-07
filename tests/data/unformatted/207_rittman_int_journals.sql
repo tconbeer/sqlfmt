@@ -34,6 +34,7 @@ select * from journal_merge_list
 
     with
         journal_merge_list as (
+
             {% for source in var("finance_warehouse_journal_sources") %}
 
                 {% set relation_source = "stg_" + source + "_journals" %}
@@ -47,6 +48,7 @@ select * from journal_merge_list
                     union all
                 {% endif %}
             {% endfor %}
+
         )
 
     select *

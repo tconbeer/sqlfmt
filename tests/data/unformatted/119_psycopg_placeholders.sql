@@ -6,11 +6,9 @@ select image_data
 from images
 
 where id = %s
-;
 
 select image_data, dividend %% divisor as escaped_mod_operator
 
 from images
 
 where id in (%(one)s, %(two)s, %(three)s, %(f!o^u+r)s)
-;

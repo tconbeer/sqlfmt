@@ -380,6 +380,7 @@ with
             = 1
 
     ),
+
     renamed as (
 
         select

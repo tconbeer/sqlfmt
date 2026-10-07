@@ -140,6 +140,26 @@ def test_bare_append_newline(bare_line: Line, node_manager: NodeManager) -> None
     assert (new_last_node.token.spos, new_last_node.token.epos) == (0, 0)
 
 
+def test_is_semicolon_only(
+    bare_line: Line, node_manager: NodeManager, simple_line: Line
+) -> None:
+    # a bare line (just a newline) is not semicolon-only
+    node_manager.append_newline(bare_line)
+    assert not bare_line.is_semicolon_only
+
+    # a line with real content is not semicolon-only
+    assert not simple_line.is_semicolon_only
+
+    semicolon_token = Token(
+        type=TokenType.SEMICOLON, prefix="", token=";", spos=0, epos=1
+    )
+    semicolon_line = Line(previous_node=None)
+    semicolon_node = node_manager.create_node(semicolon_token, None)
+    semicolon_line.nodes.append(semicolon_node)
+    node_manager.append_newline(semicolon_line)
+    assert semicolon_line.is_semicolon_only
+
+
 def test_bare_with_previous_open_lists(bare_line: Line, simple_line: Line) -> None:
     bare_line.previous_node = simple_line.nodes[-1]
     assert bare_line.open_jinja_blocks == simple_line.nodes[-1].open_jinja_blocks

@@ -107,36 +107,43 @@ select * from joined
 
                 with
                     source as (
-                        select *
 
-                        from {{ source("fivetran_hubspot_crm", "deals") }}
+                        select * from {{ source("fivetran_hubspot_crm", "deals") }}
+
                     ),
+
                     hubspot_deal_company as (
-                        select *
 
-                        from {{ source("fivetran_hubspot_crm", "deal_companies") }}
+                        select * from {{ source("fivetran_hubspot_crm", "deal_companies") }}
+
                     ),
+
                     hubspot_deal_pipelines_source as (
-                        select *
 
-                        from {{ source("fivetran_hubspot_crm", "pipelines") }}
+                        select * from {{ source("fivetran_hubspot_crm", "pipelines") }}
+
                     ),
+
                     hubspot_deal_property_history as (
-                        select *
 
-                        from {{ source("fivetran_hubspot_crm", "property_history") }}
+                        select * from {{ source("fivetran_hubspot_crm", "property_history") }}
+
                     ),
+
                     hubspot_deal_stages as (
-                        select *
 
-                        from {{ source("fivetran_hubspot_crm", "pipeline_stages") }}
+                        select * from {{ source("fivetran_hubspot_crm", "pipeline_stages") }}
+
                     ),
+
                     hubspot_deal_owners as (
-                        select *
 
-                        from {{ source("fivetran_hubspot_crm", "owners") }}
+                        select * from {{ source("fivetran_hubspot_crm", "owners") }}
+
                     ),
+
                     renamed as (
+
                         select
                             deal_id as deal_id,
                             property_dealname as deal_name,
@@ -154,8 +161,11 @@ select * from joined
                             property_hs_lastmodifieddate as deal_last_modified_date
 
                         from source
+
                     ),
+
                     joined as (
+
                         select
                             d.deal_id,
                             concat(
@@ -184,6 +194,7 @@ select * from joined
                         left outer join
                             hubspot_deal_owners u
                             on safe_cast(d.deal_owner_id as int64) = u.owner_id
+
                     )
 
                 select *

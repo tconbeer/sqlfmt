@@ -54,11 +54,10 @@ FROM final
 with
     source as (
 
-        select *
-
-        from {{ ref("geozones_yaml_flatten_source") }}
+        select * from {{ ref("geozones_yaml_flatten_source") }}
 
     ),
+
     grouping as (
 
         select
@@ -95,6 +94,7 @@ with
         from source
 
     ),
+
     final as (
 
         select distinct

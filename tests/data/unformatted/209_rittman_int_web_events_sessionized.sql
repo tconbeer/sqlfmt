@@ -186,9 +186,9 @@ from ordered_conversion_tagged
 
     with
         events as (
-            select *
 
-            from {{ ref("int_web_events") }}
+            select * from {{ ref("int_web_events") }}
+
         /*  {% if is_incremental() %}
     where visitor_id in (
         select distinct visitor_id
@@ -317,12 +317,12 @@ from ordered_conversion_tagged
                 currency_code
 
             from session_numbers
+
         ),
+
         id_stitching as (
 
-            select *
-
-            from {{ ref("int_web_events_user_stitching") }}
+            select * from {{ ref("int_web_events_user_stitching") }}
 
         ),
 
@@ -338,7 +338,9 @@ from ordered_conversion_tagged
             left join id_stitching on id_stitching.visitor_id = session_ids.visitor_id
 
         ),
+
         ordered as (
+
             select
                 *,
 
@@ -372,7 +374,9 @@ from ordered_conversion_tagged
             from joined
 
         ),
+
         ordered_conversion_tagged as (
+
             select
                 o.*
                 {% if var("attribution_conversion_event_type") %}
@@ -428,6 +432,7 @@ from ordered_conversion_tagged
                 {% endif %}
 
             from ordered o
+
         )
 
     select *

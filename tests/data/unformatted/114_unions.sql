@@ -114,6 +114,7 @@ union all
 union all
 with
     geos as (
+
         select
             *,
             'mr' as geo_code,
@@ -140,6 +141,7 @@ with
             *, 'yt' as geo_code, 'Mayotte' as geo, 'Africa' as region, 'Eastern Africa' as subregion
 
         from `chrome-ux-report.country_yt.201907`
+
     )
 
 select geo

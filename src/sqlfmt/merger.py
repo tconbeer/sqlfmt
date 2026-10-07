@@ -9,6 +9,7 @@ from sqlfmt.mode import Mode
 from sqlfmt.node import Node, _is_over_open_paren
 from sqlfmt.operator_precedence import OperatorPrecedence
 from sqlfmt.segment import Segment, create_segments_from_lines
+from sqlfmt.tokens import TokenType
 
 
 @dataclass
@@ -25,7 +26,10 @@ class LineMerger:
         if len(lines) <= 1:
             return lines
 
-        if sum(1 for line in lines if line.starts_new_major_clause) > 1:
+        if (
+            sum(1 for line in lines if line.starts_new_major_clause) > 1
+            and not self._is_trivial_cte_import_body(lines)
+        ):
             raise CannotMergeException(
                 "Can't merge multiple top-level clauses onto one line"
             )
@@ -34,6 +38,18 @@ class LineMerger:
             raise CannotMergeException(
                 "Can't merge a non-trivial window function's sub-clauses, "
                 "or its over (...) open/close parens, onto the same line"
+            )
+
+        # a CTE's body must always be its own Line(s), separate from the
+        # Line that opens it ("name as (") and the Line that closes it
+        # (")" or "),") -- house style stories 5-6 require a blank line
+        # in both of those spots regardless of how short the body is, so
+        # they can never be collapsed together onto a single Line.
+        if any(line.opens_cte_body for line in lines[:-1]) or any(
+            line.closes_cte_body for line in lines[1:]
+        ):
+            raise CannotMergeException(
+                "Can't merge a CTE's open/close paren with its body"
             )
 
         nodes, comments = self._extract_components(lines)
@@ -211,6 +227,34 @@ class LineMerger:
             raise CannotMergeException("Can't merge lines containing multiline nodes")
         else:
             return node
+
+    @staticmethod
+    def _is_trivial_cte_import_body(lines: List[Line]) -> bool:
+        """
+        True iff lines are exactly a CTE's whole body, consisting only of
+        "select *" followed by "from <single source>" -- a trivial
+        import CTE (house style story 4), which is allowed to collapse
+        onto one line even though it contains two major-clause starts.
+        """
+        if not lines or not lines[0].is_inside_cte_body:
+            return False
+        content: List[Node] = []
+        for line in lines:
+            content.extend(n for n in line.nodes if not n.is_newline)
+        if len(content) < 3:
+            return False
+        select_kw, star, from_kw, *rest = content
+        if not (select_kw.is_unterm_keyword and select_kw.value == "select"):
+            return False
+        if star.token.type is not TokenType.STAR or star.is_multiplication_star:
+            return False
+        if not (from_kw.is_unterm_keyword and from_kw.value == "from"):
+            return False
+        if not rest:
+            return False
+        if any(n.is_comma or n.is_unterm_keyword for n in rest):
+            return False
+        return True
 
     @staticmethod
     def _extract_leading_blank_lines(lines: Iterable[Line]) -> List[Line]:
