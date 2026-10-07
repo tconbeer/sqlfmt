@@ -140,6 +140,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/513_house_style_comments_preserved.sql",
         "unformatted/514_house_style_no_semicolons.sql",
         "unformatted/515_house_style_composed_cast_in_coalesce.sql",
+        "unformatted/516_house_style_window_functions.sql",
         "unformatted/900_create_view.sql",
         "unformatted/998_unsupported_ddl_with_jinja.sql",
         # 999_unsupported_ddl.sql excluded for the same reason as 124/129/

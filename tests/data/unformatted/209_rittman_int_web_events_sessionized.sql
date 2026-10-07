@@ -208,7 +208,14 @@ from ordered_conversion_tagged
 
         numbered as (
 
-            select *, row_number() over (partition by visitor_id order by event_ts) as event_number
+            select
+
+                *,
+
+                row_number() over (
+                    partition by visitor_id
+                    order by event_ts
+                ) as event_number
 
             from events
 
@@ -221,7 +228,8 @@ from ordered_conversion_tagged
                 *,
 
                 lag(event_ts) over (
-                    partition by visitor_id order by event_number
+                    partition by visitor_id
+                    order by event_number
                 ) as previous_event_ts
 
             from numbered
@@ -335,16 +343,24 @@ from ordered_conversion_tagged
 
             select
                 *,
-                row_number() over (partition by blended_user_id order by event_ts) as event_seq,
+
                 row_number() over (
-                    partition by blended_user_id, session_id order by event_ts
+                    partition by blended_user_id
+                    order by event_ts
+                ) as event_seq,
+
+                row_number() over (
+                    partition by blended_user_id, session_id
+                    order by event_ts
                 ) as event_in_session_seq,
 
                 case
                     when
                         event_type = 'Page View'
-                        and session_id
-                        = lead(session_id, 1) over (partition by visitor_id order by event_number)
+                        and session_id = lead(session_id, 1) over (
+                            partition by visitor_id
+                            order by event_number
+                        )
                     then
                         {{
                             dbt_utils.datediff(
@@ -373,7 +389,8 @@ from ordered_conversion_tagged
                             )
                         then
                             lag(o.page_url, 1) over (
-                                partition by o.blended_user_id order by o.event_seq
+                                partition by o.blended_user_id
+                                order by o.event_seq
                             )
                     end as converting_page_url,
                     case
@@ -384,7 +401,8 @@ from ordered_conversion_tagged
                             )
                         then
                             lag(o.page_title, 1) over (
-                                partition by o.blended_user_id order by o.event_seq
+                                partition by o.blended_user_id
+                                order by o.event_seq
                             )
                     end as converting_page_title,
                     case
@@ -395,7 +413,8 @@ from ordered_conversion_tagged
                             )
                         then
                             lag(o.page_url, 2) over (
-                                partition by o.blended_user_id order by o.event_seq
+                                partition by o.blended_user_id
+                                order by o.event_seq
                             )
                     end as pre_converting_page_url,
                     case
@@ -406,7 +425,8 @@ from ordered_conversion_tagged
                             )
                         then
                             lag(o.page_title, 2) over (
-                                partition by o.blended_user_id order by o.event_seq
+                                partition by o.blended_user_id
+                                order by o.event_seq
                             )
                     end as pre_converting_page_title,
                 {% endif %}
