@@ -257,6 +257,140 @@ class QueryFormatter:
 
         return new_lines
 
+    def _fix_case_then_depth(self, lines: List[Line]) -> List[Line]:
+        """
+        Node depth is computed purely from bracket/keyword nesting, which
+        naturally puts a case expression's `then` keyword at the same
+        depth as its `when` -- but house style indents a `then` that
+        doesn't merge onto the `when`/and-or line (because the merged
+        line would be too long) one level deeper, aligned with the when
+        condition / stacked and/or lines, rather than back out to
+        `when`'s own indent.
+
+        This bumps the first node of every Line that's either such an
+        isolated `then`, or nested *underneath* one (e.g. a nested case
+        expression that's the `then` value) -- the latter needs the same
+        +1 to stay one level deeper than its now-bumped `then`, rather
+        than colliding with it. A Line nested under N isolated `then`s
+        (nested cases each landing in this situation) gets bumped by N,
+        so depth keeps increasing correctly at each level.
+        """
+        isolated_then_ids = {
+            id(line.nodes[0])
+            for line in lines
+            if line.nodes
+            and line.nodes[0].is_unterm_keyword
+            and line.nodes[0].value == "then"
+        }
+        if not isolated_then_ids:
+            return lines
+
+        for line in lines:
+            if not line.nodes:
+                continue
+            first = line.nodes[0]
+            bump = sum(1 for b in first.open_brackets if id(b) in isolated_then_ids)
+            if id(first) in isolated_then_ids:
+                bump += 1
+            if bump:
+                first.open_brackets = first.open_brackets + [first] * bump
+        return lines
+
+    def _box_function_wrapped_constructs(self, lines: List[Line]) -> List[Line]:
+        """
+        Story 25: a multi-line construct wrapped inside a function call's
+        parentheses (e.g. `sum(case ... end)`) gets a blank line
+        immediately after the function's opening `(` and immediately
+        before its closing `)`, same as the universal multi-line-wrap box
+        rule -- but only when the function call's parens actually span
+        more than one Line after merging (if the whole thing collapses
+        to one line, there's nothing to box).
+
+        Only case expressions are recognized as boxable constructs here;
+        window functions and subqueries are the same "construct wrapped
+        in a function call" shape and should extend
+        _is_boxable_construct_start rather than duplicating this pass.
+        """
+        boxable_ids = {
+            id(node.open_brackets[-1])
+            for node in self._iter_nodes(lines)
+            if self._is_boxable_construct_start(node)
+            and node.open_brackets
+            and node.open_brackets[-1].token.type is TokenType.BRACKET_OPEN
+            and node.open_brackets[-1].value == "("
+            and self._opens_function_call(node.open_brackets[-1])
+        }
+        if not boxable_ids:
+            return lines
+
+        node_manager = NodeManager(self.mode.dialect.case_sensitive_names)
+        new_lines: List[Line] = []
+        for line in lines:
+            if (
+                line.nodes
+                and new_lines
+                and not new_lines[-1].is_blank_line
+                and self._closes_boxable_bracket(line, boxable_ids)
+            ):
+                blank_line = Line(previous_node=line.previous_node)
+                node_manager.append_newline(blank_line)
+                new_lines.append(blank_line)
+
+            new_lines.append(line)
+
+            if (
+                line.nodes
+                and line.opens_new_bracket
+                and id(line.nodes[-1].open_brackets[-1]) in boxable_ids
+            ):
+                blank_line = Line(previous_node=line.nodes[-1])
+                node_manager.append_newline(blank_line)
+                new_lines.append(blank_line)
+
+        return new_lines
+
+    @staticmethod
+    def _iter_nodes(lines: List[Line]) -> List[Node]:
+        return [node for line in lines for node in line.nodes if not node.is_newline]
+
+    @staticmethod
+    def _is_boxable_construct_start(node: Node) -> bool:
+        """
+        True for a node that starts a construct story 25's box rule
+        applies to. Only case expressions are in scope for this ticket;
+        window functions/subqueries extend this predicate in their own
+        tickets rather than adding a parallel mechanism.
+        """
+        return node.token.type is TokenType.STATEMENT_START and node.value == "case"
+
+    @staticmethod
+    def _opens_function_call(paren_node: Node) -> bool:
+        """
+        True if paren_node is a "(" immediately preceded by a name, i.e.
+        a function call's opening paren, as opposed to a bare scalar
+        subquery wrapper (story 32's exception) or any other grouping
+        paren.
+        """
+        prev_token, _ = get_previous_token(paren_node.previous_node)
+        return prev_token is not None and prev_token.type in (
+            TokenType.NAME,
+            TokenType.QUOTED_NAME,
+        )
+
+    @staticmethod
+    def _closes_boxable_bracket(line: Line, boxable_ids: set) -> bool:
+        if not (line.previous_node and line.previous_node.open_brackets and line.nodes):
+            return False
+        explicit_brackets = [
+            b for b in line.previous_node.open_brackets if b.is_opening_bracket
+        ]
+        if not explicit_brackets:
+            return False
+        last = explicit_brackets[-1]
+        if last in line.nodes[-1].open_brackets:
+            return False
+        return id(last) in boxable_ids
+
     def _box_cte_bodies(self, lines: List[Line]) -> List[Line]:
         """
         Every CTE's body gets a blank line immediately after its opening
@@ -648,6 +782,8 @@ class QueryFormatter:
             self._remove_semicolons,
             self._force_split_multi_item_clauses,
             self._force_split_join_on_clauses,
+            self._fix_case_then_depth,
+            self._box_function_wrapped_constructs,
             self._box_cte_bodies,
             self._box_subqueries,
             self._insert_blank_lines,
