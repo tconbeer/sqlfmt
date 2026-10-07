@@ -38,8 +38,21 @@ select
     client,
     amp_plugin_mode,
     count(distinct url) as freq,
-    sum(count(distinct url)) over (partition by client) as total,
-    round(count(distinct url) * 100 / sum(count(distinct url)) over (partition by client), 2) as pct
+
+    sum(count(distinct url)) over (
+        partition by client
+    ) as total,
+
+    round(
+
+        count(distinct url)
+        * 100
+        / sum(count(distinct url)) over (
+            partition by client
+        ),
+        2
+
+    ) as pct
 
 from
     (

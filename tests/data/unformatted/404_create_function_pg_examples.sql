@@ -50,7 +50,6 @@ as 'select $1 + $2;'
 language sql
 immutable
 returns null on null input
-;
 
 create function add(a integer, b integer)
 returns integer
@@ -58,7 +57,6 @@ language sql
 immutable
 returns null on null input
 return a + b
-;
 
 create or replace function increment(i integer)
 returns integer
@@ -68,18 +66,15 @@ as $$
         END;
 $$
 language plpgsql
-;
 
 create function dup(in int, out f1 int, out f2 text)
 as $$ SELECT $1, CAST($1 AS text) || ' is text' $$
 language sql
-;
 
 create function dup(int)
 returns dup_result
 as $$ SELECT $1, CAST($1 AS text) || ' is text' $$
 language sql
-;
 
 create function check_password(uname text, pass text)
 returns boolean
@@ -97,4 +92,3 @@ language plpgsql
 security definer
 -- Set a secure search_path: trusted schema(s), then 'pg_temp'.
 set search_path = admin, pg_temp
-;

@@ -25,18 +25,15 @@ SELECT * FROM person
 select *
 
 from test tablesample (50 percent)
-;
 
 select *
 
 from a_super_duper_really_very_long_long_long_long_table_name tablesample (bucket 4 out of 10)
-;
 
 select age, name
 
 from person
 cluster by age
-;
 
 select
     foooooooooooooooooooooooooo,
@@ -50,13 +47,11 @@ cluster by
     barrrrrrrrrrrrrrrrrrrrrrrrrrrr,
     bazzzzzzzzzzzzzzzzzzzzzzzzzz,
     quxxxxxxxxxxxxxxxxxxxxxxxxxx
-;
 
 select age, name
 
 from person
 distribute by age
-;
 
 select
     foooooooooooooooooooooooooo,
@@ -70,13 +65,11 @@ distribute by
     barrrrrrrrrrrrrrrrrrrrrrrrrrrr,
     bazzzzzzzzzzzzzzzzzzzzzzzzzz,
     quxxxxxxxxxxxxxxxxxxxxxxxxxx
-;
 
 select age, name
 
 from person
 sort by age
-;
 
 select
     foooooooooooooooooooooooooo,
@@ -90,12 +83,10 @@ sort by
     barrrrrrrrrrrrrrrrrrrrrrrrrrrr,
     bazzzzzzzzzzzzzzzzzzzzzzzzzz,
     quxxxxxxxxxxxxxxxxxxxxxxxxxx
-;
 
 select *
 
 from person pivot (sum(age) as a, avg(class) as c for name in ('John' as john, 'Mike' as mike))
-;
 
 select *
 
@@ -103,17 +94,14 @@ from
     person pivot (
         sum(age) as a, avg(class) as c for(name, age) in (('John', 30) as c1, ('Mike', 40) as c2)
     )
-;
 
 select *
 
 from person
 lateral view explode(array(30, 60)) tablename as c_age
 lateral view explode(array(40, 80)) as d_age
-;
 
 select *
 
 from person
 lateral view outer explode(array()) tablename as c_age
-;

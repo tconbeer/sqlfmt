@@ -6,7 +6,7 @@ from sqlfmt.comment import Comment
 from sqlfmt.exception import CannotMergeException, SqlfmtSegmentError
 from sqlfmt.line import Line
 from sqlfmt.mode import Mode
-from sqlfmt.node import Node
+from sqlfmt.node import Node, _is_over_open_paren
 from sqlfmt.operator_precedence import OperatorPrecedence
 from sqlfmt.segment import Segment, create_segments_from_lines
 from sqlfmt.tokens import TokenType
@@ -26,7 +26,10 @@ class LineMerger:
         if len(lines) <= 1:
             return lines
 
-        if sum(1 for line in lines if line.starts_new_major_clause) > 1:
+        if (
+            sum(1 for line in lines if line.starts_new_major_clause) > 1
+            and not self._is_trivial_cte_import_body(lines)
+        ):
             raise CannotMergeException(
                 "Can't merge multiple top-level clauses onto one line"
             )
@@ -37,6 +40,24 @@ class LineMerger:
         ):
             raise CannotMergeException(
                 "Can't merge across a case when condition's and/or boundary"
+            )
+
+        if self._spans_window_clause_boundary(lines):
+            raise CannotMergeException(
+                "Can't merge a non-trivial window function's sub-clauses, "
+                "or its over (...) open/close parens, onto the same line"
+            )
+
+        # a CTE's body must always be its own Line(s), separate from the
+        # Line that opens it ("name as (") and the Line that closes it
+        # (")" or "),") -- house style stories 5-6 require a blank line
+        # in both of those spots regardless of how short the body is, so
+        # they can never be collapsed together onto a single Line.
+        if any(line.opens_cte_body for line in lines[:-1]) or any(
+            line.closes_cte_body for line in lines[1:]
+        ):
+            raise CannotMergeException(
+                "Can't merge a CTE's open/close paren with its body"
             )
 
         nodes, comments = self._extract_components(lines)
@@ -57,6 +78,33 @@ class LineMerger:
         )
 
         return leading_blank_lines + [merged_line] + trailing_blank_lines
+
+    @staticmethod
+    def _spans_window_clause_boundary(lines: List[Line]) -> bool:
+        """
+        A non-trivial window function's over (...) always puts each
+        sub-clause (partition by/order by/a frame clause) on its own
+        line, with the open/close parens also on their own lines, and
+        -- unlike the universal multi-line-construct rule -- never a
+        blank line directly inside them. That means these boundaries
+        must never collapse onto the same printed line as each other,
+        even when the result would otherwise fit under the line-length
+        limit.
+        """
+        subclause_starts = 0
+        boundary_seen = False
+        for line in lines:
+            if not line.nodes:
+                continue
+            if line.nodes[0].is_window_subclause_start:
+                subclause_starts += 1
+            if any(n.closes_non_trivial_over_clause for n in line.nodes):
+                boundary_seen = True
+            if line.opens_new_bracket and _is_over_open_paren(
+                line.nodes[-1].open_brackets[-1]
+            ):
+                boundary_seen = True
+        return subclause_starts > 1 or (subclause_starts >= 1 and boundary_seen)
 
     def safe_create_merged_line(self, lines: List[Line]) -> List[Line]:
         try:
@@ -187,6 +235,34 @@ class LineMerger:
             raise CannotMergeException("Can't merge lines containing multiline nodes")
         else:
             return node
+
+    @staticmethod
+    def _is_trivial_cte_import_body(lines: List[Line]) -> bool:
+        """
+        True iff lines are exactly a CTE's whole body, consisting only of
+        "select *" followed by "from <single source>" -- a trivial
+        import CTE (house style story 4), which is allowed to collapse
+        onto one line even though it contains two major-clause starts.
+        """
+        if not lines or not lines[0].is_inside_cte_body:
+            return False
+        content: List[Node] = []
+        for line in lines:
+            content.extend(n for n in line.nodes if not n.is_newline)
+        if len(content) < 3:
+            return False
+        select_kw, star, from_kw, *rest = content
+        if not (select_kw.is_unterm_keyword and select_kw.value == "select"):
+            return False
+        if star.token.type is not TokenType.STAR or star.is_multiplication_star:
+            return False
+        if not (from_kw.is_unterm_keyword and from_kw.value == "from"):
+            return False
+        if not rest:
+            return False
+        if any(n.is_comma or n.is_unterm_keyword for n in rest):
+            return False
+        return True
 
     @staticmethod
     def _extract_leading_blank_lines(lines: Iterable[Line]) -> List[Line]:

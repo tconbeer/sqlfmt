@@ -19,6 +19,10 @@ having sum(order_total) > 100
 
 order by total desc
 
-qualify row_number() over (order by total desc) = 1
+qualify
+    row_number() over (
+        order by total desc
+    )
+    = 1
 
 limit 10

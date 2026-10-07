@@ -50,6 +50,16 @@ class QueryFormatter:
         lines = merger.maybe_merge_lines(lines)
         return lines
 
+    def _remove_semicolons(self, lines: List[Line]) -> List[Line]:
+        """
+        The house style never prints semicolons (dbt models are single
+        bare statements), so Lines whose only content is a semicolon are
+        dropped entirely. Any following major clause (e.g. a second
+        statement's `select`) still gets its usual blank-line separation
+        from _insert_blank_lines, since that stage runs after this one.
+        """
+        return [line for line in lines if not line.is_semicolon_only]
+
     def _dedent_jinja_blocks(self, lines: List[Line]) -> List[Line]:
         """
         Jinja block tags, like {% if foo %} and {% endif %}, shouldn't
@@ -287,6 +297,50 @@ class QueryFormatter:
             return False
         return id(last) in boxable_ids
 
+    def _box_cte_bodies(self, lines: List[Line]) -> List[Line]:
+        """
+        Every CTE's body gets a blank line immediately after its opening
+        "as (" and immediately before its closing ")" (house style
+        stories 5-6), regardless of whether the body is one line (a
+        trivial import CTE) or many. The closing ")" (or "),") is already
+        glued onto a single Line by the merger's existing stubborn-merge
+        behavior -- nothing to do there. Also inserts a blank line after
+        a CTE's closing line when more content follows (e.g. the next
+        CTE's name), so CTE boundaries are unambiguous; the separate
+        blank-line-before-next-major-clause rule in _insert_blank_lines
+        already covers the case where the with-clause ends and the main
+        query's own first clause follows.
+        """
+        node_manager = NodeManager(self.mode.dialect.case_sensitive_names)
+
+        def blank_line_after(prev_line: Line) -> Line:
+            blank_line = Line(previous_node=prev_line.nodes[-1] if prev_line.nodes else None)
+            node_manager.append_newline(blank_line)
+            return blank_line
+
+        new_lines: List[Line] = []
+        for i, line in enumerate(lines):
+            if (
+                line.closes_cte_body
+                and not line.formatting_disabled
+                and new_lines
+                and not new_lines[-1].is_blank_line
+            ):
+                new_lines.append(blank_line_after(new_lines[-1]))
+
+            new_lines.append(line)
+
+            next_line = lines[i + 1] if i + 1 < len(lines) else None
+            if (
+                (line.opens_cte_body or line.closes_cte_body)
+                and not line.formatting_disabled
+                and next_line is not None
+                and not next_line.is_blank_line
+            ):
+                new_lines.append(blank_line_after(line))
+
+        return new_lines
+
     def _insert_blank_lines(self, lines: List[Line]) -> List[Line]:
         """
         Inserts a blank Line before any Line that starts a new top-level
@@ -305,8 +359,11 @@ class QueryFormatter:
         node_manager = NodeManager(self.mode.dialect.case_sensitive_names)
         new_lines: List[Line] = []
         for line in lines:
+            starts_clause_after_config = (
+                line.is_with_clause_start or line.starts_new_major_clause
+            ) and bool(new_lines) and new_lines[-1].is_dbt_config_block
             if (
-                line.starts_new_major_clause
+                (line.starts_new_major_clause or starts_clause_after_config)
                 and not line.formatting_disabled
                 and new_lines
                 and not new_lines[-1].is_blank_line
@@ -317,6 +374,155 @@ class QueryFormatter:
                 new_lines.append(blank_line)
             new_lines.append(line)
         return new_lines
+
+    def _box_window_functions(self, lines: List[Line]) -> List[Line]:
+        """
+        Boxes each non-trivial window function (an over (...) with a
+        partition by/order by/frame-clause sub-clause) with a blank
+        line, per the house style's universal multi-line-construct rule
+        -- except over (...) itself is never blank-line-boxed on the
+        inside (that's enforced upstream by the merger; see
+        Node.is_window_subclause_start).
+
+        - If the window function is wrapped inside another function
+          call's parens (e.g. coalesce(sum(a) over (...), 0)), the blank
+          line goes *inside* that outer call's parens, same as any other
+          multi-line construct wrapped in a call (story 25).
+        - If it's a bare item in a select list on its own, the blank
+          line goes *around* it instead (story 28), since there's no
+          outer bracket to box and over (...) can't be boxed on the
+          inside.
+        - Anywhere else (e.g. a window-function predicate in a qualify
+          clause), it's left alone -- out of scope for this rule.
+        """
+        node_line_idx = {
+            id(node): i for i, line in enumerate(lines) for node in line.nodes
+        }
+
+        insert_blank_before: set = set()
+        insert_blank_after: set = set()
+        seen_over_parens: set = set()
+
+        for line in lines:
+            for node in line.nodes:
+                if not node.is_window_subclause_start:
+                    continue
+                if line.formatting_disabled or node.formatting_disabled:
+                    continue
+                over_paren = node.open_brackets[-1]
+                if id(over_paren) in seen_over_parens:
+                    continue
+                seen_over_parens.add(id(over_paren))
+
+                open_idx = node_line_idx.get(id(over_paren))
+                if open_idx is None:
+                    continue
+                close_idx = self._find_matching_close_idx(
+                    lines, open_idx, over_paren
+                )
+                if close_idx is None:
+                    continue
+
+                outer = (
+                    over_paren.open_brackets[-1] if over_paren.open_brackets else None
+                )
+                if outer is None:
+                    continue
+                elif self._is_function_call_open_paren(outer):
+                    # story 25: box inside the outer call's parens
+                    outer_open_idx = node_line_idx.get(id(outer))
+                    if outer_open_idx is None:
+                        continue
+                    outer_close_idx = self._find_matching_close_idx(
+                        lines, outer_open_idx, outer
+                    )
+                    insert_blank_after.add(outer_open_idx)
+                    if outer_close_idx is not None:
+                        insert_blank_before.add(outer_close_idx)
+                elif (
+                    outer.is_unterm_keyword
+                    and outer.value.split(" ", 1)[0] == "select"
+                ):
+                    # story 28: box around the bare select-list item
+                    insert_blank_before.add(open_idx)
+                    insert_blank_after.add(close_idx)
+                # else: out of scope (e.g. a qualify predicate) -- leave as-is
+
+        if not insert_blank_before and not insert_blank_after:
+            return lines
+
+        node_manager = NodeManager(self.mode.dialect.case_sensitive_names)
+        new_lines: List[Line] = []
+        for i, line in enumerate(lines):
+            if (
+                i in insert_blank_before
+                and new_lines
+                and not new_lines[-1].is_blank_line
+            ):
+                blank_line = Line(previous_node=line.previous_node)
+                node_manager.append_newline(blank_line)
+                new_lines.append(blank_line)
+            new_lines.append(line)
+            if (
+                i in insert_blank_after
+                and i + 1 < len(lines)
+                and not lines[i + 1].is_blank_line
+            ):
+                blank_line = Line(
+                    previous_node=line.nodes[-1] if line.nodes else line.previous_node
+                )
+                node_manager.append_newline(blank_line)
+                new_lines.append(blank_line)
+        return new_lines
+
+    @staticmethod
+    def _opening_bracket_closed_by(node: Node) -> Optional[Node]:
+        """
+        Given a closing bracket Node, returns the opening bracket Node
+        that it closes (whether or not any content lies between them).
+        Returns None if node isn't a closing bracket.
+        """
+        if not node.is_closing_bracket:
+            return None
+        prev = node.previous_node
+        while prev is not None and prev.is_newline:
+            prev = prev.previous_node
+        if prev is None:
+            return None
+        if prev.is_opening_bracket:
+            return prev
+        if not prev.open_brackets:
+            return None
+        opening = prev.open_brackets[-1]
+        if opening.is_unterm_keyword:
+            # the closing bracket pops both the inner unterm keyword
+            # (e.g. partition by/where) *and* the bracket it's nested
+            # in -- see NodeManager.open_brackets -- so the bracket we
+            # actually care about is one level further out
+            if len(prev.open_brackets) < 2:
+                return None
+            opening = prev.open_brackets[-2]
+        return opening
+
+    @classmethod
+    def _find_matching_close_idx(
+        cls, lines: List[Line], open_idx: int, opening_node: Node
+    ) -> Optional[int]:
+        for j in range(open_idx, len(lines)):
+            for node in lines[j].nodes:
+                if cls._opening_bracket_closed_by(node) is opening_node:
+                    return j
+        return None
+
+    @staticmethod
+    def _is_function_call_open_paren(node: Node) -> bool:
+        if node.token.type is not TokenType.BRACKET_OPEN:
+            return False
+        prev_token, _ = get_previous_token(node.previous_node)
+        return prev_token is not None and prev_token.type in (
+            TokenType.NAME,
+            TokenType.QUOTED_NAME,
+        )
 
     def _remove_extra_blank_lines(self, lines: List[Line]) -> List[Line]:
         """
@@ -355,10 +561,13 @@ class QueryFormatter:
             self._format_jinja,
             self._dedent_jinja_blocks,
             self._merge_lines,
+            self._remove_semicolons,
             self._force_split_multi_item_clauses,
             self._fix_case_then_depth,
             self._box_function_wrapped_constructs,
+            self._box_cte_bodies,
             self._insert_blank_lines,
+            self._box_window_functions,
             self._remove_extra_blank_lines,
         ]
 

@@ -20,6 +20,33 @@ MAJOR_CLAUSE_KEYWORDS = frozenset(
 FORCE_SPLIT_CLAUSE_KEYWORDS = frozenset({"where", "having", "group"})
 
 
+def get_previous_node(prev_node: Optional["Node"]) -> Optional["Node"]:
+    """
+    Returns prev_node, unless prev_node is a newline or jinja statement
+    (nodes that don't set sql context), in which case it recurses to find
+    the nearest preceding Node that does
+    """
+    if prev_node is None:
+        return None
+    if prev_node.token.type.does_not_set_prev_sql_context:
+        return get_previous_node(prev_node.previous_node)
+    return prev_node
+
+
+def _is_over_open_paren(node: "Node") -> bool:
+    """
+    True if node is the opening "(" of a window function's over (...)
+    (as opposed to any other bracket, like a plain function call or
+    "within group (...)").
+    """
+    if node.token.type is not TokenType.BRACKET_OPEN:
+        return False
+    prev_token, _ = get_previous_token(node.previous_node)
+    if prev_token is None or prev_token.type is not TokenType.WORD_OPERATOR:
+        return False
+    return " ".join(prev_token.token.lower().split()) == "over"
+
+
 def get_previous_token(prev_node: Optional["Node"]) -> Tuple[Optional[Token], bool]:
     """
     Returns the token of prev_node, unless prev_node is a
@@ -122,6 +149,10 @@ class Node:
     @property
     def is_comma(self) -> bool:
         return self.token.type is TokenType.COMMA
+
+    @property
+    def is_semicolon(self) -> bool:
+        return self.token.type is TokenType.SEMICOLON
 
     @property
     def divides_queries(self) -> bool:
@@ -335,6 +366,84 @@ class Node:
             return False
         parent = self.open_brackets[-1]
         return parent.is_unterm_keyword and parent.value == "when"
+
+    @property
+    def is_window_subclause_start(self) -> bool:
+        """
+        True for the first Node (partition by/order by/a frame clause's
+        rows|range|groups keyword) of a sub-clause nested directly inside
+        a window function's over (...). Used to always force each
+        sub-clause onto its own line (house style story 26) -- unlike
+        "within group (order by ...)", which isn't a window function and
+        isn't in scope for this rule.
+        """
+        if not self.is_unterm_keyword:
+            return False
+        if not self.open_brackets:
+            return False
+        return _is_over_open_paren(self.open_brackets[-1])
+
+    @property
+    def closes_non_trivial_over_clause(self) -> bool:
+        """
+        True for the closing ")" of a window function's over (...) that
+        has at least one sub-clause inside it (i.e. isn't the trivial
+        `over ()`).
+        """
+        if not self.is_closing_bracket:
+            return False
+        prev = self.previous_node
+        while prev is not None and prev.is_newline:
+            prev = prev.previous_node
+        if prev is None:
+            return False
+        if prev.is_opening_bracket:
+            return _is_over_open_paren(prev)
+        if not prev.open_brackets:
+            return False
+        opening = prev.open_brackets[-1]
+        if opening.is_unterm_keyword:
+            # the closing bracket pops both the sub-clause keyword (e.g.
+            # partition by/order by) *and* the bracket it's nested in --
+            # see NodeManager.open_brackets -- so the bracket we actually
+            # care about is one level further out
+            if len(prev.open_brackets) < 2:
+                return False
+            opening = prev.open_brackets[-2]
+        return _is_over_open_paren(opening)
+
+    @property
+    def is_cte_open_paren(self) -> bool:
+        """
+        True for a BRACKET_OPEN "(" node that opens the body of a CTE --
+        i.e., that immediately follows the "as" in a with-clause's
+        "<name> as (" pattern. Used to box CTE bodies with blank lines
+        after the opening paren and before the closing paren (house style
+        stories 4-6), regardless of whether the body is trivial (one line)
+        or not.
+        """
+        if self.token.type is not TokenType.BRACKET_OPEN or self.value != "(":
+            return False
+        as_node = get_previous_node(self.previous_node)
+        if (
+            as_node is None
+            or as_node.token.type is not TokenType.WORD_OPERATOR
+            or as_node.value != "as"
+        ):
+            return False
+        name_node = get_previous_node(as_node.previous_node)
+        if name_node is None or name_node.token.type not in (
+            TokenType.NAME,
+            TokenType.QUOTED_NAME,
+        ):
+            return False
+        if not self.open_brackets:
+            return False
+        enclosing = self.open_brackets[-1]
+        return (
+            enclosing.is_unterm_keyword
+            and enclosing.value.split(" ", 1)[0] == "with"
+        )
 
     @property
     def is_set_operator(self) -> bool:

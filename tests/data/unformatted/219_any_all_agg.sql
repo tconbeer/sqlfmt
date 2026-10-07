@@ -14,7 +14,6 @@ from
 
         limit 10
     )
-;
 
 select
     max(number) as max_number,
@@ -30,7 +29,6 @@ from
 
         limit 10
     )
-;
 
 select foo
 
@@ -38,4 +36,3 @@ from bar
 
 where foo like all (baz)
     or foo like any (qux)
-;

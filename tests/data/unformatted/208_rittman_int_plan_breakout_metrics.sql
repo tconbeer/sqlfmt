@@ -30,9 +30,9 @@ select * from plans_breakout_merge_list
 
     with
         plans_breakout_merge_list as (
-            select *
 
-            from {{ ref("stg_baremetrics_plan_breakout") }}
+            select * from {{ ref("stg_baremetrics_plan_breakout") }}
+
         )
 
     select *
