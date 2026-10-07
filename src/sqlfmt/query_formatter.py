@@ -8,6 +8,7 @@ from sqlfmt.mode import Mode
 from sqlfmt.node import (
     FORCE_SPLIT_CLAUSE_KEYWORDS,
     Node,
+    _is_over_open_paren,
     get_previous_node,
     get_previous_token,
 )
@@ -306,10 +307,13 @@ class QueryFormatter:
         more than one Line after merging (if the whole thing collapses
         to one line, there's nothing to box).
 
-        Only case expressions are recognized as boxable constructs here;
-        window functions and subqueries are the same "construct wrapped
-        in a function call" shape and should extend
-        _is_boxable_construct_start rather than duplicating this pass.
+        Case expressions and window functions (via their `over (...)`
+        open paren) are recognized as boxable constructs here; any
+        other construct wrapped in a function call should likewise
+        extend _is_boxable_construct_start rather than duplicating this
+        pass. A bare, non-wrapped window function in a select list
+        (story 28) has no enclosing function call to box, so that case
+        is handled separately by _box_window_functions.
         """
         boxable_ids = {
             id(node.open_brackets[-1])
@@ -357,11 +361,16 @@ class QueryFormatter:
     def _is_boxable_construct_start(node: Node) -> bool:
         """
         True for a node that starts a construct story 25's box rule
-        applies to. Only case expressions are in scope for this ticket;
-        window functions/subqueries extend this predicate in their own
-        tickets rather than adding a parallel mechanism.
+        applies to: a case expression's `case`, or a window function's
+        `over (...)` open paren. Both shapes are the same "construct
+        wrapped in a function call" case -- node.open_brackets[-1] is
+        the enclosing call's paren, which the caller boxes. Any future
+        boxable construct should extend this predicate rather than
+        adding a parallel mechanism (see ticket #7's postmortem).
         """
-        return node.token.type is TokenType.STATEMENT_START and node.value == "case"
+        if node.token.type is TokenType.STATEMENT_START and node.value == "case":
+            return True
+        return node.token.type is TokenType.BRACKET_OPEN and _is_over_open_paren(node)
 
     @staticmethod
     def _opens_function_call(paren_node: Node) -> bool:
@@ -511,32 +520,7 @@ class QueryFormatter:
                 insert_blank_after.add(i)
             insert_blank_before.add(close_idx)
 
-        if not insert_blank_after and not insert_blank_before:
-            return lines
-
-        node_manager = NodeManager(self.mode.dialect.case_sensitive_names)
-        new_lines: List[Line] = []
-        for i, line in enumerate(lines):
-            if (
-                i in insert_blank_before
-                and new_lines
-                and not new_lines[-1].is_blank_line
-            ):
-                blank_line = Line(previous_node=line.previous_node)
-                node_manager.append_newline(blank_line)
-                new_lines.append(blank_line)
-            new_lines.append(line)
-            if (
-                i in insert_blank_after
-                and i + 1 < len(lines)
-                and not lines[i + 1].is_blank_line
-            ):
-                blank_line = Line(
-                    previous_node=line.nodes[-1] if line.nodes else line.previous_node
-                )
-                node_manager.append_newline(blank_line)
-                new_lines.append(blank_line)
-        return new_lines
+        return self._splice_blank_lines(lines, insert_blank_before, insert_blank_after)
 
     @staticmethod
     def _is_bare_scalar_subquery_paren(open_node: Node) -> bool:
@@ -595,23 +579,17 @@ class QueryFormatter:
 
     def _box_window_functions(self, lines: List[Line]) -> List[Line]:
         """
-        Boxes each non-trivial window function (an over (...) with a
-        partition by/order by/frame-clause sub-clause) with a blank
-        line, per the house style's universal multi-line-construct rule
-        -- except over (...) itself is never blank-line-boxed on the
+        Boxes a bare, non-wrapped window function that's a standalone
+        item in a select list (story 28) with a blank line above and
+        below -- the one window-function boxing shape that isn't
+        already covered by the general "construct wrapped in a
+        function call" rule (_box_function_wrapped_constructs, which
+        _is_boxable_construct_start now also recognizes over (...)
+        starts for). over (...) itself is never blank-line-boxed on the
         inside (that's enforced upstream by the merger; see
-        Node.is_window_subclause_start).
-
-        - If the window function is wrapped inside another function
-          call's parens (e.g. coalesce(sum(a) over (...), 0)), the blank
-          line goes *inside* that outer call's parens, same as any other
-          multi-line construct wrapped in a call (story 25).
-        - If it's a bare item in a select list on its own, the blank
-          line goes *around* it instead (story 28), since there's no
-          outer bracket to box and over (...) can't be boxed on the
-          inside.
-        - Anywhere else (e.g. a window-function predicate in a qualify
-          clause), it's left alone -- out of scope for this rule.
+        Node.is_window_subclause_start) -- this only adds blank lines
+        *around* the whole construct, and only when there's no
+        enclosing function call to box instead.
         """
         node_line_idx = {
             id(node): i for i, line in enumerate(lines) for node in line.nodes
@@ -632,6 +610,19 @@ class QueryFormatter:
                     continue
                 seen_over_parens.add(id(over_paren))
 
+                outer = (
+                    over_paren.open_brackets[-1] if over_paren.open_brackets else None
+                )
+                if not (
+                    outer is not None
+                    and outer.is_unterm_keyword
+                    and outer.value.split(" ", 1)[0] == "select"
+                ):
+                    # wrapped in a function call: _box_function_wrapped_constructs
+                    # already handles it; anything else (e.g. a qualify
+                    # predicate) is out of scope for this rule
+                    continue
+
                 open_idx = node_line_idx.get(id(over_paren))
                 if open_idx is None:
                     continue
@@ -641,57 +632,10 @@ class QueryFormatter:
                 if close_idx is None:
                     continue
 
-                outer = (
-                    over_paren.open_brackets[-1] if over_paren.open_brackets else None
-                )
-                if outer is None:
-                    continue
-                elif self._is_function_call_open_paren(outer):
-                    # story 25: box inside the outer call's parens
-                    outer_open_idx = node_line_idx.get(id(outer))
-                    if outer_open_idx is None:
-                        continue
-                    outer_close_idx = self._find_matching_close_idx(
-                        lines, outer_open_idx, outer
-                    )
-                    insert_blank_after.add(outer_open_idx)
-                    if outer_close_idx is not None:
-                        insert_blank_before.add(outer_close_idx)
-                elif (
-                    outer.is_unterm_keyword
-                    and outer.value.split(" ", 1)[0] == "select"
-                ):
-                    # story 28: box around the bare select-list item
-                    insert_blank_before.add(open_idx)
-                    insert_blank_after.add(close_idx)
-                # else: out of scope (e.g. a qualify predicate) -- leave as-is
+                insert_blank_before.add(open_idx)
+                insert_blank_after.add(close_idx)
 
-        if not insert_blank_before and not insert_blank_after:
-            return lines
-
-        node_manager = NodeManager(self.mode.dialect.case_sensitive_names)
-        new_lines: List[Line] = []
-        for i, line in enumerate(lines):
-            if (
-                i in insert_blank_before
-                and new_lines
-                and not new_lines[-1].is_blank_line
-            ):
-                blank_line = Line(previous_node=line.previous_node)
-                node_manager.append_newline(blank_line)
-                new_lines.append(blank_line)
-            new_lines.append(line)
-            if (
-                i in insert_blank_after
-                and i + 1 < len(lines)
-                and not lines[i + 1].is_blank_line
-            ):
-                blank_line = Line(
-                    previous_node=line.nodes[-1] if line.nodes else line.previous_node
-                )
-                node_manager.append_newline(blank_line)
-                new_lines.append(blank_line)
-        return new_lines
+        return self._splice_blank_lines(lines, insert_blank_before, insert_blank_after)
 
     @staticmethod
     def _opening_bracket_closed_by(node: Node) -> Optional[Node]:
@@ -732,15 +676,38 @@ class QueryFormatter:
                     return j
         return None
 
-    @staticmethod
-    def _is_function_call_open_paren(node: Node) -> bool:
-        if node.token.type is not TokenType.BRACKET_OPEN:
-            return False
-        prev_token, _ = get_previous_token(node.previous_node)
-        return prev_token is not None and prev_token.type in (
-            TokenType.NAME,
-            TokenType.QUOTED_NAME,
-        )
+    def _splice_blank_lines(
+        self, lines: List[Line], before_idxs: set, after_idxs: set
+    ) -> List[Line]:
+        """
+        Shared helper for passes (subqueries, bare window functions)
+        that have already decided, by original line index, which Lines
+        need a blank Line spliced in immediately before and/or after
+        them. Skips an insertion if a blank Line is already present, so
+        each pass stays idempotent.
+        """
+        if not before_idxs and not after_idxs:
+            return lines
+
+        node_manager = NodeManager(self.mode.dialect.case_sensitive_names)
+        new_lines: List[Line] = []
+        for i, line in enumerate(lines):
+            if i in before_idxs and new_lines and not new_lines[-1].is_blank_line:
+                blank_line = Line(previous_node=line.previous_node)
+                node_manager.append_newline(blank_line)
+                new_lines.append(blank_line)
+            new_lines.append(line)
+            if (
+                i in after_idxs
+                and i + 1 < len(lines)
+                and not lines[i + 1].is_blank_line
+            ):
+                blank_line = Line(
+                    previous_node=line.nodes[-1] if line.nodes else line.previous_node
+                )
+                node_manager.append_newline(blank_line)
+                new_lines.append(blank_line)
+        return new_lines
 
     def _remove_extra_blank_lines(self, lines: List[Line]) -> List[Line]:
         """
