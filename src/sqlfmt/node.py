@@ -20,6 +20,19 @@ MAJOR_CLAUSE_KEYWORDS = frozenset(
 FORCE_SPLIT_CLAUSE_KEYWORDS = frozenset({"where", "having", "group"})
 
 
+def get_previous_node(prev_node: Optional["Node"]) -> Optional["Node"]:
+    """
+    Returns prev_node, unless prev_node is a newline or jinja statement
+    (nodes that don't set sql context), in which case it recurses to find
+    the nearest preceding Node that does
+    """
+    if prev_node is None:
+        return None
+    if prev_node.token.type.does_not_set_prev_sql_context:
+        return get_previous_node(prev_node.previous_node)
+    return prev_node
+
+
 def get_previous_token(prev_node: Optional["Node"]) -> Tuple[Optional[Token], bool]:
     """
     Returns the token of prev_node, unless prev_node is a
@@ -122,6 +135,10 @@ class Node:
     @property
     def is_comma(self) -> bool:
         return self.token.type is TokenType.COMMA
+
+    @property
+    def is_semicolon(self) -> bool:
+        return self.token.type is TokenType.SEMICOLON
 
     @property
     def divides_queries(self) -> bool:
@@ -294,6 +311,39 @@ class Node:
             return False
         normalized = " ".join(prev_token.token.lower().split())
         return normalized in ("over", "within group")
+
+    @property
+    def is_cte_open_paren(self) -> bool:
+        """
+        True for a BRACKET_OPEN "(" node that opens the body of a CTE --
+        i.e., that immediately follows the "as" in a with-clause's
+        "<name> as (" pattern. Used to box CTE bodies with blank lines
+        after the opening paren and before the closing paren (house style
+        stories 4-6), regardless of whether the body is trivial (one line)
+        or not.
+        """
+        if self.token.type is not TokenType.BRACKET_OPEN or self.value != "(":
+            return False
+        as_node = get_previous_node(self.previous_node)
+        if (
+            as_node is None
+            or as_node.token.type is not TokenType.WORD_OPERATOR
+            or as_node.value != "as"
+        ):
+            return False
+        name_node = get_previous_node(as_node.previous_node)
+        if name_node is None or name_node.token.type not in (
+            TokenType.NAME,
+            TokenType.QUOTED_NAME,
+        ):
+            return False
+        if not self.open_brackets:
+            return False
+        enclosing = self.open_brackets[-1]
+        return (
+            enclosing.is_unterm_keyword
+            and enclosing.value.split(" ", 1)[0] == "with"
+        )
 
     @property
     def is_set_operator(self) -> bool:

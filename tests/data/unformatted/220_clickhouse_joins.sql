@@ -61,7 +61,6 @@ from table_1
 global left join table_2
     on equi_cond
     and closest_match_cond
-;
 
 select expressions_list
 
@@ -69,13 +68,11 @@ from table_1
 asof left join table_2
     on equi_cond
     and closest_match_cond
-;
 
 select expressions_list
 
 from table_1
 asof join table_2 using (equi_column1, equi_columnn, asof_column)
-;
 
 select *
 
@@ -93,13 +90,11 @@ paste join
 
         order by a desc
     ) t2
-;
 
 select a, b, totypename(a), totypename(b)
 
 from t_1
 full join t_2 using (a, b)
-;
 
 select uniq(userid)
 
@@ -114,7 +109,6 @@ where
 
         where counterid = 34
     )
-;
 
 select counterid, hits, visits
 
@@ -139,4 +133,3 @@ using counterid
 order by hits desc
 
 limit 10
-;

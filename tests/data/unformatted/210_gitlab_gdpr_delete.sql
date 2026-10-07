@@ -63,6 +63,7 @@ with
         group by 1
 
     ),
+
     non_email_columns as (
 
         select

@@ -13,4 +13,3 @@ select
     value
 
 from raw_source, lateral flatten(input => src:events)
-;

@@ -22,99 +22,117 @@ select 1
 )))))__SQLFMT_OUTPUT__(((((
 with
     "select" as (
-        select *
 
-        from foo.select
+        select * from foo.select
+
     ),
+
     "case" as (
-        select *
 
-        from foo.case
+        select * from foo.case
+
     ),
+
     "end" as (
-        select *
 
-        from foo.end
+        select * from foo.end
+
     ),
+
     "as" as (
-        select *
 
-        from foo.as
+        select * from foo.as
+
     ),
+
     "interval" as (
-        select *
 
-        from foo.interval
+        select * from foo.interval
+
     ),
+
     "exclude" as (
-        select *
 
-        from foo.exclude
+        select * from foo.exclude
+
     ),
+
     "using" as (
-        select *
 
-        from foo.using
+        select * from foo.using
+
     ),
+
     "on" as (
-        select *
 
-        from foo.on
+        select * from foo.on
+
     ),
+
     "and" as (
-        select *
 
-        from foo.and
+        select * from foo.and
+
     ),
+
     "limit" as (
-        select *
 
-        from foo.limit
+        select * from foo.limit
+
     ),
+
     "over" as (
-        select *
 
-        from foo.over
+        select * from foo.over
+
     ),
+
     "between" as (
-        select *
 
-        from foo.between
+        select * from foo.between
+
     ),
+
     "union" as (
-        select *
 
-        from foo.union
+        select * from foo.union
+
     ),
+
     "explain" as (
-        select *
 
-        from foo.explain
+        select * from foo.explain
+
     ),
+
     "grant" as (
-        select *
 
-        from foo.grant
+        select * from foo.grant
+
     ),
+
     "create" as (
-        select *
 
-        from foo.create
+        select * from foo.create
+
     ),
+
     "alter" as (
-        select *
 
-        from foo.alter
+        select * from foo.alter
+
     ),
+
     "truncate" as (
-        select *
 
-        from foo.truncate
+        select * from foo.truncate
+
     ),
-    "drop" as (
-        select *
 
-        from foo.drop
+    "drop" as (
+
+        select * from foo.drop
+
     )
 
 select 1

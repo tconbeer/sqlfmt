@@ -98,14 +98,12 @@ as 'class TestFunc {
     return x;
   }
 }'
-;
 
 create function my_decrement_udf(i numeric(9, 0))
 returns numeric
 language java
 imports = ('@~/my_decrement_udf_package_dir/my_decrement_udf_jar.jar')
 handler = 'my_decrement_udf_package.my_decrement_udf_class.my_decrement_udf_method'
-;
 
 create or replace function js_factorial(d double)
 returns double
@@ -122,7 +120,6 @@ as '
     return result;
   }
   '
-;
 
 create or replace function py_udf()
 returns variant
@@ -136,7 +133,6 @@ import xgboost as xgb
 def udf():
     return [np.__version__, pd.__version__, xgb.__version__]
 $$
-;
 
 create or replace function dream(i int)
 returns variant
@@ -147,7 +143,6 @@ imports = ('@my_stage/sleepy.py')
 create function pi_udf()
 returns float
 as '3.141592654::FLOAT'
-;
 
 create function simple_table_function()
 returns table(x integer, y integer)
@@ -156,13 +151,11 @@ as $$
     union all
     select 3, 4
   $$
-;
 
 create function multiply1(a number, b number)
 returns number
 comment = 'multiply two numbers'
 as 'a * b'
-;
 
 create or replace function get_countries_for_user(id number)
 returns table(country_code char, country_name varchar)
@@ -170,4 +163,3 @@ as 'select distinct c.country_code, c.country_name
       from user_addresses a, countries c
       where a.user_id = id
       and c.country_code = a.country_code'
-;
