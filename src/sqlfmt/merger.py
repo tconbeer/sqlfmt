@@ -42,6 +42,29 @@ class LineMerger:
                 "Can't merge across a case when condition's and/or boundary"
             )
 
+        # story 20: a case expression always breaks into the multi-line
+        # case/when/else/end layout -- there's no "stays inline if
+        # short/simple" exception the way window functions have (story
+        # 27). So `case`/`when`/`else` must never merge onto a prior
+        # line, and the closing `end` must never merge content from a
+        # prior when/then/else onto itself (though it may still merge
+        # with what comes *after* it, like a trailing alias, since
+        # that's not a case boundary).
+        if any(
+            line.nodes and line.nodes[0].is_case_clause_boundary
+            for line in lines[1:]
+        ):
+            raise CannotMergeException(
+                "Can't merge a case expression's case/when/else onto a prior line"
+            )
+        if any(
+            line.nodes and line.nodes[0].token.type is TokenType.STATEMENT_END
+            for line in lines[1:]
+        ):
+            raise CannotMergeException(
+                "Can't merge a case expression's closing end onto a prior line"
+            )
+
         if self._spans_window_clause_boundary(lines):
             raise CannotMergeException(
                 "Can't merge a non-trivial window function's sub-clauses, "

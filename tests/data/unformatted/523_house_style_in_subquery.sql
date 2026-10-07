@@ -8,14 +8,13 @@ select order_id, customer_id
 
 from orders
 
-where
-    customer_id in (
+where customer_id in (
 
-        select customer_id
+    select customer_id
 
-        from customers
+    from customers
 
-        where region = 'west'
-            and active = true
+    where region = 'west'
+        and active = true
 
-    )
+)

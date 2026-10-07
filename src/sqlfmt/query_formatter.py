@@ -8,6 +8,7 @@ from sqlfmt.mode import Mode
 from sqlfmt.node import (
     FORCE_SPLIT_CLAUSE_KEYWORDS,
     Node,
+    _is_over_open_paren,
     get_previous_node,
     get_previous_token,
 )
@@ -90,6 +91,200 @@ class QueryFormatter:
                     start_node.open_brackets = line.open_brackets
 
         return lines
+
+    def _merge_simple_when_then(self, lines: List[Line]) -> List[Line]:
+        """
+        Stories 21/22: whether a `when ... then ...` breaks onto two
+        lines must be judged per when-clause, independently of its
+        sibling whens in the same case. The generic recursive merger
+        segments a case's body by depth, and once any sibling when/
+        then pair in the case has been forced multi-line (story 22's
+        and/or rule, or -- once case expressions always break multi-
+        line per story 20 -- just by virtue of being in a case at all),
+        every when/then pair in that case ends up isolated into its
+        own single-Line segment by that depth-based segmentation, with
+        no further chance to recombine.
+
+        This re-merges any `when ...`/`then ...` pair still split onto
+        two Lines, whenever the when condition has no and/or (story 22
+        already keeps those split) and the combined line fits within
+        the line-length limit (story 21). A `then` Line that's bare
+        (nothing merged onto it yet, e.g. because its own value is a
+        multi-line nested construct) is left alone -- that's not this
+        bug, and must stay split.
+        """
+        node_manager = NodeManager(self.mode.dialect.case_sensitive_names)
+        new_lines: List[Line] = []
+        skip_next = False
+        for i, line in enumerate(lines):
+            if skip_next:
+                skip_next = False
+                continue
+            next_line = lines[i + 1] if i + 1 < len(lines) else None
+            if (
+                next_line is not None
+                and not next_line.is_blank_line
+                and not line.formatting_disabled
+                and not next_line.formatting_disabled
+                and line.nodes
+                and line.nodes[0].is_unterm_keyword
+                and line.nodes[0].value == "when"
+                and not any(
+                    n.is_case_when_condition_separator for n in line.nodes
+                )
+                and next_line.nodes
+                and next_line.nodes[0].is_unterm_keyword
+                and next_line.nodes[0].value == "then"
+                and len([n for n in next_line.nodes if not n.is_newline]) > 1
+            ):
+                content_nodes = [n for n in line.nodes if not n.is_newline] + [
+                    n for n in next_line.nodes if not n.is_newline
+                ]
+                merged_line = Line.from_nodes(
+                    previous_node=line.previous_node,
+                    nodes=content_nodes,
+                    comments=line.comments + next_line.comments,
+                )
+                node_manager.append_newline(merged_line)
+                if not merged_line.is_too_long(self.mode.line_length):
+                    new_lines.append(merged_line)
+                    skip_next = True
+                    continue
+            new_lines.append(line)
+        return new_lines
+
+    def _merge_single_condition_clause_keyword(self, lines: List[Line]) -> List[Line]:
+        """
+        Story 11: a single-condition where/having clause stays on the
+        same line as the keyword, even when that one condition's own
+        right-hand side is a multi-line subquery (e.g. `where
+        customer_id in (select ...)`). The generic merger can't glue
+        the keyword onto the condition in one pass in that case --
+        the subquery's own content makes the whole clause too long to
+        merge as a single unit, so the merger leaves the keyword as
+        its own bare Line, followed by the (unmerged) first Line of
+        the condition. This re-glues the two back together whenever
+        the clause has exactly one condition (no and/or at the
+        keyword's child depth -- a multi-condition clause is correctly
+        left split by the merger/_force_split_multi_item_clauses,
+        per story 12's stacking rule, and must not be touched here).
+        """
+        new_lines: List[Line] = []
+        skip_next = False
+        for i, line in enumerate(lines):
+            if skip_next:
+                skip_next = False
+                continue
+            merged = self._maybe_glue_clause_keyword(lines, i)
+            if merged is not None:
+                self._dedent_glued_condition_subquery(lines, i, merged)
+                new_lines.append(merged)
+                skip_next = True
+            else:
+                new_lines.append(line)
+        return new_lines
+
+    def _maybe_glue_clause_keyword(
+        self, lines: List[Line], i: int
+    ) -> Optional[Line]:
+        line = lines[i]
+        next_line = lines[i + 1] if i + 1 < len(lines) else None
+        if next_line is None or next_line.is_blank_line or line.formatting_disabled:
+            return None
+        if not line.nodes or not line.nodes[0].is_unterm_keyword:
+            return None
+
+        keyword_node = line.nodes[0]
+        keyword = keyword_node.value.split(" ", 1)[0]
+        if keyword not in ("where", "having"):
+            return None
+        # a bare keyword Line has nothing but the keyword itself and a
+        # trailing newline -- if the merger already attached content,
+        # there's nothing for this pass to do.
+        content_nodes = [n for n in line.nodes if not n.is_newline]
+        if len(content_nodes) != 1:
+            return None
+
+        if not self._is_single_condition_clause(lines, i + 1, keyword_node):
+            return None
+
+        merged_nodes = content_nodes + [
+            n for n in next_line.nodes if not n.is_newline
+        ]
+        merged_line = Line.from_nodes(
+            previous_node=line.previous_node,
+            nodes=merged_nodes,
+            comments=line.comments + next_line.comments,
+        )
+        node_manager = NodeManager(self.mode.dialect.case_sensitive_names)
+        node_manager.append_newline(merged_line)
+        if merged_line.is_too_long(self.mode.line_length):
+            return None
+        return merged_line
+
+    def _dedent_glued_condition_subquery(
+        self, lines: List[Line], i: int, merged_line: Line
+    ) -> None:
+        """
+        After _maybe_glue_clause_keyword folds a where/having keyword
+        onto its single condition's Line, the keyword no longer
+        occupies its own indent level -- the condition's subquery (if
+        it ends in an open paren, e.g. `in (`/`exists (`) takes over
+        the visual nesting from there, per story 11. The subquery's
+        contents and closing paren were parsed one level deeper than
+        that (as children of the keyword's own pseudo-bracket, which
+        used to get its own printed line), so this strips the keyword
+        node out of their open_brackets to shift them back in by that
+        one level, mutating the shared Node objects in place (same
+        approach as _fix_case_then_depth's depth bump, just shrinking
+        instead of growing).
+        """
+        keyword_node = merged_line.nodes[0]
+        content_nodes = [n for n in merged_line.nodes if not n.is_newline]
+        if not content_nodes:
+            return
+        open_node = content_nodes[-1]
+        if open_node.token.type is not TokenType.BRACKET_OPEN:
+            return
+        close_idx = self._find_matching_close_idx(lines, i + 1, open_node)
+        if close_idx is None:
+            return
+        for later_line in lines[i + 1 : close_idx + 1]:
+            for node in later_line.nodes:
+                if keyword_node in node.open_brackets:
+                    node.open_brackets = [
+                        b for b in node.open_brackets if b is not keyword_node
+                    ]
+
+    @staticmethod
+    def _is_single_condition_clause(
+        lines: List[Line], start: int, keyword_node: Node
+    ) -> bool:
+        """
+        True iff the where/having clause starting with keyword_node has
+        exactly one and/or-free condition -- scanning forward from
+        `start` through the clause's own scope (any Line still nested
+        at or beneath the keyword's child depth) for a boolean and/or
+        at the keyword's immediate child depth, which would mean this
+        is a multi-condition clause that must stay split (story 12).
+        """
+        child_depth = (keyword_node.depth[0] + 1, keyword_node.depth[1])
+        for line in lines[start:]:
+            if not line.nodes:
+                continue
+            if line.depth[0] < child_depth[0]:
+                break
+            for node in line.nodes:
+                if node.is_newline:
+                    continue
+                if (
+                    node.depth == child_depth
+                    and node.is_boolean_operator
+                    and node.value in ("and", "or")
+                    and not node.is_the_and_after_the_between_operator
+                ):
+                    return False
+        return True
 
     def _force_split_multi_item_clauses(self, lines: List[Line]) -> List[Line]:
         """
@@ -306,10 +501,13 @@ class QueryFormatter:
         more than one Line after merging (if the whole thing collapses
         to one line, there's nothing to box).
 
-        Only case expressions are recognized as boxable constructs here;
-        window functions and subqueries are the same "construct wrapped
-        in a function call" shape and should extend
-        _is_boxable_construct_start rather than duplicating this pass.
+        Case expressions and window functions (via their `over (...)`
+        open paren) are recognized as boxable constructs here; any
+        other construct wrapped in a function call should likewise
+        extend _is_boxable_construct_start rather than duplicating this
+        pass. A bare, non-wrapped window function in a select list
+        (story 28) has no enclosing function call to box, so that case
+        is handled separately by _box_window_functions.
         """
         boxable_ids = {
             id(node.open_brackets[-1])
@@ -357,11 +555,16 @@ class QueryFormatter:
     def _is_boxable_construct_start(node: Node) -> bool:
         """
         True for a node that starts a construct story 25's box rule
-        applies to. Only case expressions are in scope for this ticket;
-        window functions/subqueries extend this predicate in their own
-        tickets rather than adding a parallel mechanism.
+        applies to: a case expression's `case`, or a window function's
+        `over (...)` open paren. Both shapes are the same "construct
+        wrapped in a function call" case -- node.open_brackets[-1] is
+        the enclosing call's paren, which the caller boxes. Any future
+        boxable construct should extend this predicate rather than
+        adding a parallel mechanism (see ticket #7's postmortem).
         """
-        return node.token.type is TokenType.STATEMENT_START and node.value == "case"
+        if node.token.type is TokenType.STATEMENT_START and node.value == "case":
+            return True
+        return node.token.type is TokenType.BRACKET_OPEN and _is_over_open_paren(node)
 
     @staticmethod
     def _opens_function_call(paren_node: Node) -> bool:
@@ -511,32 +714,7 @@ class QueryFormatter:
                 insert_blank_after.add(i)
             insert_blank_before.add(close_idx)
 
-        if not insert_blank_after and not insert_blank_before:
-            return lines
-
-        node_manager = NodeManager(self.mode.dialect.case_sensitive_names)
-        new_lines: List[Line] = []
-        for i, line in enumerate(lines):
-            if (
-                i in insert_blank_before
-                and new_lines
-                and not new_lines[-1].is_blank_line
-            ):
-                blank_line = Line(previous_node=line.previous_node)
-                node_manager.append_newline(blank_line)
-                new_lines.append(blank_line)
-            new_lines.append(line)
-            if (
-                i in insert_blank_after
-                and i + 1 < len(lines)
-                and not lines[i + 1].is_blank_line
-            ):
-                blank_line = Line(
-                    previous_node=line.nodes[-1] if line.nodes else line.previous_node
-                )
-                node_manager.append_newline(blank_line)
-                new_lines.append(blank_line)
-        return new_lines
+        return self._splice_blank_lines(lines, insert_blank_before, insert_blank_after)
 
     @staticmethod
     def _is_bare_scalar_subquery_paren(open_node: Node) -> bool:
@@ -595,23 +773,17 @@ class QueryFormatter:
 
     def _box_window_functions(self, lines: List[Line]) -> List[Line]:
         """
-        Boxes each non-trivial window function (an over (...) with a
-        partition by/order by/frame-clause sub-clause) with a blank
-        line, per the house style's universal multi-line-construct rule
-        -- except over (...) itself is never blank-line-boxed on the
+        Boxes a bare, non-wrapped window function that's a standalone
+        item in a select list (story 28) with a blank line above and
+        below -- the one window-function boxing shape that isn't
+        already covered by the general "construct wrapped in a
+        function call" rule (_box_function_wrapped_constructs, which
+        _is_boxable_construct_start now also recognizes over (...)
+        starts for). over (...) itself is never blank-line-boxed on the
         inside (that's enforced upstream by the merger; see
-        Node.is_window_subclause_start).
-
-        - If the window function is wrapped inside another function
-          call's parens (e.g. coalesce(sum(a) over (...), 0)), the blank
-          line goes *inside* that outer call's parens, same as any other
-          multi-line construct wrapped in a call (story 25).
-        - If it's a bare item in a select list on its own, the blank
-          line goes *around* it instead (story 28), since there's no
-          outer bracket to box and over (...) can't be boxed on the
-          inside.
-        - Anywhere else (e.g. a window-function predicate in a qualify
-          clause), it's left alone -- out of scope for this rule.
+        Node.is_window_subclause_start) -- this only adds blank lines
+        *around* the whole construct, and only when there's no
+        enclosing function call to box instead.
         """
         node_line_idx = {
             id(node): i for i, line in enumerate(lines) for node in line.nodes
@@ -632,6 +804,19 @@ class QueryFormatter:
                     continue
                 seen_over_parens.add(id(over_paren))
 
+                outer = (
+                    over_paren.open_brackets[-1] if over_paren.open_brackets else None
+                )
+                if not (
+                    outer is not None
+                    and outer.is_unterm_keyword
+                    and outer.value.split(" ", 1)[0] == "select"
+                ):
+                    # wrapped in a function call: _box_function_wrapped_constructs
+                    # already handles it; anything else (e.g. a qualify
+                    # predicate) is out of scope for this rule
+                    continue
+
                 open_idx = node_line_idx.get(id(over_paren))
                 if open_idx is None:
                     continue
@@ -641,57 +826,10 @@ class QueryFormatter:
                 if close_idx is None:
                     continue
 
-                outer = (
-                    over_paren.open_brackets[-1] if over_paren.open_brackets else None
-                )
-                if outer is None:
-                    continue
-                elif self._is_function_call_open_paren(outer):
-                    # story 25: box inside the outer call's parens
-                    outer_open_idx = node_line_idx.get(id(outer))
-                    if outer_open_idx is None:
-                        continue
-                    outer_close_idx = self._find_matching_close_idx(
-                        lines, outer_open_idx, outer
-                    )
-                    insert_blank_after.add(outer_open_idx)
-                    if outer_close_idx is not None:
-                        insert_blank_before.add(outer_close_idx)
-                elif (
-                    outer.is_unterm_keyword
-                    and outer.value.split(" ", 1)[0] == "select"
-                ):
-                    # story 28: box around the bare select-list item
-                    insert_blank_before.add(open_idx)
-                    insert_blank_after.add(close_idx)
-                # else: out of scope (e.g. a qualify predicate) -- leave as-is
+                insert_blank_before.add(open_idx)
+                insert_blank_after.add(close_idx)
 
-        if not insert_blank_before and not insert_blank_after:
-            return lines
-
-        node_manager = NodeManager(self.mode.dialect.case_sensitive_names)
-        new_lines: List[Line] = []
-        for i, line in enumerate(lines):
-            if (
-                i in insert_blank_before
-                and new_lines
-                and not new_lines[-1].is_blank_line
-            ):
-                blank_line = Line(previous_node=line.previous_node)
-                node_manager.append_newline(blank_line)
-                new_lines.append(blank_line)
-            new_lines.append(line)
-            if (
-                i in insert_blank_after
-                and i + 1 < len(lines)
-                and not lines[i + 1].is_blank_line
-            ):
-                blank_line = Line(
-                    previous_node=line.nodes[-1] if line.nodes else line.previous_node
-                )
-                node_manager.append_newline(blank_line)
-                new_lines.append(blank_line)
-        return new_lines
+        return self._splice_blank_lines(lines, insert_blank_before, insert_blank_after)
 
     @staticmethod
     def _opening_bracket_closed_by(node: Node) -> Optional[Node]:
@@ -732,15 +870,38 @@ class QueryFormatter:
                     return j
         return None
 
-    @staticmethod
-    def _is_function_call_open_paren(node: Node) -> bool:
-        if node.token.type is not TokenType.BRACKET_OPEN:
-            return False
-        prev_token, _ = get_previous_token(node.previous_node)
-        return prev_token is not None and prev_token.type in (
-            TokenType.NAME,
-            TokenType.QUOTED_NAME,
-        )
+    def _splice_blank_lines(
+        self, lines: List[Line], before_idxs: set, after_idxs: set
+    ) -> List[Line]:
+        """
+        Shared helper for passes (subqueries, bare window functions)
+        that have already decided, by original line index, which Lines
+        need a blank Line spliced in immediately before and/or after
+        them. Skips an insertion if a blank Line is already present, so
+        each pass stays idempotent.
+        """
+        if not before_idxs and not after_idxs:
+            return lines
+
+        node_manager = NodeManager(self.mode.dialect.case_sensitive_names)
+        new_lines: List[Line] = []
+        for i, line in enumerate(lines):
+            if i in before_idxs and new_lines and not new_lines[-1].is_blank_line:
+                blank_line = Line(previous_node=line.previous_node)
+                node_manager.append_newline(blank_line)
+                new_lines.append(blank_line)
+            new_lines.append(line)
+            if (
+                i in after_idxs
+                and i + 1 < len(lines)
+                and not lines[i + 1].is_blank_line
+            ):
+                blank_line = Line(
+                    previous_node=line.nodes[-1] if line.nodes else line.previous_node
+                )
+                node_manager.append_newline(blank_line)
+                new_lines.append(blank_line)
+        return new_lines
 
     def _remove_extra_blank_lines(self, lines: List[Line]) -> List[Line]:
         """
@@ -780,6 +941,8 @@ class QueryFormatter:
             self._dedent_jinja_blocks,
             self._merge_lines,
             self._remove_semicolons,
+            self._merge_simple_when_then,
+            self._merge_single_condition_clause_keyword,
             self._force_split_multi_item_clauses,
             self._force_split_join_on_clauses,
             self._fix_case_then_depth,

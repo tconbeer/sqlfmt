@@ -14,8 +14,13 @@ select
     a,
     sum(a) over () as b,
     row_number() over () as c,
+    count(
 
-    count(case when a is null then 1 end) over (
+        case
+            when a is null then 1
+        end
+
+    ) over (
         partition by user_id, date_trunc('year', performed_at)
     ) as d,
 

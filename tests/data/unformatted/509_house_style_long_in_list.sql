@@ -6,13 +6,12 @@ select *
 
 from my_table
 
-where
-    status in (
-        'aaaaaaaaaa',
-        'bbbbbbbbbb',
-        'cccccccccc',
-        'dddddddddd',
-        'eeeeeeeeee',
-        'ffffffffff',
-        'gggggggggg'
-    )
+where status in (
+    'aaaaaaaaaa',
+    'bbbbbbbbbb',
+    'cccccccccc',
+    'dddddddddd',
+    'eeeeeeeeee',
+    'ffffffffff',
+    'gggggggggg'
+)

@@ -252,8 +252,7 @@ from ordered_conversion_tagged
             select
                 *,
                 case
-                    when period_of_inactivity * -1 <= {{ var("web_inactivity_cutoff") }}
-                        then 0
+                    when period_of_inactivity * -1 <= {{ var("web_inactivity_cutoff") }} then 0
                     else 1
                 end as new_session
 

@@ -8,14 +8,13 @@ select o.order_id
 
 from orders o
 
-where
-    exists (
+where exists (
 
-        select 1
+    select 1
 
-        from order_items i
+    from order_items i
 
-        where i.order_id = o.order_id
-            and i.qty > 0
+    where i.order_id = o.order_id
+        and i.qty > 0
 
-    )
+)

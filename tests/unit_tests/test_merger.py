@@ -152,7 +152,9 @@ def test_incomplete_merge(merger: LineMerger) -> None:
         "    first_field,\n",
         "    nullif(split_part(full_name, ' ', 2), '') as last_name,\n",
         "    another_field,\n",
-        "    case when short then 1 end,\n",
+        "    case\n",
+        "        when short then 1\n",
+        "    end,\n",
         "    yet_another_field,\n",
         "    and_still_another_field\n",
         "from my_table\n",
@@ -208,8 +210,11 @@ def test_case_then_merge(merger: LineMerger) -> None:
 
     expected = [
         "\n",
-        "case when some_initial_condition_is_true then some_other_condition "
-        "else something_else_entirely end\n",
+        "case\n",
+        "    when some_initial_condition_is_true\n",
+        "    then some_other_condition\n",
+        "    else something_else_entirely\n",
+        "end\n",
     ]
 
     assert result == expected
@@ -244,7 +249,11 @@ def test_merge_count_window_function(merger: LineMerger) -> None:
     result = list(map(str, merged_lines))
 
     expected = [
-        "count(case when a is null then 1 end) over (\n",
+        "count(\n",
+        "    case\n",
+        "        when a is null then 1\n",
+        "    end\n",
+        ") over (\n",
         "    partition by user_id, date_trunc('year', performed_at)\n",
         ") as d,\n",
     ]

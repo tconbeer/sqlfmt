@@ -22,7 +22,14 @@ select
 from orders
 )))))__SQLFMT_OUTPUT__(((((
 select
-    sum(case when status = 'a' then amount else 0 end) as total_a,
+    sum(
+
+        case
+            when status = 'a' then amount
+            else 0
+        end
+
+    ) as total_a,
     sum(
 
         case
@@ -38,7 +45,11 @@ select
 
             case
                 when status = 'a'
-                    then case when region = 'us' then amount else amount * 2 end
+                    then
+                        case
+                            when region = 'us' then amount
+                            else amount * 2
+                        end
                 else 0
             end
 

@@ -30,5 +30,9 @@ select
         from baz
         where qux = quux
     ) as foo1,
-    case when something then this else also end as more
+    case
+        when something
+        then this
+        else also
+    end as more
 from bar1
