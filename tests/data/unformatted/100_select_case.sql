@@ -37,7 +37,7 @@ select
     case when true then 10 end + 4,
     case  -- a comment with no spaces
         when something_long_that_keeps_this_from_wrapping
-        then something_else_long_long_long
+            then something_else_long_long_long
         else another_super_long_field_name
     end
 
