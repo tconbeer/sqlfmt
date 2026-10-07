@@ -56,6 +56,7 @@ from foo
         and var2 is not null
 
     limit 100
+
 )
 
 union
@@ -68,6 +69,7 @@ union
         and var2 is not null
 
     limit 100
+
 )
 
 union
@@ -92,6 +94,7 @@ union
         and var2 is not null
 
     limit 100
+
 )
 
 union all
@@ -109,6 +112,7 @@ union all
         ) as sorted_order
 
     from base
+
 )
 
 union all

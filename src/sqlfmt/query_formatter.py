@@ -5,7 +5,12 @@ from sqlfmt.jinjafmt import JinjaFormatter
 from sqlfmt.line import Line
 from sqlfmt.merger import LineMerger
 from sqlfmt.mode import Mode
-from sqlfmt.node import FORCE_SPLIT_CLAUSE_KEYWORDS, Node, get_previous_token
+from sqlfmt.node import (
+    FORCE_SPLIT_CLAUSE_KEYWORDS,
+    Node,
+    get_previous_node,
+    get_previous_token,
+)
 from sqlfmt.node_manager import NodeManager
 from sqlfmt.query import Query
 from sqlfmt.splitter import LineSplitter
@@ -296,6 +301,130 @@ class QueryFormatter:
 
         return new_lines
 
+    def _box_subqueries(self, lines: List[Line]) -> List[Line]:
+        """
+        Boxes a subquery's parens -- a derived table in from/join, an
+        `in (...)`/`exists (...)` subquery, or a bare scalar subquery --
+        with the universal multi-line-construct blank-line rule: a blank
+        line immediately after the opening "(" and immediately before the
+        closing ")" (house style story 19, 25, 33), with one documented
+        exception: a bare scalar-subquery wrapper (one with no `in`/
+        `exists`/`from`/join keyword directly before its open paren) gets
+        no blank line after its opening "(", only before its closing ")"
+        (story 32). A CTE's own open paren is excluded here, since
+        `_box_cte_bodies` already handles that case (and has no
+        bare-subquery exception to worry about).
+
+        Only parens that are genuinely multi-line are boxed: a subquery
+        the merger already collapsed onto a single Line (e.g.
+        `(select 1)`) has nothing to box, and is skipped naturally since
+        its open paren isn't the last content Node on its Line.
+        """
+        insert_blank_after: set = set()
+        insert_blank_before: set = set()
+
+        for i, line in enumerate(lines):
+            if line.formatting_disabled or not line.nodes:
+                continue
+            content_nodes = [n for n in line.nodes if not n.is_newline]
+            if not content_nodes:
+                continue
+            open_node = content_nodes[-1]
+            if (
+                open_node.token.type is not TokenType.BRACKET_OPEN
+                or open_node.value != "("
+            ):
+                continue
+            # CTE bodies (including ones _box_cte_bodies' stricter
+            # name-based detection misses, e.g. a jinja-templated CTE
+            # name) are out of scope here -- any paren opened directly
+            # inside a with-clause's bracket is a CTE body, not a
+            # derived table/scalar/in/exists subquery, and stays owned
+            # by _box_cte_bodies.
+            if open_node.is_cte_open_paren:
+                continue
+            enclosing = open_node.open_brackets[-1] if open_node.open_brackets else None
+            if (
+                enclosing is not None
+                and enclosing.is_unterm_keyword
+                and enclosing.value.split(" ", 1)[0] == "with"
+            ):
+                continue
+
+            next_line = next(
+                (
+                    later
+                    for later in lines[i + 1 :]
+                    if later.nodes and not later.is_blank_line
+                ),
+                None,
+            )
+            if next_line is None:
+                continue
+            first_content = next(
+                (n for n in next_line.nodes if not n.is_newline), None
+            )
+            if first_content is None or not first_content.is_unterm_keyword:
+                continue
+            if first_content.value.split(" ", 1)[0] not in ("select", "with"):
+                continue  # a plain grouping/function-call paren, not a subquery
+
+            close_idx = self._find_matching_close_idx(lines, i, open_node)
+            if close_idx is None or close_idx <= i + 1:
+                continue
+
+            if not self._is_bare_scalar_subquery_paren(open_node):
+                insert_blank_after.add(i)
+            insert_blank_before.add(close_idx)
+
+        if not insert_blank_after and not insert_blank_before:
+            return lines
+
+        node_manager = NodeManager(self.mode.dialect.case_sensitive_names)
+        new_lines: List[Line] = []
+        for i, line in enumerate(lines):
+            if (
+                i in insert_blank_before
+                and new_lines
+                and not new_lines[-1].is_blank_line
+            ):
+                blank_line = Line(previous_node=line.previous_node)
+                node_manager.append_newline(blank_line)
+                new_lines.append(blank_line)
+            new_lines.append(line)
+            if (
+                i in insert_blank_after
+                and i + 1 < len(lines)
+                and not lines[i + 1].is_blank_line
+            ):
+                blank_line = Line(
+                    previous_node=line.nodes[-1] if line.nodes else line.previous_node
+                )
+                node_manager.append_newline(blank_line)
+                new_lines.append(blank_line)
+        return new_lines
+
+    @staticmethod
+    def _is_bare_scalar_subquery_paren(open_node: Node) -> bool:
+        """
+        True for a subquery's opening "(" that isn't directly preceded by
+        `in`/`exists` (a predicate subquery) or `from`/a join keyword (a
+        derived table) -- i.e. the bare `(...)` scalar-subquery wrapper
+        that's the one exception to the universal open-paren blank-line
+        rule (house style story 32).
+        """
+        prev = get_previous_node(open_node.previous_node)
+        if prev is None:
+            return True
+        if prev.token.type is TokenType.WORD_OPERATOR:
+            if prev.value.split(" ")[-1] in ("in", "exists"):
+                return False
+        elif prev.token.type is TokenType.UNTERM_KEYWORD:
+            first_word = prev.value.split(" ", 1)[0]
+            if first_word == "from" or prev.value.endswith("join"):
+                return False
+        return True
+
     def _insert_blank_lines(self, lines: List[Line]) -> List[Line]:
         """
         Inserts a blank Line before any Line that starts a new top-level
@@ -520,6 +649,7 @@ class QueryFormatter:
             self._force_split_multi_item_clauses,
             self._force_split_join_on_clauses,
             self._box_cte_bodies,
+            self._box_subqueries,
             self._insert_blank_lines,
             self._box_window_functions,
             self._remove_extra_blank_lines,

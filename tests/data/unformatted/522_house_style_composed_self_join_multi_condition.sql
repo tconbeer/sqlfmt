@@ -16,10 +16,12 @@ inner join employees mgr
     and mgr.region = e.region
 left join
     (
+
         select employee_id, sum(amount) as total
 
         from orders
 
         group by employee_id
+
     ) recent
     on recent.employee_id = e.id

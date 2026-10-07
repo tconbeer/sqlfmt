@@ -67,6 +67,7 @@ select
             recentagg_topsymptoms_array.topsymptoms,
             recentagg_toppositivesymptoms_array.toppositivesymptoms,
             recentagg_topactivities_array.topactivities,
+
     ) recentagg,
 
 from recentagg_root

@@ -30,11 +30,13 @@ left join
     and something_else
 right join
     (
+
         select id, five, six, seven, eight, nine
 
         from my_table
 
         where some_filter is true
+
     ) five using (five.id)
 natural full outer join six
 left anti join seven

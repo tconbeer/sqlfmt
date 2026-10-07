@@ -15,6 +15,7 @@ limit 5
     select a
 
     from t2
+
 )
 
 union all
