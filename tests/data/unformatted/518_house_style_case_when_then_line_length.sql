@@ -11,8 +11,12 @@ select
 from orders
 )))))__SQLFMT_OUTPUT__(((((
 select
-    case when a then b end as short_case,
-    case when another_field = some_other_value then some_really_long_value end as still_fits,
+    case
+        when a then b
+    end as short_case,
+    case
+        when another_field = some_other_value then some_really_long_value
+    end as still_fits,
     case
         when yet_another_condition_name
             then

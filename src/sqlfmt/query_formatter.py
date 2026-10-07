@@ -92,6 +92,67 @@ class QueryFormatter:
 
         return lines
 
+    def _merge_simple_when_then(self, lines: List[Line]) -> List[Line]:
+        """
+        Stories 21/22: whether a `when ... then ...` breaks onto two
+        lines must be judged per when-clause, independently of its
+        sibling whens in the same case. The generic recursive merger
+        segments a case's body by depth, and once any sibling when/
+        then pair in the case has been forced multi-line (story 22's
+        and/or rule, or -- once case expressions always break multi-
+        line per story 20 -- just by virtue of being in a case at all),
+        every when/then pair in that case ends up isolated into its
+        own single-Line segment by that depth-based segmentation, with
+        no further chance to recombine.
+
+        This re-merges any `when ...`/`then ...` pair still split onto
+        two Lines, whenever the when condition has no and/or (story 22
+        already keeps those split) and the combined line fits within
+        the line-length limit (story 21). A `then` Line that's bare
+        (nothing merged onto it yet, e.g. because its own value is a
+        multi-line nested construct) is left alone -- that's not this
+        bug, and must stay split.
+        """
+        node_manager = NodeManager(self.mode.dialect.case_sensitive_names)
+        new_lines: List[Line] = []
+        skip_next = False
+        for i, line in enumerate(lines):
+            if skip_next:
+                skip_next = False
+                continue
+            next_line = lines[i + 1] if i + 1 < len(lines) else None
+            if (
+                next_line is not None
+                and not next_line.is_blank_line
+                and not line.formatting_disabled
+                and not next_line.formatting_disabled
+                and line.nodes
+                and line.nodes[0].is_unterm_keyword
+                and line.nodes[0].value == "when"
+                and not any(
+                    n.is_case_when_condition_separator for n in line.nodes
+                )
+                and next_line.nodes
+                and next_line.nodes[0].is_unterm_keyword
+                and next_line.nodes[0].value == "then"
+                and len([n for n in next_line.nodes if not n.is_newline]) > 1
+            ):
+                content_nodes = [n for n in line.nodes if not n.is_newline] + [
+                    n for n in next_line.nodes if not n.is_newline
+                ]
+                merged_line = Line.from_nodes(
+                    previous_node=line.previous_node,
+                    nodes=content_nodes,
+                    comments=line.comments + next_line.comments,
+                )
+                node_manager.append_newline(merged_line)
+                if not merged_line.is_too_long(self.mode.line_length):
+                    new_lines.append(merged_line)
+                    skip_next = True
+                    continue
+            new_lines.append(line)
+        return new_lines
+
     def _merge_single_condition_clause_keyword(self, lines: List[Line]) -> List[Line]:
         """
         Story 11: a single-condition where/having clause stays on the
@@ -880,6 +941,7 @@ class QueryFormatter:
             self._dedent_jinja_blocks,
             self._merge_lines,
             self._remove_semicolons,
+            self._merge_simple_when_then,
             self._merge_single_condition_clause_keyword,
             self._force_split_multi_item_clauses,
             self._force_split_join_on_clauses,
