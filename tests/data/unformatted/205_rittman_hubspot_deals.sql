@@ -184,14 +184,17 @@ select * from joined
                             u.email as owner_email
 
                         from renamed d
-                        left outer join hubspot_deal_company a on d.deal_id = a.deal_id
-                        left outer join
+                        left join hubspot_deal_company a
+                            on d.deal_id = a.deal_id
+                        left join
                             hubspot_deal_property_history h
                             on d.deal_id = h.deal_id
                             and h.name = concat('hs_date_entered_', d.deal_pipeline_stage_id)
-                        join hubspot_deal_stages s on d.deal_pipeline_stage_id = s.stage_id
-                        join hubspot_deal_pipelines_source p on s.pipeline_id = p.pipeline_id
-                        left outer join
+                        inner join hubspot_deal_stages s
+                            on d.deal_pipeline_stage_id = s.stage_id
+                        inner join hubspot_deal_pipelines_source p
+                            on s.pipeline_id = p.pipeline_id
+                        left join
                             hubspot_deal_owners u
                             on safe_cast(d.deal_owner_id as int64) = u.owner_id
 

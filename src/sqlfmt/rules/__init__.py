@@ -139,10 +139,22 @@ MAIN = [
         ),
     ),
     Rule(
+        # table aliases ("from orders as o" / "join orders as o") never
+        # print "as" under house style, while every other use of "as"
+        # (column aliases, CTE definitions) is unaffected -- see
+        # actions.maybe_add_table_alias_as for the context check.
+        name="table_alias_as",
+        priority=1098,
+        pattern=group(r"as") + group(r"\W", r"$"),
+        action=partial(
+            actions.handle_reserved_keyword,
+            action=actions.maybe_add_table_alias_as,
+        ),
+    ),
+    Rule(
         name="word_operator",
         priority=1100,
         pattern=group(
-            r"as",
             r"(not\s+)?between",
             r"cube",
             r"(not\s+)?exists",

@@ -31,7 +31,8 @@ with
         select o.order_id, o.customer_id, c.name, o.order_total
 
         from stg_orders o
-        inner join stg_customers c on o.customer_id = c.customer_id
+        inner join stg_customers c
+            on o.customer_id = c.customer_id
 
         where o.order_total > 0
 

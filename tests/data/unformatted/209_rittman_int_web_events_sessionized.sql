@@ -335,7 +335,8 @@ from ordered_conversion_tagged
                 coalesce(id_stitching.user_id, session_ids.visitor_id) as blended_user_id
 
             from session_ids
-            left join id_stitching on id_stitching.visitor_id = session_ids.visitor_id
+            left join id_stitching
+                on id_stitching.visitor_id = session_ids.visitor_id
 
         ),
 

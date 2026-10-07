@@ -141,6 +141,13 @@ from tests.util import check_formatting, read_test_data
         "unformatted/514_house_style_no_semicolons.sql",
         "unformatted/515_house_style_composed_cast_in_coalesce.sql",
         "unformatted/516_house_style_window_functions.sql",
+        "unformatted/516_house_style_inner_join_explicit.sql",
+        "unformatted/517_house_style_left_right_join_bare.sql",
+        "unformatted/518_house_style_table_alias_no_as.sql",
+        "unformatted/519_house_style_join_on_own_line.sql",
+        "unformatted/520_house_style_join_on_and_or_stacking.sql",
+        "unformatted/521_house_style_self_join.sql",
+        "unformatted/522_house_style_composed_self_join_multi_condition.sql",
         "unformatted/900_create_view.sql",
         "unformatted/998_unsupported_ddl_with_jinja.sql",
         # 999_unsupported_ddl.sql excluded for the same reason as 124/129/
