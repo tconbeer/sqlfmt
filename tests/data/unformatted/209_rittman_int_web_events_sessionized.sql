@@ -245,7 +245,7 @@ from ordered_conversion_tagged
                 *,
                 case
                     when period_of_inactivity * -1 <= {{ var("web_inactivity_cutoff") }}
-                    then 0
+                        then 0
                     else 1
                 end as new_session
 
@@ -339,12 +339,11 @@ from ordered_conversion_tagged
                 ) as event_in_session_seq,
 
                 case
-                    when
-                        event_type = 'Page View'
+                    when event_type = 'Page View'
                         and session_id
                         = lead(session_id, 1) over (partition by visitor_id order by event_number)
-                    then
-                        {{
+                        then
+                            {{
                             dbt_utils.datediff(
                                 "lead(event_ts,1) over (partition by visitor_id order by event_number)",
                                 "event_ts",
@@ -367,10 +366,10 @@ from ordered_conversion_tagged
                                 '{{ var(' attribution_conversion_event_type ') }}',
                                 '{{ var(' attribution_create_account_event_type ') }}'
                             )
-                        then
-                            lag(o.page_url, 1) over (
-                                partition by o.blended_user_id order by o.event_seq
-                            )
+                            then
+                                lag(o.page_url, 1) over (
+                                    partition by o.blended_user_id order by o.event_seq
+                                )
                     end as converting_page_url,
                     case
                         when
@@ -378,10 +377,10 @@ from ordered_conversion_tagged
                                 '{{ var(' attribution_conversion_event_type ') }}',
                                 '{{ var(' attribution_create_account_event_type ') }}'
                             )
-                        then
-                            lag(o.page_title, 1) over (
-                                partition by o.blended_user_id order by o.event_seq
-                            )
+                            then
+                                lag(o.page_title, 1) over (
+                                    partition by o.blended_user_id order by o.event_seq
+                                )
                     end as converting_page_title,
                     case
                         when
@@ -389,10 +388,10 @@ from ordered_conversion_tagged
                                 '{{ var(' attribution_conversion_event_type ') }}',
                                 '{{ var(' attribution_create_account_event_type ') }}'
                             )
-                        then
-                            lag(o.page_url, 2) over (
-                                partition by o.blended_user_id order by o.event_seq
-                            )
+                            then
+                                lag(o.page_url, 2) over (
+                                    partition by o.blended_user_id order by o.event_seq
+                                )
                     end as pre_converting_page_url,
                     case
                         when
@@ -400,10 +399,10 @@ from ordered_conversion_tagged
                                 '{{ var(' attribution_conversion_event_type ') }}',
                                 '{{ var(' attribution_create_account_event_type ') }}'
                             )
-                        then
-                            lag(o.page_title, 2) over (
-                                partition by o.blended_user_id order by o.event_seq
-                            )
+                            then
+                                lag(o.page_title, 2) over (
+                                    partition by o.blended_user_id order by o.event_seq
+                                )
                     end as pre_converting_page_title,
                 {% endif %}
 

@@ -296,6 +296,47 @@ class Node:
         return normalized in ("over", "within group")
 
     @property
+    def is_case_clause_boundary(self) -> bool:
+        """
+        True for a node that starts a case expression's `case`, `when`,
+        or `else` -- the discrete positions house style always renders on
+        their own line (story 20), never merged onto whatever precedes
+        them (unlike `then`, which may still join the tail of its `when`/
+        and-or line when it fits -- see is_case_when_condition_separator
+        and the merger guard that uses both of these). `end` doesn't need
+        this: it's already a STATEMENT_END/closing bracket, so the
+        splitter already always splits before it.
+        """
+        if self.token.type is TokenType.STATEMENT_START and self.value == "case":
+            return True
+        return self.is_unterm_keyword and self.value in ("when", "else")
+
+    @property
+    def is_case_when_condition_separator(self) -> bool:
+        """
+        True for a BOOLEAN_OPERATOR (and/or, excluding the "and" after a
+        "between" operator) that is a direct child of a case expression's
+        `when` keyword -- i.e., part of the when condition itself, not a
+        nested sub-expression's own and/or (which stays wherever it
+        naturally falls, e.g. inside a parenthesized group).
+
+        House style always breaks a when condition containing and/or onto
+        multiple lines, regardless of length, same as where/having and/or
+        stacking -- but when/then/else aren't top-level clauses (see
+        MAJOR_CLAUSE_KEYWORDS), so this is a parallel, narrower guard used
+        by the merger to prevent collapsing across this boundary, rather
+        than reusing the clause-level machinery.
+        """
+        if not (self.is_boolean_operator and self.value in ("and", "or")):
+            return False
+        if self.is_the_and_after_the_between_operator:
+            return False
+        if not self.open_brackets:
+            return False
+        parent = self.open_brackets[-1]
+        return parent.is_unterm_keyword and parent.value == "when"
+
+    @property
     def is_set_operator(self) -> bool:
         """
         True for union/union all/intersect/except/minus

@@ -9,6 +9,7 @@ from sqlfmt.mode import Mode
 from sqlfmt.node import Node
 from sqlfmt.operator_precedence import OperatorPrecedence
 from sqlfmt.segment import Segment, create_segments_from_lines
+from sqlfmt.tokens import TokenType
 
 
 @dataclass
@@ -28,6 +29,14 @@ class LineMerger:
         if sum(1 for line in lines if line.starts_new_major_clause) > 1:
             raise CannotMergeException(
                 "Can't merge multiple top-level clauses onto one line"
+            )
+
+        if any(
+            line.nodes and line.nodes[0].is_case_when_condition_separator
+            for line in lines[1:]
+        ):
+            raise CannotMergeException(
+                "Can't merge across a case when condition's and/or boundary"
             )
 
         nodes, comments = self._extract_components(lines)
@@ -241,11 +250,65 @@ class LineMerger:
                 except SqlfmtSegmentError:
                     merged_lines.extend(only_segment)
                 else:
-                    merged_lines.extend(only_segment[: i + 1])
-                    for segment in only_segment.split_after(i):
-                        merged_lines.extend(self.maybe_merge_lines(segment))
+                    # a case expression's `when` (or a stacked and/or
+                    # condition within one) wants to swallow as much of
+                    # its own nested content onto its head line as will
+                    # fit, up to the next case/when/else/and-or boundary
+                    # -- unlike a generic opening construct (select, a
+                    # bare bracket, case itself), which should stand
+                    # alone. See Node.is_case_clause_boundary and
+                    # Node.is_case_when_condition_separator. Only engage
+                    # this for a head that is itself `case` (which needs
+                    # to swallow a simple case's test expression, e.g.
+                    # `case grade`), `when`, or a when-condition's and/or
+                    # -- otherwise an unrelated head (e.g. select, a
+                    # function call) could wrongly swallow forward to a
+                    # case boundary buried deep inside its own nested
+                    # content.
+                    head_line = only_segment[i]
+                    head_node = head_line.nodes[0] if head_line.nodes else None
+                    head_wants_condition = head_node is not None and (
+                        head_node.is_case_when_condition_separator
+                        or (head_node.is_unterm_keyword and head_node.value == "when")
+                        or (
+                            head_node.token.type is TokenType.STATEMENT_START
+                            and head_node.value == "case"
+                        )
+                    )
+                    boundary_idx = (
+                        self._next_case_boundary_index(only_segment, i + 1)
+                        if head_wants_condition
+                        else None
+                    )
+                    if boundary_idx is not None:
+                        merged_lines.extend(
+                            self.safe_create_merged_line(only_segment[:boundary_idx])
+                        )
+                        for segment in only_segment.split_after(boundary_idx - 1):
+                            merged_lines.extend(self.maybe_merge_lines(segment))
+                    else:
+                        merged_lines.extend(only_segment[: i + 1])
+                        for segment in only_segment.split_after(i):
+                            merged_lines.extend(self.maybe_merge_lines(segment))
 
         return merged_lines
+
+    @staticmethod
+    def _next_case_boundary_index(segment: Segment, start: int) -> Optional[int]:
+        """
+        Returns the index, at or after start, of the first Line in
+        segment that starts a new case/when/else/and-or boundary (see
+        Node.is_case_clause_boundary, Node.is_case_when_condition_separator),
+        or None if there is no such Line.
+        """
+        for idx in range(start, len(segment)):
+            line = segment[idx]
+            if line.nodes and (
+                line.nodes[0].is_case_when_condition_separator
+                or line.nodes[0].is_case_clause_boundary
+            ):
+                return idx
+        return None
 
     def _fix_standalone_operators(self, segments: List[Segment]) -> List[Segment]:
         """
