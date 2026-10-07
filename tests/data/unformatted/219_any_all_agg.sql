@@ -8,11 +8,13 @@ select any(number) as any_number
 
 from
     (
+
         select number
 
         from system.numbers
 
         limit 10
+
     )
 
 select
@@ -23,11 +25,13 @@ select
 
 from
     (
+
         select number
 
         from system.numbers
 
         limit 10
+
     )
 
 select foo

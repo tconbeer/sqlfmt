@@ -12,6 +12,7 @@ select s.customer_id, s.total
 
 from
     (
+
         select customer_id, sum(order_total) as total
 
         from orders
@@ -21,6 +22,7 @@ from
         group by customer_id
 
         having sum(order_total) > 100
+
     ) s
 
 where s.total > 500

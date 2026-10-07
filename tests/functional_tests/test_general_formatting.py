@@ -154,6 +154,13 @@ from tests.util import check_formatting, read_test_data
         "unformatted/520_house_style_simple_case.sql",
         "unformatted/521_house_style_nested_case.sql",
         "unformatted/522_house_style_case_function_wrap.sql",
+        "unformatted/523_house_style_in_subquery.sql",
+        "unformatted/524_house_style_exists_subquery.sql",
+        "unformatted/525_house_style_derived_table_join.sql",
+        "unformatted/526_house_style_scalar_subquery.sql",
+        "unformatted/527_house_style_parenthesized_or_group.sql",
+        "unformatted/528_house_style_composed_derived_table_with_cte.sql",
+        "unformatted/529_house_style_composed_subqueries_and_or_group.sql",
         "unformatted/900_create_view.sql",
         "unformatted/998_unsupported_ddl_with_jinja.sql",
         # 999_unsupported_ddl.sql excluded for the same reason as 124/129/

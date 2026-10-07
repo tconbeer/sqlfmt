@@ -78,17 +78,21 @@ select *
 
 from
     (
+
         select number as a
 
         from numbers(2)
+
     ) t1
 paste join
     (
+
         select number as a
 
         from numbers(2)
 
         order by a desc
+
     ) t2
 
 select a, b, totypename(a), totypename(b)
@@ -103,30 +107,36 @@ from distributed_table
 where
     counterid = 101500
     and userid global in (
+
         select userid
 
         from distributed_table
 
         where counterid = 34
+
     )
 
 select counterid, hits, visits
 
 from
     (
+
         select counterid, count() as hits
 
         from test.hits
 
         group by counterid
+
     )
 any left join
     (
+
         select counterid, sum(sign) as visits
 
         from test.visits
 
         group by counterid
+
     )
 using counterid
 
