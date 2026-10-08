@@ -99,7 +99,7 @@ def test_preformatted_short_lines_env(
     assert "5 files formatted" in results.stderr
 
     # test that CLI flag overrides ENV VAR
-    args = f"{preformatted_dir.as_posix()} -l 88 --check"
+    args = f"{preformatted_dir.as_posix()} -l 100 --check"
     results = sqlfmt_runner.invoke(
         sqlfmt_main, args=args, env={"SQLFMT_LINE_LENGTH": "1"}
     )
@@ -141,11 +141,11 @@ def test_preformatted_config_file(
     copy_config_file_to_dst("valid_sqlfmt_config.toml", preformatted_dir)
     args = f"{preformatted_dir.as_posix()}"
     results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
-    # 3 files should fail formatting with longer line length in config
+    # 1 file should fail formatting with longer line length in config
     assert results.exit_code == 1
-    assert results.stderr.startswith("3 files failed formatting check")
+    assert results.stderr.startswith("1 file failed formatting check")
     # supply CLI args to override config file so checks pass
-    args = f"{preformatted_dir.as_posix()} --line-length 88"
+    args = f"{preformatted_dir.as_posix()} --line-length 100"
     results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
     assert results.exit_code == 0
 
@@ -219,9 +219,9 @@ def test_config_option(sqlfmt_runner: CliRunner, preformatted_dir: Path) -> None
         "--check"
     )
     results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
-    # 3 files should fail formatting with longer line length in config
+    # 1 file should fail formatting with longer line length in config
     assert results.exit_code == 1
-    assert results.stderr.startswith("3 files failed formatting check")
+    assert results.stderr.startswith("1 file failed formatting check")
 
     args = f"{preformatted_dir.as_posix()} --check"
     results = sqlfmt_runner.invoke(
@@ -230,19 +230,19 @@ def test_config_option(sqlfmt_runner: CliRunner, preformatted_dir: Path) -> None
         env={"SQLFMT_CONFIG": f"{preformatted_dir.as_posix()}/pyproject.toml"},
     )
     assert results.exit_code == 1
-    assert results.stderr.startswith("3 files failed formatting check")
+    assert results.stderr.startswith("1 file failed formatting check")
 
     # supply CLI args to override config file so checks pass
     args = (
         f"{preformatted_dir.as_posix()} "
         f"--config {(preformatted_dir / 'pyproject.toml').as_posix()} "
-        "--line-length 88 --check"
+        "--line-length 100 --check"
     )
     results = sqlfmt_runner.invoke(sqlfmt_main, args=args)
     assert results.exit_code == 0
 
     # supply CLI args to override config file so checks pass
-    args = f"{preformatted_dir.as_posix()} --line-length 88 --check"
+    args = f"{preformatted_dir.as_posix()} --line-length 100 --check"
     results = sqlfmt_runner.invoke(
         sqlfmt_main,
         args=args,

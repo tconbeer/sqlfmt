@@ -1,4 +1,3 @@
-
 {{ config(foo='bar') }}
 
 
@@ -60,10 +59,8 @@ select
 
     quxxxxxxxxxxx,
 
-    foooooooooooo
-    + barrrrrrrrrr
-    + bazzzzzzzzzzz
-    + quxxxxxxxxxxx as foooooooooooo_bar_baz_qux
+    foooooooooooo + barrrrrrrrrr + bazzzzzzzzzzz + quxxxxxxxxxxx as foooooooooooo_bar_baz_qux
+
 from fooooooooooooo.barrrrrrrrrr.bazzzzzzzzzzzzzz
 
 where

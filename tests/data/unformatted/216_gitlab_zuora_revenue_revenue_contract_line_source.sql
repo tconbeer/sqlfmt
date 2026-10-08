@@ -369,10 +369,18 @@ with
     zuora_revenue_revenue_contract_line as (
 
         select *
+
         from {{ source("zuora_revenue", "zuora_revenue_revenue_contract_line") }}
-        qualify rank() over (partition by id order by incr_updt_dt desc) = 1
+
+        qualify
+            rank() over (
+                partition by id
+                order by incr_updt_dt desc
+            )
+            = 1
 
     ),
+
     renamed as (
 
         select
@@ -707,9 +715,7 @@ with
             unbilled_evergreen_flag::varchar as is_unbilled_evergreen,
             k2_batch_id::varchar as k2_batch_id,
             reason_code::varchar as reason_code,
-            concat(
-                updt_prd_id::varchar, '01'
-            ) as revenue_contract_line_updated_period_id,
+            concat(updt_prd_id::varchar, '01') as revenue_contract_line_updated_period_id,
             ramp_id::varchar as ramp_id,
             concat(unbl_rvsl_prd::varchar, '01') as unbilled_reversal_period,
             ramp_cv_chg_flag::varchar as is_ramp_carve,
@@ -722,4 +728,5 @@ with
     )
 
 select *
+
 from renamed

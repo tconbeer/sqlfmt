@@ -10,9 +10,11 @@ from (values ('some long string literal', 'another very long literal', 'more str
 ) as v;
 )))))__SQLFMT_OUTPUT__(((((
 select *
+
 from (values (1, 2, 3), (4, 5, 6))
-;
+
 select *
+
 from
     (
         values
@@ -33,5 +35,4 @@ from
                 6
             ),
             ('something shorter', 'short', 'fits', 7, 8, 9)
-    ) as v
-;
+    ) v

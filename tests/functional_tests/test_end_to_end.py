@@ -11,8 +11,8 @@ from sqlfmt.cli import sqlfmt as sqlfmt_main
     [
         "",
         "--verbose",
-        "--line-length 88",
-        "-l 88",
+        "--line-length 100",
+        "-l 100",
         "--check",
         "--check -v",
         "--diff",

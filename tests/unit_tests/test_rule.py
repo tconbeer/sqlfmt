@@ -190,7 +190,7 @@ def get_rule(ruleset: List[Rule], rule_name: str) -> Rule:
         (MAIN, "word_operator", "over"),
         (MAIN, "word_operator", "within group"),
         (MAIN, "word_operator", "filter"),
-        (MAIN, "word_operator", "as"),
+        (MAIN, "table_alias_as", "as"),
         (MAIN, "word_operator", "tablesample"),
         (MAIN, "word_operator", "pivot"),
         (MAIN, "word_operator", "unpivot"),

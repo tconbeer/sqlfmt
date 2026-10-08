@@ -3,6 +3,49 @@ from typing import List, Optional, Tuple
 
 from sqlfmt.tokens import Token, TokenType
 
+# UNTERM_KEYWORD values (by first word) that start a top-level clause of a
+# select statement, as opposed to other UNTERM_KEYWORDs (joins, with, when/
+# then/else, partition by, ...) that are handled by other formatting rules.
+# This set is intentionally the only thing that need grow as more clauses
+# gain house-style treatment -- the blank-line-insertion machinery itself
+# (Line.starts_new_major_clause) is generic over whatever is listed here.
+MAJOR_CLAUSE_KEYWORDS = frozenset(
+    {"select", "from", "where", "group", "having", "order", "qualify", "limit"}
+)
+
+# Clause keywords (by first word) whose items (conditions joined by and/or,
+# or columns joined by commas) must always be split one-per-line when there
+# is more than one item, regardless of whether the whole clause would fit
+# on one line.
+FORCE_SPLIT_CLAUSE_KEYWORDS = frozenset({"where", "having", "group"})
+
+
+def get_previous_node(prev_node: Optional["Node"]) -> Optional["Node"]:
+    """
+    Returns prev_node, unless prev_node is a newline or jinja statement
+    (nodes that don't set sql context), in which case it recurses to find
+    the nearest preceding Node that does
+    """
+    if prev_node is None:
+        return None
+    if prev_node.token.type.does_not_set_prev_sql_context:
+        return get_previous_node(prev_node.previous_node)
+    return prev_node
+
+
+def _is_over_open_paren(node: "Node") -> bool:
+    """
+    True if node is the opening "(" of a window function's over (...)
+    (as opposed to any other bracket, like a plain function call or
+    "within group (...)").
+    """
+    if node.token.type is not TokenType.BRACKET_OPEN:
+        return False
+    prev_token, _ = get_previous_token(node.previous_node)
+    if prev_token is None or prev_token.type is not TokenType.WORD_OPERATOR:
+        return False
+    return " ".join(prev_token.token.lower().split()) == "over"
+
 
 def get_previous_token(prev_node: Optional["Node"]) -> Tuple[Optional[Token], bool]:
     """
@@ -106,6 +149,10 @@ class Node:
     @property
     def is_comma(self) -> bool:
         return self.token.type is TokenType.COMMA
+
+    @property
+    def is_semicolon(self) -> bool:
+        return self.token.type is TokenType.SEMICOLON
 
     @property
     def divides_queries(self) -> bool:
@@ -240,6 +287,169 @@ class Node:
             return False
         else:
             return self.has_preceding_between_operator
+
+    @property
+    def is_major_clause_keyword(self) -> bool:
+        """
+        True for UNTERM_KEYWORD nodes that start a top-level clause of a
+        select statement (select, from, where, group by, having, order by,
+        qualify, limit). Used to insert blank lines between clauses, and
+        (for a subset of these) to force always-split formatting of
+        multi-item clauses. Deliberately keyed off a value set, not every
+        UNTERM_KEYWORD, so it excludes joins, with, when/then/else,
+        partition by, etc.
+        """
+        if not self.is_unterm_keyword:
+            return False
+        first_word = self.value.split(" ", 1)[0]
+        if first_word not in MAJOR_CLAUSE_KEYWORDS:
+            return False
+        # "order by" is also valid syntax nested inside a window function's
+        # over (...) or an ordered-set aggregate's within group (...) --
+        # that's not the select statement's own order by clause, so it
+        # doesn't count as a major clause (and shouldn't force a blank
+        # line / split).
+        if first_word == "order" and self._is_nested_in_over_or_within_group:
+            return False
+        return True
+
+    @property
+    def _is_nested_in_over_or_within_group(self) -> bool:
+        if not self.open_brackets:
+            return False
+        parent = self.open_brackets[-1]
+        if parent.token.type is not TokenType.BRACKET_OPEN:
+            return False
+        prev_token, _ = get_previous_token(parent.previous_node)
+        if prev_token is None or prev_token.type is not TokenType.WORD_OPERATOR:
+            return False
+        normalized = " ".join(prev_token.token.lower().split())
+        return normalized in ("over", "within group")
+
+    @property
+    def is_case_clause_boundary(self) -> bool:
+        """
+        True for a node that starts a case expression's `case`, `when`,
+        or `else` -- the discrete positions house style always renders on
+        their own line (story 20), never merged onto whatever precedes
+        them (unlike `then`, which may still join the tail of its `when`/
+        and-or line when it fits -- see is_case_when_condition_separator
+        and the merger guard that uses both of these). `end` doesn't need
+        this: it's already a STATEMENT_END/closing bracket, so the
+        splitter already always splits before it.
+        """
+        if self.token.type is TokenType.STATEMENT_START and self.value == "case":
+            return True
+        return self.is_unterm_keyword and self.value in ("when", "else")
+
+    @property
+    def is_case_when_condition_separator(self) -> bool:
+        """
+        True for a BOOLEAN_OPERATOR (and/or, excluding the "and" after a
+        "between" operator) that is a direct child of a case expression's
+        `when` keyword -- i.e., part of the when condition itself, not a
+        nested sub-expression's own and/or (which stays wherever it
+        naturally falls, e.g. inside a parenthesized group).
+
+        House style always breaks a when condition containing and/or onto
+        multiple lines, regardless of length, same as where/having and/or
+        stacking -- but when/then/else aren't top-level clauses (see
+        MAJOR_CLAUSE_KEYWORDS), so this is a parallel, narrower guard used
+        by the merger to prevent collapsing across this boundary, rather
+        than reusing the clause-level machinery.
+        """
+        if not (self.is_boolean_operator and self.value in ("and", "or")):
+            return False
+        if self.is_the_and_after_the_between_operator:
+            return False
+        if not self.open_brackets:
+            return False
+        parent = self.open_brackets[-1]
+        return parent.is_unterm_keyword and parent.value == "when"
+
+    @property
+    def is_window_subclause_start(self) -> bool:
+        """
+        True for the first Node (partition by/order by/a frame clause's
+        rows|range|groups keyword) of a sub-clause nested directly inside
+        a window function's over (...). Used to always force each
+        sub-clause onto its own line (house style story 26) -- unlike
+        "within group (order by ...)", which isn't a window function and
+        isn't in scope for this rule.
+        """
+        if not self.is_unterm_keyword:
+            return False
+        if not self.open_brackets:
+            return False
+        return _is_over_open_paren(self.open_brackets[-1])
+
+    @property
+    def closes_non_trivial_over_clause(self) -> bool:
+        """
+        True for the closing ")" of a window function's over (...) that
+        has at least one sub-clause inside it (i.e. isn't the trivial
+        `over ()`).
+        """
+        if not self.is_closing_bracket:
+            return False
+        prev = self.previous_node
+        while prev is not None and prev.is_newline:
+            prev = prev.previous_node
+        if prev is None:
+            return False
+        if prev.is_opening_bracket:
+            return _is_over_open_paren(prev)
+        if not prev.open_brackets:
+            return False
+        opening = prev.open_brackets[-1]
+        if opening.is_unterm_keyword:
+            # the closing bracket pops both the sub-clause keyword (e.g.
+            # partition by/order by) *and* the bracket it's nested in --
+            # see NodeManager.open_brackets -- so the bracket we actually
+            # care about is one level further out
+            if len(prev.open_brackets) < 2:
+                return False
+            opening = prev.open_brackets[-2]
+        return _is_over_open_paren(opening)
+
+    @property
+    def is_cte_open_paren(self) -> bool:
+        """
+        True for a BRACKET_OPEN "(" node that opens the body of a CTE --
+        i.e., that immediately follows the "as" in a with-clause's
+        "<name> as (" pattern. Used to box CTE bodies with blank lines
+        after the opening paren and before the closing paren (house style
+        stories 4-6), regardless of whether the body is trivial (one line)
+        or not.
+        """
+        if self.token.type is not TokenType.BRACKET_OPEN or self.value != "(":
+            return False
+        as_node = get_previous_node(self.previous_node)
+        if (
+            as_node is None
+            or as_node.token.type is not TokenType.WORD_OPERATOR
+            or as_node.value != "as"
+        ):
+            return False
+        name_node = get_previous_node(as_node.previous_node)
+        if name_node is None or name_node.token.type not in (
+            TokenType.NAME,
+            TokenType.QUOTED_NAME,
+        ):
+            return False
+        if not self.open_brackets:
+            return False
+        enclosing = self.open_brackets[-1]
+        return (
+            enclosing.is_unterm_keyword and enclosing.value.split(" ", 1)[0] == "with"
+        )
+
+    @property
+    def is_set_operator(self) -> bool:
+        """
+        True for union/union all/intersect/except/minus
+        """
+        return self.token.type is TokenType.SET_OPERATOR
 
     @property
     def is_newline(self) -> bool:

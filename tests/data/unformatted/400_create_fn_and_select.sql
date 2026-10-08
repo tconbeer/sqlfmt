@@ -76,12 +76,18 @@ select
     approx_quantiles(zindices, 1000)[offset(500)] as p50,
     approx_quantiles(zindices, 1000)[offset(750)] as p75,
     approx_quantiles(zindices, 1000)[offset(900)] as p90
+
 from
     (
         select client, count(distinct value) as zindices
+
         from `httparchive.almanac.parsed_css`
-        left join unnest(getzindexvalues(css)) as value
+        left join unnest(getzindexvalues(css)) value
+
         where date = '2019-07-01'
-        group by client, page
+
+        group by client,
+            page
     )
+
 group by client

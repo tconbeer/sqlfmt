@@ -26,7 +26,9 @@ select
     cell as long_cid,
     lon,
     lat
+
 from towershift
+
 where
     radio != 'CDMA'
     and mcc between 200 and 799

@@ -22,5 +22,6 @@ select * from {{ ref('stg_my_model') }}{% endsnapshot %}
     }}
 
     select *
+
     from {{ ref("stg_my_model") }}
 {% endsnapshot %}

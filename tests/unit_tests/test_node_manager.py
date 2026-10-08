@@ -205,7 +205,8 @@ def test_capitalization(default_mode: Mode) -> None:
         'SELECT A, B, "C", {{ D }}, e, \'f\', \'G\'\nfROM "H"."j" Join I ON k And L\n'
     )
     expected = (
-        'select a, b, "C", {{ D }}, e, \'f\', \'G\'\nfrom "H"."j" join i on k and l\n'
+        "select a, b, \"C\", {{ D }}, e, 'f', 'G'\n"
+        'from "H"."j" inner join i on k and l\n'
     )
     q = default_mode.dialect.initialize_analyzer(
         line_length=default_mode.line_length
@@ -221,7 +222,7 @@ def test_capitalization(default_mode: Mode) -> None:
             "SELECT A, B, \"C\", {{ D }}, e, 'f', 'G'\n"
             'fROM "H"."j" Join I ON k And L\n',
             "select A, B, \"C\", {{ D }}, e, 'f', 'G'\n"
-            'from "H"."j" join I on k and L\n',
+            'from "H"."j" inner join I on k and L\n',
         ),
         (
             "SELECT toString(1) AS Test_string, toDateTime64('2022-05-25', 3) "
@@ -351,7 +352,7 @@ def test_bracket_whitespace(default_mode: Mode, source_string: str) -> None:
         ("group    by", "group by\n"),
         ("not\nin", "not in\n"),
         ("not\n  similar  \n to", "not similar to\n"),
-        ("right\n  outer  \n join", "right outer join\n"),
+        ("right\n  outer  \n join", "right join\n"),
     ],
 )
 def test_internal_whitespace(

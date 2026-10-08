@@ -53,6 +53,58 @@ def add_node_to_buffer(
     analyzer.pos = token.epos
 
 
+def maybe_add_table_alias_as(
+    analyzer: "Analyzer",
+    source_string: str,
+    match: re.Match,
+) -> None:
+    """
+    Lexes "as" as a WORD_OPERATOR, except when it directly precedes a
+    table alias inside a from/join clause (immediately after a table
+    reference -- a name, quoted name, or the closing paren of a derived
+    table -- at the depth of an enclosing "from" or "...join" keyword).
+    House style never prints "as" before a table alias, so in that case
+    the token is dropped from the buffer entirely rather than created.
+
+    This drop happens in the lexer itself, so it applies identically no
+    matter which string is being lexed -- the original source *and* the
+    formatted output get the same treatment when the safety check re-lexes
+    both of them, so the token-equivalence check never sees a mismatch
+    here (both sides simply never produce this token).
+    """
+    if _is_table_alias_as(analyzer.previous_node):
+        token = Token.from_match(
+            source_string, match, token_type=TokenType.WORD_OPERATOR
+        )
+        analyzer.pos = token.epos
+        return
+
+    add_node_to_buffer(
+        analyzer, source_string, match, token_type=TokenType.WORD_OPERATOR
+    )
+
+
+def _is_table_alias_as(previous_node: Optional[Node]) -> bool:
+    if previous_node is None:
+        return False
+
+    prev_token, _ = get_previous_token(previous_node)
+    if prev_token is None or prev_token.type not in (
+        TokenType.NAME,
+        TokenType.QUOTED_NAME,
+        TokenType.BRACKET_CLOSE,
+        TokenType.JINJA_EXPRESSION,
+    ):
+        return False
+
+    context = previous_node.open_brackets[-1] if previous_node.open_brackets else None
+    if context is None or not context.is_unterm_keyword:
+        return False
+
+    first_word = context.value.split(" ", 1)[0]
+    return first_word == "from" or context.value.endswith("join")
+
+
 def safe_add_node_to_buffer(
     analyzer: "Analyzer",
     source_string: str,

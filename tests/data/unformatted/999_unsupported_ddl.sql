@@ -24,6 +24,7 @@ create table foo as (
     "bBb" int,
     ccc date
 );
+
 select 1
 ;
 insert into something
