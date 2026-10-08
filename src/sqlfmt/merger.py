@@ -26,10 +26,9 @@ class LineMerger:
         if len(lines) <= 1:
             return lines
 
-        if (
-            sum(1 for line in lines if line.starts_new_major_clause) > 1
-            and not self._is_trivial_cte_import_body(lines)
-        ):
+        if sum(
+            1 for line in lines if line.starts_new_major_clause
+        ) > 1 and not self._is_trivial_cte_import_body(lines):
             raise CannotMergeException(
                 "Can't merge multiple top-level clauses onto one line"
             )
@@ -51,8 +50,7 @@ class LineMerger:
         # with what comes *after* it, like a trailing alias, since
         # that's not a case boundary).
         if any(
-            line.nodes and line.nodes[0].is_case_clause_boundary
-            for line in lines[1:]
+            line.nodes and line.nodes[0].is_case_clause_boundary for line in lines[1:]
         ):
             raise CannotMergeException(
                 "Can't merge a case expression's case/when/else onto a prior line"

@@ -129,9 +129,7 @@ class QueryFormatter:
                 and line.nodes
                 and line.nodes[0].is_unterm_keyword
                 and line.nodes[0].value == "when"
-                and not any(
-                    n.is_case_when_condition_separator for n in line.nodes
-                )
+                and not any(n.is_case_when_condition_separator for n in line.nodes)
                 and next_line.nodes
                 and next_line.nodes[0].is_unterm_keyword
                 and next_line.nodes[0].value == "then"
@@ -184,9 +182,7 @@ class QueryFormatter:
                 new_lines.append(line)
         return new_lines
 
-    def _maybe_glue_clause_keyword(
-        self, lines: List[Line], i: int
-    ) -> Optional[Line]:
+    def _maybe_glue_clause_keyword(self, lines: List[Line], i: int) -> Optional[Line]:
         line = lines[i]
         next_line = lines[i + 1] if i + 1 < len(lines) else None
         if next_line is None or next_line.is_blank_line or line.formatting_disabled:
@@ -208,9 +204,7 @@ class QueryFormatter:
         if not self._is_single_condition_clause(lines, i + 1, keyword_node):
             return None
 
-        merged_nodes = content_nodes + [
-            n for n in next_line.nodes if not n.is_newline
-        ]
+        merged_nodes = content_nodes + [n for n in next_line.nodes if not n.is_newline]
         merged_line = Line.from_nodes(
             previous_node=line.previous_node,
             nodes=merged_nodes,
@@ -611,7 +605,9 @@ class QueryFormatter:
         node_manager = NodeManager(self.mode.dialect.case_sensitive_names)
 
         def blank_line_after(prev_line: Line) -> Line:
-            blank_line = Line(previous_node=prev_line.nodes[-1] if prev_line.nodes else None)
+            blank_line = Line(
+                previous_node=prev_line.nodes[-1] if prev_line.nodes else None
+            )
             node_manager.append_newline(blank_line)
             return blank_line
 
@@ -698,9 +694,7 @@ class QueryFormatter:
             )
             if next_line is None:
                 continue
-            first_content = next(
-                (n for n in next_line.nodes if not n.is_newline), None
-            )
+            first_content = next((n for n in next_line.nodes if not n.is_newline), None)
             if first_content is None or not first_content.is_unterm_keyword:
                 continue
             if first_content.value.split(" ", 1)[0] not in ("select", "with"):
@@ -756,8 +750,10 @@ class QueryFormatter:
         new_lines: List[Line] = []
         for line in lines:
             starts_clause_after_config = (
-                line.is_with_clause_start or line.starts_new_major_clause
-            ) and bool(new_lines) and new_lines[-1].is_dbt_config_block
+                (line.is_with_clause_start or line.starts_new_major_clause)
+                and bool(new_lines)
+                and new_lines[-1].is_dbt_config_block
+            )
             if (
                 (line.starts_new_major_clause or starts_clause_after_config)
                 and not line.formatting_disabled
@@ -820,9 +816,7 @@ class QueryFormatter:
                 open_idx = node_line_idx.get(id(over_paren))
                 if open_idx is None:
                     continue
-                close_idx = self._find_matching_close_idx(
-                    lines, open_idx, over_paren
-                )
+                close_idx = self._find_matching_close_idx(lines, open_idx, over_paren)
                 if close_idx is None:
                     continue
 

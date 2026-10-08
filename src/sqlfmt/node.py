@@ -441,8 +441,7 @@ class Node:
             return False
         enclosing = self.open_brackets[-1]
         return (
-            enclosing.is_unterm_keyword
-            and enclosing.value.split(" ", 1)[0] == "with"
+            enclosing.is_unterm_keyword and enclosing.value.split(" ", 1)[0] == "with"
         )
 
     @property

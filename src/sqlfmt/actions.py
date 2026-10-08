@@ -73,7 +73,9 @@ def maybe_add_table_alias_as(
     here (both sides simply never produce this token).
     """
     if _is_table_alias_as(analyzer.previous_node):
-        token = Token.from_match(source_string, match, token_type=TokenType.WORD_OPERATOR)
+        token = Token.from_match(
+            source_string, match, token_type=TokenType.WORD_OPERATOR
+        )
         analyzer.pos = token.epos
         return
 

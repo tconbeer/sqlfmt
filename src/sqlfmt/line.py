@@ -364,9 +364,7 @@ class Line:
             node = self.nodes[0]
         except IndexError:
             return False
-        return (
-            node.is_unterm_keyword and node.value.split(" ", 1)[0] == "with"
-        )
+        return node.is_unterm_keyword and node.value.split(" ", 1)[0] == "with"
 
     @property
     def is_dbt_config_block(self) -> bool:

@@ -205,7 +205,7 @@ def test_capitalization(default_mode: Mode) -> None:
         'SELECT A, B, "C", {{ D }}, e, \'f\', \'G\'\nfROM "H"."j" Join I ON k And L\n'
     )
     expected = (
-        'select a, b, "C", {{ D }}, e, \'f\', \'G\'\n'
+        "select a, b, \"C\", {{ D }}, e, 'f', 'G'\n"
         'from "H"."j" inner join i on k and l\n'
     )
     q = default_mode.dialect.initialize_analyzer(
