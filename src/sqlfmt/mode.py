@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional
 
-from sqlfmt.dialect import ClickHouse, Polyglot
+from sqlfmt.dialect import ClickHouse, DuckDB, Polyglot
 from sqlfmt.exception import SqlfmtConfigError
 
 
@@ -37,6 +37,7 @@ class Mode:
         dialects = {
             "polyglot": Polyglot,
             "clickhouse": ClickHouse,
+            "duckdb": DuckDB,
         }
         try:
             self.dialect = dialects[self.dialect_name.lower()]()

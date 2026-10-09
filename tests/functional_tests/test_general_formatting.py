@@ -111,3 +111,39 @@ def test_formatting(p: str) -> None:
 
     second_pass = format_string(actual, mode)
     check_formatting(expected, second_pass, ctx=f"2nd-{p}")
+
+
+@pytest.mark.parametrize(
+    "p",
+    [
+        "unformatted/221_duckdb_int_division.sql",
+    ],
+)
+def test_duckdb_formatting(p: str) -> None:
+    """Test DuckDB-specific formatting with the DuckDB dialect."""
+    mode = Mode(dialect_name="duckdb")
+
+    source, expected = read_test_data(p)
+    actual = format_string(source, mode)
+
+    check_formatting(expected, actual, ctx=p)
+
+    second_pass = format_string(actual, mode)
+    check_formatting(expected, second_pass, ctx=f"2nd-{p}")
+
+
+def test_duckdb_int_division_vs_polyglot() -> None:
+    """Test that // is treated differently in DuckDB vs Polyglot dialects."""
+    source = "select 5 // 2;"
+
+    # In DuckDB dialect, // should be preserved as an operator
+    duckdb_mode = Mode(dialect_name="duckdb")
+    duckdb_result = format_string(source, duckdb_mode)
+    assert "//" in duckdb_result
+    assert "select 5 // 2" in duckdb_result
+
+    # In Polyglot dialect, // should be treated as a comment
+    polyglot_mode = Mode(dialect_name="polyglot")
+    polyglot_result = format_string(source, polyglot_mode)
+    # The // should be converted to -- (comment marker)
+    assert "--" in polyglot_result or "2" not in polyglot_result
