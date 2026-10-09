@@ -35,39 +35,39 @@ Hello! I'm data, not code.
 ] -%}
 
 with
-    {%- for model in list_o_models %}
-        {{ model }} as (
-            select *
 
-            from {{ ref(model) }}
-        ),
-    {% endfor -%}
-    base as (
-
+{%- for model in list_o_models %}
+    {{ model }} as (
         select *
 
-        from
-            {% if "Hello" in block_o_text %} {{ ref("hello") }}
-            {% else %} {{ ref("goodbye") }}
-            {% endif %}
-
+        from {{ ref(model) }}
     ),
+{% endfor -%}
+base as (
 
-    joined as (
+    select *
 
-        select
-            {% for model in list_o_models %}
-                {{ model }}.column_a as {{ model }}_field{%- if not loop.last -%},{%- endif %}
-            {% endfor %}
+    from
+        {% if "Hello" in block_o_text %} {{ ref("hello") }}
+        {% else %} {{ ref("goodbye") }}
+        {% endif %}
 
-        from base
+),
+
+joined as (
+
+    select
         {% for model in list_o_models %}
-            inner join {{ model }}
-                on base.{{ model }}_id = {{ model }}.id
+            {{ model }}.column_a as {{ model }}_field{%- if not loop.last -%},{%- endif %}
         {% endfor %}
 
-    )
+    from base
+    {% for model in list_o_models %}
 
-select *
+        inner join {{ model }}
+            on base.{{ model }}_id = {{ model }}.id
+    {% endfor %}
 
-from joined
+)
+
+select * from joined

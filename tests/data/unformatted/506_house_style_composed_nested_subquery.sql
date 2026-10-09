@@ -8,12 +8,16 @@ from (
 ) as s
 where s.total > 500
 )))))__SQLFMT_OUTPUT__(((((
-select s.customer_id, s.total
+select
+    s.customer_id,
+    s.total
 
 from
     (
 
-        select customer_id, sum(order_total) as total
+        select
+            customer_id,
+            sum(order_total) as total
 
         from orders
 

@@ -7,23 +7,28 @@ from (
 ) as s
 where s.total > 500
 )))))__SQLFMT_OUTPUT__(((((
-select s.customer_id, s.total
+select
+    s.customer_id,
+    s.total
 
 from
     (
 
         with
-            filtered as (
 
-                select *
+        filtered as (
 
-                from orders
+            select *
 
-                where status = 'completed'
+            from orders
 
-            )
+            where status = 'completed'
 
-        select customer_id, sum(amount) as total
+        )
+
+        select
+            customer_id,
+            sum(amount) as total
 
         from filtered
 

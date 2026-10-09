@@ -21,118 +21,119 @@ with
 select 1
 )))))__SQLFMT_OUTPUT__(((((
 with
-    "select" as (
 
-        select * from foo.select
+"select" as (
 
-    ),
+    select * from foo.select
 
-    "case" as (
+),
 
-        select * from foo.case
+"case" as (
 
-    ),
+    select * from foo.case
 
-    "end" as (
+),
 
-        select * from foo.end
+"end" as (
 
-    ),
+    select * from foo.end
 
-    "as" as (
+),
 
-        select * from foo.as
+"as" as (
 
-    ),
+    select * from foo.as
 
-    "interval" as (
+),
 
-        select * from foo.interval
+"interval" as (
 
-    ),
+    select * from foo.interval
 
-    "exclude" as (
+),
 
-        select * from foo.exclude
+"exclude" as (
 
-    ),
+    select * from foo.exclude
 
-    "using" as (
+),
 
-        select * from foo.using
+"using" as (
 
-    ),
+    select * from foo.using
 
-    "on" as (
+),
 
-        select * from foo.on
+"on" as (
 
-    ),
+    select * from foo.on
 
-    "and" as (
+),
 
-        select * from foo.and
+"and" as (
 
-    ),
+    select * from foo.and
 
-    "limit" as (
+),
 
-        select * from foo.limit
+"limit" as (
 
-    ),
+    select * from foo.limit
 
-    "over" as (
+),
 
-        select * from foo.over
+"over" as (
 
-    ),
+    select * from foo.over
 
-    "between" as (
+),
 
-        select * from foo.between
+"between" as (
 
-    ),
+    select * from foo.between
 
-    "union" as (
+),
 
-        select * from foo.union
+"union" as (
 
-    ),
+    select * from foo.union
 
-    "explain" as (
+),
 
-        select * from foo.explain
+"explain" as (
 
-    ),
+    select * from foo.explain
 
-    "grant" as (
+),
 
-        select * from foo.grant
+"grant" as (
 
-    ),
+    select * from foo.grant
 
-    "create" as (
+),
 
-        select * from foo.create
+"create" as (
 
-    ),
+    select * from foo.create
 
-    "alter" as (
+),
 
-        select * from foo.alter
+"alter" as (
 
-    ),
+    select * from foo.alter
 
-    "truncate" as (
+),
 
-        select * from foo.truncate
+"truncate" as (
 
-    ),
+    select * from foo.truncate
 
-    "drop" as (
+),
 
-        select * from foo.drop
+"drop" as (
 
-    )
+    select * from foo.drop
+
+)
 
 select 1

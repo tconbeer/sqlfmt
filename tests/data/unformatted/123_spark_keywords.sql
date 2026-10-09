@@ -30,7 +30,9 @@ select *
 
 from a_super_duper_really_very_long_long_long_long_table_name tablesample (bucket 4 out of 10)
 
-select age, name
+select
+    age,
+    name
 
 from person
 cluster by age
@@ -48,7 +50,9 @@ cluster by
     bazzzzzzzzzzzzzzzzzzzzzzzzzz,
     quxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-select age, name
+select
+    age,
+    name
 
 from person
 distribute by age
@@ -66,7 +70,9 @@ distribute by
     bazzzzzzzzzzzzzzzzzzzzzzzzzz,
     quxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-select age, name
+select
+    age,
+    name
 
 from person
 sort by age

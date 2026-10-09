@@ -14,30 +14,39 @@ select order_id, name, order_total from joined
 {{ config(materialized="table", tags=["finance", "daily"]) }}
 
 with
-    stg_orders as (
 
-        select * from raw.orders
+stg_orders as (
 
-    ),
+    select * from raw.orders
 
-    stg_customers as (
+),
 
-        select * from raw.customers
+stg_customers as (
 
-    ),
+    select * from raw.customers
 
-    joined as (
+),
 
-        select o.order_id, o.customer_id, c.name, o.order_total
+joined as (
 
-        from stg_orders o
-        inner join stg_customers c
-            on o.customer_id = c.customer_id
+    select
+        o.order_id,
+        o.customer_id,
+        c.name,
+        o.order_total
 
-        where o.order_total > 0
+    from stg_orders o
 
-    )
+    inner join stg_customers c
+        on o.customer_id = c.customer_id
 
-select order_id, name, order_total
+    where o.order_total > 0
+
+)
+
+select
+    order_id,
+    name,
+    order_total
 
 from joined

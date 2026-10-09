@@ -17,7 +17,13 @@ MAJOR_CLAUSE_KEYWORDS = frozenset(
 # or columns joined by commas) must always be split one-per-line when there
 # is more than one item, regardless of whether the whole clause would fit
 # on one line.
-FORCE_SPLIT_CLAUSE_KEYWORDS = frozenset({"where", "having", "group"})
+FORCE_SPLIT_CLAUSE_KEYWORDS = frozenset({"where", "having", "group", "select"})
+
+# Clause keywords (by first word) whose items are columns joined by commas
+# (trailing comma stays with the item it follows), as opposed to
+# where/having's conditions joined by and/or (leading and/or on the next
+# item's line).
+COMMA_SEPARATED_CLAUSE_KEYWORDS = frozenset({"group", "select"})
 
 
 def get_previous_node(prev_node: Optional["Node"]) -> Optional["Node"]:
@@ -287,6 +293,17 @@ class Node:
             return False
         else:
             return self.has_preceding_between_operator
+
+    @property
+    def is_join_keyword(self) -> bool:
+        """
+        True for UNTERM_KEYWORD nodes that start a join clause (inner
+        join/left join/right join/bare join). Used to insert a blank
+        line before each join, same as the major-clause blank-line
+        rule, so a join is visually separated from the `from` line and
+        from any preceding join (house style story 3's join extension).
+        """
+        return self.is_unterm_keyword and self.value.endswith("join")
 
     @property
     def is_major_clause_keyword(self) -> bool:

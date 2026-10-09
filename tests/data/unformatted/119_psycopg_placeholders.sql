@@ -7,7 +7,9 @@ from images
 
 where id = %s
 
-select image_data, dividend %% divisor as escaped_mod_operator
+select
+    image_data,
+    dividend %% divisor as escaped_mod_operator
 
 from images
 

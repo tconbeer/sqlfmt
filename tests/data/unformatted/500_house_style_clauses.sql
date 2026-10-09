@@ -7,7 +7,9 @@ ORDER BY total DESC
 QUALIFY ROW_NUMBER() OVER (ORDER BY total DESC) = 1
 LIMIT 10
 )))))__SQLFMT_OUTPUT__(((((
-select customer_id, sum(order_total) as total
+select
+    customer_id,
+    sum(order_total) as total
 
 from orders
 

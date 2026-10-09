@@ -94,19 +94,18 @@ from a
 %}
 
 with
-    a as (
 
-        select
-            {{ dbt_utils.surrogate_key(var("surrogate_key_columns_menu_item_123456")) }}
-            as order_item_id,
-            -- this next line's jinja tag is one char too long
-            {{ dbt_utils.surrogate_key(var("surrogate_key_columns_menu_item_1234567")) }}
-            as menu_item_id,
+a as (
 
-        from b
+    select
+        {{ dbt_utils.surrogate_key(var("surrogate_key_columns_menu_item_123456")) }}
+        as order_item_id,
+        -- this next line's jinja tag is one char too long
+        {{ dbt_utils.surrogate_key(var("surrogate_key_columns_menu_item_1234567")) }}
+        as menu_item_id,
 
-    )
+    from b
 
-select *
+)
 
-from a
+select * from a

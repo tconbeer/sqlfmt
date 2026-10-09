@@ -11,6 +11,7 @@ from foo
 select *
 
 from {{ ref("events") }} e
+
 -- join from events table
 left join {{ ref("users") }} u
     on u.id = e.user_id

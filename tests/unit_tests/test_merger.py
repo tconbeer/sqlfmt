@@ -181,9 +181,9 @@ def test_cte_merge(merger: LineMerger) -> None:
 
     expected = [
         "with\n",
-        "    my_cte as (\n",
-        "        select * from my_table\n",
-        "    )\n",
+        "my_cte as (\n",
+        "    select * from my_table\n",
+        ")\n",
         "select * from my_cte\n",
     ]
 

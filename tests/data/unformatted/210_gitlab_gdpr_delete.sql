@@ -41,56 +41,53 @@ LEFT JOIN non_email_columns b ON a.fqd_name = b.fqd_name
 # SEE:
 # https://github.com/tconbeer/gitlab-analytics-sqlfmt/blob/9360d2f1986c37615926b0416e8d0fb23cae3e6e/LICENSE
 with
-    email_columns as (
 
-        select
-            lower(table_catalog)
-            || '.'
-            || lower(table_schema)
-            || '.'
-            || lower(table_name) as fqd_name,
-            listagg(column_name, ',') as email_column_names
+email_columns as (
 
-        from "RAW"."INFORMATION_SCHEMA"."COLUMNS"
+    select
+        lower(table_catalog) || '.' || lower(table_schema) || '.' || lower(table_name) as fqd_name,
+        listagg(column_name, ',') as email_column_names
 
-        where
-            lower(column_name) like '%email%'
-            and table_schema in ('SNAPSHOTS')
-            and data_type not in {{ data_types }}
-            and lower(column_name) not in {{ exclude_columns }}
-            and lower(table_name) like ('gitlab_dotcom_%')
+    from "RAW"."INFORMATION_SCHEMA"."COLUMNS"
 
-        group by 1
+    where
+        lower(column_name) like '%email%'
+        and table_schema in ('SNAPSHOTS')
+        and data_type not in {{ data_types }}
+        and lower(column_name) not in {{ exclude_columns }}
+        and lower(table_name) like ('gitlab_dotcom_%')
 
-    ),
+    group by 1
 
-    non_email_columns as (
+),
 
-        select
-            lower(table_catalog)
-            || '.'
-            || lower(table_schema)
-            || '.'
-            || lower(table_name) as fqd_name,
-            listagg(column_name, ',') as non_email_column_names
+non_email_columns as (
 
-        from "RAW"."INFORMATION_SCHEMA"."COLUMNS" a
+    select
+        lower(table_catalog) || '.' || lower(table_schema) || '.' || lower(table_name) as fqd_name,
+        listagg(column_name, ',') as non_email_column_names
 
-        where
-            lower(column_name) not like '%email%'
-            and table_schema in ('SNAPSHOTS')
-            and data_type not in {{ data_types }}
-            and lower(column_name) not in {{ exclude_columns }}
-            and lower(column_name) not like '%id%'
-            and lower(column_name) not in {{ exclude_columns }}
-            and lower(table_name) like ('gitlab_dotcom_%')
+    from "RAW"."INFORMATION_SCHEMA"."COLUMNS" a
 
-        group by 1
+    where
+        lower(column_name) not like '%email%'
+        and table_schema in ('SNAPSHOTS')
+        and data_type not in {{ data_types }}
+        and lower(column_name) not in {{ exclude_columns }}
+        and lower(column_name) not like '%id%'
+        and lower(column_name) not in {{ exclude_columns }}
+        and lower(table_name) like ('gitlab_dotcom_%')
 
-    )
+    group by 1
 
-select a.fqd_name, a.email_column_names, b.non_email_column_names
+)
+
+select
+    a.fqd_name,
+    a.email_column_names,
+    b.non_email_column_names
 
 from email_columns a
+
 left join non_email_columns b
     on a.fqd_name = b.fqd_name

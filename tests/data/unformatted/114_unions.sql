@@ -117,36 +117,33 @@ union all
 
 union all
 with
-    geos as (
 
-        select
-            *,
-            'mr' as geo_code,
-            'Mauritania' as geo,
-            'Africa' as region,
-            'Western Africa' as subregion
+geos as (
 
-        from `chrome-ux-report.country_mr.201907`
+    select
+        *, 'mr' as geo_code, 'Mauritania' as geo, 'Africa' as region, 'Western Africa' as subregion
 
-        union all
+    from `chrome-ux-report.country_mr.201907`
 
-        select
-            *,
-            'mu' as geo_code,
-            'Mauritius' as geo,
-            'Africa' as region,
-            'Eastern Africa' as subregion
+    union all
 
-        from `chrome-ux-report.country_mu.201907`
+    select
+        *, 'mu' as geo_code, 'Mauritius' as geo, 'Africa' as region, 'Eastern Africa' as subregion
 
-        union all
+    from `chrome-ux-report.country_mu.201907`
 
-        select
-            *, 'yt' as geo_code, 'Mayotte' as geo, 'Africa' as region, 'Eastern Africa' as subregion
+    union all
 
-        from `chrome-ux-report.country_yt.201907`
+    select
+        *,
+        'yt' as geo_code,
+        'Mayotte' as geo,
+        'Africa' as region,
+        'Eastern Africa' as subregion
 
-    )
+    from `chrome-ux-report.country_yt.201907`
+
+)
 
 select geo
 
@@ -154,6 +151,4 @@ from geos
 
 union distinct
 
-select *
-
-from foo
+select * from foo

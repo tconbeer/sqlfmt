@@ -20,6 +20,7 @@ warehouse_type = 'SNOWPARK-OPTIMIZED'
 max_cluster_count = 6
 create warehouse if not exists foo
 with warehouse_size = 'X5LARGE'
+
 auto_suspend = 100
 auto_resume = false
 initially_suspended = true

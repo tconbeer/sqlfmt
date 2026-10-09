@@ -13,12 +13,11 @@ select * from a
 }}
 
 with
-    a as (
 
-        select * from b
+a as (
 
-    )
+    select * from b
 
-select *
+)
 
-from a
+select * from a

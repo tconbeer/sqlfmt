@@ -58,6 +58,7 @@ select  /*+ BROADCAST(t1) */
     *
 
 from t1
+
 inner join t2
     on t1.key = t2.key
 
@@ -65,6 +66,7 @@ select  /*+ BROADCASTJOIN (t1) */
     *
 
 from t1
+
 left join t2
     on t1.key = t2.key
 
@@ -72,6 +74,7 @@ select  /*+ MAPJOIN(t2) */
     *
 
 from t1
+
 right join t2
     on t1.key = t2.key
 
@@ -80,6 +83,7 @@ select  /*+ SHUFFLE_MERGE(t1) */
     *
 
 from t1
+
 inner join t2
     on t1.key = t2.key
 
@@ -87,6 +91,7 @@ select  /*+ MERGEJOIN(t2) */
     *
 
 from t1
+
 inner join t2
     on t1.key = t2.key
 
@@ -94,6 +99,7 @@ select  /*+ MERGE(t1) */
     *
 
 from t1
+
 inner join t2
     on t1.key = t2.key
 
@@ -102,6 +108,7 @@ select  /*+ SHUFFLE_HASH(t1) */
     *
 
 from t1
+
 inner join t2
     on t1.key = t2.key
 
@@ -110,6 +117,7 @@ select  /*+ SHUFFLE_REPLICATE_NL(t1) */
     *
 
 from t1
+
 inner join t2
     on t1.key = t2.key
 
@@ -117,5 +125,6 @@ select  /*+ BROADCAST(t1), MERGE(t1, t2) */
     *
 
 from t1
+
 inner join t2
     on t1.key = t2.key

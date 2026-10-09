@@ -82,9 +82,23 @@ class Line:
         """
         Returns the whitespace to be printed at the start of this Line for
         proper indentation.
+
+        House style never indents a CTE's name/"as ("/closing ")" (or its
+        body) under "with" itself (story 5) -- "with" still contributes a
+        bracket level to self.depth for every other purpose (segmentation,
+        merging, blank-line rules), since those must stay structurally
+        aware of the with-clause boundary, but visually, a line inside a
+        with-clause renders one indent level shallower than its structural
+        depth would otherwise print, to omit the level "with" contributes.
         """
         INDENT = " " * 4
-        prefix = INDENT * (self.depth[0] + self.depth[1])
+        depth = self.depth[0] + self.depth[1]
+        if any(
+            b.is_unterm_keyword and b.value.split(" ", 1)[0] == "with"
+            for b in self.open_brackets
+        ):
+            depth -= 1
+        prefix = INDENT * depth
         return prefix
 
     def render_with_comments(self, max_length: int) -> str:
@@ -222,15 +236,18 @@ class Line:
         """
         True for a Line that starts a new top-level clause of a select
         statement (select/from/where/group by/having/order by/qualify/
-        limit), or a set operator (union/union all/intersect/except).
-        Used to force each such clause onto its own line and to insert a
-        blank line between clauses.
+        limit), a set operator (union/union all/intersect/except), or a
+        join (inner join/left join/right join). Used to force each such
+        clause onto its own line and to insert a blank line between
+        clauses.
         """
         try:
             node = self.nodes[0]
         except IndexError:
             return False
-        return node.is_major_clause_keyword or node.is_set_operator
+        return (
+            node.is_major_clause_keyword or node.is_set_operator or node.is_join_keyword
+        )
 
     @property
     def contains_unterm_keyword(self) -> bool:

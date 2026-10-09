@@ -20,9 +20,10 @@ select *
 from final
 )))))__SQLFMT_OUTPUT__(((((
 with
-    base_spine as (
 
-        {{
+base_spine as (
+
+    {{
             dbt_utils.date_spine(
                 datepart="day",
                 start_date="'2021-01-01'::date",
@@ -30,19 +31,17 @@ with
             )
         }}
 
-    ),
+),
 
-    final as (
+final as (
 
-        select
-            date_day as dt,
-            date_trunc('month', date_day) as mnth,
-            date_part('day', date_day) as day_of_month
+    select
+        date_day as dt,
+        date_trunc('month', date_day) as mnth,
+        date_part('day', date_day) as day_of_month
 
-        from base_spine
+    from base_spine
 
-    )
+)
 
-select *
-
-from final
+select * from final

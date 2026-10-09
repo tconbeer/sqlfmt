@@ -162,6 +162,9 @@ from tests.util import check_formatting, read_test_data
         "unformatted/528_house_style_composed_derived_table_with_cte.sql",
         "unformatted/529_house_style_composed_subqueries_and_or_group.sql",
         "unformatted/530_house_style_case_when_independent.sql",
+        "unformatted/531_house_style_trivial_union_branch.sql",
+        "unformatted/533_house_style_with_cte_no_indent.sql",
+        "unformatted/534_house_style_multi_column_select.sql",
         "unformatted/900_create_view.sql",
         "unformatted/998_unsupported_ddl_with_jinja.sql",
         # 999_unsupported_ddl.sql excluded for the same reason as 124/129/

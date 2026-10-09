@@ -37,38 +37,39 @@ from a_really_long_table; -- an inline comment on a semicolon
 select 1
 )))))__SQLFMT_OUTPUT__(((((
 with
-    one as (
 
-        select  -- short
-            1
+one as (
 
-    ),
+    select  -- short
+        1
 
-    two as (
+),
 
-        select  -- too long but it's an inline comment so it has to stay here or we'll get stability issues
-            a_long_enough_field, another_long_enough_field
+two as (
 
-    ),
+    select  -- too long but it's an inline comment so it has to stay here or we'll get stability issues
+        a_long_enough_field, another_long_enough_field
 
-    three as (
+),
 
-        select 1
+three as (
 
-    ),  -- short enough
+    select 1
 
-    four as (
+),  -- short enough
 
-        select
-            my_table.a_field,  -- too long but it's an inline comment so it has to stay here or we'll get stability issues
-            my_table.b_field,
-            my_table.c_field
+four as (
 
-        from my_table
+    select
+        my_table.a_field,  -- too long but it's an inline comment so it has to stay here or we'll get stability issues
+        my_table.b_field,
+        my_table.c_field
 
-        where something == 5
+    from my_table
 
-    )
+    where something == 5
+
+)
 
 select  -- not distinct
     one_really_long_field_name,  -- with a long comment that will never wrap above this line

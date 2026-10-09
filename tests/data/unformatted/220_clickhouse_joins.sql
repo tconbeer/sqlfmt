@@ -58,6 +58,7 @@ LIMIT 10;
 select expressions_list
 
 from table_1
+
 global left join table_2
     on equi_cond
     and closest_match_cond
@@ -65,6 +66,7 @@ global left join table_2
 select expressions_list
 
 from table_1
+
 asof left join table_2
     on equi_cond
     and closest_match_cond
@@ -72,6 +74,7 @@ asof left join table_2
 select expressions_list
 
 from table_1
+
 asof join table_2 using (equi_column1, equi_columnn, asof_column)
 
 select *
@@ -84,6 +87,7 @@ from
         from numbers(2)
 
     ) t1
+
 paste join
     (
 
@@ -95,9 +99,14 @@ paste join
 
     ) t2
 
-select a, b, totypename(a), totypename(b)
+select
+    a,
+    b,
+    totypename(a),
+    totypename(b)
 
 from t_1
+
 full join t_2 using (a, b)
 
 select uniq(userid)
@@ -116,22 +125,30 @@ where
 
     )
 
-select counterid, hits, visits
+select
+    counterid,
+    hits,
+    visits
 
 from
     (
 
-        select counterid, count() as hits
+        select
+            counterid,
+            count() as hits
 
         from test.hits
 
         group by counterid
 
     )
+
 any left join
     (
 
-        select counterid, sum(sign) as visits
+        select
+            counterid,
+            sum(sign) as visits
 
         from test.visits
 

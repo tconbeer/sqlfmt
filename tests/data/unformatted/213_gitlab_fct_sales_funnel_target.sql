@@ -173,7 +173,10 @@ For FY23 and beyond, targets in the sheetload file were set at the user_segment_
 }},
 date as (
 
-    select distinct fiscal_month_name_fy, fiscal_year, first_day_of_month
+    select distinct
+        fiscal_month_name_fy,
+        fiscal_year,
+        first_day_of_month
 
     from date_details_source
 
@@ -189,10 +192,12 @@ target_matrix as (
         {{ get_keyed_nulls("order_type.dim_order_type_id") }} as dim_order_type_id
 
     from {{ ref("sheetload_sales_funnel_targets_matrix_source") }}
+
     left join
         date
         on {{ sales_funnel_text_slugify("sheetload_sales_funnel_targets_matrix_source.month") }}
         = {{ sales_funnel_text_slugify("date.fiscal_month_name_fy") }}
+
     left join
         sales_qualified_source
         on {{
@@ -200,6 +205,7 @@ target_matrix as (
                 "sheetload_sales_funnel_targets_matrix_source.opportunity_source"
             )
         }} = {{ sales_funnel_text_slugify("sales_qualified_source.sales_qualified_source_name") }}
+
     left join
         order_type
         on {{ sales_funnel_text_slugify("sheetload_sales_funnel_targets_matrix_source.order_type") }}
@@ -255,6 +261,7 @@ unioned_targets as (
         fy22_user_hierarchy.crm_opp_owner_area_stamped
 
     from target_matrix
+
     left join
         fy22_user_hierarchy
         on {{ sales_funnel_text_slugify("target_matrix.area") }}
@@ -285,6 +292,7 @@ unioned_targets as (
         fy23_and_beyond_user_hierarchy.crm_opp_owner_area_stamped
 
     from target_matrix
+
     left join
         fy23_and_beyond_user_hierarchy
         on {{ sales_funnel_text_slugify("target_matrix.area") }}
@@ -351,6 +359,7 @@ final_targets as (
         sum(unioned_targets.allocated_target) as allocated_target
 
     from unioned_targets
+
     left join
         sfdc_user_hierarchy_live
         on unioned_targets.dim_crm_user_hierarchy_stamped_id

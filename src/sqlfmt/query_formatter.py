@@ -6,6 +6,7 @@ from sqlfmt.line import Line
 from sqlfmt.merger import LineMerger
 from sqlfmt.mode import Mode
 from sqlfmt.node import (
+    COMMA_SEPARATED_CLAUSE_KEYWORDS,
     FORCE_SPLIT_CLAUSE_KEYWORDS,
     Node,
     _is_over_open_paren,
@@ -150,6 +151,94 @@ class QueryFormatter:
                     continue
             new_lines.append(line)
         return new_lines
+
+    def _merge_trivial_select_star_from(self, lines: List[Line]) -> List[Line]:
+        """
+        Stories 2/3: a trivial "select *" / "from <single source>" pair
+        collapses onto one line when it's a branch of a top-level union
+        (etc.) or the file's outermost final select -- the same
+        triviality rule the generic merger already applies to a trivial
+        import CTE's body (LineMerger._is_trivial_select_star_body), but
+        those two contexts never reach the merger as a standalone
+        [select_line, from_line] pair: segmentation splits every
+        top-level line into its own segment (they're all the same
+        depth), so the merger only ever tries to merge each of
+        select/from in isolation. This re-glues them after the fact,
+        whenever both lines are otherwise untouched (nothing else
+        already merged onto either of them).
+        """
+        from sqlfmt.merger import LineMerger
+
+        node_manager = NodeManager(self.mode.dialect.case_sensitive_names)
+        new_lines: List[Line] = []
+        i = 0
+        n = len(lines)
+        while i < n:
+            line = lines[i]
+            # a pre-existing blank line between "select *" and "from x" (e.g.
+            # from source text written in the old, pre-collapse style) must
+            # not block the merge -- skip over it (and drop it) the same as
+            # if it weren't there.
+            j = i + 1
+            while j < n and lines[j].is_blank_line:
+                j += 1
+            next_line = lines[j] if j < n else None
+            if (
+                next_line is not None
+                and not line.formatting_disabled
+                and not next_line.formatting_disabled
+                and line.nodes
+                and line.nodes[0].is_major_clause_keyword
+                and line.nodes[0].value == "select"
+                and next_line.nodes
+                and next_line.nodes[0].is_major_clause_keyword
+                and next_line.nodes[0].value == "from"
+                and LineMerger._is_trivial_select_star_body([line, next_line])
+                and not self._followed_by_same_statement_clause(lines, j + 1)
+            ):
+                merged_nodes = [n for n in line.nodes if not n.is_newline] + [
+                    n for n in next_line.nodes if not n.is_newline
+                ]
+                merged_line = Line.from_nodes(
+                    previous_node=line.previous_node,
+                    nodes=merged_nodes,
+                    comments=line.comments + next_line.comments,
+                )
+                node_manager.append_newline(merged_line)
+                if not merged_line.is_too_long(self.mode.line_length):
+                    new_lines.append(merged_line)
+                    i = j + 1
+                    continue
+            new_lines.append(line)
+            i += 1
+        return new_lines
+
+    @staticmethod
+    def _followed_by_same_statement_clause(lines: List[Line], start: int) -> bool:
+        """
+        True iff the next non-blank Line at or after `start` continues
+        the *same* select statement with anything else -- another
+        top-level clause (where/group by/having/order by/qualify/
+        limit), a join, or any other table-expression modifier (e.g.
+        Spark's `lateral view`) -- which means the "select */from x"
+        pair ahead of it isn't actually trivial (it's not "literally
+        nothing else", per stories 2/3) and must not collapse onto one
+        line. A `union`/`intersect`/`except` at the same depth, a Line
+        that closes an enclosing bracket (the from's CTE/derived-table
+        paren), or end-of-file don't count -- those end the statement
+        rather than extending it.
+        """
+        for later in lines[start:]:
+            if later.is_blank_line:
+                continue
+            if not later.nodes:
+                continue
+            if later.nodes[0].is_set_operator or later.closes_cte_body:
+                return False
+            if later.closes_bracket_from_previous_line:
+                return False
+            return True
+        return False
 
     def _merge_single_condition_clause_keyword(self, lines: List[Line]) -> List[Line]:
         """
@@ -305,12 +394,12 @@ class QueryFormatter:
             return [line]
 
         child_depth = (keyword_node.depth[0] + 1, keyword_node.depth[1])
-        is_group_by = keyword == "group"
+        is_comma_separated = keyword in COMMA_SEPARATED_CLAUSE_KEYWORDS
 
         def is_item_separator(node: Node) -> bool:
             if node.depth != child_depth:
                 return False
-            if is_group_by:
+            if is_comma_separated:
                 return node.is_comma
             else:
                 return (
@@ -323,12 +412,12 @@ class QueryFormatter:
         for node in line.nodes[1:]:
             if node.is_newline:
                 continue
-            if is_group_by and is_item_separator(node):
+            if is_comma_separated and is_item_separator(node):
                 # trailing comma stays with the item it follows
                 groups[-1].append(node)
                 groups.append([])
                 continue
-            if not is_group_by and is_item_separator(node):
+            if not is_comma_separated and is_item_separator(node):
                 # and/or leads the next item's line
                 groups.append([])
             groups[-1].append(node)
@@ -336,15 +425,37 @@ class QueryFormatter:
         groups = [g for g in groups if g]
         if not groups:
             return [line]
-        groups[0] = [keyword_node] + groups[0]
 
-        if len(groups) <= 1:
-            return [line]
+        # story 13's extension to select: a multi-column select list always
+        # breaks one column per line -- but unlike group by/where/having
+        # (whose keyword glues onto the first item), select's keyword
+        # stands alone on its own line, with every column (including the
+        # first) indented below it, matching the general
+        # keyword-then-indented-items shape select already uses whenever
+        # the merger can't fit the whole list on one line.
+        if keyword == "select":
+            if len(groups) <= 1:
+                return [line]
+            item_groups = groups
+            keyword_only = True
+        else:
+            groups[0] = [keyword_node] + groups[0]
+            if len(groups) <= 1:
+                return [line]
+            item_groups = groups
+            keyword_only = False
 
         node_manager = NodeManager(self.mode.dialect.case_sensitive_names)
         new_lines: List[Line] = []
         prev_node = line.previous_node
-        for group in groups:
+        if keyword_only:
+            keyword_line = Line.from_nodes(
+                previous_node=prev_node, nodes=[keyword_node], comments=[]
+            )
+            node_manager.append_newline(keyword_line)
+            new_lines.append(keyword_line)
+            prev_node = keyword_line.nodes[-1]
+        for group in item_groups:
             new_line = Line.from_nodes(
                 previous_node=prev_node, nodes=group, comments=[]
             )
@@ -754,8 +865,18 @@ class QueryFormatter:
                 and bool(new_lines)
                 and new_lines[-1].is_dbt_config_block
             )
+            # story 4/8: a blank line follows "with" before the first CTE's
+            # name, same as the blank line after a dbt config() block --
+            # the CTE name itself isn't a major clause keyword, so this
+            # needs its own trigger here rather than reusing
+            # starts_new_major_clause.
+            starts_after_with = bool(new_lines) and new_lines[-1].is_with_clause_start
             if (
-                (line.starts_new_major_clause or starts_clause_after_config)
+                (
+                    line.starts_new_major_clause
+                    or starts_clause_after_config
+                    or starts_after_with
+                )
                 and not line.formatting_disabled
                 and new_lines
                 and not new_lines[-1].is_blank_line
@@ -934,6 +1055,7 @@ class QueryFormatter:
             self._format_jinja,
             self._dedent_jinja_blocks,
             self._merge_lines,
+            self._merge_trivial_select_star_from,
             self._remove_semicolons,
             self._merge_simple_when_then,
             self._merge_single_condition_clause_keyword,

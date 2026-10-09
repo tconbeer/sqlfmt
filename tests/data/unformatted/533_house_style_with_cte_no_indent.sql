@@ -1,7 +1,7 @@
 with
     stg_orders as (select * from raw.orders),
     final as (
-        select order_id, customer_id, status from stg_orders where status = 'completed'
+        select order_id from stg_orders where status = 'completed'
     )
 select * from final
 )))))__SQLFMT_OUTPUT__(((((
@@ -15,10 +15,7 @@ stg_orders as (
 
 final as (
 
-    select
-        order_id,
-        customer_id,
-        status
+    select order_id
 
     from stg_orders
 

@@ -11,13 +11,18 @@ and exists (
     select 1 from order_items as i where i.order_id = o.order_id
 )
 )))))__SQLFMT_OUTPUT__(((((
-select o.order_id, recent.total
+select
+    o.order_id,
+    recent.total
 
 from orders o
+
 inner join
     (
 
-        select customer_id, sum(amount) as total
+        select
+            customer_id,
+            sum(amount) as total
 
         from payments
 

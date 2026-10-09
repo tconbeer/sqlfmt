@@ -71,7 +71,11 @@ select
     ) recentagg,
 
 from recentagg_root
+
 left join recentagg_topphases_array using (id)
+
 left join recentagg_topsymptoms_array using (id)
+
 left join recentagg_toppositivesymptoms_array using (id)
+
 left join recentagg_topactivities_array using (id)

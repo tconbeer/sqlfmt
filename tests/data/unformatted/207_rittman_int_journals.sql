@@ -33,23 +33,26 @@ select * from journal_merge_list
 {% if var("finance_warehouse_journal_sources") %}
 
     with
-        journal_merge_list as (
 
-            {% for source in var("finance_warehouse_journal_sources") %}
+    journal_merge_list as (
 
-                {% set relation_source = "stg_" + source + "_journals" %}
+        {% for source in var("finance_warehouse_journal_sources") %}
 
-                select '{{source}}' as source, *
+            {% set relation_source = "stg_" + source + "_journals" %}
 
-                from {{ ref(relation_source) }}
+            select
+                '{{source}}' as source,
+                *
 
-                {% if not loop.last %}
+            from {{ ref(relation_source) }}
 
-                    union all
-                {% endif %}
-            {% endfor %}
+            {% if not loop.last %}
 
-        )
+                union all
+            {% endif %}
+        {% endfor %}
+
+    )
 
     select *
 

@@ -28,7 +28,7 @@ class LineMerger:
 
         if sum(
             1 for line in lines if line.starts_new_major_clause
-        ) > 1 and not self._is_trivial_cte_import_body(lines):
+        ) > 1 and not self._is_trivial_select_star_body(lines):
             raise CannotMergeException(
                 "Can't merge multiple top-level clauses onto one line"
             )
@@ -258,14 +258,25 @@ class LineMerger:
             return node
 
     @staticmethod
-    def _is_trivial_cte_import_body(lines: List[Line]) -> bool:
+    def _is_trivial_select_star_body(lines: List[Line]) -> bool:
         """
-        True iff lines are exactly a CTE's whole body, consisting only of
-        "select *" followed by "from <single source>" -- a trivial
-        import CTE (house style story 4), which is allowed to collapse
-        onto one line even though it contains two major-clause starts.
+        True iff lines are exactly "select *" followed by "from <single
+        source>", with nothing else, in one of the contexts house style
+        allows this trivial shape to collapse onto one line even though
+        it contains two major-clause starts:
+        - a CTE's whole body (story 4, trivial import CTE)
+        - a branch of a top-level union/union all/intersect/except
+          (story 2's extension)
+        - the file's outermost final select (story 3's extension)
+
+        A derived table, scalar subquery, or in/exists subquery's body
+        is deliberately excluded (depth > 0 and not a CTE body) -- those
+        follow the universal box rule instead (blank line after the
+        opening paren), never this one-line collapse.
         """
-        if not lines or not lines[0].is_inside_cte_body:
+        if not lines:
+            return False
+        if not (lines[0].is_inside_cte_body or lines[0].depth == (0, 0)):
             return False
         content: List[Node] = []
         for line in lines:

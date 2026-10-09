@@ -74,10 +74,13 @@ from
             and firsthtml
 
     )
+
 inner join
     (
 
-        select _table_suffix as client, url
+        select
+            _table_suffix as client,
+            url
 
         from `httparchive.technologies.2019_07_01_*`
 

@@ -55,24 +55,29 @@ select * from renamed /* what!?! */ where true
  * but we're not going to parse those
 */
 with
-    source as (
 
-        select * from {{ ref("my_model") }}
+source as (
 
-    ),
+    select * from {{ ref("my_model") }}
 
-    /* This is a multiline comment in very bad style,
+),
+
+/* This is a multiline comment in very bad style,
     * which starts and ends on lines with other tokens.
     */
-    renamed as (
+renamed as (
 
-        select id, another_field, and_another, and_still_another
+    select
+        id,
+        another_field,
+        and_another,
+        and_still_another
 
-        from source
+    from source
 
-    ),
+),
 
-    {% set my_variable_in_bad_style = ["a", "short", "list", "of", "strings"] %}
+{% set my_variable_in_bad_style = ["a", "short", "list", "of", "strings"] %}
 
 {#
  # And this is a nice multiline jinja comment

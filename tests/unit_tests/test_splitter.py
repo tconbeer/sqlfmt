@@ -34,14 +34,14 @@ def test_maybe_split(splitter: LineSplitter, depth_split_line: Line) -> None:
 
     expected = [
         "with\n",
-        " " * 4 + "my_cte\n",
-        " " * 4 + "as (\n",
-        " " * 8 + "select\n",
-        " " * 12 + "1,\n",
-        " " * 12 + "b\n",
-        " " * 8 + "from\n",
-        " " * 12 + "my_schema.my_table\n",
-        " " * 4 + "),\n",
+        "my_cte\n",
+        "as (\n",
+        " " * 4 + "select\n",
+        " " * 8 + "1,\n",
+        " " * 8 + "b\n",
+        " " * 4 + "from\n",
+        " " * 8 + "my_schema.my_table\n",
+        "),\n",
     ]
 
     assert result == expected
