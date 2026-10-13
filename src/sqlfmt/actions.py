@@ -391,7 +391,7 @@ def lex_ruleset(
     """
     analyzer.push_rules(new_ruleset)
     try:
-        analyzer.lex(source_string)
+        analyzer.lex(source_string, rule_stack_depth=len(analyzer.rule_stack))
     except StopRulesetLexing:
         analyzer.pop_rules()
 
