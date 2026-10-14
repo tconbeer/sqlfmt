@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Formatting Changes and Bug Fixes
+
+- sqlfmt no longer splits field names that start with a digit, like SparkSQL's `9021_web_flag` ([#697](https://github.com/tconbeer/sqlfmt/issues/697) - thank you [@larigcp](https://github.com/larigcp)!).
+
 ## [0.32.0] - 2026-08-10
 
 ### Formatting Changes and Bug Fixes
