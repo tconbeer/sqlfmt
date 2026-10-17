@@ -265,6 +265,46 @@ def test_capitalization_operators(default_mode: Mode, source_string: str) -> Non
 
 
 @pytest.mark.parametrize(
+    "source_string,expected",
+    [
+        # the name after a colon is a json key and preserves its case
+        (
+            "select parse_json(event_properties):numFieldsFilledIn from my_table\n",
+            "select parse_json(event_properties):numFieldsFilledIn from my_table\n",
+        ),
+        # names in a colon-delimited path after a dot are also json keys
+        (
+            "select src:Salesperson.Name from my_table\n",
+            "select src:Salesperson.Name from my_table\n",
+        ),
+        # chained json keys all preserve their case
+        (
+            "select src:Salesperson.Name:ManagerName from my_table\n",
+            "select src:Salesperson.Name:ManagerName from my_table\n",
+        ),
+        # array slices and plain column references still fold
+        (
+            "select my_array[I:J], my_table.MyColumn from my_table\n",
+            "select my_array[i:j], my_table.mycolumn from my_table\n",
+        ),
+        # casts (::) are not colon-anchored names, so they still fold
+        (
+            "select my_event::STRING from my_table\n",
+            "select my_event::string from my_table\n",
+        ),
+    ],
+)
+def test_capitalization_json_paths(
+    source_string: str, expected: str, default_mode: Mode
+) -> None:
+    q = default_mode.dialect.initialize_analyzer(
+        line_length=default_mode.line_length
+    ).parse_query(source_string=source_string)
+    parsed_string = "".join(str(line) for line in q.lines)
+    assert parsed_string == expected
+
+
+@pytest.mark.parametrize(
     "source_string",
     [
         "1e4",
