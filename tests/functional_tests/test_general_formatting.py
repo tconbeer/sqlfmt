@@ -61,6 +61,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/134_databricks_type_hints.sql",
         "unformatted/135_star_columns.sql",
         "unformatted/136_databricks_variant.sql",
+        "unformatted/137_spark_variables.sql",
         "unformatted/200_base_model.sql",
         "unformatted/201_basic_snapshot.sql",
         "unformatted/202_unpivot_macro.sql",
