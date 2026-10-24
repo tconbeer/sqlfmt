@@ -45,7 +45,12 @@ ALWAYS = [
     Rule(
         name="quoted_name",
         priority=200,
-        pattern=SQL_QUOTED_EXP,
+        pattern=group(
+            SQL_QUOTED_EXP,
+            # spark/databricks variable substitution, like ${var} or ${hivevar:var};
+            # lexed as a quoted name so that its case is preserved
+            r"\$\{[\w.:-]+\}",
+        ),
         action=partial(actions.add_node_to_buffer, token_type=TokenType.QUOTED_NAME),
     ),
     Rule(
