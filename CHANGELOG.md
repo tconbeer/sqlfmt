@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Formatting Changes and Bug Fixes
+
+- sqlfmt no longer lowercases json keys in colon-delimited key path extractions, like `src:Salesperson.Name` or `parse_json(event_properties):numFieldsFilledIn` ([#269](https://github.com/tconbeer/sqlfmt/issues/269) - thank you [@zhaoruizhe81](https://github.com/zhaoruizhe81)!).
+
 ## [0.32.0] - 2026-08-10
 
 ### Formatting Changes and Bug Fixes
