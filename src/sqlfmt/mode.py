@@ -33,6 +33,16 @@ class Mode:
     force_color: bool = False
 
     def __post_init__(self) -> None:
+        if (
+            not isinstance(self.line_length, int)
+            or isinstance(self.line_length, bool)
+            or self.line_length < 1
+        ):
+            raise SqlfmtConfigError(
+                f"Mode was created with line_length={self.line_length!r}, "
+                "which is not supported. line_length must be a positive integer."
+            )
+
         # get the dialect from its name.
         dialects = {
             "polyglot": Polyglot,

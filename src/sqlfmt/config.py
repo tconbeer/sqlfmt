@@ -108,13 +108,53 @@ def _validate_config(raw_config: Config) -> Config:
     config = {}
     for k, v in ((k.lower(), v) for k, v in raw_config.items()):
         if k == "dialect":
+            _check_value_type("dialect_name", v)
             config["dialect_name"] = v
         elif k not in Mode.__dataclass_fields__:
             raise SqlfmtConfigError(
                 f"Config file contains key {k}, which is not a "
                 f"supported option. Must be one of "
-                f"{list(Mode.__dataclass_fields__.keys())}"
+                f"{_supported_keys()}"
             )
         else:
+            _check_value_type(k, v)
             config[k] = v
     return config
+
+
+def _check_value_type(key: str, value: object) -> None:
+    """
+    Raises a SqlfmtConfigError if value does not have the type that Mode
+    expects for key. Options with other types are not checked.
+    """
+    expected = Mode.__dataclass_fields__[key].type
+    if expected is bool:
+        valid = isinstance(value, bool)
+        type_name = "a boolean"
+    elif expected is int:
+        valid = isinstance(value, int) and not isinstance(value, bool)
+        type_name = "an integer"
+    elif expected is str:
+        valid = isinstance(value, str)
+        type_name = "a string"
+    elif expected == List[str]:
+        valid = isinstance(value, list) and all(isinstance(i, str) for i in value)
+        type_name = "a list of strings"
+    else:
+        return
+    if not valid:
+        raise SqlfmtConfigError(
+            f"Config file option {_user_key(key)} must be {type_name}, "
+            f"but got {value!r}."
+        )
+
+
+def _supported_keys() -> List[str]:
+    """
+    Returns the names of the options that a user can set in a config file
+    """
+    return [_user_key(k) for k in Mode.__dataclass_fields__ if k != "SQL_EXTENSIONS"]
+
+
+def _user_key(key: str) -> str:
+    return "dialect" if key == "dialect_name" else key
