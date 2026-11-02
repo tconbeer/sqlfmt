@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Formatting Changes and Bug Fixes
+
+- sqlfmt no longer raises a parsing error on Spark and Databricks variable substitution, like `${myvar}` or `${hivevar:schema}`; these variables keep their case ([#636](https://github.com/tconbeer/sqlfmt/issues/636) - thank you [@zalmane](https://github.com/zalmane)!).
+
 ## [0.32.0] - 2026-08-10
 
 ### Formatting Changes and Bug Fixes
