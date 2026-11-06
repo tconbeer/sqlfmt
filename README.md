@@ -143,17 +143,22 @@ sqlfmt loves properly-formatted jinja, too.
 
 sqlfmt's rules are simple, which means it does not have to parse every single token in your query. This allows nearly all SQL dialects to be formatted using sqlfmt's default "polyglot" dialect, which requires no configuration.
 
-The exception to this is [ClickHouse](https://docs.sqlfmt.com/dialects/#clickhouse), which is case-sensitive where other dialects are not. To prevent the lowercasing of function names, database identifiers, and aliases, use the `--dialect clickhouse` option when running sqlfmt. For example,
+There are some exceptions:
+
+- [ClickHouse](https://docs.sqlfmt.com/dialects/#clickhouse) is case-sensitive where other dialects are not. To prevent the lowercasing of function names, database identifiers, and aliases, use the `--dialect clickhouse` option.
+- [DuckDB](https://docs.sqlfmt.com/dialects/#duckdb) uses `//` as an integer division operator, whereas other dialects use it as a comment marker. To preserve `//` as an operator, use the `--dialect duckdb` option.
+
+For example:
 
 ```bash
-$ sqlfmt . --dialect clickhouse
+$ sqlfmt . --dialect duckdb
 ```
 
 This can also be configured using the `pyproject.toml` file:
 
 ```toml
 [tool.sqlfmt]
-dialect = "clickhouse"
+dialect = "duckdb"
 ```
 
 Note that with this option, sqlfmt will not lowercase **most** non-reserved keywords, even common ones like `sum` or `count`. See (and please join) [this discussion](https://github.com/tconbeer/sqlfmt/discussions/229) for more on this topic.
