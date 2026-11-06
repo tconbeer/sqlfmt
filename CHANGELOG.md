@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Report (stderr) Changes
+
+- sqlfmt now prints a clear error message and exits with code 2, instead of raising a traceback, when the config file contains an unsupported option or an invalid value (like an unknown dialect). The list of supported options in that message now only includes options a user can set.
+- sqlfmt now raises a config error if an option in the config file has the wrong type (for example, `check = "yes"` or `exclude = "target/**"` instead of a list), instead of silently misbehaving.
+- When no SQL files are found, sqlfmt now explains why in its report, instead of only printing `0 files left unchanged.`
+- sqlfmt now rejects a `line_length` that is not a positive integer, whether it is set in the config file or with `--line-length`.
+
 ## [0.32.0] - 2026-08-10
 
 ### Formatting Changes and Bug Fixes
