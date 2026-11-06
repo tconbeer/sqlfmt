@@ -7,6 +7,39 @@ from sqlfmt.node import Node, get_previous_token
 from sqlfmt.tokens import Token, TokenType
 
 
+def is_colon_anchored_name(previous_node: Optional[Node]) -> bool:
+    """
+    Returns True if a NAME token that directly follows previous_node is part
+    of a colon-delimited json key path, like src:Salesperson.Name
+    """
+    prev = _previous_significant_node(previous_node)
+    if prev is None:
+        return False
+    elif prev.token.type is TokenType.COLON:
+        return True
+    elif prev.token.type is TokenType.DOT:
+        dotted = _previous_significant_node(prev.previous_node)
+        if dotted is not None and dotted.token.type in (
+            TokenType.NAME,
+            TokenType.QUOTED_NAME,
+        ):
+            return is_colon_anchored_name(dotted.previous_node)
+    return False
+
+
+def _previous_significant_node(node: Optional[Node]) -> Optional[Node]:
+    """
+    Returns the closest node at or before node whose token sets the previous
+    sql context (skipping newlines and jinja statements)
+    """
+    if node is None:
+        return None
+    elif node.token.type.does_not_set_prev_sql_context:
+        return _previous_significant_node(node.previous_node)
+    else:
+        return node
+
+
 class NodeManager:
     def __init__(self, case_sensitive_names: bool) -> None:
         self.case_sensitive_names = case_sensitive_names
@@ -31,7 +64,8 @@ class NodeManager:
         else:
             prev_token, extra_whitespace = get_previous_token(previous_node)
             prefix = self.whitespace(token, prev_token, extra_whitespace)
-            value = self.standardize_value(token)
+            is_json_slice = bool(open_brackets) and open_brackets[-1].value == "["
+            value = self.standardize_value(token, previous_node, is_json_slice)
 
         return Node(
             token=token,
@@ -244,15 +278,25 @@ class NodeManager:
         else:
             return SPACE
 
-    def standardize_value(self, token: Token) -> str:
+    def standardize_value(
+        self, token: Token, previous_node: Optional[Node], is_json_slice: bool
+    ) -> str:
         """
         Tokens that are words (not symbols) and aren't jinja
         or comments should be lowercased and have any internal
-        whitespace replaced with a single space
+        whitespace replaced with a single space.
+
+        However, names that are part of a colon-delimited json key
+        path (like src:Salesperson.Name) are case-sensitive in some
+        dialects, so they are not lowercased; names inside square
+        brackets are array slices or array literals, so they are
+        always lowercased.
         """
         if token.type.is_always_lowercased:
             return " ".join(token.token.lower().split())
-        elif token.type is TokenType.NAME and not self.case_sensitive_names:
+        elif token.type is not TokenType.NAME or self.case_sensitive_names:
+            return token.token
+        elif is_json_slice or not is_colon_anchored_name(previous_node):
             return token.token.lower()
         else:
             return token.token
