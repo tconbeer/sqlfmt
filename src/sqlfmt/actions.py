@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Callable, List, Optional
 from jinja2 import Environment
 
 from sqlfmt.comment import Comment
-from sqlfmt.exception import SqlfmtBracketError, StopRulesetLexing
+from sqlfmt.exception import SqlfmtBracketError, SqlfmtParsingError, StopRulesetLexing
 from sqlfmt.line import Line
 from sqlfmt.node import Node, get_previous_token
 from sqlfmt.rule import MAYBE_WHITESPACES, Rule
@@ -151,6 +151,76 @@ def handle_newline(
         # contents
         pass
     analyzer.pos = nl_token.epos
+
+
+def handle_do_semicolon(
+    analyzer: "Analyzer",
+    source_string: str,
+    match: re.Match,
+) -> None:
+    """A semicolon inside a DO block ends a statement, not the block."""
+    add_node_to_buffer(
+        analyzer=analyzer,
+        source_string=source_string,
+        match=match,
+        token_type=TokenType.SEMICOLON,
+    )
+
+
+def handle_do_dollar_end(
+    analyzer: "Analyzer",
+    source_string: str,
+    match: re.Match,
+) -> None:
+    """The closing dollar quote ends the DO ruleset."""
+    add_node_to_buffer(
+        analyzer=analyzer,
+        source_string=source_string,
+        match=match,
+        token_type=TokenType.UNTERM_KEYWORD,
+    )
+    raise StopRulesetLexing
+
+
+def handle_postgres_do(
+    analyzer: "Analyzer",
+    source_string: str,
+    match: re.Match,
+) -> None:
+    """Lex ``DO $tag$ ... $tag$`` so the body can be formatted."""
+    opener = re.match(
+        r"(?is)(\s*)(do)(\s+)(\$\w*\$)",
+        source_string[match.start() :],
+    )
+    if opener is None:
+        raise SqlfmtParsingError(
+            f"Could not parse DO at position {analyzer.pos}"
+        )
+    base = match.start()
+    keyword = Token(
+        TokenType.UNTERM_KEYWORD,
+        opener.group(1),
+        opener.group(2),
+        base,
+        base + opener.end(2),
+    )
+    delimiter = Token(
+        TokenType.UNTERM_KEYWORD,
+        opener.group(3),
+        opener.group(4),
+        base + opener.start(3),
+        base + opener.end(4),
+    )
+    for token in (keyword, delimiter):
+        node = analyzer.node_manager.create_node(
+            token=token, previous_node=analyzer.previous_node
+        )
+        analyzer.node_buffer.append(node)
+        analyzer.pos = token.epos
+
+    from sqlfmt.rules import DO_BLOCK
+
+    lex_ruleset(analyzer, source_string, match, DO_BLOCK)
 
 
 def handle_semicolon(

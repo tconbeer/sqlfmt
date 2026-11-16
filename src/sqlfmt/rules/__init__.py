@@ -345,7 +345,6 @@ MAIN = [
             r"delete",
             r"detach\s+rls\s+policy",
             r"discard",
-            r"do",
             r"drop",
             r"execute",
             r"export",
@@ -390,3 +389,44 @@ MAIN = [
         ),
     ),
 ]
+
+
+# A Postgres DO block is formatted as ordinary SQL between its dollar quotes.
+# The opening quote is consumed with the DO keyword. The closing quote stops
+# this ruleset. Semicolons inside the block must not reset the ruleset.
+DO_BLOCK = [
+    Rule(
+        name="do_dollar_end",
+        priority=150,
+        pattern=group(r"\$\w*\$"),
+        action=actions.handle_do_dollar_end,
+    ),
+    Rule(
+        name="do_semicolon",
+        priority=340,
+        pattern=group(r";"),
+        action=actions.handle_do_semicolon,
+    ),
+    Rule(
+        name="plpgsql_keyword",
+        priority=1040,
+        pattern=group(r"begin", r"if", r"then", r"elsif", r"elseif", r"else", r"loop")
+        + group(r"\W", r"$"),
+        action=partial(
+            actions.handle_reserved_keyword,
+            action=partial(
+                actions.add_node_to_buffer, token_type=TokenType.UNTERM_KEYWORD
+            ),
+        ),
+    ),
+    *MAIN,
+]
+
+MAIN.append(
+    Rule(
+        name="postgres_do",
+        priority=2100,
+        pattern=group(r"do\s+\$\w*\$"),
+        action=actions.handle_postgres_do,
+    )
+)

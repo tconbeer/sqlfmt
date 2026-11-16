@@ -82,6 +82,7 @@ from tests.util import check_formatting, read_test_data
         "unformatted/218_multiple_c_comments.sql",
         "unformatted/219_any_all_agg.sql",
         "unformatted/220_clickhouse_joins.sql",
+        "unformatted/222_postgres_do.sql",
         "unformatted/300_jinjafmt.sql",
         "unformatted/400_create_fn_and_select.sql",
         "unformatted/401_explain_select.sql",
