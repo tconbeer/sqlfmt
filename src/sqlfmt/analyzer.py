@@ -139,7 +139,9 @@ class Analyzer:
                 f" '{source_string[self.pos : self.pos + 50].strip()}'"
             )
 
-    def lex(self, source_string: str, eof_pos: int = -1) -> None:
+    def lex(
+        self, source_string: str, eof_pos: int = -1, rule_stack_depth: int = 0
+    ) -> None:
         """
         Repeatedly match Rules to the source_string (until the source_string is
         exhausted) and apply the matched action.
@@ -156,6 +158,9 @@ class Analyzer:
         while self.pos < eof_pos and self.pos > last_loop_pos:
             last_loop_pos = self.pos
             self.lex_one(source_string)
+
+            if len(self.rule_stack) < rule_stack_depth:
+                return
 
     def search_for_terminating_token(
         self,
