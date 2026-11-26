@@ -115,6 +115,11 @@ class Report:
                 )
                 report.append(style_output(changed_msg, bold=True))
             report.append(f"{self._pluralize_file(self.number_unchanged)} {unchanged}.")
+            if not self.results:
+                report.append(
+                    "No SQL files were found. Check the paths, --exclude patterns "
+                    "and file extensions (.sql, .sql.jinja)."
+                )
 
         # If configured, display detailed changes
         max_errors = 1 if self.mode.quiet else 50

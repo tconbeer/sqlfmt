@@ -48,3 +48,10 @@ def test_dialect_raises() -> None:
     # clickhouse is a subclass of Polyglot
     with pytest.raises(SqlfmtConfigError):
         _ = Mode(dialect_name="foo")
+
+
+@pytest.mark.parametrize("line_length", [0, -5, "88", True])
+def test_invalid_line_length(line_length: object) -> None:
+    with pytest.raises(SqlfmtConfigError) as excinfo:
+        _ = Mode(line_length=line_length)  # type: ignore[arg-type]
+    assert "line_length must be a positive integer" in str(excinfo.value)
