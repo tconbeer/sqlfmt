@@ -6,6 +6,7 @@ from sqlfmt.rules.common import (
     EOL,
     JINJA_START,
     NEWLINE,
+    NOT_AN_IDENTIFIER_TAIL,
     SQL_COMMENT,
     SQL_QUOTED_EXP,
     group,
@@ -101,7 +102,8 @@ CORE = [
         priority=400,
         pattern=group(
             r"(\+|-)?\d+(l|s|y)",
-        ),
+        )
+        + NOT_AN_IDENTIFIER_TAIL,
         action=actions.handle_number,
     ),
     Rule(
@@ -115,7 +117,8 @@ CORE = [
             r"0b[0-1]+",
             r"(\+|-)?\d+(_\d+)*(\.\d*(_\d+)*)?(e(\+|-)?\d+)?(bd|d|f)?",
             r"(\+|-)?\.\d+(_\d+)*(e(\+|-)?\d+)?(bd|d|f)?",
-        ),
+        )
+        + NOT_AN_IDENTIFIER_TAIL,
         action=actions.handle_number,
     ),
     Rule(
